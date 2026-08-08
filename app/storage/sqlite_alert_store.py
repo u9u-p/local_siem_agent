@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlmodel import Session, select
 
-from app.schemas import Alert, AlertStatus, Report, Severity
+from app.schemas import Alert, AlertStatus, Report, ReportStatus, Severity
 from app.storage.models import AlertRecord, ReportRecord
 
 
@@ -39,6 +39,40 @@ def _alert_to_record(alert: Alert) -> AlertRecord:
         data=alert.data,
         raw_json=alert.raw_json,
         status=alert.status.value,
+    )
+
+
+def _report_to_record(report: Report) -> ReportRecord:
+    return ReportRecord(
+        report_id=str(report.report_id),
+        alert_id=str(report.alert_id),
+        generated_at=report.generated_at,
+        alert_summary=report.alert_summary,
+        investigation_timeline=[s.model_dump() for s in report.investigation_timeline],
+        enrichment_findings=[e.model_dump() for e in report.enrichment_findings],
+        risk_assessment=report.risk_assessment.model_dump(),
+        recommended_actions=report.recommended_actions,
+        recommended_actions_freeform_experimental=report.recommended_actions_freeform_experimental,
+        uncertainty_notes=report.uncertainty_notes,
+        status=report.status.value,
+        model_metadata=report.model_metadata.model_dump(),
+    )
+
+
+def _record_to_report(record: ReportRecord) -> Report:
+    return Report(
+        report_id=record.report_id,
+        alert_id=record.alert_id,
+        generated_at=record.generated_at,
+        alert_summary=record.alert_summary,
+        investigation_timeline=record.investigation_timeline,
+        enrichment_findings=record.enrichment_findings,
+        risk_assessment=record.risk_assessment,
+        recommended_actions=record.recommended_actions,
+        recommended_actions_freeform_experimental=record.recommended_actions_freeform_experimental,
+        uncertainty_notes=record.uncertainty_notes,
+        status=ReportStatus(record.status),
+        model_metadata=record.model_metadata,
     )
 
 
@@ -111,15 +145,36 @@ class SQLiteAlertStore:
             session.commit()
 
     def save_report(self, report: Report) -> str:
-        raise NotImplementedError("added in Task 8")
+        record = _report_to_record(report)
+        with Session(self._engine) as session:
+            session.add(record)
+            session.commit()
+        return str(report.report_id)
 
     def get_report(self, report_id: str) -> Report:
-        raise NotImplementedError("added in Task 8")
+        with Session(self._engine) as session:
+            record = session.get(ReportRecord, report_id)
+            if record is None:
+                raise ReportNotFoundError(report_id)
+            return _record_to_report(record)
 
     def get_report_for_alert(self, alert_id: str) -> Report | None:
-        raise NotImplementedError("added in Task 8")
+        with Session(self._engine) as session:
+            query = select(ReportRecord).where(ReportRecord.alert_id == alert_id)
+            record = session.exec(query).first()
+            return _record_to_report(record) if record else None
 
     def list_reports(
         self, since: datetime | None = None, min_severity: Severity | None = None
     ) -> list[Report]:
-        raise NotImplementedError("added in Task 8")
+        with Session(self._engine) as session:
+            query = select(ReportRecord)
+            if since is not None:
+                query = query.where(ReportRecord.generated_at >= since)
+            records = session.exec(query).all()
+            reports = [_record_to_report(r) for r in records]
+            if min_severity is not None:
+                order = list(Severity)
+                min_index = order.index(min_severity)
+                reports = [r for r in reports if order.index(r.risk_assessment.severity) >= min_index]
+            return reports

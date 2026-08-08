@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.schemas import AgentRef, Alert, AlertStatus
+from app.schemas import AgentRef, Alert, AlertStatus, Severity
 from app.storage.db import get_engine, init_db
 from app.storage.sqlite_alert_store import AlertNotFoundError, SQLiteAlertStore
 
@@ -71,3 +71,62 @@ def test_list_alerts_filters_by_status(store):
     new_alerts = store.list_alerts(status=AlertStatus.NEW)
     assert len(new_alerts) == 1
     assert new_alerts[0].alert_id == a2.alert_id
+
+
+from app.schemas import Confidence, ModelMetadata, Report, RiskAssessment
+
+
+def _make_report(alert_id, **overrides: Any) -> Report:
+    defaults: dict[str, Any] = dict(
+        report_id=uuid4(),
+        alert_id=alert_id,
+        generated_at=datetime.now(timezone.utc),
+        alert_summary="Repeated SSH login failures from an external IP against a single host.",
+        risk_assessment=RiskAssessment(severity=Severity.MEDIUM, confidence=Confidence.HIGH, rationale="3 failed logins in 5 minutes."),
+        model_metadata=ModelMetadata(model_name="qwen2.5-7b-instruct", model_version="q4_0", prompt_version="v1"),
+    )
+    defaults.update(overrides)
+    return Report(**defaults)
+
+
+def test_save_and_get_report_round_trips(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(alert.alert_id)
+
+    store.save_report(report)
+
+    loaded = store.get_report(str(report.report_id))
+    assert loaded.alert_summary == report.alert_summary
+    assert loaded.risk_assessment.severity == Severity.MEDIUM
+
+
+def test_get_report_for_alert(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(alert.alert_id)
+    store.save_report(report)
+
+    found = store.get_report_for_alert(str(alert.alert_id))
+    assert found is not None
+    assert found.report_id == report.report_id
+    assert store.get_report_for_alert(str(uuid4())) is None
+
+
+def test_list_reports_filters_by_min_severity(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    low = _make_report(
+        alert.alert_id,
+        risk_assessment=RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
+    )
+    high = _make_report(
+        alert.alert_id,
+        report_id=uuid4(),
+        risk_assessment=RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="y"),
+    )
+    store.save_report(low)
+    store.save_report(high)
+
+    results = store.list_reports(since=None, min_severity=Severity.HIGH)
+    assert {r.report_id for r in results} == {high.report_id}
