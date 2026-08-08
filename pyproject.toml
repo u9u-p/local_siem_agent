@@ -8,11 +8,14 @@ dependencies = [
     "pydantic-settings>=2.2,<3",
     "sqlalchemy>=2.0,<3",  # imported directly for IntegrityError; also a sqlmodel dep
     "sqlmodel>=0.0.16,<0.1",
+    "httpx>=0.27,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0,<9",
+    "respx>=0.21,<1",
+    "freezegun>=1.4,<2",
 ]
 
 [build-system]
