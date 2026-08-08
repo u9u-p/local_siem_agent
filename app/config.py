@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     database_path: str = "./data/alerts.db"
     log_level: str = "INFO"
+    abuseipdb_api_key: str | None = None
 
 
 def get_settings() -> Settings:
