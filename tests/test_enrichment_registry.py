@@ -74,6 +74,35 @@ def test_enrich_returns_rate_limited_without_calling_provider(monkeypatch):
     assert provider.calls == 0
 
 
+def test_enrich_returns_unexpected_error_when_provider_raises_non_enrichment_error():
+    provider = _FakeProvider(error=RuntimeError("boom"))
+    registry = EnrichmentRegistry()
+    registry.register(provider)
+
+    result = registry.enrich(IPIndicator(value="203.0.113.5"))
+
+    assert result.verdict == EnrichmentVerdict.UNKNOWN
+    assert result.error == "unexpected_error"
+    assert provider.calls == 1
+
+
+def test_enrich_stops_calling_provider_once_rate_limit_exhausted_across_calls(monkeypatch):
+    monkeypatch.setitem(registry_module._DAILY_LIMITS, "abuseipdb", 2)
+    provider = _FakeProvider(result=_make_result())
+    registry = EnrichmentRegistry()
+    registry.register(provider)
+
+    first = registry.enrich(IPIndicator(value="203.0.113.5"))
+    second = registry.enrich(IPIndicator(value="203.0.113.6"))
+    third = registry.enrich(IPIndicator(value="203.0.113.7"))
+
+    assert first.verdict == EnrichmentVerdict.CLEAN
+    assert second.verdict == EnrichmentVerdict.CLEAN
+    assert provider.calls == 2
+    assert third.verdict == EnrichmentVerdict.UNKNOWN
+    assert third.error == "rate_limited"
+
+
 def test_enrich_raises_when_no_provider_registered():
     registry = EnrichmentRegistry()
 

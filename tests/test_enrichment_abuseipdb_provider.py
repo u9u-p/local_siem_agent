@@ -88,3 +88,43 @@ def test_lookup_raises_timeout_on_client_timeout():
     with pytest.raises(EnrichmentError) as exc_info:
         provider.lookup(IPIndicator(value="203.0.113.5"))
     assert exc_info.value.kind == "timeout"
+
+
+@respx.mock
+def test_lookup_raises_http_error_on_500():
+    respx.get(CHECK_URL).mock(return_value=httpx.Response(500, text="internal server error"))
+    provider = AbuseIPDBProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(IPIndicator(value="203.0.113.5"))
+    assert exc_info.value.kind == "http_error"
+
+
+@respx.mock
+def test_lookup_raises_network_error_on_connect_error():
+    respx.get(CHECK_URL).mock(side_effect=httpx.ConnectError("connection refused"))
+    provider = AbuseIPDBProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(IPIndicator(value="203.0.113.5"))
+    assert exc_info.value.kind == "network_error"
+
+
+@respx.mock
+def test_lookup_raises_bad_response_on_malformed_body():
+    respx.get(CHECK_URL).mock(return_value=httpx.Response(200, json={"unexpected": "shape"}))
+    provider = AbuseIPDBProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(IPIndicator(value="203.0.113.5"))
+    assert exc_info.value.kind == "bad_response"
+
+
+@respx.mock
+def test_lookup_raises_bad_response_on_non_json_body():
+    respx.get(CHECK_URL).mock(return_value=httpx.Response(200, text="<html>not json</html>"))
+    provider = AbuseIPDBProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(IPIndicator(value="203.0.113.5"))
+    assert exc_info.value.kind == "bad_response"

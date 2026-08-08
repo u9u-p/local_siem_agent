@@ -1,10 +1,8 @@
-import re
+import ipaddress
 
 from pydantic import BaseModel, field_validator
 
 from app.schemas import IndicatorType
-
-_IPV4_RE = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
 
 
 class IPIndicator(BaseModel):
@@ -14,12 +12,13 @@ class IPIndicator(BaseModel):
     @field_validator("value")
     @classmethod
     def _validate_ip(cls, v: str) -> str:
-        if not _IPV4_RE.match(v):
-            raise ValueError(f"not a valid IPv4 address: {v}")
-        octets = v.split(".")
-        if not all(0 <= int(o) <= 255 for o in octets):
-            raise ValueError(f"not a valid IPv4 address: {v}")
-        return v
+        # ipaddress rejects leading zeros, trailing garbage/whitespace and wrong octet
+        # counts, and returns a canonical string — important once indicator_value
+        # becomes part of a cache key.
+        try:
+            return str(ipaddress.IPv4Address(v))
+        except ValueError as exc:
+            raise ValueError(f"not a valid IPv4 address: {v}") from exc
 
 
 Indicator = IPIndicator

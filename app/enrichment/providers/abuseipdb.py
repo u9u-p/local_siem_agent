@@ -26,7 +26,11 @@ class AbuseIPDBProvider:
                 headers={"Key": self._api_key, "Accept": "application/json"},
             )
         except httpx.TimeoutException as exc:
+            # More specific than RequestError below — must stay first.
             raise EnrichmentError("timeout", str(exc)) from exc
+        except httpx.RequestError as exc:
+            # Connection refused, DNS failure, read errors, etc.
+            raise EnrichmentError("network_error", str(exc)) from exc
 
         if response.status_code == 401:
             raise EnrichmentError("auth_failed", "AbuseIPDB rejected the API key")
@@ -34,11 +38,19 @@ class AbuseIPDBProvider:
             raise EnrichmentError("rate_limited", "AbuseIPDB rate limit exceeded")
         if response.status_code == 404:
             raise EnrichmentError("not_found", f"no data for {indicator.value}")
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            # Any other non-2xx status (500, 503, ...).
+            raise EnrichmentError("http_error", str(exc)) from exc
 
-        payload = response.json()
-        data = payload["data"]
-        score = float(data["abuseConfidenceScore"])
+        try:
+            payload = response.json()
+            data = payload["data"]
+            score = float(data["abuseConfidenceScore"])
+        except (ValueError, KeyError, TypeError) as exc:
+            # json.JSONDecodeError is a ValueError subclass, so a non-JSON body lands here too.
+            raise EnrichmentError("bad_response", str(exc)) from exc
         if score > ABUSEIPDB_MALICIOUS_THRESHOLD:
             verdict = EnrichmentVerdict.MALICIOUS
         elif score > ABUSEIPDB_SUSPICIOUS_THRESHOLD:
