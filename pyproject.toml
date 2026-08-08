@@ -1,0 +1,25 @@
+[project]
+name = "wazuh-local-agent"
+version = "0.1.0"
+description = "Local SIEM alert investigation agent"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6,<3",
+    "pydantic-settings>=2.2,<3",
+    "sqlmodel>=0.0.16,<0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
