@@ -1,0 +1,35 @@
+import httpx
+import respx
+
+from app.enrichment.indicators import IPIndicator
+from app.enrichment.providers.abuseipdb import AbuseIPDBProvider
+from app.enrichment.registry import EnrichmentRegistry
+from app.schemas import EnrichmentVerdict
+
+CHECK_URL = "https://api.abuseipdb.com/api/v2/check"
+
+
+@respx.mock
+def test_registry_and_provider_compose_end_to_end():
+    respx.get(CHECK_URL).mock(
+        return_value=httpx.Response(200, json={"data": {"abuseConfidenceScore": 90, "ipAddress": "203.0.113.5"}})
+    )
+    registry = EnrichmentRegistry()
+    registry.register(AbuseIPDBProvider(api_key="test-key"))
+
+    result = registry.enrich(IPIndicator(value="203.0.113.5"))
+
+    assert result.verdict == EnrichmentVerdict.MALICIOUS
+    assert result.provider_id == "abuseipdb"
+
+
+@respx.mock
+def test_registry_degrades_gracefully_on_provider_auth_failure():
+    respx.get(CHECK_URL).mock(return_value=httpx.Response(401, json={"errors": [{"detail": "invalid key"}]}))
+    registry = EnrichmentRegistry()
+    registry.register(AbuseIPDBProvider(api_key="bad-key"))
+
+    result = registry.enrich(IPIndicator(value="203.0.113.5"))
+
+    assert result.verdict == EnrichmentVerdict.UNKNOWN
+    assert result.error == "auth_failed"
