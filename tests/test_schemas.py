@@ -92,3 +92,83 @@ def test_alert_accepts_optional_network_fields():
     alert = _make_alert(source_ip="203.0.113.5", source_port=51820)
     assert alert.source_ip == "203.0.113.5"
     assert alert.destination_ip is None
+
+
+from app.schemas import (
+    Confidence,
+    EnrichmentResult,
+    EnrichmentVerdict,
+    IndicatorType,
+    InvestigationStep,
+    ModelMetadata,
+    Report,
+    ReportStatus,
+    RiskAssessment,
+    Severity,
+)
+
+
+def _make_report(**overrides: Any) -> Report:
+    defaults: dict[str, Any] = dict(
+        report_id=uuid4(),
+        alert_id=uuid4(),
+        generated_at=datetime.now(timezone.utc),
+        alert_summary="Repeated SSH login failures from an external IP against a single host.",
+        risk_assessment=RiskAssessment(severity=Severity.MEDIUM, confidence=Confidence.HIGH, rationale="3 failed logins in 5 minutes from an unrecognised IP."),
+        model_metadata=ModelMetadata(model_name="qwen2.5-7b-instruct", model_version="q4_0", prompt_version="v1"),
+    )
+    defaults.update(overrides)
+    return Report(**defaults)
+
+
+def test_enrichment_result_requires_score_in_range():
+    result = EnrichmentResult(
+        indicator_type=IndicatorType.IP,
+        indicator_value="203.0.113.5",
+        provider_id="abuseipdb",
+        queried_at=datetime.now(timezone.utc),
+        verdict=EnrichmentVerdict.SUSPICIOUS,
+        score=42.0,
+        cache_expires_at=datetime.now(timezone.utc),
+    )
+    assert result.raw_response == {}
+    with pytest.raises(ValidationError):
+        EnrichmentResult(
+            indicator_type=IndicatorType.IP,
+            indicator_value="203.0.113.5",
+            provider_id="abuseipdb",
+            queried_at=datetime.now(timezone.utc),
+            verdict=EnrichmentVerdict.SUSPICIOUS,
+            score=142.0,
+            cache_expires_at=datetime.now(timezone.utc),
+        )
+
+
+def test_report_defaults():
+    report = _make_report()
+    assert report.status == ReportStatus.DRAFT
+    assert report.investigation_timeline == []
+    assert report.enrichment_findings == []
+    assert report.recommended_actions_freeform_experimental is None
+    assert report.uncertainty_notes == ""
+
+
+def test_report_accepts_nested_investigation_step_and_enrichment_finding():
+    step = InvestigationStep(
+        step_name="correlate",
+        action="run_canonical_searches",
+        output_summary="12 related alerts found for this src_ip in 24h",
+        timestamp=datetime.now(timezone.utc),
+    )
+    finding = EnrichmentResult(
+        indicator_type=IndicatorType.IP,
+        indicator_value="203.0.113.5",
+        provider_id="abuseipdb",
+        queried_at=datetime.now(timezone.utc),
+        verdict=EnrichmentVerdict.SUSPICIOUS,
+        score=42.0,
+        cache_expires_at=datetime.now(timezone.utc),
+    )
+    report = _make_report(investigation_timeline=[step], enrichment_findings=[finding])
+    assert report.investigation_timeline[0].step_name == "correlate"
+    assert report.enrichment_findings[0].verdict == EnrichmentVerdict.SUSPICIOUS
