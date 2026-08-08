@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.schemas import Alert, AlertStatus, Report, ReportStatus, Severity
@@ -14,6 +15,22 @@ class ReportNotFoundError(Exception):
     pass
 
 
+class DuplicateAlertError(Exception):
+    pass
+
+
+def _as_utc(value: datetime) -> datetime:
+    """Return `value` as a UTC-aware datetime.
+
+    Used in both directions: on write, to normalise caller-supplied datetimes to
+    UTC before they hit the tz-naive `DateTime` columns; on read, to re-attach UTC
+    to the naive value SQLite hands back. Naive input is assumed to be UTC.
+    """
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def _alert_to_record(alert: Alert) -> AlertRecord:
     return AlertRecord(
         alert_id=str(alert.alert_id),
@@ -23,9 +40,9 @@ def _alert_to_record(alert: Alert) -> AlertRecord:
         rule_description=alert.rule_description,
         rule_level=alert.rule_level,
         rule_groups=alert.rule_groups,
-        mitre=[m.model_dump() for m in alert.mitre] if alert.mitre else None,
-        timestamp=alert.timestamp,
-        ingested_at=alert.ingested_at,
+        mitre=[m.model_dump(mode="json") for m in alert.mitre] if alert.mitre else None,
+        timestamp=_as_utc(alert.timestamp),
+        ingested_at=_as_utc(alert.ingested_at),
         agent=alert.agent.model_dump(),
         manager_name=alert.manager_name,
         location=alert.location,
@@ -46,10 +63,10 @@ def _report_to_record(report: Report) -> ReportRecord:
     return ReportRecord(
         report_id=str(report.report_id),
         alert_id=str(report.alert_id),
-        generated_at=report.generated_at,
+        generated_at=_as_utc(report.generated_at),
         alert_summary=report.alert_summary,
-        investigation_timeline=[s.model_dump() for s in report.investigation_timeline],
-        enrichment_findings=[e.model_dump() for e in report.enrichment_findings],
+        investigation_timeline=[s.model_dump(mode="json") for s in report.investigation_timeline],
+        enrichment_findings=[e.model_dump(mode="json") for e in report.enrichment_findings],
         risk_assessment=report.risk_assessment.model_dump(),
         recommended_actions=report.recommended_actions,
         recommended_actions_freeform_experimental=report.recommended_actions_freeform_experimental,
@@ -63,7 +80,7 @@ def _record_to_report(record: ReportRecord) -> Report:
     return Report(
         report_id=record.report_id,
         alert_id=record.alert_id,
-        generated_at=record.generated_at,
+        generated_at=_as_utc(record.generated_at),
         alert_summary=record.alert_summary,
         investigation_timeline=record.investigation_timeline,
         enrichment_findings=record.enrichment_findings,
@@ -86,8 +103,8 @@ def _record_to_alert(record: AlertRecord) -> Alert:
         rule_level=record.rule_level,
         rule_groups=record.rule_groups,
         mitre=record.mitre,
-        timestamp=record.timestamp,
-        ingested_at=record.ingested_at,
+        timestamp=_as_utc(record.timestamp),
+        ingested_at=_as_utc(record.ingested_at),
         agent=record.agent,
         manager_name=record.manager_name,
         location=record.location,
@@ -112,7 +129,11 @@ class SQLiteAlertStore:
         record = _alert_to_record(alert)
         with Session(self._engine) as session:
             session.add(record)
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError as exc:
+                session.rollback()
+                raise DuplicateAlertError(str(alert.alert_id)) from exc
         return str(alert.alert_id)
 
     def get_alert(self, alert_id: str) -> Alert:
@@ -130,7 +151,7 @@ class SQLiteAlertStore:
             if status is not None:
                 query = query.where(AlertRecord.status == status.value)
             if since is not None:
-                query = query.where(AlertRecord.timestamp >= since)
+                query = query.where(AlertRecord.timestamp >= _as_utc(since).replace(tzinfo=None))
             query = query.order_by(AlertRecord.timestamp.desc()).limit(limit)
             records = session.exec(query).all()
             return [_record_to_alert(r) for r in records]
@@ -160,7 +181,11 @@ class SQLiteAlertStore:
 
     def get_report_for_alert(self, alert_id: str) -> Report | None:
         with Session(self._engine) as session:
-            query = select(ReportRecord).where(ReportRecord.alert_id == alert_id)
+            query = (
+                select(ReportRecord)
+                .where(ReportRecord.alert_id == alert_id)
+                .order_by(ReportRecord.generated_at.desc())
+            )
             record = session.exec(query).first()
             return _record_to_report(record) if record else None
 
@@ -170,7 +195,7 @@ class SQLiteAlertStore:
         with Session(self._engine) as session:
             query = select(ReportRecord)
             if since is not None:
-                query = query.where(ReportRecord.generated_at >= since)
+                query = query.where(ReportRecord.generated_at >= _as_utc(since).replace(tzinfo=None))
             records = session.exec(query).all()
             reports = [_record_to_report(r) for r in records]
             if min_severity is not None:

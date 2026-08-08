@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.6,<3",
     "pydantic-settings>=2.2,<3",
+    "sqlalchemy>=2.0,<3",  # imported directly for IntegrityError; also a sqlmodel dep
     "sqlmodel>=0.0.16,<0.1",
 ]
 
