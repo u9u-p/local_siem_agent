@@ -24,3 +24,32 @@ def test_settings_abuseipdb_api_key_env_override(monkeypatch):
     monkeypatch.setenv("ABUSEIPDB_API_KEY", "test-key-123")
     settings = Settings(_env_file=None)
     assert settings.abuseipdb_api_key == "test-key-123"
+
+
+def test_settings_wazuh_fields_default_to_none_and_verify_ssl_false():
+    settings = Settings(_env_file=None)
+    assert settings.wazuh_indexer_url is None
+    assert settings.wazuh_indexer_username is None
+    assert settings.wazuh_indexer_password is None
+    assert settings.wazuh_manager_url is None
+    assert settings.wazuh_manager_username is None
+    assert settings.wazuh_manager_password is None
+    assert settings.wazuh_verify_ssl is False
+
+
+def test_settings_wazuh_fields_env_override(monkeypatch):
+    monkeypatch.setenv("WAZUH_INDEXER_URL", "https://localhost:9200")
+    monkeypatch.setenv("WAZUH_INDEXER_USERNAME", "admin")
+    monkeypatch.setenv("WAZUH_INDEXER_PASSWORD", "test-password")
+    monkeypatch.setenv("WAZUH_MANAGER_URL", "https://localhost:55000")
+    monkeypatch.setenv("WAZUH_MANAGER_USERNAME", "wazuh-wui")
+    monkeypatch.setenv("WAZUH_MANAGER_PASSWORD", "test-password-2")
+    monkeypatch.setenv("WAZUH_VERIFY_SSL", "true")
+    settings = Settings(_env_file=None)
+    assert settings.wazuh_indexer_url == "https://localhost:9200"
+    assert settings.wazuh_indexer_username == "admin"
+    assert settings.wazuh_indexer_password == "test-password"
+    assert settings.wazuh_manager_url == "https://localhost:55000"
+    assert settings.wazuh_manager_username == "wazuh-wui"
+    assert settings.wazuh_manager_password == "test-password-2"
+    assert settings.wazuh_verify_ssl is True
