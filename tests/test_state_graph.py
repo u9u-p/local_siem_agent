@@ -232,3 +232,59 @@ def test_step_gather_context_degrades_on_siem_connector_error():
     assert rule_metadata is None
     assert step.action == "degraded"
     assert "unreachable" in step.output_summary
+
+
+def test_stub_step_logs_stub_when_model_available():
+    analyst = _make_analyst()
+
+    step = analyst._stub_step(Step.CORRELATE, model_available=True)
+
+    assert step.step_name == Step.CORRELATE.value
+    assert step.action == "stub"
+    assert "Phase 4c/4d" in step.output_summary
+
+
+def test_stub_step_logs_skipped_when_model_unavailable():
+    analyst = _make_analyst()
+
+    step = analyst._stub_step(Step.RISK_ASSESSMENT, model_available=False)
+
+    assert step.step_name == Step.RISK_ASSESSMENT.value
+    assert step.action == "skipped"
+    assert "model unavailable" in step.output_summary
+
+
+def test_step_correlate_delegates_to_stub_step():
+    analyst = _make_analyst()
+
+    step = analyst._step_correlate(model_available=True)
+
+    assert step.step_name == Step.CORRELATE.value
+    assert step.action == "stub"
+
+
+def test_step_risk_assessment_delegates_to_stub_step():
+    analyst = _make_analyst()
+
+    step = analyst._step_risk_assessment(model_available=False)
+
+    assert step.step_name == Step.RISK_ASSESSMENT.value
+    assert step.action == "skipped"
+
+
+def test_step_draft_report_delegates_to_stub_step():
+    analyst = _make_analyst()
+
+    step = analyst._step_draft_report(model_available=True)
+
+    assert step.step_name == Step.DRAFT_REPORT.value
+    assert step.action == "stub"
+
+
+def test_step_self_check_delegates_to_stub_step():
+    analyst = _make_analyst()
+
+    step = analyst._step_self_check(model_available=True)
+
+    assert step.step_name == Step.SELF_CHECK.value
+    assert step.action == "stub"

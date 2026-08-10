@@ -111,3 +111,29 @@ class AgenticAnalyst:
             timestamp=datetime.now(timezone.utc),
         )
         return agent_context, rule_metadata, step
+
+    def _stub_step(self, step: Step, model_available: bool) -> InvestigationStep:
+        if model_available:
+            action, summary = "stub", f"not yet implemented — Phase 4c/4d ({step.value})"
+        else:
+            action, summary = "skipped", "skipped: model unavailable"
+        return InvestigationStep(
+            step_name=step.value,
+            action=action,
+            tool_used=None,
+            input=None,
+            output_summary=summary,
+            timestamp=datetime.now(timezone.utc),
+        )
+
+    def _step_correlate(self, model_available: bool) -> InvestigationStep:
+        return self._stub_step(Step.CORRELATE, model_available)
+
+    def _step_risk_assessment(self, model_available: bool) -> InvestigationStep:
+        return self._stub_step(Step.RISK_ASSESSMENT, model_available)
+
+    def _step_draft_report(self, model_available: bool) -> InvestigationStep:
+        return self._stub_step(Step.DRAFT_REPORT, model_available)
+
+    def _step_self_check(self, model_available: bool) -> InvestigationStep:
+        return self._stub_step(Step.SELF_CHECK, model_available)
