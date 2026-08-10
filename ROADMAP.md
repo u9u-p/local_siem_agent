@@ -23,7 +23,7 @@ Phases are ordered by dependency, per CLAUDE.md §1.4: the Agentic Analyst depen
 
 ---
 
-## Phase 3: Integration — SIEMConnector — Next
+## Phase 3: Integration — SIEMConnector — ✅ Complete
 
 **Goal:** `SIEMConnector` Protocol + `WazuhConnector` implementation, per CLAUDE.md §1.1 and §3.
 **Key files (per CLAUDE.md §9):** `app/integration/siem_connector.py`.
@@ -34,23 +34,37 @@ Known design points already settled in CLAUDE.md, to carry into that phase's spe
 - `SearchQuery` is a small constrained object (`field`, `operator` from `eq|contains|range|terms`, `value`, `time_range`), never a raw query string — CLAUDE.md §1.1.
 - Self-signed TLS needs an explicit, flagged `verify=False`/CA-bundle option (CLAUDE.md §3, §8 assumption) — this is a demo-only affordance, not a default to leave on silently.
 
-Open items for that phase's brainstorming (not yet decided):
-- Whether to build against a real Wazuh instance or mock the Indexer/Manager HTTP APIs (`respx`, following the Enrichment phase's pattern) — likely mocked-first, same as AbuseIPDB, with a real-instance smoke test as a stretch goal.
-- JWT refresh timing/retry policy for the Manager's ~900s token expiry.
+Resolved during that phase's brainstorming: mocked-first (respx) test suite plus a skippable real-instance smoke test — later run successfully against a real Wazuh 4.14.x Docker deployment, confirming both the API research and the one previously-open item (the alert timestamp field is `timestamp`, not `@timestamp`). JWT refresh is reactive (401 → refresh → retry once → propagate on second 401), not proactive.
 
 ---
 
-## Phase 4: Agentic Analyst — State Graph
+## Phase 4: Agentic Analyst — State Graph — Next
 
-**Goal:** The 9-step deterministic FSM from CLAUDE.md §4 — the orchestration core that ties Integration, Enrichment, and an LLM together into investigation reports.
-**Key files (per CLAUDE.md §9):** `app/agent/state_graph.py`.
-**Depends on:** Phase 1 (`AlertStore`, `Report`/`Alert` schemas), Phase 2 (`EnrichmentRegistry`), Phase 3 (`SIEMConnector`), and an `LLMClient` Protocol.
+The largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per CLAUDE.md §4.1) and the one with the most undecided design surface — split into 4 sub-phases, each with its own brainstorm → spec → plan cycle, built in this order:
 
-**Gap to resolve before/during that phase's brainstorming:** CLAUDE.md §1.4 requires an `LLMClient` Protocol, but §9's critical-files list never names where it lives (no `llm_client.py` entry). Decide its home (likely `app/agent/llm_client.py` or `app/llm/client.py`) and whether it's built as part of this phase or as a small Phase 3.5 on its own — probably its own short phase, since it's independently testable (Ollama's JSON-schema-constrained generation, mockable) and several state-graph steps depend on it existing first.
+**Carry forward from Enrichment's final review, applying to every sub-phase below:** the "a provider outage must never abort the investigation" pattern (catch broadly, degrade to a synthetic result, never let an unexpected exception escape a module boundary) is exactly the shape CLAUDE.md §4.2 rule 1 asks for at each LLM call site (schema-validation retry, safe fallback default). Budget an explicit final-review check for "does any step's failure path actually degrade gracefully, or does it just look like it does" — this is precisely the class of bug that per-task review has caught in every subsystem so far (Foundation's datetime serialization, Enrichment's exception handling, Integration's bare `IndexError` and MITRE mispairing) because it only becomes visible at composition time.
 
-This is the largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per CLAUDE.md §4.1) — expect it to be split into its own sub-phases during brainstorming (e.g. steps 1-4 deterministic pipeline first, then the LLM-calling steps, then Self-Check), rather than one flat 8-task plan like Foundation/Enrichment.
+### Phase 4a: `LLMClient` Protocol + Ollama implementation
 
-**Carry forward from Enrichment's final review:** the "a provider outage must never abort the investigation" pattern (catch broadly, degrade to a synthetic result, never let an unexpected exception escape a module boundary) is exactly the shape CLAUDE.md §4.2 rule 1 asks for at each LLM call site (schema-validation retry, safe fallback default). Budget an explicit final-review check for "does any step's failure path actually degrade gracefully, or does it just look like it does" — this is precisely the class of bug that per-task review missed twice now (Foundation's datetime serialization, Enrichment's exception handling) because it only becomes visible at composition time.
+**Goal:** Resolve the gap CLAUDE.md §1.4 requires but §9's critical-files list never names a home for — an `LLMClient` Protocol wrapping Ollama's JSON-schema-constrained generation, independently testable (mockable) with no state graph needed yet.
+**Key files:** not yet named in CLAUDE.md §9 — likely `app/agent/llm_client.py` or `app/llm/client.py`, decided during this sub-phase's brainstorming.
+**Depends on:** nothing (self-contained).
+
+### Phase 4b: Deterministic pipeline skeleton
+
+**Goal:** The FSM dispatcher itself (`app/agent/state_graph.py`'s `Step` enum + dispatcher), steps 1/4/9 (Ingest & Parse, Gather Host/Rule Context, Finalize & Persist — no LLM), the deterministic half of steps 2/3 (regex extraction; enrichment routing, already built in Phase 2), skip-condition logic, and `InvestigationStep` timeline logging. LLM-calling steps are wired in as stubs here, against a fake `LLMClient`.
+**Key files:** `app/agent/state_graph.py`.
+**Depends on:** Phase 4a (even a stub needs the real `LLMClient` Protocol shape), Phase 1 (`AlertStore`, schemas), Phase 3 (`SIEMConnector`).
+
+### Phase 4c: LLM-calling classification steps
+
+**Goal:** Step 2b (indicator candidate extraction), step 3's conditional verdict reconciliation, step 5 (Correlate decision + pattern), step 6 (Risk Assessment + MITRE) — all closed-vocabulary decision calls per CLAUDE.md §4.2.
+**Depends on:** Phase 4a, Phase 4b (slots into the skeleton's stubs), Phase 2 (`EnrichmentRegistry`).
+
+### Phase 4d: Report drafting + Self-Check
+
+**Goal:** Step 7 (Draft-A canonical / Draft-B experimental) and step 8 (Self-Check) — the report-generation half, and arguably the hardest part: the two-pass draft+critique loop, and the one place in the whole design with deliberately free-text (not closed-vocabulary) output.
+**Depends on:** Phase 4a, Phase 4b, Phase 4c (Self-Check audits claims against the structured findings 4c produced).
 
 ---
 
