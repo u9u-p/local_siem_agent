@@ -48,6 +48,10 @@ class OllamaClient:
             # it into message.parsed=None — treat it as a non-conforming attempt.
             self._last_raw_content = "(response did not match the required schema)"
             return None
+        except openai.APIConnectionError as exc:
+            raise LLMClientError("unreachable", str(exc)) from exc
+        except openai.NotFoundError as exc:
+            raise LLMClientError("model_not_found", str(exc)) from exc
 
         message = completion.choices[0].message
         if message.refusal is not None:

@@ -94,3 +94,55 @@ def test_generate_structured_retries_after_truncation():
 
     assert result.label == "clean"
     assert call_count["n"] == 2
+
+
+def _refusal_response() -> httpx.Response:
+    return httpx.Response(
+        200,
+        json={
+            "id": "chatcmpl-2",
+            "object": "chat.completion",
+            "created": 1234567890,
+            "model": "qwen3.5:9b",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": None, "refusal": "I cannot help with that."},
+                    "finish_reason": "stop",
+                }
+            ],
+        },
+    )
+
+
+@respx.mock
+def test_generate_structured_raises_unreachable_on_connection_error():
+    respx.post(f"{BASE_URL}chat/completions").mock(side_effect=httpx.ConnectError("connection refused"))
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "unreachable"
+
+
+@respx.mock
+def test_generate_structured_raises_model_not_found_on_404():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=httpx.Response(404, json={"error": {"message": "model 'qwen3.5:9b' not found"}})
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "model_not_found"
+
+
+@respx.mock
+def test_generate_structured_raises_generation_failed_on_refusal_without_retry():
+    route = respx.post(f"{BASE_URL}chat/completions").mock(return_value=_refusal_response())
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "generation_failed"
+    assert route.call_count == 1
