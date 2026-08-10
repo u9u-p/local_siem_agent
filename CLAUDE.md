@@ -248,12 +248,12 @@ Per the Context section's deployment-topology decision, Wazuh (manager + indexer
 | Wazuh Manager | ~0.5–1GB | Moderate, not the concern |
 | Wazuh Indexer (OpenSearch, JVM-based) | ~2–4GB+ | **The actual pressure point.** Its JVM heap defaults to auto-sizing against available host RAM — this must be explicitly capped for a colocated deployment, not left on its default |
 | Wazuh Dashboard | ~0.5–1GB | Kept running per the deployment-topology decision above |
-| Ollama + loaded model (idle) | ~5GB (7B, Q4) or ~9GB (14B, Q4) | Both remain valid options per §6 — pick based on what's actually free once Wazuh is sized |
+| Ollama + loaded model (idle) | ~7GB | `qwen3.5:9b` (Q4_K_M) is ~6.6GB of weights per §6, plus Ollama's own overhead and KV cache on top |
 | This app (Python process) | ~0.2–0.5GB | Negligible |
 
 These are planning-only ranges, not guarantees — validate actual resident memory with Activity Monitor or `ps` once Wazuh is installed on the target host, and adjust from there.
 
-**Guidance, not a mandated number:** explicitly set the OpenSearch JVM heap (`-Xms`/`-Xmx`) to a fixed value sized for a single-analyst POC's alert volume rather than letting it auto-size to ~50% of host RAM (its usual default) — that default assumes the indexer owns the whole machine, which isn't true here. On a 24GB host, all-in-one Wazuh (~4–6GB) plus a 14B model (~9GB) plus OS (~5GB) leaves a workable but not generous margin — worth watching closely if you go with the 14B model.
+**Guidance, not a mandated number:** explicitly set the OpenSearch JVM heap (`-Xms`/`-Xmx`) to a fixed value sized for a single-analyst POC's alert volume rather than letting it auto-size to ~50% of host RAM (its usual default) — that default assumes the indexer owns the whole machine, which isn't true here. On a 24GB host, all-in-one Wazuh (~4–6GB) plus `qwen3.5:9b` under Ollama (~7GB) plus OS (~5GB) leaves a workable margin — comfortable enough for the POC, but still worth watching once real alert volume is flowing.
 
 ---
 
@@ -272,6 +272,7 @@ These are planning-only ranges, not guarantees — validate actual resident memo
 - `app/integration/siem_connector.py` — `SIEMConnector`/`AuthStrategy` Protocols and the `WazuhConnector` implementation (dual indexer/manager auth)
 - `app/storage/alert_store.py` — `AlertStore` Protocol and `SQLiteAlertStore` (SQLModel models + repository)
 - `app/agent/state_graph.py` — the deterministic `Step` enum, allowed-action tables, and FSM dispatcher for the Agentic Analyst
+- `app/llm/` — `LLMClient` Protocol (`client.py`), the Ollama-backed implementation with schema-constrained generation and retry-once (`ollama_client.py`), and the typed `LLMClientError` boundary (`errors.py`); a dependency of `app/agent/state_graph.py`
 - `app/enrichment/registry.py` — `EnrichmentProvider` Protocol, `IndicatorType`→provider routing, rate-limit wrapper
 - `app/enrichment/cache.py` — `EnrichmentCache` Protocol and its SQLite-backed implementation (§1.3)
 - `app/schemas.py` — shared Pydantic models for `Alert`, `EnrichmentResult`, `Report`
