@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
+from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata
 from app.schemas import AgentRef, Alert, EnrichmentResult
 from app.schemas import EnrichmentVerdict, IndicatorType
@@ -202,3 +203,32 @@ def test_step_enrich_skips_when_no_indicators():
     assert results == []
     assert step.action == "skipped"
     assert "no validated indicators" in step.output_summary
+
+
+def test_step_gather_context_returns_context_on_success():
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+    )
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    agent_context, rule_metadata, step = analyst._step_gather_context(alert)
+
+    assert agent_context.id == "001"
+    assert rule_metadata.rule_id == "5710"
+    assert step.step_name == Step.GATHER_CONTEXT.value
+    assert step.action == "completed"
+
+
+def test_step_gather_context_degrades_on_siem_connector_error():
+    siem = _FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused"))
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    agent_context, rule_metadata, step = analyst._step_gather_context(alert)
+
+    assert agent_context is None
+    assert rule_metadata is None
+    assert step.action == "degraded"
+    assert "unreachable" in step.output_summary

@@ -4,6 +4,8 @@ from enum import Enum
 from app.agent.indicator_extraction import extract_and_validate
 from app.enrichment.indicators import Indicator
 from app.enrichment.registry import EnrichmentRegistry
+from app.integration.errors import SIEMConnectorError
+from app.integration.models import AgentContext, RuleMetadata
 from app.integration.siem_connector import SIEMConnector
 from app.llm.client import LLMClient
 from app.schemas import Alert, EnrichmentResult, InvestigationStep
@@ -82,3 +84,30 @@ class AgenticAnalyst:
             timestamp=datetime.now(timezone.utc),
         )
         return results, step
+
+    def _step_gather_context(
+        self, alert: Alert
+    ) -> tuple[AgentContext | None, RuleMetadata | None, InvestigationStep]:
+        try:
+            agent_context = self._siem.get_agent_context(alert.agent.id)
+            rule_metadata = self._siem.get_rule_metadata(alert.rule_id)
+        except SIEMConnectorError as exc:
+            step = InvestigationStep(
+                step_name=Step.GATHER_CONTEXT.value,
+                action="degraded",
+                tool_used="siem_connector",
+                input=None,
+                output_summary=f"could not gather host/rule context: {exc.kind}",
+                timestamp=datetime.now(timezone.utc),
+            )
+            return None, None, step
+
+        step = InvestigationStep(
+            step_name=Step.GATHER_CONTEXT.value,
+            action="completed",
+            tool_used="siem_connector",
+            input=None,
+            output_summary=f"gathered context for agent {alert.agent.id}, rule {alert.rule_id}",
+            timestamp=datetime.now(timezone.utc),
+        )
+        return agent_context, rule_metadata, step
