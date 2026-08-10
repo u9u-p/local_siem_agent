@@ -63,7 +63,9 @@ class OllamaClient:
 
     def health_check(self) -> bool:
         try:
-            self._client.models.list()
-            return True
+            models = self._client.models.list()
+            # Check if the configured model is available
+            model_ids = {model.id for model in models.data}
+            return self._model in model_ids
         except openai.OpenAIError:
             return False
