@@ -19,6 +19,13 @@ def live_client():
     )
     if not client.health_check():
         pytest.skip(f"Ollama not reachable at {settings.llm_base_url} — skipping live LLMClient test")
+
+    available_models = {model.id for model in client._client.models.list().data}
+    if settings.llm_model not in available_models:
+        pytest.skip(
+            f"Ollama is reachable but model {settings.llm_model!r} is not pulled "
+            "— skipping live LLMClient test"
+        )
     return client
 
 
