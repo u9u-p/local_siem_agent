@@ -1,4 +1,6 @@
 import ipaddress
+import re
+import urllib.parse
 
 from pydantic import BaseModel, field_validator
 
@@ -21,4 +23,53 @@ class IPIndicator(BaseModel):
             raise ValueError(f"not a valid IPv4 address: {v}") from exc
 
 
-Indicator = IPIndicator
+_HASH_PATTERNS = {
+    32: re.compile(r"^[0-9a-fA-F]{32}$"),   # MD5
+    40: re.compile(r"^[0-9a-fA-F]{40}$"),   # SHA1
+    64: re.compile(r"^[0-9a-fA-F]{64}$"),   # SHA256
+}
+
+_DOMAIN_RE = re.compile(
+    r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\.[A-Za-z]{2,63}$"
+)
+
+
+class HashIndicator(BaseModel):
+    indicator_type: IndicatorType = IndicatorType.FILE_HASH
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def _validate_hash(cls, v: str) -> str:
+        pattern = _HASH_PATTERNS.get(len(v))
+        if pattern is None or not pattern.match(v):
+            raise ValueError(f"not a valid MD5/SHA1/SHA256 hash: {v}")
+        return v.lower()
+
+
+class DomainIndicator(BaseModel):
+    indicator_type: IndicatorType = IndicatorType.DOMAIN
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def _validate_domain(cls, v: str) -> str:
+        if not _DOMAIN_RE.match(v):
+            raise ValueError(f"not a valid domain name: {v}")
+        return v.lower()
+
+
+class URLIndicator(BaseModel):
+    indicator_type: IndicatorType = IndicatorType.URL
+    value: str
+
+    @field_validator("value")
+    @classmethod
+    def _validate_url(cls, v: str) -> str:
+        parsed = urllib.parse.urlparse(v)
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            raise ValueError(f"not a valid http(s) URL: {v}")
+        return v
+
+
+Indicator = IPIndicator | HashIndicator | DomainIndicator | URLIndicator
