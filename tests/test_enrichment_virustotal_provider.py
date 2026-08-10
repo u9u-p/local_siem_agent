@@ -1,5 +1,3 @@
-import base64
-
 import httpx
 import respx
 
@@ -125,7 +123,7 @@ def test_lookup_hash_indicator_queries_files_endpoint():
 
 def test_url_lookup_uses_unpadded_base64_id():
     raw_url = "https://example.com/malware.exe"
-    expected_id = base64.urlsafe_b64encode(raw_url.encode()).decode().rstrip("=")
+    expected_id = "aHR0cHM6Ly9leGFtcGxlLmNvbS9tYWx3YXJlLmV4ZQ"
     url_endpoint = f"https://www.virustotal.com/api/v3/urls/{expected_id}"
 
     with respx.mock:
