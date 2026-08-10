@@ -48,7 +48,7 @@ Resolved during that phase's brainstorming: mocked-first (respx) test suite plus
 
 ---
 
-## Phase 4: Agentic Analyst — State Graph — Next
+## Phase 4: Agentic Analyst — State Graph — In Progress (4a, 4b complete)
 
 The largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per CLAUDE.md §4.1) and the one with the most undecided design surface — split into 4 sub-phases, each with its own brainstorm → spec → plan cycle, built in this order:
 
@@ -60,15 +60,19 @@ The largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per 
 **Key files:** not yet named in CLAUDE.md §9 — likely `app/agent/llm_client.py` or `app/llm/client.py`, decided during this sub-phase's brainstorming.
 **Depends on:** nothing (self-contained).
 
-### Phase 4b: Deterministic pipeline skeleton
+### Phase 4b: Deterministic pipeline skeleton — ✅ Complete
 
-**Goal:** The FSM dispatcher itself (`app/agent/state_graph.py`'s `Step` enum + dispatcher), steps 1/4/9 (Ingest & Parse, Gather Host/Rule Context, Finalize & Persist — no LLM), the deterministic half of steps 2/3 (regex extraction; enrichment routing, already built in Phase 2), skip-condition logic, and `InvestigationStep` timeline logging. LLM-calling steps are wired in as stubs here, against a fake `LLMClient`.
-**Key files:** `app/agent/state_graph.py`.
-**Depends on:** Phase 4a (even a stub needs the real `LLMClient` Protocol shape), Phase 1 (`AlertStore`, schemas), Phase 3 (`SIEMConnector`).
+**Goal:** The FSM dispatcher itself (`app/agent/state_graph.py`'s `Step` enum + `AgenticAnalyst` dispatcher), steps 1/4/9 (Ingest & Parse, Gather Host/Rule Context, Finalize & Persist — no LLM), the deterministic half of steps 2/3 (regex extraction in `app/agent/indicator_extraction.py`; enrichment routing via the existing `EnrichmentRegistry`), skip-condition logic, and `InvestigationStep` timeline logging. LLM-calling steps (2b, Correlate, Risk Assessment, Draft Report, Self-Check) are wired in as inert stubs — no `generate_structured()` calls, no per-step schemas yet.
+**Key files:** `app/agent/state_graph.py`, `app/agent/indicator_extraction.py`, `app/llm/client.py`/`app/llm/ollama_client.py` (gained `model_available()`).
+**Depends on:** Phase 4a (`LLMClient` Protocol shape), Phase 1 (`AlertStore`, schemas), Phase 2/2b (`EnrichmentRegistry`, indicator validators), Phase 3 (`SIEMConnector`).
+
+Decided during that phase's brainstorming: CLAUDE.md §4.1 step 3's verdict-reconciliation conditional call is **dropped entirely, not stubbed** — Phase 2b's one-provider-per-indicator-type architecture means two providers can never disagree on the same indicator, so the branch is structurally unreachable, not merely unbuilt. `LLMClient` gained `model_available()` (distinct from the existing reachability-only `health_check()`) so the pipeline can honestly distinguish "not yet implemented" from "model unavailable" in its stub steps' logged reasons — this has no behavioral effect yet in 4b (no step calls the LLM either way) but establishes the exact contract 4c's real steps need.
+
+**Carry into Phase 4c:** the domain-regex extractor in `app/agent/indicator_extraction.py` over-extracts more than intended — its final-review found it matches common filenames (`setup.exe`, `invoice.pdf`, `auth.log`) as DOMAIN candidates, which then route to `VirusTotalProvider` and consume its shared 500/day quota while polluting `Report.enrichment_findings` with misleading "domain: setup.exe" rows. The plan's "over-extraction is harmless, resolves to UNKNOWN/CLEAN" justification doesn't hold once a real, rate-limited provider and a real analyst-facing report are both involved — this needs an explicit decision (e.g. reject domain candidates whose final label is a common file extension) as part of 4c's design, not a silent carryover.
 
 ### Phase 4c: LLM-calling classification steps
 
-**Goal:** Step 2b (indicator candidate extraction), step 3's conditional verdict reconciliation, step 5 (Correlate decision + pattern), step 6 (Risk Assessment + MITRE) — all closed-vocabulary decision calls per CLAUDE.md §4.2.
+**Goal:** Step 2b (indicator candidate extraction), step 5 (Correlate decision + pattern), step 6 (Risk Assessment + MITRE) — all closed-vocabulary decision calls per CLAUDE.md §4.2. (Step 3's verdict-reconciliation call is out of scope — see Phase 4b's note above; it was dropped, not deferred to this phase.)
 **Depends on:** Phase 4a, Phase 4b (slots into the skeleton's stubs), Phase 2 (`EnrichmentRegistry`).
 
 ### Phase 4d: Report drafting + Self-Check
