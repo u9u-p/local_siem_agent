@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     database_path: str = "./data/alerts.db"
     log_level: str = "INFO"
     abuseipdb_api_key: str | None = None
+    virustotal_api_key: str | None = None
     wazuh_indexer_url: str | None = None
     wazuh_indexer_username: str | None = None
     wazuh_indexer_password: str | None = None

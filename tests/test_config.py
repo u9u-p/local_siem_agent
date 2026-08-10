@@ -70,3 +70,14 @@ def test_settings_llm_fields_env_override(monkeypatch):
     assert settings.llm_base_url == "http://localhost:9999/v1/"
     assert settings.llm_model == "some-other-model:latest"
     assert settings.llm_timeout_seconds == 30.0
+
+
+def test_settings_virustotal_api_key_defaults_to_none():
+    settings = Settings(_env_file=None)
+    assert settings.virustotal_api_key is None
+
+
+def test_settings_virustotal_api_key_env_override(monkeypatch):
+    monkeypatch.setenv("VIRUSTOTAL_API_KEY", "test-vt-key")
+    settings = Settings(_env_file=None)
+    assert settings.virustotal_api_key == "test-vt-key"
