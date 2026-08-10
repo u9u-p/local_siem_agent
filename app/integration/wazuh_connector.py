@@ -123,7 +123,29 @@ class WazuhConnector:
         return SearchResult(alerts=alerts, total_count=payload["hits"]["total"]["value"])
 
     def get_agent_context(self, agent_id: str) -> AgentContext:
-        raise NotImplementedError("added in Task 8")
+        response = self._manager_request("GET", "/agents", params={"agents_list": agent_id})
+        response.raise_for_status()
+        item = response.json()["data"]["affected_items"][0]
+        os_info = item.get("os", {})
+        return AgentContext(
+            id=item["id"],
+            name=item["name"],
+            ip=item["ip"],
+            os_platform=os_info.get("platform"),
+            os_version=os_info.get("version"),
+            agent_version=item.get("version"),
+            status=item["status"],
+            last_keep_alive=item.get("lastKeepAlive"),
+        )
 
     def get_rule_metadata(self, rule_id: str) -> RuleMetadata:
-        raise NotImplementedError("added in Task 8")
+        response = self._manager_request("GET", "/rules", params={"rule_ids": rule_id})
+        response.raise_for_status()
+        item = response.json()["data"]["affected_items"][0]
+        return RuleMetadata(
+            rule_id=str(item["id"]),
+            description=item["description"],
+            level=item["level"],
+            groups=item.get("groups", []),
+            mitre_technique_ids=item.get("mitre", []),
+        )

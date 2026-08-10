@@ -178,3 +178,105 @@ def test_search_translates_terms_operator_to_terms_query():
     assert parsed["query"]["bool"]["must"] == [
         {"terms": {"rule.groups": ["authentication_failed", "syslog"]}}
     ]
+
+
+@respx.mock
+def test_get_agent_context_maps_manager_response():
+    respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        return_value=httpx.Response(200, json={"data": {"token": "abc123"}, "error": 0})
+    )
+    respx.get(f"{MANAGER_URL}/agents").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "data": {
+                    "affected_items": [
+                        {
+                            "id": "001",
+                            "name": "web-01",
+                            "ip": "10.0.0.5",
+                            "status": "active",
+                            "os": {"platform": "ubuntu", "version": "22.04"},
+                            "version": "Wazuh v4.14.1",
+                            "lastKeepAlive": "2026-08-10T09:00:00Z",
+                        }
+                    ]
+                },
+                "error": 0,
+            },
+        )
+    )
+    connector = _make_connector()
+
+    context = connector.get_agent_context("001")
+
+    assert context.id == "001"
+    assert context.os_platform == "ubuntu"
+    assert context.os_version == "22.04"
+    assert context.agent_version == "Wazuh v4.14.1"
+    assert context.status == "active"
+
+
+@respx.mock
+def test_get_rule_metadata_maps_manager_response_with_flat_mitre_list():
+    respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        return_value=httpx.Response(200, json={"data": {"token": "abc123"}, "error": 0})
+    )
+    respx.get(f"{MANAGER_URL}/rules").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "data": {
+                    "affected_items": [
+                        {
+                            "id": 5710,
+                            "description": "sshd: Attempt to login using a non-existent user",
+                            "level": 5,
+                            "groups": ["authentication_failed", "syslog"],
+                            "mitre": ["T1110"],
+                        }
+                    ]
+                },
+                "error": 0,
+            },
+        )
+    )
+    connector = _make_connector()
+
+    metadata = connector.get_rule_metadata("5710")
+
+    assert metadata.rule_id == "5710"
+    assert metadata.level == 5
+    assert metadata.groups == ["authentication_failed", "syslog"]
+    assert metadata.mitre_technique_ids == ["T1110"]
+
+
+@respx.mock
+def test_get_agent_context_retries_once_after_401():
+    respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        side_effect=[
+            httpx.Response(200, json={"data": {"token": "expired-token"}, "error": 0}),
+            httpx.Response(200, json={"data": {"token": "fresh-token"}, "error": 0}),
+        ]
+    )
+    respx.get(f"{MANAGER_URL}/agents").mock(
+        side_effect=[
+            httpx.Response(401, json={"title": "Unauthorized", "detail": "No authorization token provided"}),
+            httpx.Response(
+                200,
+                json={
+                    "data": {
+                        "affected_items": [
+                            {"id": "001", "name": "web-01", "ip": "10.0.0.5", "status": "active"}
+                        ]
+                    },
+                    "error": 0,
+                },
+            ),
+        ]
+    )
+    connector = _make_connector()
+
+    context = connector.get_agent_context("001")
+
+    assert context.id == "001"
