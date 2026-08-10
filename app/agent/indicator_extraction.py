@@ -8,9 +8,7 @@ from app.schemas import Alert
 _IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 _HASH_RE = re.compile(r"\b[a-fA-F0-9]{32}\b|\b[a-fA-F0-9]{40}\b|\b[a-fA-F0-9]{64}\b")
 _URL_RE = re.compile(r"https?://[^\s\"'<>]+")
-# Domain pattern with negative lookahead to exclude common file extensions
-_FILE_EXTENSIONS = r"(?:exe|dll|bin|zip|tar|rar|7z|gz|jar|war|bat|cmd|msi|dmg|app|deb|rpm|apk|txt|pdf|doc|docx|xls|xlsx|ppt|pptx|png|jpg|gif|mp3|mp4|avi|mov|mkv)"
-_DOMAIN_RE = re.compile(rf"\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{{0,61}}[a-zA-Z0-9])?\.)+(?!{_FILE_EXTENSIONS}\b)[a-zA-Z]{{2,63}}\b")
+_DOMAIN_RE = re.compile(r"\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}\b")
 
 _VALIDATORS = (IPIndicator, HashIndicator, DomainIndicator, URLIndicator)
 

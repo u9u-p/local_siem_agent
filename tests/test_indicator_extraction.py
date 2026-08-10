@@ -49,14 +49,15 @@ def test_extract_and_validate_discards_invalid_candidates_and_counts_correctly()
 
     validated, candidate_count, validated_count = extract_and_validate(alert)
 
-    assert candidate_count == 6
-    assert validated_count == 5
+    assert candidate_count == 7
+    assert validated_count == 6
     values_by_type = {(type(i), i.value) for i in validated}
     assert (IPIndicator, "203.0.113.5") in values_by_type
     assert (HashIndicator, "a" * 64) in values_by_type
     assert (URLIndicator, "http://malicious-example.test/payload.exe") in values_by_type
     assert (DomainIndicator, "evil-domain.test") in values_by_type
     assert (DomainIndicator, "malicious-example.test") in values_by_type
+    assert (DomainIndicator, "payload.exe") in values_by_type
 
 
 def test_extract_and_validate_returns_empty_for_alert_with_no_indicators():
