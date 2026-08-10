@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
+from uuid import uuid4
 
 from app.agent.indicator_extraction import extract_and_validate
 from app.enrichment.indicators import Indicator
@@ -8,7 +9,18 @@ from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata
 from app.integration.siem_connector import SIEMConnector
 from app.llm.client import LLMClient
-from app.schemas import Alert, EnrichmentResult, InvestigationStep
+from app.schemas import (
+    Alert,
+    AlertStatus,
+    Confidence,
+    EnrichmentResult,
+    InvestigationStep,
+    ModelMetadata,
+    Report,
+    ReportStatus,
+    RiskAssessment,
+    Severity,
+)
 from app.storage.alert_store import AlertStore
 
 
@@ -137,3 +149,71 @@ class AgenticAnalyst:
 
     def _step_self_check(self, model_available: bool) -> InvestigationStep:
         return self._stub_step(Step.SELF_CHECK, model_available)
+
+    def _assemble_report(
+        self,
+        alert: Alert,
+        timeline: list[InvestigationStep],
+        enrichment_results: list[EnrichmentResult],
+        model_available: bool,
+    ) -> Report:
+        return Report(
+            report_id=uuid4(),
+            alert_id=alert.alert_id,
+            generated_at=datetime.now(timezone.utc),
+            alert_summary=f"Stub report for alert {alert.alert_id} — full investigation logic pending Phase 4c/4d.",
+            investigation_timeline=timeline,
+            enrichment_findings=enrichment_results,
+            risk_assessment=RiskAssessment(
+                severity=Severity.LOW,
+                confidence=Confidence.LOW,
+                rationale="stub — risk assessment not yet implemented (Phase 4c)",
+            ),
+            recommended_actions=[],
+            recommended_actions_freeform_experimental=None,
+            uncertainty_notes=(
+                "This report was produced by the Phase 4b pipeline skeleton — steps 5-8 "
+                "(Correlate, Risk Assessment, Draft Report, Self-Check) are stubs, not real analysis."
+            ),
+            status=ReportStatus.NEEDS_HUMAN_REVIEW,
+            model_metadata=ModelMetadata(
+                model_name="qwen3.5:9b" if model_available else "none",
+                model_version="none",
+                prompt_version="stub-4b",
+            ),
+        )
+
+    def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
+        self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
+        return InvestigationStep(
+            step_name=Step.FINALIZE_AND_PERSIST.value,
+            action="completed",
+            tool_used="alert_store",
+            input=None,
+            output_summary=f"report {report.report_id} persisted, alert marked investigated",
+            timestamp=datetime.now(timezone.utc),
+        )
+
+    def investigate(self, alert: Alert) -> Report:
+        model_available = self._llm_client.model_available()
+        timeline: list[InvestigationStep] = [self._step_ingest_and_parse(alert, model_available)]
+
+        indicators, extract_step = self._step_extract_indicators(alert)
+        timeline.append(extract_step)
+
+        enrichment_results, enrich_step = self._step_enrich(indicators)
+        timeline.append(enrich_step)
+
+        _agent_context, _rule_metadata, context_step = self._step_gather_context(alert)
+        timeline.append(context_step)
+
+        timeline.append(self._step_correlate(model_available))
+        timeline.append(self._step_risk_assessment(model_available))
+        timeline.append(self._step_draft_report(model_available))
+        timeline.append(self._step_self_check(model_available))
+
+        report = self._assemble_report(alert, timeline, enrichment_results, model_available)
+        finalize_step = self._step_finalize_and_persist(alert, report)
+        report.investigation_timeline.append(finalize_step)
+        self._alert_store.save_report(report)
+        return report

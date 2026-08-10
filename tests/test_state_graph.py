@@ -7,6 +7,9 @@ from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata
 from app.schemas import AgentRef, Alert, EnrichmentResult
 from app.schemas import EnrichmentVerdict, IndicatorType
+from app.schemas import AlertStatus, Confidence, ReportStatus, Severity
+from app.storage.db import get_engine, init_db
+from app.storage.sqlite_alert_store import SQLiteAlertStore
 
 
 class _FakeSIEMConnector:
@@ -288,3 +291,93 @@ def test_step_self_check_delegates_to_stub_step():
 
     assert step.step_name == Step.SELF_CHECK.value
     assert step.action == "stub"
+
+
+def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+    alert_store.save_raw_alert(alert)
+
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
+        alert_store=alert_store,
+        enrichment_registry=registry,
+        llm_client=_FakeLLMClient(model_available=True),
+    )
+
+    report = analyst.investigate(alert)
+
+    step_names = [s.step_name for s in report.investigation_timeline]
+    assert step_names == [
+        Step.INGEST_AND_PARSE.value,
+        Step.EXTRACT_INDICATORS.value,
+        Step.ENRICH.value,
+        Step.GATHER_CONTEXT.value,
+        Step.CORRELATE.value,
+        Step.RISK_ASSESSMENT.value,
+        Step.DRAFT_REPORT.value,
+        Step.SELF_CHECK.value,
+        Step.FINALIZE_AND_PERSIST.value,
+    ]
+    assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
+    assert report.risk_assessment.severity == Severity.LOW
+    assert report.risk_assessment.confidence == Confidence.LOW
+    assert report.model_metadata.model_name == "qwen3.5:9b"
+    assert len(report.enrichment_findings) == 1
+    assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
+    assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
+
+
+def test_investigate_stub_steps_skip_when_model_unavailable(tmp_path):
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    alert_store.save_raw_alert(alert)
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=False),
+    )
+
+    report = analyst.investigate(alert)
+
+    stub_step_names = {Step.CORRELATE.value, Step.RISK_ASSESSMENT.value, Step.DRAFT_REPORT.value, Step.SELF_CHECK.value}
+    stub_steps = [s for s in report.investigation_timeline if s.step_name in stub_step_names]
+    assert len(stub_steps) == 4
+    assert all(s.action == "skipped" for s in stub_steps)
+    assert report.enrichment_findings == []
+    assert report.model_metadata.model_name == "none"
+
+
+def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path):
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    alert_store.save_raw_alert(alert)
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused")),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=True),
+    )
+
+    report = analyst.investigate(alert)
+
+    context_step = next(s for s in report.investigation_timeline if s.step_name == Step.GATHER_CONTEXT.value)
+    assert context_step.action == "degraded"
+    assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
