@@ -3,9 +3,17 @@ import base64
 import httpx
 import respx
 
-from app.integration.auth import BasicAuthStrategy, JWTBearerAuthStrategy
+from app.integration.auth import AuthStrategy, BasicAuthStrategy, JWTBearerAuthStrategy
 
 MANAGER_URL = "https://wazuh-manager.test:55000"
+
+
+def test_basic_auth_strategy_satisfies_auth_strategy_protocol():
+    assert isinstance(BasicAuthStrategy("u", "p"), AuthStrategy)
+
+
+def test_jwt_bearer_strategy_satisfies_auth_strategy_protocol():
+    assert isinstance(JWTBearerAuthStrategy(httpx.Client(), "u", "p"), AuthStrategy)
 
 
 def test_basic_auth_strategy_encodes_credentials():

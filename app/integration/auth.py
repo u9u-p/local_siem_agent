@@ -1,9 +1,10 @@
 import base64
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 import httpx
 
 
+@runtime_checkable
 class AuthStrategy(Protocol):
     def get_headers(self) -> dict[str, str]: ...
     def refresh(self) -> None: ...

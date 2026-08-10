@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from app.integration.models import AgentContext, RuleMetadata, SearchQuery, SearchResult
 from app.schemas import Alert
 
 
+@runtime_checkable
 class SIEMConnector(Protocol):
     def health_check(self) -> bool: ...
     def pull_alerts(self, since: datetime, until: datetime | None = None, limit: int = 500) -> list[Alert]: ...
