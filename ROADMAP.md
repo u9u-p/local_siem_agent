@@ -19,7 +19,17 @@ Phases are ordered by dependency, per CLAUDE.md §1.4: the Agentic Analyst depen
 **Goal:** Typed indicators, typed errors, rate limiting, one live provider (AbuseIPDB), and the registry that routes/gates them.
 **Key files:** `app/enrichment/*`.
 **Depends on:** Phase 1 (`app/schemas.py`).
-**Explicitly deferred out of this phase** (see Phase 6): `EnrichmentCache`, a second provider (VirusTotal).
+**Explicitly deferred out of this phase** (see Phase 6): `EnrichmentCache`.
+
+---
+
+## Phase 2b: VirusTotal Provider + Multi-Type Indicators — ✅ Complete
+
+**Goal:** A second Enrichment provider (`VirusTotalProvider`) covering `DOMAIN`/`FILE_HASH`/`URL` indicator types, alongside three new Pydantic indicator models (`HashIndicator`, `DomainIndicator`, `URLIndicator`), so one alert's extracted indicators route by type to their own dedicated provider (IP → AbuseIPDB, everything else → VirusTotal) — one provider per indicator type, not multiple competing providers per type.
+**Key files:** `app/enrichment/indicators.py` (extended), `app/enrichment/providers/virustotal.py` (new), `app/enrichment/registry.py` (one config-line addition, no dispatch-logic changes).
+**Depends on:** Phase 2 (`EnrichmentRegistry`, `EnrichmentError`, `AbuseIPDBProvider` as the pattern to mirror).
+
+Inserted between Phase 2 and Phase 3/4b once it became clear the Agentic Analyst's Correlate/Enrich steps (CLAUDE.md §4.1) need real multi-type indicator coverage to be worth building a state graph around — not deferred to Phase 6 after all. `EnrichmentRegistry` needed zero dispatch-logic changes (confirmed by design-phase code audit before implementation started): `register()` already loops a provider's `supported_types`, so a second, differently-typed provider slots in for free.
 
 ---
 
@@ -82,8 +92,7 @@ Carries the §7.1 resource-budget guidance (cap the Wazuh indexer JVM heap, pick
 
 Not scheduled — pick up opportunistically or when a concrete need arises:
 
-- **`EnrichmentCache`** — deferred during Phase 2 for prototype-scoping reasons (see `docs/superpowers/specs/2026-08-09-enrichment-module-design.md`'s Non-Goals). CLAUDE.md §1.3 already defines the Protocol shape; slots into `EnrichmentRegistry.enrich()` as a cache-check-then-cache-write pair. **Do this before any sustained/production use** — repeated lookups currently cost real third-party API quota every time.
-- **Second Enrichment provider (VirusTotal)** — CLAUDE.md §5 names it as a second adapter; exercises the multi-provider fallback logic `EnrichmentRegistry` deliberately doesn't implement yet (currently always uses `providers[0]`).
+- **`EnrichmentCache`** — deferred during Phase 2 for prototype-scoping reasons (see `docs/superpowers/specs/2026-08-09-enrichment-module-design.md`'s Non-Goals). CLAUDE.md §1.3 already defines the Protocol shape; slots into `EnrichmentRegistry.enrich()` as a cache-check-then-cache-write pair. **Do this before any sustained/production use** — repeated lookups currently cost real third-party API quota every time (both AbuseIPDB and, since Phase 2b, VirusTotal).
 - **Postgres swap for `AlertStore`** — CLAUDE.md's Context §4 designs for this ("a new `AlertStore` implementation, same Protocol") but it's not needed until the demo needs to scale past SQLite.
 - **Alembic migrations** — deferred in the Foundation plan's Global Constraints until the schema actually needs to evolve post-deployment.
 - **§6.7-style Risk/Compliance/Legal sign-off** — not applicable to this POC per CLAUDE.md §8, but the trigger condition (connecting to production SIEM data or acting on real customer-impacting alerts) should be watched for explicitly, not assumed away.
