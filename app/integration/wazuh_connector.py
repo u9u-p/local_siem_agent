@@ -98,7 +98,29 @@ class WazuhConnector:
         return [wazuh_source_to_alert(hit["_source"]) for hit in hits]
 
     def search(self, query: SearchQuery) -> SearchResult:
-        raise NotImplementedError("added in Task 7")
+        operator_clause: dict[str, Any]
+        if query.operator == "eq":
+            operator_clause = {"term": {query.field: query.value}}
+        elif query.operator == "contains":
+            operator_clause = {"match": {query.field: query.value}}
+        elif query.operator == "range":
+            operator_clause = {"range": {query.field: query.value}}
+        else:  # "terms"
+            operator_clause = {"terms": {query.field: query.value}}
+
+        filter_clauses: list[dict[str, Any]] = []
+        if query.time_range is not None:
+            since, until = query.time_range
+            filter_clauses.append({"range": {"timestamp": {"gte": since.isoformat(), "lte": until.isoformat()}}})
+
+        body = {"query": {"bool": {"must": [operator_clause], "filter": filter_clauses}}}
+        response = self._indexer_client.post(
+            "/wazuh-alerts-*/_search", json=body, headers=self._indexer_auth.get_headers()
+        )
+        response.raise_for_status()
+        payload = response.json()
+        alerts = [wazuh_source_to_alert(hit["_source"]) for hit in payload["hits"]["hits"]]
+        return SearchResult(alerts=alerts, total_count=payload["hits"]["total"]["value"])
 
     def get_agent_context(self, agent_id: str) -> AgentContext:
         raise NotImplementedError("added in Task 8")
