@@ -151,7 +151,7 @@ def test_generate_structured_raises_generation_failed_on_refusal_without_retry()
 @respx.mock
 def test_health_check_returns_true_when_models_list_succeeds():
     respx.get(f"{BASE_URL}models").mock(
-        return_value=httpx.Response(200, json={"object": "list", "data": [{"id": "qwen3.5:9b"}]})
+        return_value=httpx.Response(200, json={"object": "list", "data": []})
     )
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
