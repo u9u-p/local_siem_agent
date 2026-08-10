@@ -214,3 +214,43 @@ def test_health_check_returns_false_on_connection_error():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     assert client.health_check() is False
+
+
+@respx.mock
+def test_model_available_returns_true_when_configured_model_is_pulled():
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "qwen3.5:9b", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    assert client.model_available() is True
+
+
+@respx.mock
+def test_model_available_returns_false_when_configured_model_is_not_pulled():
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "llama3:8b", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    assert client.model_available() is False
+
+
+@respx.mock
+def test_model_available_returns_false_on_connection_error():
+    respx.get(f"{BASE_URL}models").mock(side_effect=httpx.ConnectError("connection refused"))
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    assert client.model_available() is False

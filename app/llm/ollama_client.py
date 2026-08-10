@@ -76,3 +76,10 @@ class OllamaClient:
             return True
         except openai.OpenAIError:
             return False
+
+    def model_available(self) -> bool:
+        try:
+            models = self._client.models.list()
+        except openai.OpenAIError:
+            return False
+        return any(model.id == self._model for model in models.data)

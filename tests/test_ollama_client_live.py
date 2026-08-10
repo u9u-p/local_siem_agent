@@ -19,11 +19,7 @@ def live_client():
     )
     if not client.health_check():
         pytest.skip(f"Ollama not reachable at {settings.llm_base_url} — skipping live LLMClient test")
-
-    # Deliberately reaching into the private _client attribute here rather than adding new
-    # public API surface to OllamaClient for this test-only check.
-    available_models = {model.id for model in client._client.models.list().data}
-    if settings.llm_model not in available_models:
+    if not client.model_available():
         pytest.skip(
             f"Ollama is reachable but model {settings.llm_model!r} is not pulled "
             "— skipping live LLMClient test"
