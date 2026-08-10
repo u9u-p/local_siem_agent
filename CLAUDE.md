@@ -199,7 +199,7 @@ These apply to every one of the 6–7 calls in §4.1, not just individual steps:
 3. **Self-Check is a re-read, not a continuation.** Step 8 gets a fresh prompt with Draft-A's output plus the same structured findings Draft-A saw — never Draft-A's reasoning or chat history — so it can't rubber-stamp its own prior output. `uncertainty_notes` comes from concrete structural gaps it observes, not the model introspecting on its own confidence (which LLMs are unreliable at).
 4. **Closed vocabulary everywhere a choice is made.** Severity, confidence, pattern_type, MITRE technique, correlation-search template, verdict, and canonical recommended actions are all enum/catalog selections — never free text — with exactly two deliberately-scoped exceptions: Draft-A's summary/rationale prose, and the Draft-B experimental actions (both still grounded per rule 2).
 5. **Prompt versioning.** Each step's prompt template is versioned and recorded in `Report.model_metadata.prompt_version` — a prompt edit is a tracked, diffable change, not a silent behavior shift.
-6. **Model/context sizing.** With 6–7 calls per alert, each bounded to structured JSON rather than raw logs or transcripts, the 7B end of the §6 recommendation (Qwen2.5-7B-Instruct, Q4/Q5) should hold up for most steps; reserve 14B as a fallback specifically for Risk Assessment and Draft-A if 7B's classification accuracy or prose grounding proves weak in testing. Small, bounded prompts also keep per-call latency low enough that 6–7 sequential calls per alert stay practical on a single MacBook Pro without concurrent generation.
+6. **Model/context sizing.** With 6–7 calls per alert, each bounded to structured JSON rather than raw logs or transcripts, `qwen3.5:9b` (§6) should hold up for most steps; revisit model choice specifically for Risk Assessment and Draft-A if its classification accuracy or prose grounding proves weak in testing. Small, bounded prompts also keep per-call latency low enough that 6–7 sequential calls per alert stay practical on a single MacBook Pro without concurrent generation.
 
 ---
 
@@ -218,7 +218,7 @@ These apply to every one of the 6–7 calls in §4.1, not just individual steps:
 |---|---|---|
 | HTTP clients (SIEM + enrichment) | `httpx` + `tenacity` for retry/backoff | modern sync/async, HTTP/2, clean timeout handling |
 | Local LLM inference | **Ollama** as the default, behind an `LLMClient` Protocol | simplest local model lifecycle on Apple Silicon (Metal-accelerated), OpenAI-compatible API, native JSON-schema-constrained output and tool-calling; alternatives (MLX-LM, llama-cpp-python) can implement the same Protocol later |
-| Model | Qwen2.5-7B/14B-Instruct or Llama-3.1-8B-Instruct, Q4/Q5 quantised | strong structured-output/instruction-following at a size that leaves headroom in 24GB unified memory; left as a recommendation since the requirements doc leaves it undecided — validate against actual step prompts (§4) during implementation |
+| Model | `qwen3.5:9b` (Q4_K_M) | Confirmed pullable via Ollama's library; chosen as the Phase 4a implementation target — see `docs/superpowers/specs/2026-08-10-llm-client-design.md`. Supersedes the original Qwen2.5/Llama-3.1 recommendation, which predates this model's release |
 | Structured output / "tool calling" | Ollama's JSON-schema-constrained generation, with Pydantic models as the schema, validate-or-retry on parse failure | keeps every LLM decision point returning a typed, closed-vocabulary object rather than free text |
 | SQLite access | **SQLModel** (SQLAlchemy + Pydantic) with **Alembic** migrations | one model definition serves both persistence and validation; moving `AlertStore` to Postgres later is a connection-string change |
 | Config/secrets | `pydantic-settings` for typed env/`.env` loading, `config.yaml` for non-secret structure, with a thin `SecretsProvider` abstraction so the loading mechanism can later move from an env file to macOS Keychain or a proper secrets manager without touching call sites | typed, validated config; credentials never hardcoded or committed — `.env` excluded via `.gitignore`, only `.env.example` (variable names, no values) checked in |
@@ -259,7 +259,7 @@ These are planning-only ranges, not guarantees — validate actual resident memo
 
 ## 8. Open Questions and Assumptions (consolidated)
 
-- **LLM model** is a recommendation only (Qwen2.5/Llama-3.1 class, 7–14B, quantised) since the requirements doc leaves it undecided — validate against real step prompts (§4) during implementation.
+- **LLM model** is now decided: `qwen3.5:9b` (Q4_K_M), per Phase 4a's implementation — validate against real step prompts (§4) as later phases build them; revisit if classification accuracy or prose grounding proves weak.
 - Assumes a single-node/all-in-one Wazuh install (manager + indexer + dashboard together); a distributed Wazuh cluster would need indexer-node-specific connection details.
 - Assumes self-signed TLS is acceptable for the demo — must be tightened before any non-demo use.
 - Assumes sequential (not concurrent) alert investigation is acceptable for demo throughput.

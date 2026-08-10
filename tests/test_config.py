@@ -53,3 +53,20 @@ def test_settings_wazuh_fields_env_override(monkeypatch):
     assert settings.wazuh_manager_username == "wazuh-wui"
     assert settings.wazuh_manager_password == "test-password-2"
     assert settings.wazuh_verify_ssl is True
+
+
+def test_settings_llm_fields_have_expected_defaults():
+    settings = Settings(_env_file=None)
+    assert settings.llm_base_url == "http://localhost:11434/v1/"
+    assert settings.llm_model == "qwen3.5:9b"
+    assert settings.llm_timeout_seconds == 120.0
+
+
+def test_settings_llm_fields_env_override(monkeypatch):
+    monkeypatch.setenv("LLM_BASE_URL", "http://localhost:9999/v1/")
+    monkeypatch.setenv("LLM_MODEL", "some-other-model:latest")
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "30")
+    settings = Settings(_env_file=None)
+    assert settings.llm_base_url == "http://localhost:9999/v1/"
+    assert settings.llm_model == "some-other-model:latest"
+    assert settings.llm_timeout_seconds == 30.0
