@@ -1,8 +1,11 @@
+import json
+
 import httpx
 import pytest
 import respx
 from pydantic import BaseModel
 
+from app.llm.client import LLMClient
 from app.llm.errors import LLMClientError
 from app.llm.ollama_client import OllamaClient
 
@@ -33,6 +36,10 @@ def _chat_completion_response(parsed_content: str, finish_reason: str = "stop") 
     )
 
 
+def test_ollama_client_satisfies_llm_client_protocol():
+    assert isinstance(OllamaClient(base_url=BASE_URL, model="qwen3.5:9b"), LLMClient)
+
+
 @respx.mock
 def test_generate_structured_returns_parsed_object_on_first_attempt():
     respx.post(f"{BASE_URL}chat/completions").mock(
@@ -44,9 +51,6 @@ def test_generate_structured_returns_parsed_object_on_first_attempt():
 
     assert result.label == "malicious"
     assert result.confidence == "high"
-
-
-import openai
 
 
 @respx.mock
@@ -63,6 +67,27 @@ def test_generate_structured_retries_once_after_non_conforming_first_attempt():
 
     assert result.label == "clean"
     assert route.call_count == 2
+
+
+@respx.mock
+def test_retry_prompt_carries_original_prompt_and_the_validation_error():
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response('{"label": "malicious"}'),
+            _chat_completion_response('{"label": "clean", "confidence": "low"}'),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    client.generate_structured("classify this alert", Verdict)
+
+    assert route.call_count == 2
+    retry_body = json.loads(route.calls[1].request.content)
+    retry_prompt = retry_body["messages"][0]["content"]
+    assert "classify this alert" in retry_prompt
+    assert "did not match the required schema" in retry_prompt
+    # The actual pydantic failure detail must reach the model, not just a placeholder.
+    assert "confidence" in retry_prompt.split("classify this alert", 1)[1]
 
 
 @respx.mock
@@ -135,6 +160,31 @@ def test_generate_structured_raises_model_not_found_on_404():
     with pytest.raises(LLMClientError) as exc_info:
         client.generate_structured("classify this", Verdict)
     assert exc_info.value.kind == "model_not_found"
+
+
+@respx.mock
+def test_generate_structured_raises_generation_failed_on_server_error():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=httpx.Response(500, json={"error": {"message": "internal server error"}})
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "generation_failed"
+    assert "500" in str(exc_info.value)
+
+
+@respx.mock
+def test_generate_structured_raises_timeout_on_client_timeout():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=httpx.ReadTimeout("timed out waiting for the model")
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "timeout"
 
 
 @respx.mock

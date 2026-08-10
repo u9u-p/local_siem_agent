@@ -1,4 +1,5 @@
 class LLMClientError(Exception):
     def __init__(self, kind: str, message: str):
-        self.kind = kind  # "unreachable" | "model_not_found" | "generation_failed" | "validation_failed"
+        # "unreachable" | "model_not_found" | "generation_failed" | "validation_failed" | "timeout"
+        self.kind = kind
         super().__init__(message)
