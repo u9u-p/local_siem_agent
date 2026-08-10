@@ -4,7 +4,8 @@ from uuid import uuid4
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.models import AgentContext, RuleMetadata
-from app.schemas import AgentRef, Alert
+from app.schemas import AgentRef, Alert, EnrichmentResult
+from app.schemas import EnrichmentVerdict, IndicatorType
 
 
 class _FakeSIEMConnector:
@@ -128,3 +129,76 @@ def test_step_ingest_and_parse_records_model_available_false():
     step = analyst._step_ingest_and_parse(alert, model_available=False)
 
     assert "model available: False" in step.output_summary
+
+
+class _FakeIPProvider:
+    provider_id = "abuseipdb"
+    supported_types = frozenset({IndicatorType.IP})
+
+    def __init__(self, result):
+        self._result = result
+
+    def lookup(self, indicator):
+        return self._result
+
+
+def _make_enrichment_result(**overrides):
+    defaults = dict(
+        indicator_type=IndicatorType.IP,
+        indicator_value="203.0.113.5",
+        provider_id="abuseipdb",
+        queried_at=datetime.now(timezone.utc),
+        verdict=EnrichmentVerdict.CLEAN,
+        score=1.0,
+        cache_expires_at=datetime.now(timezone.utc),
+    )
+    defaults.update(overrides)
+    return EnrichmentResult(**defaults)
+
+
+def test_step_extract_indicators_finds_and_validates_ip():
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    indicators, step = analyst._step_extract_indicators(alert)
+
+    assert len(indicators) == 1
+    assert indicators[0].value == "203.0.113.5"
+    assert step.step_name == Step.EXTRACT_INDICATORS.value
+    assert "1 candidates, 1 validated" in step.output_summary
+
+
+def test_step_extract_indicators_returns_empty_list_when_nothing_found():
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="nothing interesting here")
+
+    indicators, step = analyst._step_extract_indicators(alert)
+
+    assert indicators == []
+    assert step.action == "completed"
+
+
+def test_step_enrich_calls_registry_for_each_indicator():
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    analyst = _make_analyst(enrichment_registry=registry)
+    indicators, _ = analyst._step_extract_indicators(
+        _make_alert(full_log="Invalid user admin from 203.0.113.5")
+    )
+
+    results, step = analyst._step_enrich(indicators)
+
+    assert len(results) == 1
+    assert results[0].verdict == EnrichmentVerdict.CLEAN
+    assert step.step_name == Step.ENRICH.value
+    assert step.action == "completed"
+
+
+def test_step_enrich_skips_when_no_indicators():
+    analyst = _make_analyst()
+
+    results, step = analyst._step_enrich([])
+
+    assert results == []
+    assert step.action == "skipped"
+    assert "no validated indicators" in step.output_summary
