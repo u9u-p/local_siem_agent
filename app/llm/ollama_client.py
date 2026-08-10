@@ -62,4 +62,8 @@ class OllamaClient:
         return None
 
     def health_check(self) -> bool:
-        raise NotImplementedError("added in Task 8")
+        try:
+            self._client.models.list()
+            return True
+        except openai.OpenAIError:
+            return False

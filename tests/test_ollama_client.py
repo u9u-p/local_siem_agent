@@ -146,3 +146,21 @@ def test_generate_structured_raises_generation_failed_on_refusal_without_retry()
         client.generate_structured("classify this", Verdict)
     assert exc_info.value.kind == "generation_failed"
     assert route.call_count == 1
+
+
+@respx.mock
+def test_health_check_returns_true_when_models_list_succeeds():
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(200, json={"object": "list", "data": []})
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    assert client.health_check() is True
+
+
+@respx.mock
+def test_health_check_returns_false_on_connection_error():
+    respx.get(f"{BASE_URL}models").mock(side_effect=httpx.ConnectError("connection refused"))
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    assert client.health_check() is False
