@@ -1,6 +1,8 @@
 import httpx
+import pytest
 import respx
 
+from app.enrichment.errors import EnrichmentError
 from app.enrichment.indicators import DomainIndicator, HashIndicator, URLIndicator
 from app.enrichment.providers.virustotal import VirusTotalProvider
 from app.schemas import EnrichmentVerdict
@@ -153,3 +155,83 @@ def test_url_lookup_uses_unpadded_base64_id():
 
         assert result.verdict == EnrichmentVerdict.CLEAN
         assert result.indicator_value == raw_url
+
+
+@respx.mock
+def test_lookup_raises_auth_failed_on_401():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(401, json={"error": {"code": "WrongCredentialsError"}}))
+    provider = VirusTotalProvider(api_key="bad-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "auth_failed"
+
+
+@respx.mock
+def test_lookup_raises_not_found_on_404():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(404, json={"error": {"code": "NotFoundError"}}))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "not_found"
+
+
+@respx.mock
+def test_lookup_raises_rate_limited_on_429():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(429, json={"error": {"code": "QuotaExceededError"}}))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "rate_limited"
+
+
+@respx.mock
+def test_lookup_raises_http_error_on_500():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(500, text="internal server error"))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "http_error"
+
+
+@respx.mock
+def test_lookup_raises_timeout_on_client_timeout():
+    respx.get(DOMAIN_URL).mock(side_effect=httpx.TimeoutException("timed out"))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "timeout"
+
+
+@respx.mock
+def test_lookup_raises_network_error_on_connect_error():
+    respx.get(DOMAIN_URL).mock(side_effect=httpx.ConnectError("connection refused"))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "network_error"
+
+
+@respx.mock
+def test_lookup_raises_bad_response_on_malformed_body():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(200, json={"unexpected": "shape"}))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "bad_response"
+
+
+@respx.mock
+def test_lookup_raises_bad_response_on_non_json_body():
+    respx.get(DOMAIN_URL).mock(return_value=httpx.Response(200, text="<html>not json</html>"))
+    provider = VirusTotalProvider(api_key="test-key")
+
+    with pytest.raises(EnrichmentError) as exc_info:
+        provider.lookup(DomainIndicator(value="example.com"))
+    assert exc_info.value.kind == "bad_response"

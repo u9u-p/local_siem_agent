@@ -20,14 +20,33 @@ class VirusTotalProvider:
 
     def lookup(self, indicator: DomainIndicator | HashIndicator | URLIndicator) -> EnrichmentResult:
         path = self._path_for(indicator)
-        response = self._client.get(path, headers={"x-apikey": self._api_key})
+        try:
+            response = self._client.get(path, headers={"x-apikey": self._api_key})
+        except httpx.TimeoutException as exc:
+            raise EnrichmentError("timeout", str(exc)) from exc
+        except httpx.RequestError as exc:
+            raise EnrichmentError("network_error", str(exc)) from exc
 
-        payload = response.json()
-        stats = payload["data"]["attributes"]["last_analysis_stats"]
-        malicious = int(stats["malicious"])
-        suspicious = int(stats["suspicious"])
-        harmless = int(stats.get("harmless", 0))
-        undetected = int(stats.get("undetected", 0))
+        if response.status_code == 401:
+            raise EnrichmentError("auth_failed", "VirusTotal rejected the API key")
+        if response.status_code == 404:
+            raise EnrichmentError("not_found", f"no VirusTotal report for {indicator.value}")
+        if response.status_code == 429:
+            raise EnrichmentError("rate_limited", "VirusTotal rate limit exceeded")
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise EnrichmentError("http_error", str(exc)) from exc
+
+        try:
+            payload = response.json()
+            stats = payload["data"]["attributes"]["last_analysis_stats"]
+            malicious = int(stats["malicious"])
+            suspicious = int(stats["suspicious"])
+            harmless = int(stats.get("harmless", 0))
+            undetected = int(stats.get("undetected", 0))
+        except (ValueError, KeyError, TypeError) as exc:
+            raise EnrichmentError("bad_response", str(exc)) from exc
 
         if malicious >= VIRUSTOTAL_MALICIOUS_ENGINE_COUNT:
             verdict = EnrichmentVerdict.MALICIOUS
