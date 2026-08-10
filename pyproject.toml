@@ -9,6 +9,7 @@ dependencies = [
     "sqlalchemy>=2.0,<3",  # imported directly for IntegrityError; also a sqlmodel dep
     "sqlmodel>=0.0.16,<0.1",
     "httpx>=0.27,<1",
+    "openai>=1.50,<2",
 ]
 
 [project.optional-dependencies]
