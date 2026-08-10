@@ -1,4 +1,5 @@
 import openai
+import pydantic
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -30,13 +31,27 @@ class OllamaClient:
         raise LLMClientError("validation_failed", "schema validation failed after one retry")
 
     def _attempt(self, prompt: str, schema: type[BaseModel]) -> BaseModel | None:
-        completion = self._client.beta.chat.completions.parse(
-            model=self._model,
-            messages=[{"role": "user", "content": prompt}],
-            response_format=schema,
-            temperature=0,
-        )
+        try:
+            completion = self._client.beta.chat.completions.parse(
+                model=self._model,
+                messages=[{"role": "user", "content": prompt}],
+                response_format=schema,
+                temperature=0,
+            )
+        except openai.LengthFinishReasonError:
+            self._last_raw_content = "(truncated — response exceeded the token limit)"
+            return None
+        except pydantic.ValidationError:
+            # This installed openai SDK version raises ValidationError directly from
+            # .parse() for any content that fails schema validation (invalid JSON
+            # syntax, or valid JSON missing required fields) rather than swallowing
+            # it into message.parsed=None — treat it as a non-conforming attempt.
+            self._last_raw_content = "(response did not match the required schema)"
+            return None
+
         message = completion.choices[0].message
+        if message.refusal is not None:
+            raise LLMClientError("generation_failed", f"model refused: {message.refusal}")
         if message.parsed is not None:
             return message.parsed
         self._last_raw_content = message.content

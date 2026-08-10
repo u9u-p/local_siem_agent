@@ -1,7 +1,9 @@
 import httpx
+import pytest
 import respx
 from pydantic import BaseModel
 
+from app.llm.errors import LLMClientError
 from app.llm.ollama_client import OllamaClient
 
 BASE_URL = "https://fake-ollama.test/v1/"
@@ -42,3 +44,53 @@ def test_generate_structured_returns_parsed_object_on_first_attempt():
 
     assert result.label == "malicious"
     assert result.confidence == "high"
+
+
+import openai
+
+
+@respx.mock
+def test_generate_structured_retries_once_after_non_conforming_first_attempt():
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response("not valid json at all"),
+            _chat_completion_response('{"label": "clean", "confidence": "low"}'),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    result = client.generate_structured("classify this", Verdict)
+
+    assert result.label == "clean"
+    assert route.call_count == 2
+
+
+@respx.mock
+def test_generate_structured_raises_validation_failed_after_retry_also_fails():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response("still not valid json")
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict)
+    assert exc_info.value.kind == "validation_failed"
+
+
+@respx.mock
+def test_generate_structured_retries_after_truncation():
+    call_count = {"n": 0}
+
+    def _side_effect(request):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            return _chat_completion_response("", finish_reason="length")
+        return _chat_completion_response('{"label": "clean", "confidence": "low"}')
+
+    respx.post(f"{BASE_URL}chat/completions").mock(side_effect=_side_effect)
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    result = client.generate_structured("classify this", Verdict)
+
+    assert result.label == "clean"
+    assert call_count["n"] == 2
