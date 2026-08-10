@@ -95,6 +95,11 @@ def test_rejects_domain_starting_with_hyphen():
         DomainIndicator(value="-example.com")
 
 
+def test_rejects_domain_with_trailing_newline():
+    with pytest.raises(ValidationError):
+        DomainIndicator(value="example.com\n")
+
+
 def test_accepts_valid_https_url():
     indicator = URLIndicator(value="https://example.com/path")
     assert indicator.value == "https://example.com/path"
@@ -113,3 +118,13 @@ def test_rejects_non_http_scheme():
 def test_rejects_url_without_host():
     with pytest.raises(ValidationError):
         URLIndicator(value="https://")
+
+
+def test_rejects_url_with_embedded_newline():
+    with pytest.raises(ValidationError):
+        URLIndicator(value="https://exa\nmple.com/x")
+
+
+def test_rejects_url_with_embedded_carriage_return():
+    with pytest.raises(ValidationError):
+        URLIndicator(value="https://example.com/a\r\nX-Evil: 1")

@@ -30,7 +30,7 @@ _HASH_PATTERNS = {
 }
 
 _DOMAIN_RE = re.compile(
-    r"^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\.[A-Za-z]{2,63}$"
+    r"\A(?=.{1,253}\Z)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\.[A-Za-z]{2,63}\Z"
 )
 
 
@@ -66,6 +66,8 @@ class URLIndicator(BaseModel):
     @field_validator("value")
     @classmethod
     def _validate_url(cls, v: str) -> str:
+        if any(c in v for c in "\t\r\n"):
+            raise ValueError(f"URL contains control characters: {v!r}")
         parsed = urllib.parse.urlparse(v)
         if parsed.scheme not in ("http", "https") or not parsed.netloc:
             raise ValueError(f"not a valid http(s) URL: {v}")

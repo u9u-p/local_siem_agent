@@ -4,6 +4,7 @@ import pytest
 
 from app.enrichment.errors import EnrichmentError
 from app.enrichment.indicators import IPIndicator
+from app.enrichment.providers.virustotal import VirusTotalProvider
 from app.enrichment.registry import EnrichmentRegistry
 import app.enrichment.registry as registry_module
 from app.schemas import EnrichmentResult, EnrichmentVerdict, IndicatorType
@@ -130,3 +131,9 @@ def test_registering_two_providers_routes_each_type_to_its_own_provider():
     assert registry.providers_for(IndicatorType.FILE_HASH) == [vt_provider]
     assert registry.providers_for(IndicatorType.URL) == [vt_provider]
     assert registry.providers_for(IndicatorType.EMAIL) == []
+
+
+def test_virustotal_provider_supports_domain_hash_and_url():
+    assert VirusTotalProvider.supported_types == frozenset(
+        {IndicatorType.DOMAIN, IndicatorType.FILE_HASH, IndicatorType.URL}
+    )
