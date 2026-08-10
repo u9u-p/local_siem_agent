@@ -108,14 +108,17 @@ def test_search_translates_eq_operator_to_term_query():
 
 @respx.mock
 def test_search_translates_contains_operator_to_match_query():
-    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+    route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
         return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
     )
     connector = _make_connector()
 
     connector.search(SearchQuery(field="full_log", operator="contains", value="Invalid user"))
-    # Correctness of the query body content is checked in the eq/range/terms tests;
-    # this test only confirms the call succeeds without raising for the "contains" branch.
+
+    import json
+
+    parsed = json.loads(route.calls.last.request.content)
+    assert parsed["query"]["bool"]["must"] == [{"match": {"full_log": "Invalid user"}}]
 
 
 @respx.mock
