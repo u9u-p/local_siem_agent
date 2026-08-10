@@ -14,6 +14,7 @@ from app.schemas import (
     AlertStatus,
     Confidence,
     EnrichmentResult,
+    EnrichmentVerdict,
     InvestigationStep,
     ModelMetadata,
     Report,
@@ -86,7 +87,24 @@ class AgenticAnalyst:
             )
             return [], step
 
-        results = [self._enrichment_registry.enrich(indicator) for indicator in indicators]
+        results: list[EnrichmentResult] = []
+        for indicator in indicators:
+            try:
+                results.append(self._enrichment_registry.enrich(indicator))
+            except ValueError:
+                queried_at = datetime.now(timezone.utc)
+                results.append(
+                    EnrichmentResult(
+                        indicator_type=indicator.indicator_type,
+                        indicator_value=indicator.value,
+                        provider_id="none",
+                        queried_at=queried_at,
+                        verdict=EnrichmentVerdict.UNKNOWN,
+                        score=0.0,
+                        cache_expires_at=queried_at,
+                        error="no_provider_registered",
+                    )
+                )
         step = InvestigationStep(
             step_name=Step.ENRICH.value,
             action="completed",
@@ -184,7 +202,18 @@ class AgenticAnalyst:
         )
 
     def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
-        self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
+        try:
+            self._alert_store.save_report(report)
+            self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
+        except Exception as exc:
+            return InvestigationStep(
+                step_name=Step.FINALIZE_AND_PERSIST.value,
+                action="degraded",
+                tool_used="alert_store",
+                input=None,
+                output_summary=f"could not persist report or update alert status: {exc}",
+                timestamp=datetime.now(timezone.utc),
+            )
         return InvestigationStep(
             step_name=Step.FINALIZE_AND_PERSIST.value,
             action="completed",
@@ -215,5 +244,4 @@ class AgenticAnalyst:
         report = self._assemble_report(alert, timeline, enrichment_results, model_available)
         finalize_step = self._step_finalize_and_persist(alert, report)
         report.investigation_timeline.append(finalize_step)
-        self._alert_store.save_report(report)
         return report

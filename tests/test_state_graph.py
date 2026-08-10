@@ -381,3 +381,70 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
     context_step = next(s for s in report.investigation_timeline if s.step_name == Step.GATHER_CONTEXT.value)
     assert context_step.action == "degraded"
     assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
+
+
+def test_step_enrich_degrades_when_no_provider_registered_for_type():
+    analyst = _make_analyst(enrichment_registry=EnrichmentRegistry())
+    indicators, _ = analyst._step_extract_indicators(
+        _make_alert(full_log="Invalid user admin from 203.0.113.5")
+    )
+
+    results, step = analyst._step_enrich(indicators)
+
+    assert len(results) == 1
+    assert results[0].verdict == EnrichmentVerdict.UNKNOWN
+    assert results[0].error == "no_provider_registered"
+    assert step.action == "completed"
+
+
+def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    # Deliberately NOT calling alert_store.save_raw_alert(alert) first, so
+    # update_alert_status will raise AlertNotFoundError.
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=True),
+    )
+
+    report = analyst.investigate(alert)
+
+    finalize_step = report.investigation_timeline[-1]
+    assert finalize_step.step_name == Step.FINALIZE_AND_PERSIST.value
+    assert finalize_step.action == "degraded"
+    # The report itself was still persisted even though the alert-status update failed,
+    # since save_report() runs before update_alert_status() inside the same try block.
+    assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
+
+
+def test_investigate_handles_multiple_simultaneous_degradations(tmp_path):
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    alert_store.save_raw_alert(alert)
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused")),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=False),
+    )
+
+    report = analyst.investigate(alert)
+
+    assert len(report.investigation_timeline) == 9
+    assert report.risk_assessment is not None
+    assert report.model_metadata is not None
+    context_step = next(s for s in report.investigation_timeline if s.step_name == Step.GATHER_CONTEXT.value)
+    assert context_step.action == "degraded"
+    finalize_step = report.investigation_timeline[-1]
+    assert finalize_step.action == "completed"
