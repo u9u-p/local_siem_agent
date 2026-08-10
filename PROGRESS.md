@@ -12,9 +12,9 @@ Living status tracker for the Local SIEM Alert Investigation Agent. See `ROADMAP
 | 6a. EnrichmentCache | ⬜ Deferred (see Roadmap Phase 6) | — | — | — |
 | 6b. Second Enrichment provider (VirusTotal) | ⬜ Deferred | — | — | — |
 
-**Current test count:** 108 passing + 3 skippable on `main` (`pytest -v` from repo root, after `pip install -e ".[dev]"`). The 3 skips are `tests/test_wazuh_connector_live.py` — they only run with real `WAZUH_*` credentials in `.env`.
+**Current test count:** 111 passing on `main` when real `WAZUH_*` credentials are configured in `.env` (108 always-on + 3 live, all verified passing against a real Wazuh Docker deployment on 10 Aug 2026); 108 passing + 3 skipped without them. Run `pytest -v` from repo root after `pip install -e ".[dev]"`.
 
-**Open item carried into Phase 4:** the Integration module's alert-timestamp field name (`timestamp` vs `@timestamp`) is still empirically unverified against a real Wazuh instance — `pull_alerts`/`search` are coded against `timestamp` per the design research, but the live smoke test that would confirm this has never actually run (no reachable instance in CI/session environments so far). Run `test_wazuh_connector_live.py` against a real instance before trusting `pull_alerts` results, per its own inline check.
+**Resolved:** the Integration module's alert-timestamp field name question (`timestamp` vs `@timestamp`, open since the design spec) is now empirically confirmed — `test_live_alert_documents_use_the_timestamp_field_name` passed against a real instance. `pull_alerts`/`search`'s use of `"timestamp"` is correct; no further action needed.
 
 ## Notes carried forward
 
