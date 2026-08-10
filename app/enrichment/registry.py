@@ -6,7 +6,7 @@ from app.enrichment.indicators import Indicator
 from app.enrichment.rate_limiter import DailyRateLimiter
 from app.schemas import EnrichmentResult, EnrichmentVerdict, IndicatorType
 
-_DAILY_LIMITS = {"abuseipdb": 1000}
+_DAILY_LIMITS = {"abuseipdb": 1000, "virustotal": 500}
 
 
 class EnrichmentProvider(Protocol):
@@ -47,8 +47,10 @@ class EnrichmentRegistry:
         if not providers:
             raise ValueError(f"no provider registered for {indicator.indicator_type}")
 
-        # Highest-priority (first-registered) provider only — cross-provider fallback
-        # on error is out of scope until a second IP-capable provider exists.
+        # Highest-priority (first-registered) provider only — this project's design
+        # keeps exactly one provider per indicator type (routing is by type, not by
+        # competing providers within a type), so this is always the sole registered
+        # provider for indicator.indicator_type, not an arbitrary "first of many" pick.
         provider = providers[0]
         limiter = self._limiters[provider.provider_id]
         if not limiter.try_acquire():

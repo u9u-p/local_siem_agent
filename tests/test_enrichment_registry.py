@@ -108,3 +108,25 @@ def test_enrich_raises_when_no_provider_registered():
 
     with pytest.raises(ValueError):
         registry.enrich(IPIndicator(value="203.0.113.5"))
+
+
+class _FakeVirusTotalProvider:
+    provider_id = "virustotal"
+    supported_types = frozenset({IndicatorType.DOMAIN, IndicatorType.FILE_HASH, IndicatorType.URL})
+
+    def lookup(self, indicator):
+        raise AssertionError("not exercised in this test")
+
+
+def test_registering_two_providers_routes_each_type_to_its_own_provider():
+    ip_provider = _FakeProvider(result=_make_result())
+    vt_provider = _FakeVirusTotalProvider()
+    registry = EnrichmentRegistry()
+    registry.register(ip_provider)
+    registry.register(vt_provider)
+
+    assert registry.providers_for(IndicatorType.IP) == [ip_provider]
+    assert registry.providers_for(IndicatorType.DOMAIN) == [vt_provider]
+    assert registry.providers_for(IndicatorType.FILE_HASH) == [vt_provider]
+    assert registry.providers_for(IndicatorType.URL) == [vt_provider]
+    assert registry.providers_for(IndicatorType.EMAIL) == []
