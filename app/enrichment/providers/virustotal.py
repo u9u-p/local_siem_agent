@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timezone
 
 import httpx
@@ -56,4 +57,5 @@ class VirusTotalProvider:
             return f"/domains/{indicator.value}"
         if indicator.indicator_type == IndicatorType.FILE_HASH:
             return f"/files/{indicator.value}"
-        raise NotImplementedError("URL lookup added in Task 4")
+        url_id = base64.urlsafe_b64encode(indicator.value.encode()).decode().rstrip("=")
+        return f"/urls/{url_id}"
