@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
@@ -5,18 +6,33 @@ from uuid import uuid4
 import httpx
 
 from app.integration.auth import BasicAuthStrategy, JWTBearerAuthStrategy
+from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchQuery, SearchResult
 from app.schemas import AgentRef, Alert, MitreRef
+
+logger = logging.getLogger(__name__)
+
+# search() takes no size parameter (the SIEMConnector Protocol fixes its signature),
+# so it uses the same default cap as pull_alerts' limit rather than OpenSearch's
+# silent default of 10.
+_SEARCH_DEFAULT_SIZE = 500
+
+_INDEX_PATH = "/wazuh-alerts-*/_search"
 
 
 def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
     rule = source.get("rule", {})
     mitre_raw = rule.get("mitre") or {}
+    # rule.mitre.id and rule.mitre.technique are parallel (one entry per technique);
+    # rule.mitre.tactic is an independent list — the union of all tactics the rule maps
+    # to — so a specific tactic cannot be attributed to a specific technique from this
+    # data. Zip only the genuinely parallel pair and attach every tactic to each ref.
+    technique_ids = mitre_raw.get("id", [])
+    technique_names = mitre_raw.get("technique", [])
+    tactics_str = ", ".join(mitre_raw.get("tactic", []))
     mitre = [
-        MitreRef(tactic=tactic, technique_id=technique_id, technique_name=technique_name)
-        for tactic, technique_id, technique_name in zip(
-            mitre_raw.get("tactic", []), mitre_raw.get("id", []), mitre_raw.get("technique", [])
-        )
+        MitreRef(tactic=tactics_str, technique_id=technique_id, technique_name=technique_name)
+        for technique_id, technique_name in zip(technique_ids, technique_names)
     ] or None
 
     agent = source.get("agent", {})
@@ -48,6 +64,25 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
     )
 
 
+def _map_hits(hits: list[dict[str, Any]]) -> list[Alert]:
+    """Map Indexer hits to Alerts, skipping (and logging) any malformed document.
+
+    wazuh_source_to_alert is deliberately strict; degradation is handled here so one
+    bad document cannot discard an entire batch.
+    """
+    alerts: list[Alert] = []
+    for hit in hits:
+        try:
+            alerts.append(wazuh_source_to_alert(hit["_source"]))
+        except (KeyError, ValueError, TypeError) as exc:
+            logger.warning(
+                "skipping malformed Wazuh alert document (id=%r): %s",
+                hit.get("_id") if isinstance(hit, dict) else None,
+                exc,
+            )
+    return alerts
+
+
 class WazuhConnector:
     def __init__(
         self,
@@ -64,14 +99,59 @@ class WazuhConnector:
         self._manager_client = httpx.Client(base_url=manager_url, verify=verify_ssl, timeout=10.0)
         self._manager_auth = JWTBearerAuthStrategy(self._manager_client, manager_username, manager_password)
 
+    # --- internal request helpers -------------------------------------------------
+
     def _manager_request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
-        headers = self._manager_auth.get_headers()
-        response = self._manager_client.request(method, path, headers=headers, **kwargs)
-        if response.status_code == 401:
-            self._manager_auth.refresh()
+        try:
             headers = self._manager_auth.get_headers()
             response = self._manager_client.request(method, path, headers=headers, **kwargs)
+            if response.status_code == 401:
+                self._manager_auth.refresh()
+                headers = self._manager_auth.get_headers()
+                response = self._manager_client.request(method, path, headers=headers, **kwargs)
+        except httpx.RequestError as exc:
+            raise SIEMConnectorError("unreachable", str(exc)) from exc
+        except httpx.HTTPStatusError as exc:
+            # the token handshake in JWTBearerAuthStrategy.refresh() itself failed
+            raise SIEMConnectorError("auth_failed", str(exc)) from exc
+        except (ValueError, KeyError) as exc:
+            # non-JSON or unexpectedly-shaped token response
+            raise SIEMConnectorError("auth_failed", f"malformed authentication response: {exc}") from exc
         return response
+
+    @staticmethod
+    def _manager_payload(response: httpx.Response, description: str) -> dict[str, Any]:
+        if response.status_code == 401:
+            raise SIEMConnectorError(
+                "auth_failed",
+                f"{description} returned HTTP 401 after a token refresh and retry: {response.text[:200]}",
+            )
+        if not 200 <= response.status_code < 300:
+            raise SIEMConnectorError(
+                "bad_response", f"{description} returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise SIEMConnectorError("bad_response", f"{description} returned a non-JSON body: {exc}") from exc
+
+    def _indexer_search(self, body: dict[str, Any]) -> dict[str, Any]:
+        try:
+            response = self._indexer_client.post(
+                _INDEX_PATH, json=body, headers=self._indexer_auth.get_headers()
+            )
+        except httpx.RequestError as exc:
+            raise SIEMConnectorError("unreachable", str(exc)) from exc
+        if not 200 <= response.status_code < 300:
+            raise SIEMConnectorError(
+                "bad_response", f"indexer search returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise SIEMConnectorError("bad_response", f"indexer search returned a non-JSON body: {exc}") from exc
+
+    # --- SIEMConnector surface ----------------------------------------------------
 
     def health_check(self) -> bool:
         try:
@@ -82,20 +162,21 @@ class WazuhConnector:
                 return False
             manager_response = self._manager_request("GET", "/agents", params={"limit": 1})
             return manager_response.status_code == 200
-        except httpx.HTTPError:
+        except (SIEMConnectorError, httpx.HTTPError, ValueError, KeyError):
             return False
 
     def pull_alerts(self, since: datetime, until: datetime | None = None, limit: int = 500) -> list[Alert]:
+        # UNVERIFIED against a live instance — see design spec §6; if this returns zero alerts unexpectedly, confirm the real field name first
         must: list[dict[str, Any]] = [{"range": {"timestamp": {"gte": since.isoformat()}}}]
         if until is not None:
             must[0]["range"]["timestamp"]["lte"] = until.isoformat()
-        body = {"query": {"bool": {"filter": must}}, "size": limit}
-        response = self._indexer_client.post(
-            "/wazuh-alerts-*/_search", json=body, headers=self._indexer_auth.get_headers()
-        )
-        response.raise_for_status()
-        hits = response.json()["hits"]["hits"]
-        return [wazuh_source_to_alert(hit["_source"]) for hit in hits]
+        body = {
+            "query": {"bool": {"filter": must}},
+            "size": limit,
+            "sort": [{"timestamp": {"order": "asc"}}],
+        }
+        payload = self._indexer_search(body)
+        return _map_hits(payload["hits"]["hits"])
 
     def search(self, query: SearchQuery) -> SearchResult:
         operator_clause: dict[str, Any]
@@ -111,21 +192,25 @@ class WazuhConnector:
         filter_clauses: list[dict[str, Any]] = []
         if query.time_range is not None:
             since, until = query.time_range
+            # UNVERIFIED against a live instance — see design spec §6; if this returns zero alerts unexpectedly, confirm the real field name first
             filter_clauses.append({"range": {"timestamp": {"gte": since.isoformat(), "lte": until.isoformat()}}})
 
-        body = {"query": {"bool": {"must": [operator_clause], "filter": filter_clauses}}}
-        response = self._indexer_client.post(
-            "/wazuh-alerts-*/_search", json=body, headers=self._indexer_auth.get_headers()
-        )
-        response.raise_for_status()
-        payload = response.json()
-        alerts = [wazuh_source_to_alert(hit["_source"]) for hit in payload["hits"]["hits"]]
+        body = {
+            "query": {"bool": {"must": [operator_clause], "filter": filter_clauses}},
+            "size": _SEARCH_DEFAULT_SIZE,
+        }
+        payload = self._indexer_search(body)
+        alerts = _map_hits(payload["hits"]["hits"])
         return SearchResult(alerts=alerts, total_count=payload["hits"]["total"]["value"])
 
     def get_agent_context(self, agent_id: str) -> AgentContext:
         response = self._manager_request("GET", "/agents", params={"agents_list": agent_id})
-        response.raise_for_status()
-        item = response.json()["data"]["affected_items"][0]
+        payload = self._manager_payload(response, f"agent lookup for {agent_id!r}")
+        items = payload.get("data", {}).get("affected_items", [])
+        if not items:
+            # Wazuh answers an unknown agent with HTTP 200 and an empty affected_items
+            raise SIEMConnectorError("not_found", f"agent {agent_id!r} not found")
+        item = items[0]
         os_info = item.get("os", {})
         return AgentContext(
             id=item["id"],
@@ -140,8 +225,12 @@ class WazuhConnector:
 
     def get_rule_metadata(self, rule_id: str) -> RuleMetadata:
         response = self._manager_request("GET", "/rules", params={"rule_ids": rule_id})
-        response.raise_for_status()
-        item = response.json()["data"]["affected_items"][0]
+        payload = self._manager_payload(response, f"rule lookup for {rule_id!r}")
+        items = payload.get("data", {}).get("affected_items", [])
+        if not items:
+            # Wazuh answers an unknown rule with HTTP 200 and an empty affected_items
+            raise SIEMConnectorError("not_found", f"rule {rule_id!r} not found")
+        item = items[0]
         return RuleMetadata(
             rule_id=str(item["id"]),
             description=item["description"],

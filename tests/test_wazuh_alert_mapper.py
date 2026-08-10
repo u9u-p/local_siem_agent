@@ -53,7 +53,9 @@ def test_maps_mitre_parallel_arrays_into_mitre_ref_list():
     assert alert.agent.name == "Windows11"
     assert alert.mitre is not None
     assert len(alert.mitre) == 1
-    assert alert.mitre[0].tactic == "Persistence"
+    # tactic is an independent, non-parallel list (all tactics the rule maps to), so
+    # every tactic is attached to each technique rather than being zipped positionally
+    assert alert.mitre[0].tactic == "Persistence, Privilege Escalation"
     assert alert.mitre[0].technique_id == "T1543.003"
     assert alert.mitre[0].technique_name == "Windows Service"
 

@@ -1,8 +1,12 @@
+import json
 from datetime import datetime, timezone
 
 import httpx
+import pytest
 import respx
 
+from app.integration.errors import SIEMConnectorError
+from app.integration.siem_connector import SIEMConnector
 from app.integration.wazuh_connector import WazuhConnector
 
 INDEXER_URL = "https://wazuh-indexer.test:9200"
@@ -280,3 +284,287 @@ def test_get_agent_context_retries_once_after_401():
     context = connector.get_agent_context("001")
 
     assert context.id == "001"
+
+
+def _mock_manager_auth():
+    return respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        return_value=httpx.Response(200, json={"data": {"token": "abc123"}, "error": 0})
+    )
+
+
+class _Missing:
+    """Sentinel: pass `field=_MISSING` to _alert_hit to omit that field entirely."""
+
+
+_MISSING = _Missing()
+
+
+def _alert_hit(**source_overrides):
+    source = {
+        "agent": {"ip": "10.0.0.5", "name": "web-01", "id": "001"},
+        "manager": {"name": "wazuh-manager"},
+        "data": {"srcip": "203.0.113.5"},
+        "rule": {"level": 5, "description": "sshd auth failure", "groups": [], "id": "5710"},
+        "location": "/var/log/auth.log",
+        "full_log": "Invalid user admin from 203.0.113.5",
+        "id": "1699999999.123456",
+        "timestamp": "2026-08-10T09:00:00.000+0000",
+    }
+    source.update(source_overrides)
+    for key, value in list(source.items()):
+        if value is _MISSING:
+            del source[key]
+    return {"_source": source}
+
+
+# --- Finding 1: empty affected_items is Wazuh's "not found", not an IndexError -------
+
+
+@respx.mock
+def test_get_agent_context_raises_not_found_when_affected_items_empty():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/agents").mock(
+        return_value=httpx.Response(200, json={"data": {"affected_items": []}, "error": 0})
+    )
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_agent_context("999")
+
+    assert excinfo.value.kind == "not_found"
+
+
+@respx.mock
+def test_get_rule_metadata_raises_not_found_when_affected_items_empty():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/rules").mock(
+        return_value=httpx.Response(200, json={"data": {"affected_items": []}, "error": 0})
+    )
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_rule_metadata("999999")
+
+    assert excinfo.value.kind == "not_found"
+
+
+# --- Finding 2: health_check must return False, never raise --------------------------
+
+
+@respx.mock
+def test_health_check_returns_false_when_manager_auth_returns_non_json():
+    respx.get(f"{INDEXER_URL}/_cluster/health").mock(return_value=httpx.Response(200, json={"status": "green"}))
+    # e.g. WAZUH_MANAGER_URL misconfigured to point at the Dashboard instead of the API
+    respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        return_value=httpx.Response(200, text="<html>not json</html>")
+    )
+    connector = _make_connector()
+
+    assert connector.health_check() is False
+
+
+# --- Finding 3: typed error contract for the four network-calling methods ------------
+
+
+@respx.mock
+def test_pull_alerts_raises_bad_response_on_indexer_500():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(return_value=httpx.Response(500, text="boom"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.pull_alerts(since=datetime(2026, 8, 10, tzinfo=timezone.utc))
+
+    assert excinfo.value.kind == "bad_response"
+
+
+@respx.mock
+def test_pull_alerts_raises_unreachable_on_connection_error():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        side_effect=httpx.ConnectError("connection refused")
+    )
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.pull_alerts(since=datetime(2026, 8, 10, tzinfo=timezone.utc))
+
+    assert excinfo.value.kind == "unreachable"
+
+
+@respx.mock
+def test_search_raises_bad_response_on_indexer_500():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(return_value=httpx.Response(500, text="boom"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+
+    assert excinfo.value.kind == "bad_response"
+
+
+@respx.mock
+def test_search_raises_unreachable_on_connection_error():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        side_effect=httpx.ConnectError("connection refused")
+    )
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+
+    assert excinfo.value.kind == "unreachable"
+
+
+@respx.mock
+def test_get_agent_context_raises_bad_response_on_manager_500():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/agents").mock(return_value=httpx.Response(500, text="boom"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_agent_context("001")
+
+    assert excinfo.value.kind == "bad_response"
+
+
+@respx.mock
+def test_get_agent_context_raises_unreachable_on_connection_error():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/agents").mock(side_effect=httpx.ConnectError("connection refused"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_agent_context("001")
+
+    assert excinfo.value.kind == "unreachable"
+
+
+@respx.mock
+def test_get_rule_metadata_raises_bad_response_on_manager_500():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/rules").mock(return_value=httpx.Response(500, text="boom"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_rule_metadata("5710")
+
+    assert excinfo.value.kind == "bad_response"
+
+
+@respx.mock
+def test_get_rule_metadata_raises_unreachable_on_connection_error():
+    _mock_manager_auth()
+    respx.get(f"{MANAGER_URL}/rules").mock(side_effect=httpx.ConnectError("connection refused"))
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_rule_metadata("5710")
+
+    assert excinfo.value.kind == "unreachable"
+
+
+# --- Finding 4: one malformed document must not discard the batch --------------------
+
+
+@respx.mock
+def test_pull_alerts_skips_malformed_hit_and_maps_the_rest():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "hits": {
+                    "total": {"value": 2},
+                    "hits": [
+                        _alert_hit(),
+                        _alert_hit(timestamp=_MISSING, id="1699999999.999999"),
+                    ],
+                }
+            },
+        )
+    )
+    connector = _make_connector()
+
+    alerts = connector.pull_alerts(since=datetime(2026, 8, 10, tzinfo=timezone.utc))
+
+    assert len(alerts) == 1
+    assert alerts[0].source_alert_id == "1699999999.123456"
+
+
+@respx.mock
+def test_search_skips_malformed_hit_and_maps_the_rest():
+    respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "hits": {
+                    "total": {"value": 2},
+                    "hits": [
+                        _alert_hit(),
+                        _alert_hit(timestamp=_MISSING, id="1699999999.999999"),
+                    ],
+                }
+            },
+        )
+    )
+    connector = _make_connector()
+
+    result = connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+
+    assert len(result.alerts) == 1
+    assert result.total_count == 2
+
+
+# --- Findings 5 & 6: deterministic ordering and an explicit search size --------------
+
+
+@respx.mock
+def test_pull_alerts_sorts_by_timestamp_ascending():
+    route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
+    )
+    connector = _make_connector()
+
+    connector.pull_alerts(since=datetime(2026, 8, 10, tzinfo=timezone.utc))
+
+    parsed = json.loads(route.calls.last.request.content)
+    assert parsed["sort"] == [{"timestamp": {"order": "asc"}}]
+
+
+@respx.mock
+def test_search_sends_an_explicit_default_size():
+    route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
+    )
+    connector = _make_connector()
+
+    connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+
+    parsed = json.loads(route.calls.last.request.content)
+    assert parsed["size"] == 500
+
+
+# --- Finding 8: the real class must satisfy the Protocol -----------------------------
+
+
+def test_wazuh_connector_satisfies_siem_connector_protocol():
+    assert isinstance(_make_connector(), SIEMConnector)
+
+
+# --- Finding 9: a 401 that survives the refresh-and-retry must not loop or leak -------
+
+
+@respx.mock
+def test_get_agent_context_raises_auth_failed_when_401_persists_after_retry():
+    auth_route = respx.post(f"{MANAGER_URL}/security/user/authenticate").mock(
+        return_value=httpx.Response(200, json={"data": {"token": "abc123"}, "error": 0})
+    )
+    agents_route = respx.get(f"{MANAGER_URL}/agents").mock(
+        return_value=httpx.Response(401, json={"title": "Unauthorized", "detail": "invalid token"})
+    )
+    connector = _make_connector()
+
+    with pytest.raises(SIEMConnectorError) as excinfo:
+        connector.get_agent_context("001")
+
+    assert excinfo.value.kind == "auth_failed"
+    assert agents_route.call_count == 2  # one attempt, exactly one retry — no loop
+    assert auth_route.call_count == 2
