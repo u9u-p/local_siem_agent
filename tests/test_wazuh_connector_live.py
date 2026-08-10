@@ -47,9 +47,29 @@ def test_live_pull_alerts_returns_alert_list(live_connector):
     alerts = live_connector.pull_alerts(since=since, limit=5)
 
     assert isinstance(alerts, list)
-    # This call itself is the empirical check for design spec §6: if the Indexer's
-    # alert documents use a different timestamp field name than "timestamp" for the
-    # range query, this call will return zero alerts even when alerts exist in that
-    # window (rather than raising) — if that happens, inspect one real hit's _source
-    # keys directly (GET /wazuh-alerts-*/_search with no filter, size=1) and update
-    # WazuhConnector.pull_alerts'/.search()'s range-query field name accordingly.
+
+
+def test_live_alert_documents_use_the_timestamp_field_name(live_connector):
+    """Empirical check for design spec §6's unresolved `timestamp` vs `@timestamp`.
+
+    pull_alerts/search hardcode "timestamp" in their range queries; a wrong field name
+    returns zero alerts rather than raising, so a filtered query cannot detect it. This
+    issues one *unfiltered* query straight at the Indexer and inspects a real document's
+    keys. Reaching past the SIEMConnector Protocol to the underlying indexer client is
+    deliberate — this is a diagnostic, not part of the public surface.
+    """
+    response = live_connector._indexer_client.post(
+        "/wazuh-alerts-*/_search",
+        json={"query": {"match_all": {}}, "size": 1},
+        headers=live_connector._indexer_auth.get_headers(),
+    )
+    response.raise_for_status()
+    hits = response.json()["hits"]["hits"]
+    if not hits:
+        pytest.skip("live Wazuh instance holds no alerts — cannot verify the timestamp field name")
+
+    source = hits[0]["_source"]
+    assert "timestamp" in source, (
+        f"alert documents do not use a 'timestamp' field (keys: {sorted(source)}) — "
+        "update the range-query field name in WazuhConnector.pull_alerts and .search"
+    )
