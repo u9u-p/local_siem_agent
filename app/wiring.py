@@ -58,39 +58,9 @@ def build_enrichment_registry(settings: Settings) -> EnrichmentRegistry:
     return registry
 
 
-class _UnconfiguredSIEMConnector:
-    """Placeholder used when Wazuh settings are incomplete.
-
-    Structurally satisfies the SIEMConnector protocol (so an AgenticAnalyst can
-    still be constructed, e.g. for report-browsing CLI paths that never touch
-    the SIEM) but raises clearly the moment any method is actually invoked,
-    rather than failing at construction time the way build_siem_connector does
-    for callers that need a real connection up front.
-    """
-
-    def health_check(self) -> bool:
-        return False
-
-    def pull_alerts(self, since, until=None, limit=500):  # noqa: ANN001
-        raise RuntimeError("Wazuh is not configured; cannot pull alerts")
-
-    def search(self, query):  # noqa: ANN001
-        raise RuntimeError("Wazuh is not configured; cannot search")
-
-    def get_agent_context(self, agent_id):  # noqa: ANN001
-        raise RuntimeError("Wazuh is not configured; cannot get agent context")
-
-    def get_rule_metadata(self, rule_id):  # noqa: ANN001
-        raise RuntimeError("Wazuh is not configured; cannot get rule metadata")
-
-
 def build_analyst(settings: Settings, alert_store: AlertStore | None = None) -> AgenticAnalyst:
-    try:
-        siem = build_siem_connector(settings)
-    except RuntimeError:
-        siem = _UnconfiguredSIEMConnector()
     return AgenticAnalyst(
-        siem=siem,
+        siem=build_siem_connector(settings),
         alert_store=alert_store if alert_store is not None else build_alert_store(settings),
         enrichment_registry=build_enrichment_registry(settings),
         llm_client=build_llm_client(settings),

@@ -78,7 +78,7 @@ def test_build_enrichment_registry_registers_virustotal_when_key_set():
 
 
 def test_build_analyst_reuses_a_passed_in_alert_store(tmp_path):
-    settings = Settings(database_path=str(tmp_path / "test.db"), _env_file=None)
+    settings = _wazuh_settings(database_path=str(tmp_path / "test.db"))
     alert_store = build_alert_store(settings)
     from app.agent.state_graph import AgenticAnalyst
 
@@ -88,7 +88,7 @@ def test_build_analyst_reuses_a_passed_in_alert_store(tmp_path):
 
 
 def test_build_analyst_builds_its_own_alert_store_when_none_given(tmp_path):
-    settings = Settings(database_path=str(tmp_path / "test.db"), _env_file=None)
+    settings = _wazuh_settings(database_path=str(tmp_path / "test.db"))
     from app.agent.state_graph import AgenticAnalyst
 
     analyst = build_analyst(settings)
