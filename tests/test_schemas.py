@@ -153,6 +153,12 @@ def test_report_defaults():
     assert report.uncertainty_notes == ""
 
 
+def test_report_triage_experimental_fields_default_to_none():
+    report = _make_report()
+    assert report.triage_verdict_experimental is None
+    assert report.triage_rationale_experimental is None
+
+
 def test_report_accepts_nested_investigation_step_and_enrichment_finding():
     step = InvestigationStep(
         step_name="correlate",

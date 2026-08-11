@@ -128,6 +128,8 @@ class Report(BaseModel):
     risk_assessment: RiskAssessment
     recommended_actions: list[str] = Field(default_factory=list)
     recommended_actions_freeform_experimental: list[str] | None = None
+    triage_verdict_experimental: str | None = None
+    triage_rationale_experimental: str | None = None
     uncertainty_notes: str = ""
     status: ReportStatus = ReportStatus.DRAFT
     model_metadata: ModelMetadata
