@@ -48,7 +48,7 @@ Resolved during that phase's brainstorming: mocked-first (respx) test suite plus
 
 ---
 
-## Phase 4: Agentic Analyst — State Graph — In Progress (4a, 4b complete)
+## Phase 4: Agentic Analyst — State Graph — In Progress (4a, 4b, 4c complete)
 
 The largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per CLAUDE.md §4.1) and the one with the most undecided design surface — split into 4 sub-phases, each with its own brainstorm → spec → plan cycle, built in this order:
 
@@ -68,17 +68,24 @@ The largest, most novel phase (6 fixed LLM calls + 1 conditional per alert, per 
 
 Decided during that phase's brainstorming: CLAUDE.md §4.1 step 3's verdict-reconciliation conditional call is **dropped entirely, not stubbed** — Phase 2b's one-provider-per-indicator-type architecture means two providers can never disagree on the same indicator, so the branch is structurally unreachable, not merely unbuilt. `LLMClient` gained `model_available()` (distinct from the existing reachability-only `health_check()`) so the pipeline can honestly distinguish "not yet implemented" from "model unavailable" in its stub steps' logged reasons — this has no behavioral effect yet in 4b (no step calls the LLM either way) but establishes the exact contract 4c's real steps need.
 
-**Carry into Phase 4c:** the domain-regex extractor in `app/agent/indicator_extraction.py` over-extracts more than intended — its final-review found it matches common filenames (`setup.exe`, `invoice.pdf`, `auth.log`) as DOMAIN candidates, which then route to `VirusTotalProvider` and consume its shared 500/day quota while polluting `Report.enrichment_findings` with misleading "domain: setup.exe" rows. The plan's "over-extraction is harmless, resolves to UNKNOWN/CLEAN" justification doesn't hold once a real, rate-limited provider and a real analyst-facing report are both involved — this needs an explicit decision (e.g. reject domain candidates whose final label is a common file extension) as part of 4c's design, not a silent carryover.
+**Carried into 4c but NOT addressed there — still open for 4d or a dedicated fix:** the domain-regex extractor in `app/agent/indicator_extraction.py` over-extracts more than intended — its final-review found it matches common filenames (`setup.exe`, `invoice.pdf`, `auth.log`) as DOMAIN candidates, which then route to `VirusTotalProvider` and consume its shared 500/day quota while polluting `Report.enrichment_findings` with misleading "domain: setup.exe" rows. 4c's plan didn't touch `indicator_extraction.py`'s regex at all, so this remains exactly as flagged in 4b — the plan's "over-extraction is harmless" justification still doesn't hold once a real, rate-limited provider and a real analyst-facing report are both involved.
 
-### Phase 4c: LLM-calling classification steps
+### Phase 4c: LLM-calling classification steps — ✅ Complete
 
-**Goal:** Step 2b (indicator candidate extraction), step 5 (Correlate decision + pattern), step 6 (Risk Assessment + MITRE) — all closed-vocabulary decision calls per CLAUDE.md §4.2. (Step 3's verdict-reconciliation call is out of scope — see Phase 4b's note above; it was dropped, not deferred to this phase.)
-**Depends on:** Phase 4a, Phase 4b (slots into the skeleton's stubs), Phase 2 (`EnrichmentRegistry`).
+**Goal:** Step 2b (indicator candidate extraction), step 5 (Correlate decision + pattern), step 6 (Risk Assessment) — all closed-vocabulary decision calls per CLAUDE.md §4.2. MITRE technique selection (originally part of step 6) is tabled for a future feature — `Alert.mitre` (Wazuh's own decoder-provided mapping, from Phase 3) is still passed to Risk Assessment as passive, non-LLM context, but there is no LLM-driven gap-filling or curated MITRE catalog. (Step 3's verdict-reconciliation call is out of scope — see Phase 4b's note above; it was dropped, not deferred to this phase.)
+**Key files:** `app/agent/schemas.py` (new), `app/agent/prompts.py` (new), `app/agent/correlation_queries.py` (new), `app/agent/state_graph.py` (extended), `app/integration/models.py`/`app/integration/wazuh_connector.py` (`SearchQuery` redesigned to compound ANDed clauses).
+**Depends on:** Phase 4a, Phase 4b (slots into the skeleton's stubs), Phase 2 (`EnrichmentRegistry`), Phase 3 (`SIEMConnector`).
+
+Decided during that phase's brainstorming, beyond what CLAUDE.md §4.1 originally specified: `evidence_count` is computed by code (summed `SearchResult.total_count`), never LLM-returned. An **open-value search** was added as a genuine extension beyond CLAUDE.md's original closed-menu design — a separate, conditionally-triggered LLM call (only when the closed-menu classification comes back `NONE`/`OTHER`) that proposes a free-text search *value* only (never a field name), executed as a fixed `field="full_log", operator="contains"` query and flagged `"noisier, unstructured match"` in the timeline.
+
+Final review caught two Critical, plan-level defects invisible to any single task's diff-scoped review, both fixed before merge: (1) the three SIEM `search()` calls inside Correlate (canonical searches, follow-up, open-value) were completely unguarded — unlike every other external-dependency call site in this codebase, an indexer outage would have crashed the whole investigation; (2) the canonical query field names (`source_ip`, `rule_id`, `destination_ip`) were Python `Alert` attribute names, not real Wazuh OpenSearch index paths (`data.srcip`, `rule.id`, `data.dstip`, confirmed against Phase 3's already-verified `wazuh_source_to_alert` mapper) — every canonical search would have silently returned zero evidence against a real Wazuh instance, making the phase's largest feature a no-op in production while reporting "completed" throughout. See `PROGRESS.md` for the full list, including two Important findings parked as real design questions for Phase 4d rather than fixed here (the follow-up menu currently just re-runs a canonical search verbatim; the open-value search's result is informational-only, not folded into `evidence_count` — both consistent with the design as discussed, not clearly bugs).
 
 ### Phase 4d: Report drafting + Self-Check
 
 **Goal:** Step 7 (Draft-A canonical / Draft-B experimental) and step 8 (Self-Check) — the report-generation half, and arguably the hardest part: the two-pass draft+critique loop, and the one place in the whole design with deliberately free-text (not closed-vocabulary) output.
 **Depends on:** Phase 4a, Phase 4b, Phase 4c (Self-Check audits claims against the structured findings 4c produced).
+
+Carries forward from 4c: the domain-regex over-extraction issue (above) is worth resolving before or during this phase, since Self-Check's `uncertainty_notes` derivation (CLAUDE.md §4.1 step 8) is supposed to key off concrete structural gaps — a report full of spurious "domain: setup.exe" enrichment rows is exactly the kind of noise that derivation needs to either explain or filter out. Also worth building before this phase's own LLM calls land: a prompt-capturing fake `LLMClient` test double (flagged in 4c's final review) — the existing fake dispatches purely on schema class, so no test anywhere actually verifies that Correlate's `pattern_type`/`evidence_count` are the values reaching Risk Assessment's prompt; the wiring is correct on inspection but unverified, and 4d will add more cross-step data threading that needs the same kind of check.
 
 ---
 
