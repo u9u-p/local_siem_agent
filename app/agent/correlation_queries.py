@@ -13,7 +13,7 @@ def build_canonical_queries(alert: Alert) -> dict[SearchTemplate, SearchQuery | 
 
     if alert.source_ip:
         queries[SearchTemplate.SAME_SRC_IP_24H] = SearchQuery(
-            clauses=[SearchClause(field="source_ip", operator="eq", value=alert.source_ip)],
+            clauses=[SearchClause(field="data.srcip", operator="eq", value=alert.source_ip)],
             time_range=window,
         )
     else:
@@ -21,7 +21,7 @@ def build_canonical_queries(alert: Alert) -> dict[SearchTemplate, SearchQuery | 
 
     queries[SearchTemplate.SAME_RULE_ID_HOST] = SearchQuery(
         clauses=[
-            SearchClause(field="rule_id", operator="eq", value=alert.rule_id),
+            SearchClause(field="rule.id", operator="eq", value=alert.rule_id),
             SearchClause(field="agent.id", operator="eq", value=alert.agent.id),
         ],
         time_range=window,
@@ -29,7 +29,7 @@ def build_canonical_queries(alert: Alert) -> dict[SearchTemplate, SearchQuery | 
 
     if alert.destination_ip:
         queries[SearchTemplate.SAME_DST_HOST] = SearchQuery(
-            clauses=[SearchClause(field="destination_ip", operator="eq", value=alert.destination_ip)],
+            clauses=[SearchClause(field="data.dstip", operator="eq", value=alert.destination_ip)],
             time_range=window,
         )
     else:

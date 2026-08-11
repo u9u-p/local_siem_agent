@@ -339,35 +339,69 @@ def test_stub_step_logs_skipped_when_model_unavailable():
 def test_run_canonical_searches_sums_evidence_count_across_all_three():
     siem = _FakeSIEMConnector(
         search_results={
-            "source_ip": SearchResult(alerts=[], total_count=3),
-            "rule_id": SearchResult(alerts=[], total_count=5),
-            "destination_ip": SearchResult(alerts=[], total_count=2),
+            "data.srcip": SearchResult(alerts=[], total_count=3),
+            "rule.id": SearchResult(alerts=[], total_count=5),
+            "data.dstip": SearchResult(alerts=[], total_count=2),
         }
     )
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip="203.0.113.5", destination_ip="198.51.100.9")
 
-    results, evidence_count = analyst._run_canonical_searches(alert)
+    queries, results, evidence_count, failed_count = analyst._run_canonical_searches(alert)
 
     assert evidence_count == 10
     assert len(results) == 3
+    assert failed_count == 0
 
 
 def test_run_canonical_searches_skips_missing_fields():
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=4)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=4)})
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    results, evidence_count = analyst._run_canonical_searches(alert)
+    queries, results, evidence_count, failed_count = analyst._run_canonical_searches(alert)
 
     assert evidence_count == 4
     assert SearchTemplate.SAME_SRC_IP_24H not in results
     assert SearchTemplate.SAME_DST_HOST not in results
     assert SearchTemplate.SAME_RULE_ID_HOST in results
+    assert failed_count == 0
+
+
+def test_run_canonical_searches_degrades_when_a_search_raises():
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=5)})
+    siem.search = lambda query: (_ for _ in ()).throw(SIEMConnectorError("unreachable", "indexer down")) \
+        if query.clauses[0].field == "data.srcip" else SearchResult(alerts=[], total_count=5)
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    queries, results, evidence_count, failed_count = analyst._run_canonical_searches(alert)
+
+    assert failed_count == 1
+    assert SearchTemplate.SAME_SRC_IP_24H not in results
+    assert SearchTemplate.SAME_RULE_ID_HOST in results
+    assert evidence_count == 5
+
+
+def test_step_correlate_reports_failed_canonical_searches_without_crashing():
+    siem = _FakeSIEMConnector()
+
+    def _raising_search(query):
+        raise SIEMConnectorError("unreachable", "indexer down")
+
+    siem.search = _raising_search
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+
+    assert step.action == "completed"
+    assert evidence_count == 0
+    assert "1 canonical search(es) failed" in step.output_summary
 
 
 def test_step_correlate_runs_searches_and_skips_classification_when_model_unavailable():
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=7)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=7)})
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
@@ -382,8 +416,8 @@ def test_step_correlate_runs_searches_and_skips_classification_when_model_unavai
 def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
     siem = _FakeSIEMConnector(
         search_results={
-            "source_ip": SearchResult(alerts=[], total_count=14),
-            "rule_id": SearchResult(alerts=[], total_count=14),
+            "data.srcip": SearchResult(alerts=[], total_count=14),
+            "rule.id": SearchResult(alerts=[], total_count=14),
         }
     )
     llm_client = _FakeLLMClient(
@@ -408,7 +442,7 @@ def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
 
 
 def test_step_correlate_skips_follow_up_when_none_needed():
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     llm_client = _FakeLLMClient(
         model_available=True,
         responses={
@@ -430,7 +464,7 @@ def test_step_correlate_skips_follow_up_when_none_needed():
 
 
 def test_step_correlate_falls_back_to_other_when_classification_call_fails():
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=2)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=2)})
     llm_client = _FakeLLMClient(model_available=True, error=LLMClientError("timeout", "took too long"))
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
@@ -444,7 +478,7 @@ def test_step_correlate_falls_back_to_other_when_classification_call_fails():
 def test_step_correlate_runs_open_value_search_when_pattern_is_none():
     siem = _FakeSIEMConnector(
         search_results={
-            "rule_id": SearchResult(alerts=[], total_count=1),
+            "rule.id": SearchResult(alerts=[], total_count=1),
             "full_log": SearchResult(alerts=[], total_count=3),
         }
     )
@@ -471,7 +505,7 @@ def test_step_correlate_runs_open_value_search_when_pattern_is_none():
 
 
 def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     llm_client = _FakeLLMClient(
         model_available=True,
         responses={
@@ -506,7 +540,7 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
         def model_available(self):
             return True
 
-    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     analyst = _make_analyst(siem=siem, llm_client=_SequencedLLMClient())
     alert = _make_alert(source_ip=None, destination_ip=None)
 
@@ -595,7 +629,7 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     siem = _FakeSIEMConnector(
         agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
         rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
-        search_results={"source_ip": SearchResult(alerts=[], total_count=1), "rule_id": SearchResult(alerts=[], total_count=1)},
+        search_results={"data.srcip": SearchResult(alerts=[], total_count=1), "rule.id": SearchResult(alerts=[], total_count=1)},
     )
     llm_client = _FakeLLMClient(
         model_available=True,

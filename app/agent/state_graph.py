@@ -224,20 +224,26 @@ class AgenticAnalyst:
         )
         return agent_context, rule_metadata, step
 
-    def _run_canonical_searches(self, alert: Alert) -> tuple[dict[SearchTemplate, SearchResult], int]:
+    def _run_canonical_searches(
+        self, alert: Alert
+    ) -> tuple[dict[SearchTemplate, SearchQuery | None], dict[SearchTemplate, SearchResult], int, int]:
         queries = build_canonical_queries(alert)
         results: dict[SearchTemplate, SearchResult] = {}
+        failed_count = 0
         for template, query in queries.items():
             if query is not None:
-                results[template] = self._siem.search(query)
+                try:
+                    results[template] = self._siem.search(query)
+                except SIEMConnectorError:
+                    failed_count += 1
         evidence_count = sum(r.total_count for r in results.values())
-        return results, evidence_count
+        return queries, results, evidence_count, failed_count
 
     def _step_correlate(
         self, alert: Alert, model_available: bool
     ) -> tuple[PatternType, int, InvestigationStep]:
-        results, evidence_count = self._run_canonical_searches(alert)
-        queries = build_canonical_queries(alert)
+        queries, results, evidence_count, failed_count = self._run_canonical_searches(alert)
+        failed_note = f"; {failed_count} canonical search(es) failed" if failed_count else ""
 
         if not model_available:
             step = InvestigationStep(
@@ -246,8 +252,8 @@ class AgenticAnalyst:
                 tool_used="siem_connector",
                 input=None,
                 output_summary=(
-                    f"ran {len(results)} canonical search(es), {evidence_count} total evidence "
-                    "(classification skipped: model unavailable)"
+                    f"ran {len(results)} canonical search(es), {evidence_count} total evidence"
+                    f"{failed_note} (classification skipped: model unavailable)"
                 ),
                 timestamp=datetime.now(timezone.utc),
             )
@@ -259,9 +265,12 @@ class AgenticAnalyst:
         if decision.follow_up_query != SearchTemplate.NONE_NEEDED:
             follow_up_query = queries.get(decision.follow_up_query)
             if follow_up_query is not None:
-                follow_up_result = self._siem.search(follow_up_query)
-                evidence_count += follow_up_result.total_count
-                follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
+                try:
+                    follow_up_result = self._siem.search(follow_up_query)
+                    evidence_count += follow_up_result.total_count
+                    follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
+                except SIEMConnectorError:
+                    follow_up_note = f"; follow-up {decision.follow_up_query.value} failed"
 
         open_value_note = ""
         if decision.pattern_type in (PatternType.NONE, PatternType.OTHER):
@@ -274,7 +283,7 @@ class AgenticAnalyst:
             input=None,
             output_summary=(
                 f"pattern_type={decision.pattern_type.value}, evidence_count={evidence_count}"
-                f"{follow_up_note}{open_value_note}"
+                f"{failed_note}{follow_up_note}{open_value_note}"
             ),
             timestamp=datetime.now(timezone.utc),
         )
@@ -302,7 +311,10 @@ class AgenticAnalyst:
             clauses=[SearchClause(field="full_log", operator="contains", value=proposal.search_value)],
             time_range=(alert.timestamp - CANONICAL_SEARCH_WINDOW, alert.timestamp),
         )
-        result = self._siem.search(query)
+        try:
+            result = self._siem.search(query)
+        except SIEMConnectorError:
+            return f"; open-value search for {proposal.search_value!r} failed"
         return (
             f"; open-value search for {proposal.search_value!r} found {result.total_count} "
             "(noisier, unstructured match)"

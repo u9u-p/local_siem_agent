@@ -111,6 +111,29 @@ def test_search_translates_eq_operator_to_term_query():
 
 
 @respx.mock
+def test_search_translates_multiple_clauses_into_multiple_must_entries():
+    route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
+        return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
+    )
+    connector = _make_connector()
+
+    connector.search(
+        SearchQuery(
+            clauses=[
+                SearchClause(field="rule.id", operator="eq", value="5710"),
+                SearchClause(field="agent.id", operator="eq", value="001"),
+            ]
+        )
+    )
+
+    parsed = json.loads(route.calls.last.request.content)
+    assert parsed["query"]["bool"]["must"] == [
+        {"term": {"rule.id": "5710"}},
+        {"term": {"agent.id": "001"}},
+    ]
+
+
+@respx.mock
 def test_search_translates_contains_operator_to_match_query():
     route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
         return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
