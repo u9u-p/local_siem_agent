@@ -4,9 +4,10 @@ from uuid import uuid4
 
 from typer.testing import CliRunner
 
-from app.schemas import Alert, AgentRef
+from app.schemas import Alert, AgentRef, AlertStatus
 from app.storage.sqlite_alert_store import DuplicateAlertError
 from app.cli import _add_alert, _pull_alerts, _resolve_since, app
+from tests.test_schemas import _make_report
 
 
 runner = CliRunner()
@@ -184,3 +185,85 @@ def test_add_alert_command_reports_malformed_file(tmp_path, monkeypatch):
 
     assert result.exit_code == 1
     assert "Could not add alert" in result.output
+
+
+class _FakeAnalyst:
+    def __init__(self, report):
+        self._report = report
+        self.investigated_alerts = []
+
+    def investigate(self, alert):
+        self.investigated_alerts.append(alert)
+        return self._report
+
+
+def test_investigate_alert_calls_analyst_and_writes_report_file(tmp_path):
+    from app.cli import _investigate_alert
+
+    alert = _make_alert()
+    report = _make_report(alert_id=alert.alert_id)
+    analyst = _FakeAnalyst(report)
+    reports_dir = tmp_path / "reports"
+
+    result = _investigate_alert(analyst, alert, reports_dir)
+
+    assert result == report
+    assert analyst.investigated_alerts == [alert]
+    assert (reports_dir / f"{report.report_id}.json").exists()
+
+
+def test_investigate_all_command_prints_no_alerts_message(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_analyst", lambda settings, alert_store=None: _FakeAnalyst(_make_report()))
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["investigate-all"])
+
+    assert result.exit_code == 0
+    assert "No new alerts to investigate." in result.stdout
+
+
+def test_investigate_all_command_investigates_each_new_alert(monkeypatch, tmp_path):
+    new_alert = _make_alert(status=AlertStatus.NEW)
+    closed_alert = _make_alert(alert_id=uuid4(), status=AlertStatus.CLOSED)
+    store = _FakeAlertStore(alerts=[new_alert, closed_alert])
+    report = _make_report(alert_id=new_alert.alert_id)
+    analyst = _FakeAnalyst(report)
+
+    monkeypatch.setattr("app.cli.build_analyst", lambda settings, alert_store=None: analyst)
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+
+    result = runner.invoke(app, ["investigate-all"])
+
+    assert result.exit_code == 0
+    assert analyst.investigated_alerts == [new_alert]
+    assert str(report.report_id) in result.stdout
+
+
+def test_investigate_one_command_reports_not_found(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", lambda settings, alert_store=None: _FakeAnalyst(_make_report()))
+
+    result = runner.invoke(app, ["investigate-one", "nonexistent-id"])
+
+    assert result.exit_code == 1
+    assert "No alert found with id nonexistent-id" in result.output
+
+
+def test_investigate_one_command_investigates_the_named_alert(monkeypatch, tmp_path):
+    alert = _make_alert()
+    store = _FakeAlertStore(alerts=[alert])
+    report = _make_report(alert_id=alert.alert_id)
+    analyst = _FakeAnalyst(report)
+
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", lambda settings, alert_store=None: analyst)
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+
+    result = runner.invoke(app, ["investigate-one", str(alert.alert_id)])
+
+    assert result.exit_code == 0
+    assert analyst.investigated_alerts == [alert]
+    assert str(report.report_id) in result.stdout
