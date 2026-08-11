@@ -1228,6 +1228,10 @@ def test_investigate_handles_multiple_simultaneous_degradations(tmp_path):
     assert len(report.investigation_timeline) == 9
     assert report.risk_assessment is not None
     assert report.model_metadata is not None
+    context_step = next(s for s in report.investigation_timeline if s.step_name == Step.GATHER_CONTEXT.value)
+    assert context_step.action == "degraded"
+    finalize_step = report.investigation_timeline[-1]
+    assert finalize_step.action == "completed"
 
 
 def test_step_gather_context_degrades_marks_investigation_degraded():
