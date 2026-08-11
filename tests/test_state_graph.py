@@ -1047,11 +1047,17 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
         Step.SELF_CHECK.value,
         Step.FINALIZE_AND_PERSIST.value,
     ]
-    assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
+    assert report.status == ReportStatus.COMPLETE
+    assert report.alert_summary == "Brute-force login attempts detected from 203.0.113.5 against web-01."
     assert report.risk_assessment.severity == Severity.HIGH
     assert report.risk_assessment.confidence == Confidence.HIGH
+    assert report.risk_assessment.rationale == "High confidence based on repeated failed logins and a known-malicious source IP."
+    assert report.recommended_actions == [
+        RecommendedAction.BLOCK_SOURCE_IP.value, RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value,
+    ]
+    assert report.triage_verdict_experimental == "true_positive"
     assert report.model_metadata.model_name == "gemma4:12b"
-    assert report.model_metadata.prompt_version == "4c-v1"
+    assert report.model_metadata.prompt_version == "4d-v1"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
@@ -1222,7 +1228,68 @@ def test_investigate_handles_multiple_simultaneous_degradations(tmp_path):
     assert len(report.investigation_timeline) == 9
     assert report.risk_assessment is not None
     assert report.model_metadata is not None
-    context_step = next(s for s in report.investigation_timeline if s.step_name == Step.GATHER_CONTEXT.value)
-    assert context_step.action == "degraded"
-    finalize_step = report.investigation_timeline[-1]
-    assert finalize_step.action == "completed"
+
+
+def test_step_gather_context_degrades_marks_investigation_degraded():
+    siem = _FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused"))
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    analyst._step_gather_context(alert)
+
+    assert analyst._degraded_reasons == ["SIEM context unavailable: unreachable"]
+
+
+def test_step_risk_assessment_llm_failure_marks_investigation_degraded():
+    llm_client = _FakeLLMClient(model_available=True, error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True)
+
+    assert analyst._degraded_reasons == ["risk assessment failed: timeout"]
+
+
+def test_assemble_report_status_complete_when_nothing_degraded(tmp_path):
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True,
+    )
+
+    assert report.status == ReportStatus.COMPLETE
+    assert report.alert_summary == draft.alert_summary
+    assert report.risk_assessment.rationale == draft.rationale
+    assert report.recommended_actions == [a.value for a in draft.recommended_actions]
+    assert report.model_metadata.prompt_version == "4d-v1"
+
+
+def test_assemble_report_status_needs_human_review_when_degraded():
+    analyst = _make_analyst()
+    analyst._degraded_reasons.append("risk assessment failed: timeout")
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+
+    assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
+
+
+def test_assemble_report_includes_experimental_fields_when_present():
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    experimental = DraftReportExperimental(
+        recommended_actions_freeform=["do X"], triage_verdict=TriageVerdict.FALSE_POSITIVE, triage_rationale="y",
+    )
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, experimental, "", model_available=True)
+
+    assert report.recommended_actions_freeform_experimental == ["do X"]
+    assert report.triage_verdict_experimental == "false_positive"
+    assert report.triage_rationale_experimental == "y"

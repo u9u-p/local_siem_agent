@@ -187,6 +187,7 @@ class AgenticAnalyst:
         merged = _merge_indicators(validated, llm_validated)
 
         if llm_error is not None:
+            self._degraded_reasons.append(f"indicator extraction LLM failed: {llm_error}")
             summary = (
                 f"regex: {candidate_count} candidates, {validated_count} validated; "
                 f"LLM-assisted extraction failed: {llm_error}"
@@ -272,6 +273,7 @@ class AgenticAnalyst:
             agent_context = self._siem.get_agent_context(alert.agent.id)
             rule_metadata = self._siem.get_rule_metadata(alert.rule_id)
         except SIEMConnectorError as exc:
+            self._degraded_reasons.append(f"SIEM context unavailable: {exc.kind}")
             step = InvestigationStep(
                 step_name=Step.GATHER_CONTEXT.value,
                 action="degraded",
@@ -312,6 +314,8 @@ class AgenticAnalyst:
     ) -> tuple[PatternType, int, InvestigationStep]:
         queries, results, evidence_count, failed_count = self._run_canonical_searches(alert)
         failed_note = f"; {failed_count} canonical search(es) failed" if failed_count else ""
+        if failed_count:
+            self._degraded_reasons.append(f"{failed_count} canonical search(es) failed")
 
         if not model_available:
             step = InvestigationStep(
@@ -339,6 +343,7 @@ class AgenticAnalyst:
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
                 except SIEMConnectorError:
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} failed"
+                    self._degraded_reasons.append(f"correlation follow-up {decision.follow_up_query.value} failed")
 
         open_value_note = ""
         if decision.pattern_type in (PatternType.NONE, PatternType.OTHER):
@@ -363,7 +368,8 @@ class AgenticAnalyst:
         prompt = build_correlation_decision_prompt(alert, canonical_results, evidence_count)
         try:
             return self._llm_client.generate_structured(prompt, CorrelationDecision)
-        except LLMClientError:
+        except LLMClientError as exc:
+            self._degraded_reasons.append(f"correlation classification failed: {exc.kind}")
             return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
 
     def _run_open_value_search(
@@ -419,6 +425,7 @@ class AgenticAnalyst:
         try:
             return self._llm_client.generate_structured(prompt, RiskAssessment)
         except LLMClientError as exc:
+            self._degraded_reasons.append(f"risk assessment failed: {exc.kind}")
             return RiskAssessment(
                 severity=Severity.LOW, confidence=Confidence.LOW,
                 rationale=f"risk assessment failed: {exc.kind}",
@@ -531,32 +538,33 @@ class AgenticAnalyst:
             return None
 
     def _assemble_report(
-        self,
-        alert: Alert,
-        timeline: list[InvestigationStep],
-        enrichment_results: list[EnrichmentResult],
-        risk_assessment: RiskAssessment,
-        model_available: bool,
+        self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],
+        risk_assessment: RiskAssessment, draft: DraftReportCanonical, experimental: DraftReportExperimental | None,
+        uncertainty_notes: str, model_available: bool,
     ) -> Report:
+        status = ReportStatus.NEEDS_HUMAN_REVIEW if self._degraded_reasons else ReportStatus.COMPLETE
         return Report(
             report_id=uuid4(),
             alert_id=alert.alert_id,
             generated_at=datetime.now(timezone.utc),
-            alert_summary=f"Stub report for alert {alert.alert_id} — full investigation logic pending Phase 4d.",
+            alert_summary=draft.alert_summary,
             investigation_timeline=timeline,
             enrichment_findings=enrichment_results,
-            risk_assessment=risk_assessment,
-            recommended_actions=[],
-            recommended_actions_freeform_experimental=None,
-            uncertainty_notes=(
-                "This report was produced by the Phase 4c pipeline — steps 7-8 "
-                "(Draft Report, Self-Check) are still stubs, not real analysis."
+            risk_assessment=RiskAssessment(
+                severity=risk_assessment.severity, confidence=risk_assessment.confidence, rationale=draft.rationale,
             ),
-            status=ReportStatus.NEEDS_HUMAN_REVIEW,
+            recommended_actions=[a.value for a in draft.recommended_actions],
+            recommended_actions_freeform_experimental=(
+                experimental.recommended_actions_freeform if experimental is not None else None
+            ),
+            triage_verdict_experimental=experimental.triage_verdict.value if experimental is not None else None,
+            triage_rationale_experimental=experimental.triage_rationale if experimental is not None else None,
+            uncertainty_notes=uncertainty_notes,
+            status=status,
             model_metadata=ModelMetadata(
                 model_name="gemma4:12b" if model_available else "none",
                 model_version="none",
-                prompt_version="4c-v1",
+                prompt_version="4d-v1",
             ),
         )
 
@@ -583,7 +591,10 @@ class AgenticAnalyst:
         )
 
     def investigate(self, alert: Alert) -> Report:
+        self._degraded_reasons = []
         model_available = self._llm_client.model_available()
+        if not model_available:
+            self._degraded_reasons.append("model unavailable")
         timeline: list[InvestigationStep] = [self._step_ingest_and_parse(alert, model_available)]
 
         indicators, extract_step = self._step_extract_indicators(alert, model_available)
@@ -614,7 +625,9 @@ class AgenticAnalyst:
         )
         timeline.append(self_check_step)
 
-        report = self._assemble_report(alert, timeline, enrichment_results, risk_assessment, model_available)
+        report = self._assemble_report(
+            alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes, model_available,
+        )
         finalize_step = self._step_finalize_and_persist(alert, report)
         report.investigation_timeline.append(finalize_step)
         return report
