@@ -103,3 +103,22 @@ def build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichm
         "classify whether this alert looks like a true_positive, false_positive, or uncertain, with a "
         "one-sentence rationale for that triage call."
     )
+
+
+def build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+    claims = [draft.alert_summary, draft.rationale, *[a.value for a in draft.recommended_actions]]
+    claims_block = "\n".join(f"{i + 1}. {claim}" for i, claim in enumerate(claims))
+    enrichment_summary = "\n".join(
+        f"- {e.indicator_type.value} {e.indicator_value}: {e.verdict.value} (provider {e.provider_id})"
+        for e in enrichment_results
+    ) or "none"
+    return (
+        "You are auditing a draft security report against the structured findings that produced it. "
+        "For EACH numbered claim below, decide whether the structured findings support it. If not, and you "
+        "can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\n"
+        f"Correlation findings: pattern_type={pattern_type.value}, evidence_count={evidence_count}.\n"
+        f"Enrichment findings:\n{enrichment_summary}\n"
+        f"Risk assessment: severity={risk_assessment.severity.value}, confidence={risk_assessment.confidence.value}.\n\n"
+        f"Claims to audit, in order:\n{claims_block}\n\n"
+        "Return exactly one audit per claim, in the same order."
+    )

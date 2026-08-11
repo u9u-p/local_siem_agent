@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.agent.schemas import (
+    ClaimAudit,
     CorrelationDecision,
     DraftReportCanonical,
     DraftReportExperimental,
@@ -11,6 +12,7 @@ from app.agent.schemas import (
     PatternType,
     RecommendedAction,
     SearchTemplate,
+    SelfCheckResult,
     TriageVerdict,
 )
 from app.agent.state_graph import AgenticAnalyst, Step
@@ -18,7 +20,7 @@ from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.llm.errors import LLMClientError
-from app.schemas import AgentRef, Alert, EnrichmentResult
+from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep
 from app.schemas import EnrichmentVerdict, IndicatorType
 from app.schemas import AlertStatus, Confidence, ReportStatus, RiskAssessment, Severity
 from app.storage.db import get_engine, init_db
@@ -331,26 +333,6 @@ def test_step_gather_context_degrades_on_siem_connector_error():
     assert rule_metadata is None
     assert step.action == "degraded"
     assert "unreachable" in step.output_summary
-
-
-def test_stub_step_logs_stub_when_model_available():
-    analyst = _make_analyst()
-
-    step = analyst._stub_step(Step.CORRELATE, model_available=True)
-
-    assert step.step_name == Step.CORRELATE.value
-    assert step.action == "stub"
-    assert "Phase 4c/4d" in step.output_summary
-
-
-def test_stub_step_logs_skipped_when_model_unavailable():
-    analyst = _make_analyst()
-
-    step = analyst._stub_step(Step.RISK_ASSESSMENT, model_available=False)
-
-    assert step.step_name == Step.RISK_ASSESSMENT.value
-    assert step.action == "skipped"
-    assert "model unavailable" in step.output_summary
 
 
 def test_run_canonical_searches_sums_evidence_count_across_all_three():
@@ -696,13 +678,292 @@ def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
     assert "7" in canonical_prompt
 
 
-def test_step_self_check_delegates_to_stub_step():
+def _draft_with_two_actions():
+    return DraftReportCanonical(
+        alert_summary="Brute-force attempts from 203.0.113.5.",
+        rationale="Repeated failed logins against a single account.",
+        recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+    )
+
+
+def _passthrough_correlate_step():
+    return InvestigationStep(
+        step_name=Step.CORRELATE.value, action="completed", tool_used="siem_connector+llm", input=None,
+        output_summary="pattern_type=brute_force, evidence_count=14",
+        timestamp=datetime.now(timezone.utc),
+    )
+
+
+def test_step_self_check_keeps_all_claims_when_all_supported():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected == draft
+    # No claims were flagged, but `_passthrough_correlate_step()` has no "follow-up"/"open-value
+    # search" text and `_make_alert()` defaults `mitre` to None, so `_compute_uncertainty_notes`
+    # still reports those two structural gaps (see test_step_self_check_notes_unused_correlation_menu
+    # and test_step_self_check_notes_missing_mitre_mapping for the same behavior in isolation).
+    assert notes == (
+        "correlation follow-up/open-value search menu was not used; "
+        "no MITRE ATT&CK mapping available for this alert"
+    )
+    assert step.action == "completed"
+
+
+def test_step_self_check_applies_correction_to_unsupported_free_text_claim():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=False, correction="Corrected summary text."),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected.alert_summary == "Corrected summary text."
+    assert corrected.recommended_actions == draft.recommended_actions
+
+
+def test_step_self_check_drops_unsupported_action_without_using_its_correction():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=False, correction="Do something else instead"),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected.recommended_actions == [RecommendedAction.DISABLE_OR_RESET_ACCOUNT]
+    assert "Do something else instead" not in [a.value for a in corrected.recommended_actions]
+    assert analyst._degraded_reasons == ["self-check flagged 1 unsupported claim(s)"]
+
+
+def test_step_self_check_falls_back_to_escalate_when_all_actions_dropped():
+    draft = DraftReportCanonical(
+        alert_summary="x", rationale="y", recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP],
+    )
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=False),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
+
+
+def test_step_self_check_notes_unsupported_claim_without_correction():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=False, correction=None),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected.alert_summary == draft.alert_summary  # kept as-is, best effort
+    assert f"unsupported claim: {draft.alert_summary!r}" in notes
+
+
+def test_step_self_check_notes_errored_and_unknown_enrichments():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    enrichment_results = [
+        _make_enrichment_result(error="rate_limited"),
+        _make_enrichment_result(verdict=EnrichmentVerdict.UNKNOWN),
+    ]
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, enrichment_results, risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert "2 enrichment lookup(s) errored or returned unknown verdicts" in notes
+
+
+def test_step_self_check_notes_unused_correlation_menu():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    unused_correlate_step = InvestigationStep(
+        step_name=Step.CORRELATE.value, action="completed", tool_used="siem_connector+llm", input=None,
+        output_summary="pattern_type=brute_force, evidence_count=14",  # no "follow-up" or "open-value search" text
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        unused_correlate_step, model_available=True,
+    )
+
+    assert "correlation follow-up/open-value search menu was not used" in notes
+
+
+def test_step_self_check_notes_missing_mitre_mapping():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()  # _make_alert's defaults never set `mitre`, so it defaults to None
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert "no MITRE ATT&CK mapping available for this alert" in notes
+
+
+def test_step_self_check_falls_back_when_call_fails():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected == draft
+    assert "self-check could not run" in notes
+    assert analyst._degraded_reasons == ["self-check failed: timeout"]
+
+
+def test_step_self_check_falls_back_when_audit_count_mismatches_claim_count():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[ClaimAudit(claim=draft.alert_summary, supported=True)])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected == draft
+
+
+def test_step_self_check_skips_when_model_unavailable():
+    draft = _draft_with_two_actions()
     analyst = _make_analyst()
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    step = analyst._step_self_check(model_available=True)
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=False,
+    )
 
-    assert step.step_name == Step.SELF_CHECK.value
-    assert step.action == "stub"
+    assert corrected == draft
+    assert "self-check skipped: model unavailable" in notes
+    assert step.action == "skipped"
+
+
+def test_self_check_prompt_contains_draft_alert_summary():
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    self_check_prompt = next(p for p, schema in llm_client.calls if schema is SelfCheckResult)
+    assert draft.alert_summary in self_check_prompt
 
 
 def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
@@ -737,6 +998,12 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
                 triage_verdict=TriageVerdict.TRUE_POSITIVE,
                 triage_rationale="Pattern matches a known brute-force signature.",
             ),
+            SelfCheckResult: SelfCheckResult(audits=[
+                ClaimAudit(claim="Brute-force login attempts detected from 203.0.113.5 against web-01.", supported=True),
+                ClaimAudit(claim="High confidence based on repeated failed logins and a known-malicious source IP.", supported=True),
+                ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+                ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+            ]),
         },
     )
     analyst = AgenticAnalyst(
@@ -829,6 +1096,12 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
                     triage_verdict=TriageVerdict.TRUE_POSITIVE,
                     triage_rationale="Pattern matches a known brute-force signature.",
                 ),
+                SelfCheckResult: SelfCheckResult(audits=[
+                    ClaimAudit(claim="Brute-force login attempts detected from 203.0.113.5 against web-01.", supported=True),
+                    ClaimAudit(claim="High confidence based on repeated failed logins and a known-malicious source IP.", supported=True),
+                    ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+                    ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+                ]),
             },
         ),
     )
@@ -887,6 +1160,12 @@ def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
                     triage_verdict=TriageVerdict.TRUE_POSITIVE,
                     triage_rationale="Pattern matches a known brute-force signature.",
                 ),
+                SelfCheckResult: SelfCheckResult(audits=[
+                    ClaimAudit(claim="Brute-force login attempts detected from 203.0.113.5 against web-01.", supported=True),
+                    ClaimAudit(claim="High confidence based on repeated failed logins and a known-malicious source IP.", supported=True),
+                    ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+                    ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+                ]),
             },
         ),
     )

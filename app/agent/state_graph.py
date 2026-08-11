@@ -13,8 +13,10 @@ from app.agent.prompts import (
     build_extract_indicators_prompt,
     build_open_value_search_prompt,
     build_risk_assessment_prompt,
+    build_self_check_prompt,
 )
 from app.agent.schemas import (
+    ClaimAudit,
     CorrelationDecision,
     DraftReportCanonical,
     DraftReportExperimental,
@@ -23,6 +25,7 @@ from app.agent.schemas import (
     PatternType,
     RecommendedAction,
     SearchTemplate,
+    SelfCheckResult,
 )
 from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
 from app.enrichment.registry import EnrichmentRegistry
@@ -64,6 +67,65 @@ def _merge_indicators(regex_validated: list[Indicator], llm_validated: list[Indi
             seen.add(key)
             merged.append(indicator)
     return merged
+
+
+def _compute_uncertainty_notes(
+    alert: Alert, enrichment_results: list[EnrichmentResult],
+    correlate_step: InvestigationStep, flagged_claims: list[str],
+) -> str:
+    gaps: list[str] = [f"unsupported claim: {claim!r}" for claim in flagged_claims]
+
+    errored_or_unknown = [
+        r for r in enrichment_results if r.error is not None or r.verdict == EnrichmentVerdict.UNKNOWN
+    ]
+    if errored_or_unknown:
+        gaps.append(f"{len(errored_or_unknown)} enrichment lookup(s) errored or returned unknown verdicts")
+
+    if "follow-up" not in correlate_step.output_summary and "open-value search" not in correlate_step.output_summary:
+        gaps.append("correlation follow-up/open-value search menu was not used")
+
+    if not alert.mitre:
+        gaps.append("no MITRE ATT&CK mapping available for this alert")
+
+    return "; ".join(gaps)
+
+
+def _apply_self_check_corrections(
+    draft: DraftReportCanonical, result: SelfCheckResult
+) -> tuple[DraftReportCanonical, list[str]]:
+    claims = [draft.alert_summary, draft.rationale, *[a.value for a in draft.recommended_actions]]
+    if len(result.audits) != len(claims):
+        return draft, []
+
+    alert_summary = draft.alert_summary
+    rationale = draft.rationale
+    flagged_claims: list[str] = []
+
+    summary_audit = result.audits[0]
+    if not summary_audit.supported:
+        if summary_audit.correction:
+            alert_summary = summary_audit.correction
+        else:
+            flagged_claims.append(summary_audit.claim)
+
+    rationale_audit = result.audits[1]
+    if not rationale_audit.supported:
+        if rationale_audit.correction:
+            rationale = rationale_audit.correction
+        else:
+            flagged_claims.append(rationale_audit.claim)
+
+    kept_actions = []
+    for action, audit in zip(draft.recommended_actions, result.audits[2:]):
+        if audit.supported:
+            kept_actions.append(action)
+        else:
+            flagged_claims.append(audit.claim)
+    if not kept_actions:
+        kept_actions = [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
+
+    corrected = DraftReportCanonical(alert_summary=alert_summary, rationale=rationale, recommended_actions=kept_actions)
+    return corrected, flagged_claims
 
 
 class Step(str, Enum):
@@ -326,20 +388,6 @@ class AgenticAnalyst:
             "(noisier, unstructured match)"
         )
 
-    def _stub_step(self, step: Step, model_available: bool) -> InvestigationStep:
-        if model_available:
-            action, summary = "stub", f"not yet implemented — Phase 4c/4d ({step.value})"
-        else:
-            action, summary = "skipped", "skipped: model unavailable"
-        return InvestigationStep(
-            step_name=step.value,
-            action=action,
-            tool_used=None,
-            input=None,
-            output_summary=summary,
-            timestamp=datetime.now(timezone.utc),
-        )
-
     def _step_risk_assessment(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], model_available: bool,
@@ -436,8 +484,51 @@ class AgenticAnalyst:
         except LLMClientError:
             return None
 
-    def _step_self_check(self, model_available: bool) -> InvestigationStep:
-        return self._stub_step(Step.SELF_CHECK, model_available)
+    def _step_self_check(
+        self, alert: Alert, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
+        correlate_step: InvestigationStep, model_available: bool,
+    ) -> tuple[DraftReportCanonical, str, InvestigationStep]:
+        if not model_available:
+            notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
+            notes = "self-check skipped: model unavailable" + (f"; {notes}" if notes else "")
+            step = InvestigationStep(
+                step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None, input=None,
+                output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
+            )
+            return draft, notes, step
+
+        result = self._run_self_check(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        if result is None:
+            notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
+            notes = "self-check could not run" + (f"; {notes}" if notes else "")
+            step = InvestigationStep(
+                step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm", input=None,
+                output_summary="self-check call failed; corrections not applied", timestamp=datetime.now(timezone.utc),
+            )
+            return draft, notes, step
+
+        corrected_draft, flagged_claims = _apply_self_check_corrections(draft, result)
+        if flagged_claims:
+            self._degraded_reasons.append(f"self-check flagged {len(flagged_claims)} unsupported claim(s)")
+        notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, flagged_claims)
+        step = InvestigationStep(
+            step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm", input=None,
+            output_summary=f"audited {len(result.audits)} claim(s), {len(flagged_claims)} flagged",
+            timestamp=datetime.now(timezone.utc),
+        )
+        return corrected_draft, notes, step
+
+    def _run_self_check(
+        self, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
+    ) -> SelfCheckResult | None:
+        prompt = build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        try:
+            return self._llm_client.generate_structured(prompt, SelfCheckResult)
+        except LLMClientError as exc:
+            self._degraded_reasons.append(f"self-check failed: {exc.kind}")
+            return None
 
     def _assemble_report(
         self,
@@ -517,7 +608,11 @@ class AgenticAnalyst:
         )
         timeline.append(draft_step)
 
-        timeline.append(self._step_self_check(model_available))
+        draft, uncertainty_notes, self_check_step = self._step_self_check(
+            alert, draft, pattern_type, evidence_count, enrichment_results, risk_assessment,
+            correlate_step, model_available,
+        )
+        timeline.append(self_check_step)
 
         report = self._assemble_report(alert, timeline, enrichment_results, risk_assessment, model_available)
         finalize_step = self._step_finalize_and_persist(alert, report)
