@@ -10,6 +10,7 @@ dependencies = [
     "sqlmodel>=0.0.16,<0.1",
     "httpx>=0.27,<1",
     "openai>=1.50,<2",
+    "typer>=0.12,<1",
 ]
 
 [project.optional-dependencies]
@@ -18,6 +19,9 @@ dev = [
     "respx>=0.21,<1",
     "freezegun>=1.4,<2",
 ]
+
+[project.scripts]
+agent = "app.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]

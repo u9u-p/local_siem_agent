@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_path: str = "./data/alerts.db"
+    reports_dir: str = "./data/reports"
     log_level: str = "INFO"
     abuseipdb_api_key: str | None = None
     virustotal_api_key: str | None = None

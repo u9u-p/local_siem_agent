@@ -81,3 +81,12 @@ def test_settings_virustotal_api_key_env_override(monkeypatch):
     monkeypatch.setenv("VIRUSTOTAL_API_KEY", "test-vt-key")
     settings = Settings(_env_file=None)
     assert settings.virustotal_api_key == "test-vt-key"
+
+
+def test_settings_reports_dir_defaults_and_env_override(monkeypatch):
+    settings = Settings(_env_file=None)
+    assert settings.reports_dir == "./data/reports"
+
+    monkeypatch.setenv("REPORTS_DIR", "/tmp/custom-reports")
+    settings = Settings(_env_file=None)
+    assert settings.reports_dir == "/tmp/custom-reports"
