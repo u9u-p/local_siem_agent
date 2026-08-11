@@ -69,7 +69,7 @@ def add_alert_cmd(file: Path = typer.Argument(..., exists=True, readable=True)) 
     try:
         alert = _add_alert(alert_store, file)
     except (json.JSONDecodeError, KeyError, ValueError, TypeError) as exc:
-        typer.echo(f"Could not add alert from {file}: {exc}")
+        typer.echo(f"Could not add alert from {file}: {exc}", err=True)
         raise typer.Exit(code=1)
     typer.echo(f"Saved alert {alert.alert_id} (rule {alert.rule_id}).")
 

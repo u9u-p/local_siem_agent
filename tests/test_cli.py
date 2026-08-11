@@ -183,4 +183,4 @@ def test_add_alert_command_reports_malformed_file(tmp_path, monkeypatch):
     result = runner.invoke(app, ["add-alert", str(file_path)])
 
     assert result.exit_code == 1
-    assert "Could not add alert" in result.stdout
+    assert "Could not add alert" in result.output
