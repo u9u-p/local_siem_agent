@@ -5,6 +5,7 @@ from app.agent.schemas import (
     CorrelationDecision,
     ExtractedIndicators,
     IndicatorCandidate,
+    OpenValueSearchProposal,
     PatternType,
     SearchTemplate,
 )
@@ -411,8 +412,10 @@ def test_step_correlate_skips_follow_up_when_none_needed():
     llm_client = _FakeLLMClient(
         model_available=True,
         responses={
+            # NOTE: uses BRUTE_FORCE (not NONE/OTHER) so this test — which is only about
+            # follow-up-query skip logic — isn't coupled to Task 7's open-value-search path.
             CorrelationDecision: CorrelationDecision(
-                pattern_type=PatternType.NONE, follow_up_query=SearchTemplate.NONE_NEEDED
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
             )
         },
     )
@@ -421,7 +424,7 @@ def test_step_correlate_skips_follow_up_when_none_needed():
 
     pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
 
-    assert pattern_type == PatternType.NONE
+    assert pattern_type == PatternType.BRUTE_FORCE
     assert evidence_count == 1
     assert len(siem.search_calls) == 1  # only the one canonical search — no follow-up executed
 
@@ -436,6 +439,80 @@ def test_step_correlate_falls_back_to_other_when_classification_call_fails():
 
     assert pattern_type == PatternType.OTHER
     assert evidence_count == 2
+
+
+def test_step_correlate_runs_open_value_search_when_pattern_is_none():
+    siem = _FakeSIEMConnector(
+        search_results={
+            "rule_id": SearchResult(alerts=[], total_count=1),
+            "full_log": SearchResult(alerts=[], total_count=3),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.NONE, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            OpenValueSearchProposal: OpenValueSearchProposal(search_value="admin@evil.test"),
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+
+    assert pattern_type == PatternType.NONE
+    assert "noisier, unstructured match" in step.output_summary
+    assert "admin@evil.test" in step.output_summary
+    full_log_calls = [c for c in siem.search_calls if c.clauses[0].field == "full_log"]
+    assert len(full_log_calls) == 1
+    assert full_log_calls[0].clauses[0].operator == "contains"
+
+
+def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    _, _, step = analyst._step_correlate(alert, model_available=True)
+
+    assert "noisier" not in step.output_summary
+    assert all(c.clauses[0].field != "full_log" for c in siem.search_calls)
+
+
+def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
+    class _SequencedLLMClient:
+        def __init__(self):
+            self.calls = 0
+
+        def generate_structured(self, prompt, schema):
+            self.calls += 1
+            if schema is CorrelationDecision:
+                return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+            raise LLMClientError("timeout", "took too long")
+
+        def health_check(self):
+            return True
+
+        def model_available(self):
+            return True
+
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    analyst = _make_analyst(siem=siem, llm_client=_SequencedLLMClient())
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    _, _, step = analyst._step_correlate(alert, model_available=True)
+
+    assert "noisier" not in step.output_summary
 
 
 def test_step_risk_assessment_delegates_to_stub_step():

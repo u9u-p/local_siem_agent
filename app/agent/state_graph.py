@@ -4,14 +4,24 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
-from app.agent.correlation_queries import build_canonical_queries
+from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries
 from app.agent.indicator_extraction import extract_and_validate
-from app.agent.prompts import build_correlation_decision_prompt, build_extract_indicators_prompt
-from app.agent.schemas import CorrelationDecision, ExtractedIndicators, PatternType, SearchTemplate
+from app.agent.prompts import (
+    build_correlation_decision_prompt,
+    build_extract_indicators_prompt,
+    build_open_value_search_prompt,
+)
+from app.agent.schemas import (
+    CorrelationDecision,
+    ExtractedIndicators,
+    OpenValueSearchProposal,
+    PatternType,
+    SearchTemplate,
+)
 from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
-from app.integration.models import AgentContext, RuleMetadata, SearchResult
+from app.integration.models import AgentContext, RuleMetadata, SearchClause, SearchQuery, SearchResult
 from app.integration.siem_connector import SIEMConnector
 from app.llm.client import LLMClient
 from app.llm.errors import LLMClientError
@@ -252,12 +262,19 @@ class AgenticAnalyst:
                 evidence_count += follow_up_result.total_count
                 follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
 
+        open_value_note = ""
+        if decision.pattern_type in (PatternType.NONE, PatternType.OTHER):
+            open_value_note = self._run_open_value_search(alert, results)
+
         step = InvestigationStep(
             step_name=Step.CORRELATE.value,
             action="completed",
             tool_used="siem_connector+llm",
             input=None,
-            output_summary=f"pattern_type={decision.pattern_type.value}, evidence_count={evidence_count}{follow_up_note}",
+            output_summary=(
+                f"pattern_type={decision.pattern_type.value}, evidence_count={evidence_count}"
+                f"{follow_up_note}{open_value_note}"
+            ),
             timestamp=datetime.now(timezone.utc),
         )
         return decision.pattern_type, evidence_count, step
@@ -270,6 +287,25 @@ class AgenticAnalyst:
             return self._llm_client.generate_structured(prompt, CorrelationDecision)
         except LLMClientError:
             return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+
+    def _run_open_value_search(
+        self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult]
+    ) -> str:
+        prompt = build_open_value_search_prompt(alert, canonical_results)
+        try:
+            proposal = self._llm_client.generate_structured(prompt, OpenValueSearchProposal)
+        except LLMClientError:
+            return ""
+
+        query = SearchQuery(
+            clauses=[SearchClause(field="full_log", operator="contains", value=proposal.search_value)],
+            time_range=(alert.timestamp - CANONICAL_SEARCH_WINDOW, alert.timestamp),
+        )
+        result = self._siem.search(query)
+        return (
+            f"; open-value search for {proposal.search_value!r} found {result.total_count} "
+            "(noisier, unstructured match)"
+        )
 
     def _stub_step(self, step: Step, model_available: bool) -> InvestigationStep:
         if model_available:

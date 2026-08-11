@@ -29,3 +29,18 @@ def build_correlation_decision_prompt(alert, canonical_results, evidence_count) 
         "(same_src_ip_24h, same_rule_id_host, same_dst_host, or none_needed) if further investigation "
         "of one of the canonical searches would help confirm the pattern."
     )
+
+
+def build_open_value_search_prompt(alert, canonical_results) -> str:
+    findings_summary = "\n".join(
+        f"- {template.value}: {result.total_count} matching alert(s)"
+        for template, result in canonical_results.items()
+    )
+    return (
+        "The closed-menu correlation searches below did not find or explain a clear pattern for "
+        "this security alert. Propose ONE additional free-text search value (not a field name) "
+        "that might surface related evidence in the alert log text.\n\n"
+        f"Alert: rule {alert.rule_id} ({alert.rule_description}), level {alert.rule_level}.\n\n"
+        f"Canonical search results:\n{findings_summary}\n\n"
+        "Respond with a single search_value string."
+    )
