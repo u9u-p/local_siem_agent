@@ -10,6 +10,7 @@ from app.agent.prompts import (
     build_correlation_decision_prompt,
     build_extract_indicators_prompt,
     build_open_value_search_prompt,
+    build_risk_assessment_prompt,
 )
 from app.agent.schemas import (
     CorrelationDecision,
@@ -321,8 +322,41 @@ class AgenticAnalyst:
             timestamp=datetime.now(timezone.utc),
         )
 
-    def _step_risk_assessment(self, model_available: bool) -> InvestigationStep:
-        return self._stub_step(Step.RISK_ASSESSMENT, model_available)
+    def _step_risk_assessment(
+        self, alert: Alert, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], model_available: bool,
+    ) -> tuple[RiskAssessment, InvestigationStep]:
+        if not model_available:
+            assessment = RiskAssessment(
+                severity=Severity.LOW, confidence=Confidence.LOW,
+                rationale="risk assessment skipped: model unavailable",
+            )
+            step = InvestigationStep(
+                step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None, input=None,
+                output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
+            )
+            return assessment, step
+
+        assessment = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results)
+        step = InvestigationStep(
+            step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm", input=None,
+            output_summary=f"severity={assessment.severity.value}, confidence={assessment.confidence.value}",
+            timestamp=datetime.now(timezone.utc),
+        )
+        return assessment, step
+
+    def _assess_risk(
+        self, alert: Alert, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult],
+    ) -> RiskAssessment:
+        prompt = build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results)
+        try:
+            return self._llm_client.generate_structured(prompt, RiskAssessment)
+        except LLMClientError as exc:
+            return RiskAssessment(
+                severity=Severity.LOW, confidence=Confidence.LOW,
+                rationale=f"risk assessment failed: {exc.kind}",
+            )
 
     def _step_draft_report(self, model_available: bool) -> InvestigationStep:
         return self._stub_step(Step.DRAFT_REPORT, model_available)
@@ -335,31 +369,28 @@ class AgenticAnalyst:
         alert: Alert,
         timeline: list[InvestigationStep],
         enrichment_results: list[EnrichmentResult],
+        risk_assessment: RiskAssessment,
         model_available: bool,
     ) -> Report:
         return Report(
             report_id=uuid4(),
             alert_id=alert.alert_id,
             generated_at=datetime.now(timezone.utc),
-            alert_summary=f"Stub report for alert {alert.alert_id} — full investigation logic pending Phase 4c/4d.",
+            alert_summary=f"Stub report for alert {alert.alert_id} — full investigation logic pending Phase 4d.",
             investigation_timeline=timeline,
             enrichment_findings=enrichment_results,
-            risk_assessment=RiskAssessment(
-                severity=Severity.LOW,
-                confidence=Confidence.LOW,
-                rationale="stub — risk assessment not yet implemented (Phase 4c)",
-            ),
+            risk_assessment=risk_assessment,
             recommended_actions=[],
             recommended_actions_freeform_experimental=None,
             uncertainty_notes=(
-                "This report was produced by the Phase 4b pipeline skeleton — steps 5-8 "
-                "(Correlate, Risk Assessment, Draft Report, Self-Check) are stubs, not real analysis."
+                "This report was produced by the Phase 4c pipeline — steps 7-8 "
+                "(Draft Report, Self-Check) are still stubs, not real analysis."
             ),
             status=ReportStatus.NEEDS_HUMAN_REVIEW,
             model_metadata=ModelMetadata(
-                model_name="qwen3.5:9b" if model_available else "none",
+                model_name="gemma4:12b" if model_available else "none",
                 model_version="none",
-                prompt_version="stub-4b",
+                prompt_version="4c-v1",
             ),
         )
 
@@ -400,11 +431,15 @@ class AgenticAnalyst:
 
         pattern_type, evidence_count, correlate_step = self._step_correlate(alert, model_available)
         timeline.append(correlate_step)
-        timeline.append(self._step_risk_assessment(model_available))
+
+        risk_assessment, risk_step = self._step_risk_assessment(
+            alert, pattern_type, evidence_count, enrichment_results, model_available
+        )
+        timeline.append(risk_step)
         timeline.append(self._step_draft_report(model_available))
         timeline.append(self._step_self_check(model_available))
 
-        report = self._assemble_report(alert, timeline, enrichment_results, model_available)
+        report = self._assemble_report(alert, timeline, enrichment_results, risk_assessment, model_available)
         finalize_step = self._step_finalize_and_persist(alert, report)
         report.investigation_timeline.append(finalize_step)
         return report

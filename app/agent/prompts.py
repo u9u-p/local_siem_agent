@@ -31,6 +31,26 @@ def build_correlation_decision_prompt(alert, canonical_results, evidence_count) 
     )
 
 
+def build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results) -> str:
+    enrichment_summary = "\n".join(
+        f"- {e.indicator_type.value} {e.indicator_value}: {e.verdict.value} (provider {e.provider_id})"
+        for e in enrichment_results
+    ) or "none"
+    mitre_summary = (
+        ", ".join(f"{m.technique_id} ({m.technique_name})" for m in alert.mitre) if alert.mitre else "none mapped"
+    )
+    return (
+        "You are assessing the risk of a security alert for a human analyst to review.\n\n"
+        f"Rule: {alert.rule_id} - {alert.rule_description} (level {alert.rule_level}, "
+        f"groups: {', '.join(alert.rule_groups)}).\n"
+        f"Known MITRE ATT&CK mapping: {mitre_summary}.\n"
+        f"Correlation findings: pattern_type={pattern_type.value}, evidence_count={evidence_count}.\n"
+        f"Enrichment findings:\n{enrichment_summary}\n\n"
+        "Assess the severity (low/medium/high/critical), your confidence in this assessment "
+        "(low/medium/high), and a one-to-two-sentence rationale."
+    )
+
+
 def build_open_value_search_prompt(alert, canonical_results) -> str:
     findings_summary = "\n".join(
         f"- {template.value}: {result.total_count} matching alert(s)"

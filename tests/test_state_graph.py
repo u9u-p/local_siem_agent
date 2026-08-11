@@ -16,7 +16,7 @@ from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.llm.errors import LLMClientError
 from app.schemas import AgentRef, Alert, EnrichmentResult
 from app.schemas import EnrichmentVerdict, IndicatorType
-from app.schemas import AlertStatus, Confidence, ReportStatus, Severity
+from app.schemas import AlertStatus, Confidence, ReportStatus, RiskAssessment, Severity
 from app.storage.db import get_engine, init_db
 from app.storage.sqlite_alert_store import SQLiteAlertStore
 
@@ -515,13 +515,54 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
     assert "noisier" not in step.output_summary
 
 
-def test_step_risk_assessment_delegates_to_stub_step():
-    analyst = _make_analyst()
+def test_step_risk_assessment_returns_real_assessment():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="matches known malicious IP"
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
 
-    step = analyst._step_risk_assessment(model_available=False)
+    assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.BRUTE_FORCE, 14, [], model_available=True
+    )
 
+    assert assessment.severity == Severity.HIGH
+    assert assessment.confidence == Confidence.HIGH
     assert step.step_name == Step.RISK_ASSESSMENT.value
+    assert step.action == "completed"
+    assert "severity=high" in step.output_summary
+
+
+def test_step_risk_assessment_skips_when_model_unavailable():
+    analyst = _make_analyst()
+    alert = _make_alert()
+
+    assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.OTHER, 0, [], model_available=False
+    )
+
+    assert assessment.severity == Severity.LOW
+    assert assessment.confidence == Confidence.LOW
     assert step.action == "skipped"
+
+
+def test_step_risk_assessment_falls_back_on_llm_error():
+    llm_client = _FakeLLMClient(model_available=True, error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.OTHER, 0, [], model_available=True
+    )
+
+    assert assessment.severity == Severity.LOW
+    assert assessment.confidence == Confidence.LOW
+    assert "risk assessment failed: timeout" in assessment.rationale
 
 
 def test_step_draft_report_delegates_to_stub_step():
@@ -565,6 +606,7 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
                 CorrelationDecision: CorrelationDecision(
                     pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
                 ),
+                RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
             },
         ),
     )
@@ -586,7 +628,7 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
     assert report.risk_assessment.severity == Severity.LOW
     assert report.risk_assessment.confidence == Confidence.LOW
-    assert report.model_metadata.model_name == "qwen3.5:9b"
+    assert report.model_metadata.model_name == "gemma4:12b"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
@@ -641,6 +683,7 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
                 CorrelationDecision: CorrelationDecision(
                     pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
                 ),
+                RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
             },
         ),
     )
@@ -688,6 +731,7 @@ def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
                 CorrelationDecision: CorrelationDecision(
                     pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
                 ),
+                RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
             },
         ),
     )
