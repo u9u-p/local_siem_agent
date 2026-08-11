@@ -6,8 +6,8 @@ from pydantic import ValidationError
 
 from app.agent.correlation_queries import build_canonical_queries
 from app.agent.indicator_extraction import extract_and_validate
-from app.agent.prompts import build_extract_indicators_prompt
-from app.agent.schemas import ExtractedIndicators, PatternType, SearchTemplate
+from app.agent.prompts import build_correlation_decision_prompt, build_extract_indicators_prompt
+from app.agent.schemas import CorrelationDecision, ExtractedIndicators, PatternType, SearchTemplate
 from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
@@ -226,6 +226,7 @@ class AgenticAnalyst:
         self, alert: Alert, model_available: bool
     ) -> tuple[PatternType, int, InvestigationStep]:
         results, evidence_count = self._run_canonical_searches(alert)
+        queries = build_canonical_queries(alert)
 
         if not model_available:
             step = InvestigationStep(
@@ -241,15 +242,34 @@ class AgenticAnalyst:
             )
             return PatternType.OTHER, evidence_count, step
 
+        decision = self._classify_correlation(alert, results, evidence_count)
+
+        follow_up_note = ""
+        if decision.follow_up_query != SearchTemplate.NONE_NEEDED:
+            follow_up_query = queries.get(decision.follow_up_query)
+            if follow_up_query is not None:
+                follow_up_result = self._siem.search(follow_up_query)
+                evidence_count += follow_up_result.total_count
+                follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
+
         step = InvestigationStep(
             step_name=Step.CORRELATE.value,
             action="completed",
-            tool_used="siem_connector",
+            tool_used="siem_connector+llm",
             input=None,
-            output_summary=f"ran {len(results)} canonical search(es), {evidence_count} total evidence",
+            output_summary=f"pattern_type={decision.pattern_type.value}, evidence_count={evidence_count}{follow_up_note}",
             timestamp=datetime.now(timezone.utc),
         )
-        return PatternType.OTHER, evidence_count, step
+        return decision.pattern_type, evidence_count, step
+
+    def _classify_correlation(
+        self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult], evidence_count: int
+    ) -> CorrelationDecision:
+        prompt = build_correlation_decision_prompt(alert, canonical_results, evidence_count)
+        try:
+            return self._llm_client.generate_structured(prompt, CorrelationDecision)
+        except LLMClientError:
+            return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
 
     def _stub_step(self, step: Step, model_available: bool) -> InvestigationStep:
         if model_available:

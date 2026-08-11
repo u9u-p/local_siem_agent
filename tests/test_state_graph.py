@@ -1,7 +1,13 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.agent.schemas import ExtractedIndicators, IndicatorCandidate, PatternType, SearchTemplate
+from app.agent.schemas import (
+    CorrelationDecision,
+    ExtractedIndicators,
+    IndicatorCandidate,
+    PatternType,
+    SearchTemplate,
+)
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
@@ -372,6 +378,66 @@ def test_step_correlate_runs_searches_and_skips_classification_when_model_unavai
     assert "classification skipped: model unavailable" in step.output_summary
 
 
+def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
+    siem = _FakeSIEMConnector(
+        search_results={
+            "source_ip": SearchResult(alerts=[], total_count=14),
+            "rule_id": SearchResult(alerts=[], total_count=14),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.SAME_SRC_IP_24H
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+
+    assert pattern_type == PatternType.BRUTE_FORCE
+    # base evidence (14 from rule_id canonical search, source_ip canonical search also 14) + the
+    # follow-up re-running the same same_src_ip_24h query, adding another 14
+    assert evidence_count == 14 + 14 + 14
+    assert "pattern_type=brute_force" in step.output_summary
+    assert "same_src_ip_24h" in step.output_summary
+
+
+def test_step_correlate_skips_follow_up_when_none_needed():
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=1)})
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.NONE, follow_up_query=SearchTemplate.NONE_NEEDED
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+
+    assert pattern_type == PatternType.NONE
+    assert evidence_count == 1
+    assert len(siem.search_calls) == 1  # only the one canonical search — no follow-up executed
+
+
+def test_step_correlate_falls_back_to_other_when_classification_call_fails():
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=2)})
+    llm_client = _FakeLLMClient(model_available=True, error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+
+    assert pattern_type == PatternType.OTHER
+    assert evidence_count == 2
+
+
 def test_step_risk_assessment_delegates_to_stub_step():
     analyst = _make_analyst()
 
@@ -417,7 +483,12 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
         enrichment_registry=registry,
         llm_client=_FakeLLMClient(
             model_available=True,
-            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+            responses={
+                ExtractedIndicators: ExtractedIndicators(candidates=[]),
+                CorrelationDecision: CorrelationDecision(
+                    pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+                ),
+            },
         ),
     )
 
@@ -488,7 +559,12 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
         enrichment_registry=EnrichmentRegistry(),
         llm_client=_FakeLLMClient(
             model_available=True,
-            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+            responses={
+                ExtractedIndicators: ExtractedIndicators(candidates=[]),
+                CorrelationDecision: CorrelationDecision(
+                    pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+                ),
+            },
         ),
     )
 
@@ -530,7 +606,12 @@ def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
         enrichment_registry=EnrichmentRegistry(),
         llm_client=_FakeLLMClient(
             model_available=True,
-            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+            responses={
+                ExtractedIndicators: ExtractedIndicators(candidates=[]),
+                CorrelationDecision: CorrelationDecision(
+                    pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+                ),
+            },
         ),
     )
 
