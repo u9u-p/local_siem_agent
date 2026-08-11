@@ -199,7 +199,7 @@ These apply to every one of the 6–7 calls in §4.1, not just individual steps:
 3. **Self-Check is a re-read, not a continuation.** Step 8 gets a fresh prompt with Draft-A's output plus the same structured findings Draft-A saw — never Draft-A's reasoning or chat history — so it can't rubber-stamp its own prior output. `uncertainty_notes` comes from concrete structural gaps it observes, not the model introspecting on its own confidence (which LLMs are unreliable at).
 4. **Closed vocabulary everywhere a choice is made.** Severity, confidence, pattern_type, MITRE technique, correlation-search template, verdict, and canonical recommended actions are all enum/catalog selections — never free text — with exactly two deliberately-scoped exceptions: Draft-A's summary/rationale prose, and the Draft-B experimental actions (both still grounded per rule 2).
 5. **Prompt versioning.** Each step's prompt template is versioned and recorded in `Report.model_metadata.prompt_version` — a prompt edit is a tracked, diffable change, not a silent behavior shift.
-6. **Model/context sizing.** With 6–7 calls per alert, each bounded to structured JSON rather than raw logs or transcripts, `qwen3.5:9b` (§6) should hold up for most steps; revisit model choice specifically for Risk Assessment and Draft-A if its classification accuracy or prose grounding proves weak in testing. Small, bounded prompts also keep per-call latency low enough that 6–7 sequential calls per alert stay practical on a single MacBook Pro without concurrent generation.
+6. **Model/context sizing.** With 6–7 calls per alert, each bounded to structured JSON rather than raw logs or transcripts, `gemma4:12b` (§6) should hold up for most steps; revisit model choice specifically for Risk Assessment and Draft-A if its classification accuracy or prose grounding proves weak in testing. Small, bounded prompts also keep per-call latency low enough that 6–7 sequential calls per alert stay practical on a single MacBook Pro without concurrent generation — measured at ~2.5 minutes/alert with `gemma4:12b` on short probe prompts (see `PROGRESS.md`), not yet with Phase 4c's real, longer per-step prompts.
 
 ---
 
@@ -217,9 +217,9 @@ These apply to every one of the 6–7 calls in §4.1, not just individual steps:
 | Concern | Recommendation | Why |
 |---|---|---|
 | HTTP clients (SIEM + enrichment) | `httpx` + `tenacity` for retry/backoff | modern sync/async, HTTP/2, clean timeout handling |
-| Local LLM inference | **Ollama** as the default, behind an `LLMClient` Protocol | simplest local model lifecycle on Apple Silicon (Metal-accelerated), OpenAI-compatible API, native JSON-schema-constrained output and tool-calling; alternatives (MLX-LM, llama-cpp-python) can implement the same Protocol later |
-| Model | `qwen3.5:9b` (Q4_K_M) | Confirmed pullable via Ollama's library; chosen as the Phase 4a implementation target — see `docs/superpowers/specs/2026-08-10-llm-client-design.md`. Supersedes the original Qwen2.5/Llama-3.1 recommendation, which predates this model's release |
-| Structured output / "tool calling" | Ollama's JSON-schema-constrained generation, with Pydantic models as the schema, validate-or-retry on parse failure | keeps every LLM decision point returning a typed, closed-vocabulary object rather than free text |
+| Local LLM inference | **Ollama** as the default, behind an `LLMClient` Protocol | simplest local model lifecycle on Apple Silicon (Metal-accelerated), OpenAI-compatible API, native JSON-schema-constrained output and tool-calling — **confirmed empirically (Phase 4b) that this only holds for GGUF-format models**: Ollama's MLX backend silently ignores `response_format`, so MLX-tagged model builds are not usable for this project regardless of the underlying weights; alternatives (MLX-LM, llama-cpp-python) can implement the same Protocol later |
+| Model | `gemma4:12b` (Q4_K_M, **GGUF format required** — see row above) | Empirically validated (Phase 4b) against real per-step-shaped schemas: matched `qwen3.5:9b` on correctness across flat/multi-enum/nested-list schemas, at roughly 4x the speed (~2.5 min vs ~8-9 min per 6-7-call alert investigation) — see `PROGRESS.md`. Supersedes `qwen3.5:9b` (chosen as the Phase 4a implementation target, itself superseding the original Qwen2.5/Llama-3.1 recommendation) as the project default |
+| Structured output / "tool calling" | Ollama's JSON-schema-constrained generation, with Pydantic models as the schema, validate-or-retry on parse failure | keeps every LLM decision point returning a typed, closed-vocabulary object rather than free text — **GGUF-backend-only**, see the Local LLM inference row |
 | SQLite access | **SQLModel** (SQLAlchemy + Pydantic) with **Alembic** migrations | one model definition serves both persistence and validation; moving `AlertStore` to Postgres later is a connection-string change |
 | Config/secrets | `pydantic-settings` for typed env/`.env` loading, `config.yaml` for non-secret structure, with a thin `SecretsProvider` abstraction so the loading mechanism can later move from an env file to macOS Keychain or a proper secrets manager without touching call sites | typed, validated config; credentials never hardcoded or committed — `.env` excluded via `.gitignore`, only `.env.example` (variable names, no values) checked in |
 | Deterministic state-graph orchestration | Lightweight custom FSM (enum of `Step`s + dispatcher), not LangGraph | the pipeline is a small fixed sequence (§4.1, 9 steps); a hand-rolled FSM keeps every allowed transition and action-set visible in one place — more auditable than a general agent-graph framework built for open-ended flows |
@@ -248,18 +248,18 @@ Per the Context section's deployment-topology decision, Wazuh (manager + indexer
 | Wazuh Manager | ~0.5–1GB | Moderate, not the concern |
 | Wazuh Indexer (OpenSearch, JVM-based) | ~2–4GB+ | **The actual pressure point.** Its JVM heap defaults to auto-sizing against available host RAM — this must be explicitly capped for a colocated deployment, not left on its default |
 | Wazuh Dashboard | ~0.5–1GB | Kept running per the deployment-topology decision above |
-| Ollama + loaded model (idle) | ~7GB | `qwen3.5:9b` (Q4_K_M) is ~6.6GB of weights per §6, plus Ollama's own overhead and KV cache on top |
+| Ollama + loaded model (idle) | ~8GB | `gemma4:12b` (Q4_K_M) is ~7.6GB of weights per §6, plus Ollama's own overhead and KV cache on top |
 | This app (Python process) | ~0.2–0.5GB | Negligible |
 
 These are planning-only ranges, not guarantees — validate actual resident memory with Activity Monitor or `ps` once Wazuh is installed on the target host, and adjust from there.
 
-**Guidance, not a mandated number:** explicitly set the OpenSearch JVM heap (`-Xms`/`-Xmx`) to a fixed value sized for a single-analyst POC's alert volume rather than letting it auto-size to ~50% of host RAM (its usual default) — that default assumes the indexer owns the whole machine, which isn't true here. On a 24GB host, all-in-one Wazuh (~4–6GB) plus `qwen3.5:9b` under Ollama (~7GB) plus OS (~5GB) leaves a workable margin — comfortable enough for the POC, but still worth watching once real alert volume is flowing.
+**Guidance, not a mandated number:** explicitly set the OpenSearch JVM heap (`-Xms`/`-Xmx`) to a fixed value sized for a single-analyst POC's alert volume rather than letting it auto-size to ~50% of host RAM (its usual default) — that default assumes the indexer owns the whole machine, which isn't true here. On a 24GB host, all-in-one Wazuh (~4–6GB) plus `gemma4:12b` under Ollama (~8GB) plus OS (~5GB) leaves a workable margin — comfortable enough for the POC, but still worth watching once real alert volume is flowing.
 
 ---
 
 ## 8. Open Questions and Assumptions (consolidated)
 
-- **LLM model** is now decided: `qwen3.5:9b` (Q4_K_M), per Phase 4a's implementation — validate against real step prompts (§4) as later phases build them; revisit if classification accuracy or prose grounding proves weak.
+- **LLM model** is now decided: `gemma4:12b` (Q4_K_M, GGUF format), per Phase 4b's real-model probes (matched `qwen3.5:9b` on correctness at ~4x the speed; MLX-format builds of either model are unusable — see §6) — validate against real step prompts (§4) as Phase 4c builds them; revisit if classification accuracy or prose grounding proves weak.
 - Assumes a single-node/all-in-one Wazuh install (manager + indexer + dashboard together); a distributed Wazuh cluster would need indexer-node-specific connection details.
 - Assumes self-signed TLS is acceptable for the demo — must be tightened before any non-demo use.
 - Assumes sequential (not concurrent) alert investigation is acceptable for demo throughput.

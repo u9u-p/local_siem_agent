@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     wazuh_manager_password: str | None = None
     wazuh_verify_ssl: bool = False
     llm_base_url: str = "http://localhost:11434/v1/"
-    llm_model: str = "qwen3.5:9b"
+    llm_model: str = "gemma4:12b"
     llm_timeout_seconds: float = 120.0
 
 
