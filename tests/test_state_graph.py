@@ -89,8 +89,10 @@ class _FakeLLMClient:
         self._model_available = model_available
         self._responses = responses or {}  # {schema_class: return_value}
         self._error = error
+        self.calls: list[tuple[str, type]] = []
 
     def generate_structured(self, prompt, schema):
+        self.calls.append((prompt, schema))
         if self._error is not None:
             raise self._error
         if schema in self._responses:
@@ -102,6 +104,17 @@ class _FakeLLMClient:
 
     def model_available(self):
         return self._model_available
+
+
+def test_fake_llm_client_records_prompt_and_schema_per_call():
+    client = _FakeLLMClient(responses={RiskAssessment: RiskAssessment(
+        severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"
+    )})
+
+    client.generate_structured("first prompt", RiskAssessment)
+    client.generate_structured("second prompt", RiskAssessment)
+
+    assert client.calls == [("first prompt", RiskAssessment), ("second prompt", RiskAssessment)]
 
 
 def _make_alert(**overrides):
