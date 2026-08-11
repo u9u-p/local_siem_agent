@@ -90,7 +90,7 @@ def test_pull_alerts_maps_indexer_hits_to_alerts():
     assert alerts[0].source_ip == "203.0.113.5"
 
 
-from app.integration.models import SearchQuery
+from app.integration.models import SearchClause, SearchQuery
 
 
 @respx.mock
@@ -100,7 +100,7 @@ def test_search_translates_eq_operator_to_term_query():
     )
     connector = _make_connector()
 
-    result = connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+    result = connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)]))
 
     assert result.total_count == 0
     sent_body = route.calls.last.request.content
@@ -117,7 +117,7 @@ def test_search_translates_contains_operator_to_match_query():
     )
     connector = _make_connector()
 
-    connector.search(SearchQuery(field="full_log", operator="contains", value="Invalid user"))
+    connector.search(SearchQuery(clauses=[SearchClause(field="full_log", operator="contains", value="Invalid user")]))
 
     import json
 
@@ -156,7 +156,7 @@ def test_search_translates_range_operator_and_time_range_filter():
     until = datetime(2026, 8, 11, tzinfo=timezone.utc)
 
     result = connector.search(
-        SearchQuery(field="rule.level", operator="range", value={"gte": 3}, time_range=(since, until))
+        SearchQuery(clauses=[SearchClause(field="rule.level", operator="range", value={"gte": 3})], time_range=(since, until))
     )
 
     assert result.total_count == 1
@@ -174,7 +174,9 @@ def test_search_translates_terms_operator_to_terms_query():
     )
     connector = _make_connector()
 
-    connector.search(SearchQuery(field="rule.groups", operator="terms", value=["authentication_failed", "syslog"]))
+    connector.search(
+        SearchQuery(clauses=[SearchClause(field="rule.groups", operator="terms", value=["authentication_failed", "syslog"])])
+    )
 
     import json
 
@@ -396,7 +398,7 @@ def test_search_raises_bad_response_on_indexer_500():
     connector = _make_connector()
 
     with pytest.raises(SIEMConnectorError) as excinfo:
-        connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+        connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)]))
 
     assert excinfo.value.kind == "bad_response"
 
@@ -409,7 +411,7 @@ def test_search_raises_unreachable_on_connection_error():
     connector = _make_connector()
 
     with pytest.raises(SIEMConnectorError) as excinfo:
-        connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+        connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)]))
 
     assert excinfo.value.kind == "unreachable"
 
@@ -507,7 +509,7 @@ def test_search_skips_malformed_hit_and_maps_the_rest():
     )
     connector = _make_connector()
 
-    result = connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+    result = connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)]))
 
     assert len(result.alerts) == 1
     assert result.total_count == 2
@@ -536,7 +538,7 @@ def test_search_sends_an_explicit_default_size():
     )
     connector = _make_connector()
 
-    connector.search(SearchQuery(field="rule.level", operator="eq", value=5))
+    connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)]))
 
     parsed = json.loads(route.calls.last.request.content)
     assert parsed["size"] == 500

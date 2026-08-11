@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.integration.models import AgentContext, RuleMetadata, SearchQuery, SearchResult
+from app.integration.models import AgentContext, RuleMetadata, SearchClause, SearchQuery, SearchResult
 from app.integration.siem_connector import SIEMConnector
 from app.schemas import AgentRef, Alert
 
@@ -27,6 +27,6 @@ def test_fake_connector_satisfies_siem_connector_protocol():
     connector: SIEMConnector = _FakeConnector()
     assert connector.health_check() is True
     assert connector.pull_alerts(since=datetime.now(timezone.utc)) == []
-    assert connector.search(SearchQuery(field="rule.level", operator="eq", value=5)).total_count == 0
+    assert connector.search(SearchQuery(clauses=[SearchClause(field="rule.level", operator="eq", value=5)])).total_count == 0
     assert connector.get_agent_context("001").id == "001"
     assert connector.get_rule_metadata("5710").rule_id == "5710"

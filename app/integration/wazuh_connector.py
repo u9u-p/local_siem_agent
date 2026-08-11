@@ -179,24 +179,25 @@ class WazuhConnector:
         return _map_hits(payload["hits"]["hits"])
 
     def search(self, query: SearchQuery) -> SearchResult:
-        operator_clause: dict[str, Any]
-        if query.operator == "eq":
-            operator_clause = {"term": {query.field: query.value}}
-        elif query.operator == "contains":
-            operator_clause = {"match": {query.field: query.value}}
-        elif query.operator == "range":
-            operator_clause = {"range": {query.field: query.value}}
-        else:  # "terms"
-            operator_clause = {"terms": {query.field: query.value}}
+        must_clauses: list[dict[str, Any]] = []
+        for clause in query.clauses:
+            if clause.operator == "eq":
+                must_clauses.append({"term": {clause.field: clause.value}})
+            elif clause.operator == "contains":
+                must_clauses.append({"match": {clause.field: clause.value}})
+            elif clause.operator == "range":
+                must_clauses.append({"range": {clause.field: clause.value}})
+            else:  # "terms"
+                must_clauses.append({"terms": {clause.field: clause.value}})
 
         filter_clauses: list[dict[str, Any]] = []
         if query.time_range is not None:
             since, until = query.time_range
-            # UNVERIFIED against a live instance — see design spec §6; if this returns zero alerts unexpectedly, confirm the real field name first
+            # Confirmed against a live Wazuh 4.14.x instance during Phase 3 — "timestamp" is the real field name.
             filter_clauses.append({"range": {"timestamp": {"gte": since.isoformat(), "lte": until.isoformat()}}})
 
         body = {
-            "query": {"bool": {"must": [operator_clause], "filter": filter_clauses}},
+            "query": {"bool": {"must": must_clauses, "filter": filter_clauses}},
             "size": _SEARCH_DEFAULT_SIZE,
         }
         payload = self._indexer_search(body)

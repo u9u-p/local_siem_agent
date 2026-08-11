@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.integration.models import AgentContext, RuleMetadata, SearchQuery, SearchResult
+from app.integration.models import AgentContext, RuleMetadata, SearchClause, SearchQuery, SearchResult
 from app.schemas import AgentRef, Alert
 
 
@@ -28,15 +28,30 @@ def _make_alert(**overrides):
     return Alert(**defaults)
 
 
-def test_search_query_accepts_valid_operators():
+def test_search_clause_accepts_valid_operators():
     for operator in ("eq", "contains", "range", "terms"):
-        query = SearchQuery(field="rule.level", operator=operator, value=5)
-        assert query.operator == operator
+        clause = SearchClause(field="rule.level", operator=operator, value=5)
+        assert clause.operator == operator
 
 
-def test_search_query_rejects_invalid_operator():
+def test_search_clause_rejects_invalid_operator():
     with pytest.raises(ValidationError):
-        SearchQuery(field="rule.level", operator="fuzzy", value=5)
+        SearchClause(field="rule.level", operator="fuzzy", value=5)
+
+
+def test_search_query_holds_multiple_clauses():
+    query = SearchQuery(
+        clauses=[
+            SearchClause(field="rule_id", operator="eq", value="5710"),
+            SearchClause(field="agent.id", operator="eq", value="001"),
+        ]
+    )
+    assert len(query.clauses) == 2
+
+
+def test_search_query_rejects_empty_clause_list():
+    with pytest.raises(ValidationError):
+        SearchQuery(clauses=[])
 
 
 def test_search_result_holds_alerts_and_total_count():

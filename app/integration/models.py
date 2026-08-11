@@ -6,10 +6,14 @@ from pydantic import BaseModel, Field
 from app.schemas import Alert
 
 
-class SearchQuery(BaseModel):
+class SearchClause(BaseModel):
     field: str
     operator: Literal["eq", "contains", "range", "terms"]
     value: Any
+
+
+class SearchQuery(BaseModel):
+    clauses: list[SearchClause] = Field(min_length=1)
     time_range: tuple[datetime, datetime] | None = None
 
 
