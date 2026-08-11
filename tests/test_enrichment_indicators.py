@@ -100,6 +100,16 @@ def test_rejects_domain_with_trailing_newline():
         DomainIndicator(value="example.com\n")
 
 
+def test_rejects_common_filenames_as_domains():
+    for filename in ("setup.exe", "auth.log", "invoice.pdf", "readme.txt", "config.json"):
+        with pytest.raises(ValidationError):
+            DomainIndicator(value=filename)
+
+
+def test_still_accepts_real_dot_com_domain():
+    assert DomainIndicator(value="evil.com").value == "evil.com"
+
+
 def test_accepts_valid_https_url():
     indicator = URLIndicator(value="https://example.com/path")
     assert indicator.value == "https://example.com/path"

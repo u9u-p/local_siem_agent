@@ -33,6 +33,15 @@ _DOMAIN_RE = re.compile(
     r"\A(?=.{1,253}\Z)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\.[A-Za-z]{2,63}\Z"
 )
 
+_FILENAME_EXTENSION_BLOCKLIST = frozenset({
+    "exe", "dll", "so", "dylib", "bin", "msi", "bat", "ps1", "sh", "py", "rb", "pl",
+    "php", "jar", "class", "log", "txt", "csv", "tsv", "json", "xml", "yaml", "yml",
+    "conf", "cfg", "ini", "pem", "key", "crt", "cer", "csr", "db", "sql", "bak",
+    "tmp", "dat", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip", "tar",
+    "gz", "rar", "htm", "html", "css", "ts", "go", "rs", "cpp", "obj", "sys", "vbs",
+    "scr", "apk", "deb", "rpm", "war",
+})
+
 
 class HashIndicator(BaseModel):
     indicator_type: IndicatorType = IndicatorType.FILE_HASH
@@ -56,6 +65,9 @@ class DomainIndicator(BaseModel):
     def _validate_domain(cls, v: str) -> str:
         if not _DOMAIN_RE.match(v):
             raise ValueError(f"not a valid domain name: {v}")
+        tld = v.rsplit(".", 1)[-1].lower()
+        if tld in _FILENAME_EXTENSION_BLOCKLIST:
+            raise ValueError(f"looks like a filename, not a domain: {v}")
         return v.lower()
 
 
