@@ -267,3 +267,94 @@ def test_investigate_one_command_investigates_the_named_alert(monkeypatch, tmp_p
     assert result.exit_code == 0
     assert analyst.investigated_alerts == [alert]
     assert str(report.report_id) in result.stdout
+
+
+def test_list_alerts_command_prints_table(monkeypatch):
+    alert = _make_alert()
+    store = _FakeAlertStore(alerts=[alert])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-alerts"])
+
+    assert result.exit_code == 0
+    assert str(alert.alert_id) in result.stdout
+    assert alert.rule_id in result.stdout
+
+
+def test_list_alerts_command_prints_empty_message(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-alerts"])
+
+    assert result.exit_code == 0
+    assert "No alerts found." in result.stdout
+
+
+def test_list_alerts_command_rejects_invalid_status(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-alerts", "--status", "not-a-real-status"])
+
+    assert result.exit_code == 1
+    assert "Invalid status" in result.output
+
+
+def test_list_reports_command_prints_table(monkeypatch):
+    report = _make_report()
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-reports"])
+
+    assert result.exit_code == 0
+    assert str(report.report_id) in result.stdout
+
+
+def test_list_reports_command_rejects_invalid_severity(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-reports", "--min-severity", "not-a-real-severity"])
+
+    assert result.exit_code == 1
+    assert "Invalid severity" in result.output
+
+
+def test_show_report_command_reports_not_found(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", "nonexistent-id"])
+
+    assert result.exit_code == 1
+    assert "No report found with id nonexistent-id" in result.output
+
+
+def test_show_report_command_prints_human_readable_detail(monkeypatch):
+    report = _make_report(
+        recommended_actions=["Block the source IP at the network perimeter"],
+        uncertainty_notes="no MITRE ATT&CK mapping available for this alert",
+    )
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id)])
+
+    assert result.exit_code == 0
+    assert report.alert_summary in result.stdout
+    assert "Block the source IP at the network perimeter" in result.stdout
+    assert "no MITRE ATT&CK mapping available for this alert" in result.stdout
+
+
+def test_show_report_command_json_output(monkeypatch):
+    report = _make_report()
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id), "--json"])
+
+    assert result.exit_code == 0
+    parsed = json.loads(result.stdout)
+    assert parsed["report_id"] == str(report.report_id)

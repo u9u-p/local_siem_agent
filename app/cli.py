@@ -8,9 +8,9 @@ from app.config import get_settings
 from app.integration.siem_connector import SIEMConnector
 from app.integration.wazuh_connector import wazuh_source_to_alert
 from app.report_export import write_report_file
-from app.schemas import AlertStatus, Report
+from app.schemas import AlertStatus, Report, Severity
 from app.storage.alert_store import AlertStore
-from app.storage.sqlite_alert_store import AlertNotFoundError, DuplicateAlertError
+from app.storage.sqlite_alert_store import AlertNotFoundError, DuplicateAlertError, ReportNotFoundError
 from app.wiring import build_alert_store, build_analyst, build_siem_connector
 
 app = typer.Typer()
@@ -118,6 +118,118 @@ def investigate_one_cmd(alert_id: str = typer.Argument(...)) -> None:
 
     report = _investigate_alert(analyst, alert, reports_dir)
     typer.echo(_summary_line(report))
+
+
+def _parse_status(value: str | None) -> AlertStatus | None:
+    if value is None:
+        return None
+    try:
+        return AlertStatus(value.lower())
+    except ValueError:
+        valid = ", ".join(s.value for s in AlertStatus)
+        typer.echo(f"Invalid status {value!r}. Must be one of: {valid}", err=True)
+        raise typer.Exit(code=1)
+
+
+def _parse_severity(value: str | None) -> Severity | None:
+    if value is None:
+        return None
+    try:
+        return Severity(value.lower())
+    except ValueError:
+        valid = ", ".join(s.value for s in Severity)
+        typer.echo(f"Invalid severity {value!r}. Must be one of: {valid}", err=True)
+        raise typer.Exit(code=1)
+
+
+def _format_alerts_table(alerts) -> str:
+    if not alerts:
+        return "No alerts found."
+    lines = ["alert_id | rule_id | rule_description | level | status | timestamp"]
+    for a in alerts:
+        lines.append(
+            f"{a.alert_id} | {a.rule_id} | {a.rule_description} | {a.rule_level} | "
+            f"{a.status.value} | {a.timestamp.isoformat()}"
+        )
+    return "\n".join(lines)
+
+
+@app.command(name="list-alerts")
+def list_alerts_cmd(
+    status: str = typer.Option(None, "--status"),
+    limit: int = typer.Option(100, "--limit"),
+) -> None:
+    settings = get_settings()
+    alert_store = build_alert_store(settings)
+    parsed_status = _parse_status(status)
+    alerts = alert_store.list_alerts(status=parsed_status, limit=limit)
+    typer.echo(_format_alerts_table(alerts))
+
+
+def _format_reports_table(reports) -> str:
+    if not reports:
+        return "No reports found."
+    lines = ["report_id | alert_id | severity | status | generated_at"]
+    for r in reports:
+        lines.append(
+            f"{r.report_id} | {r.alert_id} | {r.risk_assessment.severity.value} | "
+            f"{r.status.value} | {r.generated_at.isoformat()}"
+        )
+    return "\n".join(lines)
+
+
+@app.command(name="list-reports")
+def list_reports_cmd(
+    since: str = typer.Option(None, "--since"),
+    min_severity: str = typer.Option(None, "--min-severity"),
+) -> None:
+    settings = get_settings()
+    alert_store = build_alert_store(settings)
+    parsed_since = datetime.fromisoformat(since) if since else None
+    parsed_min_severity = _parse_severity(min_severity)
+    reports = alert_store.list_reports(since=parsed_since, min_severity=parsed_min_severity)
+    typer.echo(_format_reports_table(reports))
+
+
+def _format_report_detail(report: Report) -> str:
+    lines = [
+        f"Report {report.report_id} (alert {report.alert_id})",
+        f"Status: {report.status.value}",
+        f"Generated: {report.generated_at.isoformat()}",
+        "",
+        "Summary:",
+        report.alert_summary,
+        "",
+        f"Risk: severity={report.risk_assessment.severity.value}, confidence={report.risk_assessment.confidence.value}",
+        report.risk_assessment.rationale,
+        "",
+        "Recommended actions:",
+        *[f"  - {a}" for a in report.recommended_actions],
+        "",
+        f"Uncertainty notes: {report.uncertainty_notes or '(none)'}",
+        "",
+        "Timeline:",
+        *[f"  - {s.step_name}: {s.action}" for s in report.investigation_timeline],
+    ]
+    return "\n".join(lines)
+
+
+@app.command(name="show-report")
+def show_report_cmd(
+    report_id: str = typer.Argument(...),
+    as_json: bool = typer.Option(False, "--json"),
+) -> None:
+    settings = get_settings()
+    alert_store = build_alert_store(settings)
+    try:
+        report = alert_store.get_report(report_id)
+    except ReportNotFoundError:
+        typer.echo(f"No report found with id {report_id}.", err=True)
+        raise typer.Exit(code=1)
+    if as_json:
+        typer.echo(report.model_dump_json(indent=2))
+    else:
+        typer.echo(_format_report_detail(report))
 
 
 def main() -> None:
