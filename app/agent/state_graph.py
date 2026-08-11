@@ -2,19 +2,25 @@ from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
 
+from pydantic import ValidationError
+
 from app.agent.indicator_extraction import extract_and_validate
-from app.enrichment.indicators import Indicator
+from app.agent.prompts import build_extract_indicators_prompt
+from app.agent.schemas import ExtractedIndicators
+from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata
 from app.integration.siem_connector import SIEMConnector
 from app.llm.client import LLMClient
+from app.llm.errors import LLMClientError
 from app.schemas import (
     Alert,
     AlertStatus,
     Confidence,
     EnrichmentResult,
     EnrichmentVerdict,
+    IndicatorType,
     InvestigationStep,
     ModelMetadata,
     Report,
@@ -23,6 +29,24 @@ from app.schemas import (
     Severity,
 )
 from app.storage.alert_store import AlertStore
+
+_INDICATOR_TYPE_TO_VALIDATOR: dict[IndicatorType, type] = {
+    IndicatorType.IP: IPIndicator,
+    IndicatorType.FILE_HASH: HashIndicator,
+    IndicatorType.DOMAIN: DomainIndicator,
+    IndicatorType.URL: URLIndicator,
+}
+
+
+def _merge_indicators(regex_validated: list[Indicator], llm_validated: list[Indicator]) -> list[Indicator]:
+    seen = {(type(i), i.value) for i in regex_validated}
+    merged = list(regex_validated)
+    for indicator in llm_validated:
+        key = (type(indicator), indicator.value)
+        if key not in seen:
+            seen.add(key)
+            merged.append(indicator)
+    return merged
 
 
 class Step(str, Enum):
@@ -60,20 +84,66 @@ class AgenticAnalyst:
             timestamp=datetime.now(timezone.utc),
         )
 
-    def _step_extract_indicators(self, alert: Alert) -> tuple[list[Indicator], InvestigationStep]:
+    def _step_extract_indicators(
+        self, alert: Alert, model_available: bool
+    ) -> tuple[list[Indicator], InvestigationStep]:
         validated, candidate_count, validated_count = extract_and_validate(alert)
+
+        if not model_available:
+            step = InvestigationStep(
+                step_name=Step.EXTRACT_INDICATORS.value,
+                action="completed",
+                tool_used="regex_extraction",
+                input=None,
+                output_summary=(
+                    f"regex: {candidate_count} candidates, {validated_count} validated "
+                    "(LLM-assisted extraction skipped: model unavailable)"
+                ),
+                timestamp=datetime.now(timezone.utc),
+            )
+            return validated, step
+
+        llm_validated, llm_candidate_count, llm_validated_count, llm_error = self._extract_indicators_via_llm(alert)
+        merged = _merge_indicators(validated, llm_validated)
+
+        if llm_error is not None:
+            summary = (
+                f"regex: {candidate_count} candidates, {validated_count} validated; "
+                f"LLM-assisted extraction failed: {llm_error}"
+            )
+        else:
+            summary = (
+                f"regex: {candidate_count} candidates, {validated_count} validated; "
+                f"LLM: {llm_candidate_count} candidates, {llm_validated_count} validated"
+            )
+
         step = InvestigationStep(
             step_name=Step.EXTRACT_INDICATORS.value,
             action="completed",
-            tool_used="regex_extraction",
+            tool_used="regex_extraction+llm_extraction",
             input=None,
-            output_summary=(
-                f"{candidate_count} candidates, {validated_count} validated "
-                "(LLM-assisted extraction: not yet implemented, Phase 4c)"
-            ),
+            output_summary=summary,
             timestamp=datetime.now(timezone.utc),
         )
-        return validated, step
+        return merged, step
+
+    def _extract_indicators_via_llm(self, alert: Alert) -> tuple[list[Indicator], int, int, str | None]:
+        prompt = build_extract_indicators_prompt(alert)
+        try:
+            result = self._llm_client.generate_structured(prompt, ExtractedIndicators)
+        except LLMClientError as exc:
+            return [], 0, 0, exc.kind
+
+        validated: list[Indicator] = []
+        for candidate in result.candidates:
+            validator_cls = _INDICATOR_TYPE_TO_VALIDATOR.get(candidate.type)
+            if validator_cls is None:
+                continue
+            try:
+                validated.append(validator_cls(value=candidate.value))
+            except ValidationError:
+                continue
+        return validated, len(result.candidates), len(validated), None
 
     def _step_enrich(self, indicators: list[Indicator]) -> tuple[list[EnrichmentResult], InvestigationStep]:
         if not indicators:
@@ -227,7 +297,7 @@ class AgenticAnalyst:
         model_available = self._llm_client.model_available()
         timeline: list[InvestigationStep] = [self._step_ingest_and_parse(alert, model_available)]
 
-        indicators, extract_step = self._step_extract_indicators(alert)
+        indicators, extract_step = self._step_extract_indicators(alert, model_available)
         timeline.append(extract_step)
 
         enrichment_results, enrich_step = self._step_enrich(indicators)

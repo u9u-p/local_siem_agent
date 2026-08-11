@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
+from app.agent.schemas import ExtractedIndicators, IndicatorCandidate
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata
+from app.llm.errors import LLMClientError
 from app.schemas import AgentRef, Alert, EnrichmentResult
 from app.schemas import EnrichmentVerdict, IndicatorType
 from app.schemas import AlertStatus, Confidence, ReportStatus, Severity
@@ -70,11 +72,17 @@ class _FakeAlertStore:
 
 
 class _FakeLLMClient:
-    def __init__(self, model_available=True):
+    def __init__(self, model_available=True, responses=None, error=None):
         self._model_available = model_available
+        self._responses = responses or {}  # {schema_class: return_value}
+        self._error = error
 
     def generate_structured(self, prompt, schema):
-        raise NotImplementedError("not used in Phase 4b")
+        if self._error is not None:
+            raise self._error
+        if schema in self._responses:
+            return self._responses[schema]
+        raise NotImplementedError(f"no canned response configured for {schema}")
 
     def health_check(self):
         return True
@@ -164,22 +172,80 @@ def test_step_extract_indicators_finds_and_validates_ip():
     analyst = _make_analyst()
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert)
+    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert len(indicators) == 1
     assert indicators[0].value == "203.0.113.5"
     assert step.step_name == Step.EXTRACT_INDICATORS.value
-    assert "1 candidates, 1 validated" in step.output_summary
+    assert "regex: 1 candidates, 1 validated" in step.output_summary
 
 
 def test_step_extract_indicators_returns_empty_list_when_nothing_found():
     analyst = _make_analyst()
     alert = _make_alert(full_log="nothing interesting here")
 
-    indicators, step = analyst._step_extract_indicators(alert)
+    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert indicators == []
     assert step.action == "completed"
+
+
+def test_step_extract_indicators_skips_llm_when_model_unavailable():
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="nothing interesting here")
+
+    _, step = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert "LLM-assisted extraction skipped: model unavailable" in step.output_summary
+
+
+def test_step_extract_indicators_merges_llm_candidates_with_regex_results():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(
+                candidates=[IndicatorCandidate(type=IndicatorType.DOMAIN, value="evil.test")]
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+
+    values = {i.value for i in indicators}
+    assert values == {"203.0.113.5", "evil.test"}
+    assert "LLM: 1 candidates, 1 validated" in step.output_summary
+
+
+def test_step_extract_indicators_discards_invalid_llm_candidates():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(
+                candidates=[IndicatorCandidate(type=IndicatorType.IP, value="not-an-ip")]
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="nothing interesting here")
+
+    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+
+    assert indicators == []
+    assert "LLM: 1 candidates, 0 validated" in step.output_summary
+
+
+def test_step_extract_indicators_keeps_regex_results_when_llm_call_fails():
+    llm_client = _FakeLLMClient(model_available=True, error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+
+    assert len(indicators) == 1
+    assert indicators[0].value == "203.0.113.5"
+    assert "LLM-assisted extraction failed: timeout" in step.output_summary
 
 
 def test_step_enrich_calls_registry_for_each_indicator():
@@ -187,7 +253,7 @@ def test_step_enrich_calls_registry_for_each_indicator():
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
     analyst = _make_analyst(enrichment_registry=registry)
     indicators, _ = analyst._step_extract_indicators(
-        _make_alert(full_log="Invalid user admin from 203.0.113.5")
+        _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
     results, step = analyst._step_enrich(indicators)
@@ -309,7 +375,10 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
         ),
         alert_store=alert_store,
         enrichment_registry=registry,
-        llm_client=_FakeLLMClient(model_available=True),
+        llm_client=_FakeLLMClient(
+            model_available=True,
+            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+        ),
     )
 
     report = analyst.investigate(alert)
@@ -373,7 +442,10 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
         siem=_FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused")),
         alert_store=alert_store,
         enrichment_registry=EnrichmentRegistry(),
-        llm_client=_FakeLLMClient(model_available=True),
+        llm_client=_FakeLLMClient(
+            model_available=True,
+            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+        ),
     )
 
     report = analyst.investigate(alert)
@@ -386,7 +458,7 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
 def test_step_enrich_degrades_when_no_provider_registered_for_type():
     analyst = _make_analyst(enrichment_registry=EnrichmentRegistry())
     indicators, _ = analyst._step_extract_indicators(
-        _make_alert(full_log="Invalid user admin from 203.0.113.5")
+        _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
     results, step = analyst._step_enrich(indicators)
@@ -412,7 +484,10 @@ def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
         ),
         alert_store=alert_store,
         enrichment_registry=EnrichmentRegistry(),
-        llm_client=_FakeLLMClient(model_available=True),
+        llm_client=_FakeLLMClient(
+            model_available=True,
+            responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+        ),
     )
 
     report = analyst.investigate(alert)
