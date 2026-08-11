@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.agent.schemas import ExtractedIndicators, IndicatorCandidate
+from app.agent.schemas import ExtractedIndicators, IndicatorCandidate, PatternType, SearchTemplate
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
-from app.integration.models import AgentContext, RuleMetadata
+from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.llm.errors import LLMClientError
 from app.schemas import AgentRef, Alert, EnrichmentResult
 from app.schemas import EnrichmentVerdict, IndicatorType
@@ -15,10 +15,12 @@ from app.storage.sqlite_alert_store import SQLiteAlertStore
 
 
 class _FakeSIEMConnector:
-    def __init__(self, agent_context=None, rule_metadata=None, context_error=None):
+    def __init__(self, agent_context=None, rule_metadata=None, context_error=None, search_results=None):
         self._agent_context = agent_context
         self._rule_metadata = rule_metadata
         self._context_error = context_error
+        self._search_results = search_results or {}  # {field_name: SearchResult}
+        self.search_calls = []
 
     def health_check(self):
         return True
@@ -27,7 +29,11 @@ class _FakeSIEMConnector:
         return []
 
     def search(self, query):
-        raise NotImplementedError
+        self.search_calls.append(query)
+        # Keyed by the first clause's field — sufficient for these tests, since each
+        # canonical/follow-up query in this phase has a distinguishable primary field.
+        field = query.clauses[0].field
+        return self._search_results.get(field, SearchResult(alerts=[], total_count=0))
 
     def get_agent_context(self, agent_id):
         if self._context_error is not None:
@@ -323,13 +329,47 @@ def test_stub_step_logs_skipped_when_model_unavailable():
     assert "model unavailable" in step.output_summary
 
 
-def test_step_correlate_delegates_to_stub_step():
-    analyst = _make_analyst()
+def test_run_canonical_searches_sums_evidence_count_across_all_three():
+    siem = _FakeSIEMConnector(
+        search_results={
+            "source_ip": SearchResult(alerts=[], total_count=3),
+            "rule_id": SearchResult(alerts=[], total_count=5),
+            "destination_ip": SearchResult(alerts=[], total_count=2),
+        }
+    )
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip="198.51.100.9")
 
-    step = analyst._step_correlate(model_available=True)
+    results, evidence_count = analyst._run_canonical_searches(alert)
 
+    assert evidence_count == 10
+    assert len(results) == 3
+
+
+def test_run_canonical_searches_skips_missing_fields():
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=4)})
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    results, evidence_count = analyst._run_canonical_searches(alert)
+
+    assert evidence_count == 4
+    assert SearchTemplate.SAME_SRC_IP_24H not in results
+    assert SearchTemplate.SAME_DST_HOST not in results
+    assert SearchTemplate.SAME_RULE_ID_HOST in results
+
+
+def test_step_correlate_runs_searches_and_skips_classification_when_model_unavailable():
+    siem = _FakeSIEMConnector(search_results={"rule_id": SearchResult(alerts=[], total_count=7)})
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert(source_ip=None, destination_ip=None)
+
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+
+    assert pattern_type == PatternType.OTHER
+    assert evidence_count == 7
     assert step.step_name == Step.CORRELATE.value
-    assert step.action == "stub"
+    assert "classification skipped: model unavailable" in step.output_summary
 
 
 def test_step_risk_assessment_delegates_to_stub_step():
@@ -423,9 +463,13 @@ def test_investigate_stub_steps_skip_when_model_unavailable(tmp_path):
 
     report = analyst.investigate(alert)
 
-    stub_step_names = {Step.CORRELATE.value, Step.RISK_ASSESSMENT.value, Step.DRAFT_REPORT.value, Step.SELF_CHECK.value}
+    correlate_step = next(s for s in report.investigation_timeline if s.step_name == Step.CORRELATE.value)
+    assert correlate_step.action == "completed"  # canonical searches still ran deterministically
+    assert "classification skipped" in correlate_step.output_summary
+
+    stub_step_names = {Step.RISK_ASSESSMENT.value, Step.DRAFT_REPORT.value, Step.SELF_CHECK.value}
     stub_steps = [s for s in report.investigation_timeline if s.step_name in stub_step_names]
-    assert len(stub_steps) == 4
+    assert len(stub_steps) == 3
     assert all(s.action == "skipped" for s in stub_steps)
     assert report.enrichment_findings == []
     assert report.model_metadata.model_name == "none"

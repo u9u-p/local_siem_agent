@@ -4,13 +4,14 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
+from app.agent.correlation_queries import build_canonical_queries
 from app.agent.indicator_extraction import extract_and_validate
 from app.agent.prompts import build_extract_indicators_prompt
-from app.agent.schemas import ExtractedIndicators
+from app.agent.schemas import ExtractedIndicators, PatternType, SearchTemplate
 from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
-from app.integration.models import AgentContext, RuleMetadata
+from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.integration.siem_connector import SIEMConnector
 from app.llm.client import LLMClient
 from app.llm.errors import LLMClientError
@@ -212,6 +213,44 @@ class AgenticAnalyst:
         )
         return agent_context, rule_metadata, step
 
+    def _run_canonical_searches(self, alert: Alert) -> tuple[dict[SearchTemplate, SearchResult], int]:
+        queries = build_canonical_queries(alert)
+        results: dict[SearchTemplate, SearchResult] = {}
+        for template, query in queries.items():
+            if query is not None:
+                results[template] = self._siem.search(query)
+        evidence_count = sum(r.total_count for r in results.values())
+        return results, evidence_count
+
+    def _step_correlate(
+        self, alert: Alert, model_available: bool
+    ) -> tuple[PatternType, int, InvestigationStep]:
+        results, evidence_count = self._run_canonical_searches(alert)
+
+        if not model_available:
+            step = InvestigationStep(
+                step_name=Step.CORRELATE.value,
+                action="completed",
+                tool_used="siem_connector",
+                input=None,
+                output_summary=(
+                    f"ran {len(results)} canonical search(es), {evidence_count} total evidence "
+                    "(classification skipped: model unavailable)"
+                ),
+                timestamp=datetime.now(timezone.utc),
+            )
+            return PatternType.OTHER, evidence_count, step
+
+        step = InvestigationStep(
+            step_name=Step.CORRELATE.value,
+            action="completed",
+            tool_used="siem_connector",
+            input=None,
+            output_summary=f"ran {len(results)} canonical search(es), {evidence_count} total evidence",
+            timestamp=datetime.now(timezone.utc),
+        )
+        return PatternType.OTHER, evidence_count, step
+
     def _stub_step(self, step: Step, model_available: bool) -> InvestigationStep:
         if model_available:
             action, summary = "stub", f"not yet implemented — Phase 4c/4d ({step.value})"
@@ -225,9 +264,6 @@ class AgenticAnalyst:
             output_summary=summary,
             timestamp=datetime.now(timezone.utc),
         )
-
-    def _step_correlate(self, model_available: bool) -> InvestigationStep:
-        return self._stub_step(Step.CORRELATE, model_available)
 
     def _step_risk_assessment(self, model_available: bool) -> InvestigationStep:
         return self._stub_step(Step.RISK_ASSESSMENT, model_available)
@@ -306,7 +342,8 @@ class AgenticAnalyst:
         _agent_context, _rule_metadata, context_step = self._step_gather_context(alert)
         timeline.append(context_step)
 
-        timeline.append(self._step_correlate(model_available))
+        pattern_type, evidence_count, correlate_step = self._step_correlate(alert, model_available)
+        timeline.append(correlate_step)
         timeline.append(self._step_risk_assessment(model_available))
         timeline.append(self._step_draft_report(model_available))
         timeline.append(self._step_self_check(model_available))
