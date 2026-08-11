@@ -8,15 +8,20 @@ from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonic
 from app.agent.indicator_extraction import extract_and_validate
 from app.agent.prompts import (
     build_correlation_decision_prompt,
+    build_draft_canonical_prompt,
+    build_draft_experimental_prompt,
     build_extract_indicators_prompt,
     build_open_value_search_prompt,
     build_risk_assessment_prompt,
 )
 from app.agent.schemas import (
     CorrelationDecision,
+    DraftReportCanonical,
+    DraftReportExperimental,
     ExtractedIndicators,
     OpenValueSearchProposal,
     PatternType,
+    RecommendedAction,
     SearchTemplate,
 )
 from app.enrichment.indicators import DomainIndicator, HashIndicator, IPIndicator, Indicator, URLIndicator
@@ -85,6 +90,7 @@ class AgenticAnalyst:
         self._alert_store = alert_store
         self._enrichment_registry = enrichment_registry
         self._llm_client = llm_client
+        self._degraded_reasons: list[str] = []
 
     def _step_ingest_and_parse(self, alert: Alert, model_available: bool) -> InvestigationStep:
         return InvestigationStep(
@@ -370,8 +376,65 @@ class AgenticAnalyst:
                 rationale=f"risk assessment failed: {exc.kind}",
             )
 
-    def _step_draft_report(self, model_available: bool) -> InvestigationStep:
-        return self._stub_step(Step.DRAFT_REPORT, model_available)
+    def _step_draft_report(
+        self, alert: Alert, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, model_available: bool,
+    ) -> tuple[DraftReportCanonical, DraftReportExperimental | None, InvestigationStep]:
+        fallback_summary = (
+            f"Rule {alert.rule_id} ({alert.rule_description}), level {alert.rule_level}, "
+            f"on agent {alert.agent.name}."
+        )
+        if not model_available:
+            draft = DraftReportCanonical(
+                alert_summary=fallback_summary,
+                rationale="draft report skipped: model unavailable",
+                recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
+            )
+            step = InvestigationStep(
+                step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None, input=None,
+                output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
+            )
+            return draft, None, step
+
+        draft = self._draft_canonical(
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, fallback_summary
+        )
+        experimental = self._draft_experimental(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        summary = f"draft-A: {len(draft.recommended_actions)} action(s) selected"
+        summary += (
+            "; draft-B failed" if experimental is None
+            else f"; draft-B: experimental triage={experimental.triage_verdict.value}"
+        )
+        step = InvestigationStep(
+            step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm", input=None,
+            output_summary=summary, timestamp=datetime.now(timezone.utc),
+        )
+        return draft, experimental, step
+
+    def _draft_canonical(
+        self, alert: Alert, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, fallback_summary: str,
+    ) -> DraftReportCanonical:
+        prompt = build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        try:
+            return self._llm_client.generate_structured(prompt, DraftReportCanonical)
+        except LLMClientError as exc:
+            self._degraded_reasons.append(f"draft report failed: {exc.kind}")
+            return DraftReportCanonical(
+                alert_summary=fallback_summary,
+                rationale=f"draft report failed: {exc.kind}",
+                recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
+            )
+
+    def _draft_experimental(
+        self, alert: Alert, pattern_type: PatternType, evidence_count: int,
+        enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
+    ) -> DraftReportExperimental | None:
+        prompt = build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        try:
+            return self._llm_client.generate_structured(prompt, DraftReportExperimental)
+        except LLMClientError:
+            return None
 
     def _step_self_check(self, model_available: bool) -> InvestigationStep:
         return self._stub_step(Step.SELF_CHECK, model_available)
@@ -448,7 +511,12 @@ class AgenticAnalyst:
             alert, pattern_type, evidence_count, enrichment_results, model_available
         )
         timeline.append(risk_step)
-        timeline.append(self._step_draft_report(model_available))
+
+        draft, experimental, draft_step = self._step_draft_report(
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, model_available
+        )
+        timeline.append(draft_step)
+
         timeline.append(self._step_self_check(model_available))
 
         report = self._assemble_report(alert, timeline, enrichment_results, risk_assessment, model_available)

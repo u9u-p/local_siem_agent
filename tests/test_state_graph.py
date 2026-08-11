@@ -3,11 +3,15 @@ from uuid import uuid4
 
 from app.agent.schemas import (
     CorrelationDecision,
+    DraftReportCanonical,
+    DraftReportExperimental,
     ExtractedIndicators,
     IndicatorCandidate,
     OpenValueSearchProposal,
     PatternType,
+    RecommendedAction,
     SearchTemplate,
+    TriageVerdict,
 )
 from app.agent.state_graph import AgenticAnalyst, Step
 from app.enrichment.registry import EnrichmentRegistry
@@ -612,13 +616,84 @@ def test_step_risk_assessment_falls_back_on_llm_error():
     assert "risk assessment failed: timeout" in assessment.rationale
 
 
-def test_step_draft_report_delegates_to_stub_step():
-    analyst = _make_analyst()
+def test_step_draft_report_returns_canonical_and_experimental_drafts():
+    draft_canonical = DraftReportCanonical(
+        alert_summary="Brute-force attempts from 203.0.113.5.",
+        rationale="Repeated failed logins against a single account.",
+        recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP],
+    )
+    draft_experimental = DraftReportExperimental(
+        recommended_actions_freeform=["Consider geo-blocking"],
+        triage_verdict=TriageVerdict.TRUE_POSITIVE,
+        triage_rationale="Matches known brute-force pattern.",
+    )
+    llm_client = _FakeLLMClient(responses={
+        DraftReportCanonical: draft_canonical,
+        DraftReportExperimental: draft_experimental,
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
 
-    step = analyst._step_draft_report(model_available=True)
+    draft, experimental, step = analyst._step_draft_report(
+        alert, PatternType.BRUTE_FORCE, 14, [], risk_assessment, model_available=True
+    )
 
+    assert draft == draft_canonical
+    assert experimental == draft_experimental
     assert step.step_name == Step.DRAFT_REPORT.value
-    assert step.action == "stub"
+    assert step.action == "completed"
+
+
+def test_step_draft_report_falls_back_when_canonical_call_fails():
+    llm_client = _FakeLLMClient(error=LLMClientError("timeout", "took too long"))
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    draft, experimental, step = analyst._step_draft_report(
+        alert, PatternType.OTHER, 0, [], risk_assessment, model_available=True
+    )
+
+    assert draft.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
+    assert "draft report failed: timeout" in draft.rationale
+    assert experimental is None
+    assert "draft report failed: timeout" in analyst._degraded_reasons[0]
+
+
+def test_step_draft_report_skips_when_model_unavailable():
+    analyst = _make_analyst()
+    alert = _make_alert(rule_id="5710", rule_description="sshd brute force", rule_level=10)
+
+    draft, experimental, step = analyst._step_draft_report(
+        alert, PatternType.OTHER, 0, [], RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
+        model_available=False,
+    )
+
+    assert "5710" in draft.alert_summary
+    assert draft.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
+    assert experimental is None
+    assert step.action == "skipped"
+
+
+def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
+    llm_client = _FakeLLMClient(responses={
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="x", rationale="y", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=[], triage_verdict=TriageVerdict.UNCERTAIN, triage_rationale="z"
+        ),
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.MEDIUM, confidence=Confidence.MEDIUM, rationale="w")
+
+    analyst._step_draft_report(alert, PatternType.SCANNING, 7, [], risk_assessment, model_available=True)
+
+    canonical_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportCanonical)
+    assert "scanning" in canonical_prompt
+    assert "7" in canonical_prompt
 
 
 def test_step_self_check_delegates_to_stub_step():
@@ -652,6 +727,16 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
                 pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
             ),
             RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x"),
+            DraftReportCanonical: DraftReportCanonical(
+                alert_summary="Brute-force login attempts detected from 203.0.113.5 against web-01.",
+                rationale="High confidence based on repeated failed logins and a known-malicious source IP.",
+                recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+            ),
+            DraftReportExperimental: DraftReportExperimental(
+                recommended_actions_freeform=["Consider geo-blocking the source region"],
+                triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                triage_rationale="Pattern matches a known brute-force signature.",
+            ),
         },
     )
     analyst = AgenticAnalyst(
@@ -734,6 +819,16 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
                     pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
                 ),
                 RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
+                DraftReportCanonical: DraftReportCanonical(
+                    alert_summary="Brute-force login attempts detected from 203.0.113.5 against web-01.",
+                    rationale="High confidence based on repeated failed logins and a known-malicious source IP.",
+                    recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+                ),
+                DraftReportExperimental: DraftReportExperimental(
+                    recommended_actions_freeform=["Consider geo-blocking the source region"],
+                    triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                    triage_rationale="Pattern matches a known brute-force signature.",
+                ),
             },
         ),
     )
@@ -782,6 +877,16 @@ def test_investigate_degrades_gracefully_when_alert_not_yet_saved(tmp_path):
                     pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
                 ),
                 RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
+                DraftReportCanonical: DraftReportCanonical(
+                    alert_summary="Brute-force login attempts detected from 203.0.113.5 against web-01.",
+                    rationale="High confidence based on repeated failed logins and a known-malicious source IP.",
+                    recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+                ),
+                DraftReportExperimental: DraftReportExperimental(
+                    recommended_actions_freeform=["Consider geo-blocking the source region"],
+                    triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                    triage_rationale="Pattern matches a known brute-force signature.",
+                ),
             },
         ),
     )

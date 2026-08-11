@@ -1,4 +1,5 @@
 # app/agent/prompts.py
+from app.agent.schemas import RecommendedAction
 from app.schemas import Alert
 
 
@@ -63,4 +64,42 @@ def build_open_value_search_prompt(alert, canonical_results) -> str:
         f"Alert: rule {alert.rule_id} ({alert.rule_description}), level {alert.rule_level}.\n\n"
         f"Canonical search results:\n{findings_summary}\n\n"
         "Respond with a single search_value string."
+    )
+
+
+def _findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+    enrichment_summary = "\n".join(
+        f"- {e.indicator_type.value} {e.indicator_value}: {e.verdict.value} (provider {e.provider_id})"
+        for e in enrichment_results
+    ) or "none"
+    return (
+        f"Rule: {alert.rule_id} - {alert.rule_description} (level {alert.rule_level}, "
+        f"groups: {', '.join(alert.rule_groups)}).\n"
+        f"Correlation findings: pattern_type={pattern_type.value}, evidence_count={evidence_count}.\n"
+        f"Enrichment findings:\n{enrichment_summary}\n"
+        f"Risk assessment: severity={risk_assessment.severity.value}, confidence={risk_assessment.confidence.value}, "
+        f"rationale: {risk_assessment.rationale}\n"
+    )
+
+
+def build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+    action_menu = "\n".join(f"- {a.value}" for a in RecommendedAction)
+    return (
+        "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\n"
+        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)}\n"
+        "Write a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining "
+        "the risk assessment above in more detail, and select every recommended_action below that applies to "
+        "this alert — you MUST only pick from this exact list:\n"
+        f"{action_menu}"
+    )
+
+
+def build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+    return (
+        "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. "
+        "This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\n"
+        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)}\n"
+        "Freely propose any additional recommended actions in your own words (no fixed list this time), then "
+        "classify whether this alert looks like a true_positive, false_positive, or uncertain, with a "
+        "one-sentence rationale for that triage call."
     )
