@@ -587,28 +587,28 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     engine = get_engine(str(tmp_path / "test.db"))
     init_db(engine)
     alert_store = SQLiteAlertStore(engine)
-    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5", source_ip="203.0.113.5")
     alert_store.save_raw_alert(alert)
 
     registry = EnrichmentRegistry()
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        search_results={"source_ip": SearchResult(alerts=[], total_count=1), "rule_id": SearchResult(alerts=[], total_count=1)},
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(candidates=[]),
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x"),
+        },
+    )
     analyst = AgenticAnalyst(
-        siem=_FakeSIEMConnector(
-            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
-            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
-        ),
-        alert_store=alert_store,
-        enrichment_registry=registry,
-        llm_client=_FakeLLMClient(
-            model_available=True,
-            responses={
-                ExtractedIndicators: ExtractedIndicators(candidates=[]),
-                CorrelationDecision: CorrelationDecision(
-                    pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
-                ),
-                RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"),
-            },
-        ),
+        siem=siem, alert_store=alert_store, enrichment_registry=registry, llm_client=llm_client,
     )
 
     report = analyst.investigate(alert)
@@ -626,15 +626,16 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
         Step.FINALIZE_AND_PERSIST.value,
     ]
     assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
-    assert report.risk_assessment.severity == Severity.LOW
-    assert report.risk_assessment.confidence == Confidence.LOW
+    assert report.risk_assessment.severity == Severity.HIGH
+    assert report.risk_assessment.confidence == Confidence.HIGH
     assert report.model_metadata.model_name == "gemma4:12b"
+    assert report.model_metadata.prompt_version == "4c-v1"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
 
 
-def test_investigate_stub_steps_skip_when_model_unavailable(tmp_path):
+def test_investigate_degrades_gracefully_when_model_unavailable(tmp_path):
     engine = get_engine(str(tmp_path / "test.db"))
     init_db(engine)
     alert_store = SQLiteAlertStore(engine)
@@ -654,12 +655,14 @@ def test_investigate_stub_steps_skip_when_model_unavailable(tmp_path):
     report = analyst.investigate(alert)
 
     correlate_step = next(s for s in report.investigation_timeline if s.step_name == Step.CORRELATE.value)
-    assert correlate_step.action == "completed"  # canonical searches still ran deterministically
+    assert correlate_step.action == "completed"  # canonical searches still ran
     assert "classification skipped" in correlate_step.output_summary
 
-    stub_step_names = {Step.RISK_ASSESSMENT.value, Step.DRAFT_REPORT.value, Step.SELF_CHECK.value}
+    risk_step = next(s for s in report.investigation_timeline if s.step_name == Step.RISK_ASSESSMENT.value)
+    assert risk_step.action == "skipped"
+
+    stub_step_names = {Step.DRAFT_REPORT.value, Step.SELF_CHECK.value}
     stub_steps = [s for s in report.investigation_timeline if s.step_name in stub_step_names]
-    assert len(stub_steps) == 3
     assert all(s.action == "skipped" for s in stub_steps)
     assert report.enrichment_findings == []
     assert report.model_metadata.model_name == "none"
