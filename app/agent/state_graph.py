@@ -16,7 +16,6 @@ from app.agent.prompts import (
     build_self_check_prompt,
 )
 from app.agent.schemas import (
-    ClaimAudit,
     CorrelationDecision,
     DraftReportCanonical,
     DraftReportExperimental,
@@ -90,12 +89,16 @@ def _compute_uncertainty_notes(
     return "; ".join(gaps)
 
 
+def _claims_for(draft: DraftReportCanonical) -> list[str]:
+    return [draft.alert_summary, draft.rationale, *[a.value for a in draft.recommended_actions]]
+
+
 def _apply_self_check_corrections(
     draft: DraftReportCanonical, result: SelfCheckResult
-) -> tuple[DraftReportCanonical, list[str]]:
-    claims = [draft.alert_summary, draft.rationale, *[a.value for a in draft.recommended_actions]]
+) -> tuple[DraftReportCanonical, list[str]] | None:
+    claims = _claims_for(draft)
     if len(result.audits) != len(claims):
-        return draft, []
+        return None
 
     alert_summary = draft.alert_summary
     rationale = draft.rationale
@@ -106,21 +109,21 @@ def _apply_self_check_corrections(
         if summary_audit.correction:
             alert_summary = summary_audit.correction
         else:
-            flagged_claims.append(summary_audit.claim)
+            flagged_claims.append(claims[0])
 
     rationale_audit = result.audits[1]
     if not rationale_audit.supported:
         if rationale_audit.correction:
             rationale = rationale_audit.correction
         else:
-            flagged_claims.append(rationale_audit.claim)
+            flagged_claims.append(claims[1])
 
     kept_actions = []
-    for action, audit in zip(draft.recommended_actions, result.audits[2:]):
+    for claim, action, audit in zip(claims[2:], draft.recommended_actions, result.audits[2:]):
         if audit.supported:
             kept_actions.append(action)
         else:
-            flagged_claims.append(audit.claim)
+            flagged_claims.append(claim)
     if not kept_actions:
         kept_actions = [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
 
@@ -442,7 +445,7 @@ class AgenticAnalyst:
         if not model_available:
             draft = DraftReportCanonical(
                 alert_summary=fallback_summary,
-                rationale="draft report skipped: model unavailable",
+                rationale=risk_assessment.rationale,
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
             )
             step = InvestigationStep(
@@ -477,7 +480,7 @@ class AgenticAnalyst:
             self._degraded_reasons.append(f"draft report failed: {exc.kind}")
             return DraftReportCanonical(
                 alert_summary=fallback_summary,
-                rationale=f"draft report failed: {exc.kind}",
+                rationale=risk_assessment.rationale,
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
             )
 
@@ -505,17 +508,29 @@ class AgenticAnalyst:
             )
             return draft, notes, step
 
-        result = self._run_self_check(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        result, failure_kind = self._run_self_check(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
         if result is None:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
-            notes = "self-check could not run" + (f"; {notes}" if notes else "")
+            notes = f"self-check could not run: {failure_kind}" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm", input=None,
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
                 output_summary="self-check call failed; corrections not applied", timestamp=datetime.now(timezone.utc),
             )
             return draft, notes, step
 
-        corrected_draft, flagged_claims = _apply_self_check_corrections(draft, result)
+        correction_result = _apply_self_check_corrections(draft, result)
+        if correction_result is None:
+            self._degraded_reasons.append("self-check returned a mismatched audit count")
+            notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
+            notes = "self-check audit count did not match claim count; corrections not applied" + (f"; {notes}" if notes else "")
+            step = InvestigationStep(
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
+                output_summary=f"self-check returned {len(result.audits)} audit(s) for {len(_claims_for(draft))} claim(s); corrections not applied",
+                timestamp=datetime.now(timezone.utc),
+            )
+            return draft, notes, step
+
+        corrected_draft, flagged_claims = correction_result
         if flagged_claims:
             self._degraded_reasons.append(f"self-check flagged {len(flagged_claims)} unsupported claim(s)")
         notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, flagged_claims)
@@ -529,13 +544,13 @@ class AgenticAnalyst:
     def _run_self_check(
         self, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
-    ) -> SelfCheckResult | None:
+    ) -> tuple[SelfCheckResult | None, str | None]:
         prompt = build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
         try:
-            return self._llm_client.generate_structured(prompt, SelfCheckResult)
+            return self._llm_client.generate_structured(prompt, SelfCheckResult), None
         except LLMClientError as exc:
             self._degraded_reasons.append(f"self-check failed: {exc.kind}")
-            return None
+            return None, exc.kind
 
     def _assemble_report(
         self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],

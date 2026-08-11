@@ -110,6 +110,11 @@ def test_still_accepts_real_dot_com_domain():
     assert DomainIndicator(value="evil.com").value == "evil.com"
 
 
+def test_still_accepts_real_delegated_tlds_that_double_as_extensions():
+    for domain in ("login-verify.pl", "invoice.zip", "cdn.evil.so", "payload.sh", "c2.evil.py", "panel.evil.rs"):
+        assert DomainIndicator(value=domain).value == domain
+
+
 def test_accepts_valid_https_url():
     indicator = URLIndicator(value="https://example.com/path")
     assert indicator.value == "https://example.com/path"

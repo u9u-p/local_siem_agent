@@ -631,14 +631,14 @@ def test_step_draft_report_falls_back_when_canonical_call_fails():
     llm_client = _FakeLLMClient(error=LLMClientError("timeout", "took too long"))
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert()
-    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="Original step-6 rationale text.")
 
     draft, experimental, step = analyst._step_draft_report(
         alert, PatternType.OTHER, 0, [], risk_assessment, model_available=True
     )
 
     assert draft.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
-    assert "draft report failed: timeout" in draft.rationale
+    assert draft.rationale == "Original step-6 rationale text."
     assert experimental is None
     assert "draft report failed: timeout" in analyst._degraded_reasons[0]
 
@@ -929,7 +929,8 @@ def test_step_self_check_falls_back_when_call_fails():
     )
 
     assert corrected == draft
-    assert "self-check could not run" in notes
+    assert "self-check could not run: timeout" in notes
+    assert step.action == "degraded"
     assert analyst._degraded_reasons == ["self-check failed: timeout"]
 
 
@@ -948,6 +949,9 @@ def test_step_self_check_falls_back_when_audit_count_mismatches_claim_count():
     )
 
     assert corrected == draft
+    assert step.action == "degraded"
+    assert "self-check audit count did not match claim count" in notes
+    assert analyst._degraded_reasons == ["self-check returned a mismatched audit count"]
 
 
 def test_step_self_check_skips_when_model_unavailable():

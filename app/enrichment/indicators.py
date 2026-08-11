@@ -34,11 +34,11 @@ _DOMAIN_RE = re.compile(
 )
 
 _FILENAME_EXTENSION_BLOCKLIST = frozenset({
-    "exe", "dll", "so", "dylib", "bin", "msi", "bat", "ps1", "sh", "py", "rb", "pl",
+    "exe", "dll", "dylib", "bin", "msi", "bat", "ps1", "rb",
     "php", "jar", "class", "log", "txt", "csv", "tsv", "json", "xml", "yaml", "yml",
     "conf", "cfg", "ini", "pem", "key", "crt", "cer", "csr", "db", "sql", "bak",
-    "tmp", "dat", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip", "tar",
-    "gz", "rar", "htm", "html", "css", "ts", "go", "rs", "cpp", "obj", "sys", "vbs",
+    "tmp", "dat", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "tar",
+    "gz", "rar", "htm", "html", "css", "ts", "go", "cpp", "obj", "sys", "vbs",
     "scr", "apk", "deb", "rpm", "war",
 })
 
