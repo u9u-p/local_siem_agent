@@ -2,6 +2,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.agent.schemas import PatternType
 from app.agent.state_graph import AgenticAnalyst
 from app.config import Settings
 from app.enrichment.registry import EnrichmentRegistry
@@ -91,5 +92,6 @@ def test_live_correlate_produces_a_valid_pattern_classification(live_analyst):
 
     pattern_type, evidence_count, step = live_analyst._step_correlate(alert, model_available=True)
 
+    assert pattern_type == PatternType.BRUTE_FORCE
     assert step.action == "completed"
     assert evidence_count >= 14  # at least the fake SIEM's canned canonical-search total
