@@ -795,6 +795,29 @@ def test_step_self_check_falls_back_to_escalate_when_all_actions_dropped():
     assert corrected.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
 
 
+def test_step_self_check_re_adds_escalate_even_if_it_was_the_dropped_action():
+    draft = DraftReportCanonical(
+        alert_summary="x", rationale="y", recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
+    )
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.ESCALATE_TO_HUMAN_ANALYST.value, supported=False),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True,
+    )
+
+    assert corrected.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
+
+
 def test_step_self_check_notes_unsupported_claim_without_correction():
     draft = _draft_with_two_actions()
     llm_client = _FakeLLMClient(responses={
