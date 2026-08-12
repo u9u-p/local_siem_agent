@@ -549,6 +549,29 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
     assert "noisier" not in step.output_summary
 
 
+def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
+    siem = _FakeSIEMConnector(search_results={"full_log": SearchResult(alerts=[], total_count=5)})
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            OpenValueSearchProposal: OpenValueSearchProposal(search_value="admin@evil.test")
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert()
+    canonical_results = {}
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        result = analyst._run_open_value_search(alert, canonical_results)
+
+    assert "_run_open_value_search prompt" in caplog.text
+    assert "_run_open_value_search result" in caplog.text
+    assert "_run_open_value_search: SIEM search for" in caplog.text
+    assert "admin@evil.test" in caplog.text
+    assert "5" in caplog.text
+    assert "noisier, unstructured match" in result
+
+
 def test_step_risk_assessment_returns_real_assessment():
     llm_client = _FakeLLMClient(
         model_available=True,

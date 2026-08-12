@@ -439,7 +439,12 @@ class AgenticAnalyst:
         try:
             result = self._siem.search(query)
         except SIEMConnectorError:
+            logger.debug("_run_open_value_search: SIEM search failed for value %r", proposal.search_value)
             return f"; open-value search for {proposal.search_value!r} failed"
+        logger.debug(
+            "_run_open_value_search: SIEM search for %r found %s result(s)",
+            proposal.search_value, result.total_count,
+        )
         return (
             f"; open-value search for {proposal.search_value!r} found {result.total_count} "
             "(noisier, unstructured match)"
