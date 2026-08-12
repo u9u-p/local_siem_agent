@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -1301,3 +1302,49 @@ def test_assemble_report_includes_experimental_fields_when_present():
     assert report.recommended_actions_freeform_experimental == ["do X"]
     assert report.triage_verdict_experimental == "false_positive"
     assert report.triage_rationale_experimental == "y"
+
+
+def test_step_extract_indicators_logs_input_and_output(caplog):
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        analyst._step_extract_indicators(alert, model_available=False)
+
+    assert "_step_extract_indicators input" in caplog.text
+    assert str(alert.alert_id) in caplog.text
+    assert "_step_extract_indicators output" in caplog.text
+    assert "203.0.113.5" in caplog.text
+
+
+def test_step_enrich_logs_input_and_output(caplog):
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    analyst = _make_analyst(enrichment_registry=registry)
+    indicators, _ = analyst._step_extract_indicators(
+        _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
+    )
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        analyst._step_enrich(indicators)
+
+    assert "_step_enrich input" in caplog.text
+    assert "203.0.113.5" in caplog.text
+    assert "_step_enrich output" in caplog.text
+
+
+def test_step_gather_context_logs_input_and_output(caplog):
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+    )
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        analyst._step_gather_context(alert)
+
+    assert "_step_gather_context input" in caplog.text
+    assert "001" in caplog.text
+    assert "_step_gather_context output" in caplog.text
+    assert "web-01" in caplog.text

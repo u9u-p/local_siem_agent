@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
@@ -48,6 +49,8 @@ from app.schemas import (
     Severity,
 )
 from app.storage.alert_store import AlertStore
+
+logger = logging.getLogger(__name__)
 
 _INDICATOR_TYPE_TO_VALIDATOR: dict[IndicatorType, type] = {
     IndicatorType.IP: IPIndicator,
@@ -158,7 +161,11 @@ class AgenticAnalyst:
         self._degraded_reasons: list[str] = []
 
     def _step_ingest_and_parse(self, alert: Alert, model_available: bool) -> InvestigationStep:
-        return InvestigationStep(
+        logger.debug(
+            "_step_ingest_and_parse input: alert_id=%s, rule_id=%s, model_available=%s",
+            alert.alert_id, alert.rule_id, model_available,
+        )
+        step = InvestigationStep(
             step_name=Step.INGEST_AND_PARSE.value,
             action="completed",
             tool_used=None,
@@ -166,10 +173,15 @@ class AgenticAnalyst:
             output_summary=f"alert {alert.alert_id} ingested; model available: {model_available}",
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug("_step_ingest_and_parse output: %s", step.output_summary)
+        return step
 
     def _step_extract_indicators(
         self, alert: Alert, model_available: bool
     ) -> tuple[list[Indicator], InvestigationStep]:
+        logger.debug(
+            "_step_extract_indicators input: alert_id=%s, model_available=%s", alert.alert_id, model_available
+        )
         validated, candidate_count, validated_count = extract_and_validate(alert)
 
         if not model_available:
@@ -183,6 +195,10 @@ class AgenticAnalyst:
                     "(LLM-assisted extraction skipped: model unavailable)"
                 ),
                 timestamp=datetime.now(timezone.utc),
+            )
+            logger.debug(
+                "_step_extract_indicators output: %s indicator(s): %s",
+                len(validated), [(type(i).__name__, i.value) for i in validated],
             )
             return validated, step
 
@@ -209,14 +225,21 @@ class AgenticAnalyst:
             output_summary=summary,
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug(
+            "_step_extract_indicators output: %s indicator(s): %s",
+            len(merged), [(type(i).__name__, i.value) for i in merged],
+        )
         return merged, step
 
     def _extract_indicators_via_llm(self, alert: Alert) -> tuple[list[Indicator], int, int, str | None]:
         prompt = build_extract_indicators_prompt(alert)
+        logger.debug("_extract_indicators_via_llm prompt: %s", prompt)
         try:
             result = self._llm_client.generate_structured(prompt, ExtractedIndicators)
         except LLMClientError as exc:
+            logger.debug("_extract_indicators_via_llm failed: %s", exc.kind)
             return [], 0, 0, exc.kind
+        logger.debug("_extract_indicators_via_llm result: %s", result.model_dump_json())
 
         validated: list[Indicator] = []
         for candidate in result.candidates:
@@ -230,6 +253,10 @@ class AgenticAnalyst:
         return validated, len(result.candidates), len(validated), None
 
     def _step_enrich(self, indicators: list[Indicator]) -> tuple[list[EnrichmentResult], InvestigationStep]:
+        logger.debug(
+            "_step_enrich input: %s indicator(s): %s",
+            len(indicators), [(type(i).__name__, i.value) for i in indicators],
+        )
         if not indicators:
             step = InvestigationStep(
                 step_name=Step.ENRICH.value,
@@ -239,6 +266,7 @@ class AgenticAnalyst:
                 output_summary="skipped: no validated indicators to enrich",
                 timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_enrich output: skipped, no indicators")
             return [], step
 
         results: list[EnrichmentResult] = []
@@ -267,11 +295,13 @@ class AgenticAnalyst:
             output_summary=f"enriched {len(results)} indicator(s)",
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug("_step_enrich output: %s", [r.model_dump_json() for r in results])
         return results, step
 
     def _step_gather_context(
         self, alert: Alert
     ) -> tuple[AgentContext | None, RuleMetadata | None, InvestigationStep]:
+        logger.debug("_step_gather_context input: agent_id=%s, rule_id=%s", alert.agent.id, alert.rule_id)
         try:
             agent_context = self._siem.get_agent_context(alert.agent.id)
             rule_metadata = self._siem.get_rule_metadata(alert.rule_id)
@@ -285,6 +315,7 @@ class AgenticAnalyst:
                 output_summary=f"could not gather host/rule context: {exc.kind}",
                 timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_gather_context output: failed: %s", exc.kind)
             return None, None, step
 
         step = InvestigationStep(
@@ -294,6 +325,10 @@ class AgenticAnalyst:
             input=None,
             output_summary=f"gathered context for agent {alert.agent.id}, rule {alert.rule_id}",
             timestamp=datetime.now(timezone.utc),
+        )
+        logger.debug(
+            "_step_gather_context output: agent_context=%s, rule_metadata=%s",
+            agent_context.model_dump_json(), rule_metadata.model_dump_json(),
         )
         return agent_context, rule_metadata, step
 
