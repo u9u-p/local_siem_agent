@@ -96,13 +96,17 @@ Final whole-branch review found 1 Critical and 2 Important findings, all fixed b
 
 ---
 
-## Phase 5: Deployment / Runtime Glue
+## Phase 5: Deployment / Runtime Glue — ✅ Complete
 
-**Goal:** Wire everything into a runnable process — poller, in-process queue, CLI/FastAPI surface, per CLAUDE.md §7.
-**Key files:** not yet named in CLAUDE.md §9 — add them when this phase is scoped (likely `app/main.py` / `app/poller.py` plus a `typer` CLI entry point).
+**Goal:** Wire everything into a runnable process, per CLAUDE.md §7.
+**Key files:** `app/wiring.py` (new — builds real `SIEMConnector`/`AlertStore`/`EnrichmentRegistry`/`LLMClient`/`AgenticAnalyst` instances from `Settings`), `app/cli.py` (new — the `typer` CLI), `app/report_export.py` (new — file-based report artefacts), `app/config.py` (`Settings.reports_dir`).
 **Depends on:** Phases 1–4 (needs a working state graph to hand alerts to).
 
-Carries the §7.1 resource-budget guidance (cap the Wazuh indexer JVM heap, pick 7B vs 14B based on measured headroom) — this is where that guidance actually gets exercised for the first time.
+**Deliberate scope reduction from CLAUDE.md §7's original design, decided during brainstorming:** this phase builds **one-shot CLI commands**, not the continuous poller-thread + in-process-queue + worker-thread daemon CLAUDE.md originally describes. Seven `typer` commands instead: `pull-alerts`, `add-alert` (manually inject a raw Wazuh-shaped alert from a file — no live Wazuh needed for demos), `investigate-all`, `investigate-one`, `list-alerts`, `list-reports`, `show-report`. Each does its one job and exits; meant to be invoked manually or via an external scheduler (cron/launchd). CLI only — no FastAPI viewer (CLAUDE.md's "optionally"). `wazuh_deployment/`'s docker-compose config was left untouched — the §7.1 JVM-heap-capping guidance remains a documented operational note (below), not a coded task.
+
+**Known limitation, confirmed and deliberately left unfixed at final review:** `pull-alerts`'s duplicate-alert detection does not actually work. `wazuh_source_to_alert()` (Phase 3) assigns a fresh random `alert_id` on every mapping, so the same Wazuh alert re-pulled twice gets two different primary keys and never collides — `DuplicateAlertError`/the unique-constraint mechanism the design assumed is unreachable in practice. Since `WazuhConnector.pull_alerts`'s `since` filter is inclusive (`gte`), **every `pull-alerts` run re-fetches and duplicates the newest already-stored alert**, and `investigate-all` then re-investigates that duplicate (~2.5 minutes of local LLM time per run, unbounded growth). Two real fixes exist — making `alert_id` deterministic (a hash of `source_alert_id`) so the existing mechanism works, or adding a `get_alert_by_source_id`-style lookup to the `AlertStore` Protocol — but both touch already-merged code from earlier phases (Phase 3's `wazuh_source_to_alert`, or Phase 1's `AlertStore` Protocol) rather than this phase's own new code, so the user explicitly chose to document this rather than fix it now. **Do not run `pull-alerts` unattended/on a schedule until this is fixed** — for now, treat it as safe only for deliberate, manually-checked one-off pulls, and expect at least one duplicate row per invocation.
+
+Carries the §7.1 resource-budget guidance (cap the Wazuh indexer JVM heap, pick 7B vs 14B based on measured headroom) — not yet applied to `wazuh_deployment/`'s docker-compose config; still an outstanding operational step before any sustained real-alert-volume use.
 
 ---
 
@@ -114,3 +118,6 @@ Not scheduled — pick up opportunistically or when a concrete need arises:
 - **Postgres swap for `AlertStore`** — CLAUDE.md's Context §4 designs for this ("a new `AlertStore` implementation, same Protocol") but it's not needed until the demo needs to scale past SQLite.
 - **Alembic migrations** — deferred in the Foundation plan's Global Constraints until the schema actually needs to evolve post-deployment.
 - **§6.7-style Risk/Compliance/Legal sign-off** — not applicable to this POC per CLAUDE.md §8, but the trigger condition (connecting to production SIEM data or acting on real customer-impacting alerts) should be watched for explicitly, not assumed away.
+- **`pull-alerts`'s duplicate-alert-detection gap** — see Phase 5's note above. Fix by either making `wazuh_source_to_alert()`'s `alert_id` deterministic (hash of `source_alert_id`) or adding an `AlertStore` lookup-by-`source_alert_id` capability. **Do this before running `pull-alerts` unattended/on a schedule** — every run currently duplicates the newest stored alert and re-investigates it.
+- **Continuous poller daemon** — CLAUDE.md §7's original design (poller thread + in-process queue + worker thread), deliberately not built in Phase 5 in favor of one-shot commands. Would build on top of Phase 5's existing `_pull_alerts`/`_investigate_all` logic functions (a scheduler loop calling them on an interval) rather than requiring a rewrite.
+- **FastAPI report viewer** — deferred per Phase 5's "CLI only" decision; a natural candidate if browsing via `list-alerts`/`list-reports`/`show-report`'s terminal tables proves insufficient.
