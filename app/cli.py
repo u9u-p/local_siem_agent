@@ -1,4 +1,6 @@
 import json
+import logging
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -91,8 +93,28 @@ def _summary_line(report: Report) -> str:
     return f"{report.report_id} | {report.risk_assessment.severity.value:8} | {report.status.value}"
 
 
+def _configure_verbose_logging(verbose: bool, log_file: Path | None) -> None:
+    app_logger = logging.getLogger("app")
+    for handler in list(app_logger.handlers):
+        app_logger.removeHandler(handler)
+    if not verbose and log_file is None:
+        return
+    app_logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(log_file, mode="a") if log_file is not None else logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    app_logger.addHandler(handler)
+
+
 @app.command(name="investigate-all")
-def investigate_all_cmd() -> None:
+def investigate_all_cmd(
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Log each pipeline stage's input/output at DEBUG level."
+    ),
+    log_file: Path = typer.Option(
+        None, "--log-file", help="Write verbose logs to this file instead of stdout. Implies --verbose."
+    ),
+) -> None:
+    _configure_verbose_logging(verbose, log_file)
     settings = get_settings()
     alert_store = build_alert_store(settings)
 
@@ -118,7 +140,16 @@ def investigate_all_cmd() -> None:
 
 
 @app.command(name="investigate-one")
-def investigate_one_cmd(alert_id: str = typer.Argument(...)) -> None:
+def investigate_one_cmd(
+    alert_id: str = typer.Argument(...),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Log each pipeline stage's input/output at DEBUG level."
+    ),
+    log_file: Path = typer.Option(
+        None, "--log-file", help="Write verbose logs to this file instead of stdout. Implies --verbose."
+    ),
+) -> None:
+    _configure_verbose_logging(verbose, log_file)
     settings = get_settings()
     alert_store = build_alert_store(settings)
 

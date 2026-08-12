@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -490,3 +491,54 @@ def test_show_report_command_json_output(monkeypatch):
     assert result.exit_code == 0
     parsed = json.loads(result.stdout)
     assert parsed["report_id"] == str(report.report_id)
+
+
+def test_configure_verbose_logging_attaches_stream_handler_when_verbose():
+    from app.cli import _configure_verbose_logging
+
+    logging.getLogger("app").handlers.clear()
+    _configure_verbose_logging(verbose=True, log_file=None)
+    app_logger = logging.getLogger("app")
+
+    assert app_logger.level == logging.DEBUG
+    assert len(app_logger.handlers) == 1
+    assert isinstance(app_logger.handlers[0], logging.StreamHandler)
+    assert not isinstance(app_logger.handlers[0], logging.FileHandler)
+
+    logging.getLogger("app").handlers.clear()
+
+
+def test_configure_verbose_logging_attaches_file_handler_when_log_file_given(tmp_path):
+    from app.cli import _configure_verbose_logging
+
+    log_path = tmp_path / "trace.log"
+    _configure_verbose_logging(verbose=False, log_file=log_path)
+    app_logger = logging.getLogger("app")
+
+    assert app_logger.level == logging.DEBUG
+    assert len(app_logger.handlers) == 1
+    assert isinstance(app_logger.handlers[0], logging.FileHandler)
+
+    logging.getLogger("app").handlers.clear()
+
+
+def test_configure_verbose_logging_does_nothing_when_neither_option_given():
+    from app.cli import _configure_verbose_logging
+
+    logging.getLogger("app").handlers.clear()
+    _configure_verbose_logging(verbose=False, log_file=None)
+    app_logger = logging.getLogger("app")
+
+    assert app_logger.handlers == []
+
+
+def test_configure_verbose_logging_is_idempotent_across_repeated_calls():
+    from app.cli import _configure_verbose_logging
+
+    _configure_verbose_logging(verbose=True, log_file=None)
+    _configure_verbose_logging(verbose=True, log_file=None)
+    app_logger = logging.getLogger("app")
+
+    assert len(app_logger.handlers) == 1
+
+    logging.getLogger("app").handlers.clear()
