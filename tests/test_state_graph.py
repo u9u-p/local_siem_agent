@@ -1393,3 +1393,29 @@ def test_step_gather_context_logs_input_and_output(caplog):
     assert "001" in caplog.text
     assert "_step_gather_context output" in caplog.text
     assert "web-01" in caplog.text
+
+
+def test_step_self_check_logs_input_and_output(caplog):
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        analyst._step_self_check(
+            alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+            _passthrough_correlate_step(), model_available=True,
+        )
+
+    assert "_step_self_check input" in caplog.text
+    assert "_run_self_check prompt" in caplog.text
+    assert "_run_self_check result" in caplog.text
+    assert "_step_self_check output" in caplog.text

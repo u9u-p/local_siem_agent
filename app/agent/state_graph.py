@@ -501,6 +501,10 @@ class AgenticAnalyst:
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, model_available: bool,
     ) -> tuple[DraftReportCanonical, DraftReportExperimental | None, InvestigationStep]:
+        logger.debug(
+            "_step_draft_report input: pattern_type=%s, evidence_count=%s, severity=%s, model_available=%s",
+            pattern_type.value, evidence_count, risk_assessment.severity.value, model_available,
+        )
         fallback_summary = (
             f"Rule {alert.rule_id} ({alert.rule_description}), level {alert.rule_level}, "
             f"on agent {alert.agent.name}."
@@ -515,6 +519,7 @@ class AgenticAnalyst:
                 step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None, input=None,
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_draft_report output: skipped: %s", draft.model_dump_json())
             return draft, None, step
 
         draft = self._draft_canonical(
@@ -530,6 +535,10 @@ class AgenticAnalyst:
             step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm", input=None,
             output_summary=summary, timestamp=datetime.now(timezone.utc),
         )
+        logger.debug(
+            "_step_draft_report output: draft=%s, experimental=%s",
+            draft.model_dump_json(), experimental.model_dump_json() if experimental is not None else None,
+        )
         return draft, experimental, step
 
     def _draft_canonical(
@@ -537,31 +546,40 @@ class AgenticAnalyst:
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, fallback_summary: str,
     ) -> DraftReportCanonical:
         prompt = build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        logger.debug("_draft_canonical prompt: %s", prompt)
         try:
-            return self._llm_client.generate_structured(prompt, DraftReportCanonical)
+            draft = self._llm_client.generate_structured(prompt, DraftReportCanonical)
         except LLMClientError as exc:
             self._degraded_reasons.append(f"draft report failed: {exc.kind}")
+            logger.debug("_draft_canonical failed: %s", exc.kind)
             return DraftReportCanonical(
                 alert_summary=fallback_summary,
                 rationale=risk_assessment.rationale,
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
             )
+        logger.debug("_draft_canonical result: %s", draft.model_dump_json())
+        return draft
 
     def _draft_experimental(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
     ) -> DraftReportExperimental | None:
         prompt = build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        logger.debug("_draft_experimental prompt: %s", prompt)
         try:
-            return self._llm_client.generate_structured(prompt, DraftReportExperimental)
+            experimental = self._llm_client.generate_structured(prompt, DraftReportExperimental)
         except LLMClientError:
+            logger.debug("_draft_experimental failed")
             return None
+        logger.debug("_draft_experimental result: %s", experimental.model_dump_json())
+        return experimental
 
     def _step_self_check(
         self, alert: Alert, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
         correlate_step: InvestigationStep, model_available: bool,
     ) -> tuple[DraftReportCanonical, str, InvestigationStep]:
+        logger.debug("_step_self_check input: draft=%s, model_available=%s", draft.model_dump_json(), model_available)
         if not model_available:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = "self-check skipped: model unavailable" + (f"; {notes}" if notes else "")
@@ -569,6 +587,7 @@ class AgenticAnalyst:
                 step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None, input=None,
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_self_check output: skipped, draft unchanged, notes=%r", notes)
             return draft, notes, step
 
         result, failure_kind = self._run_self_check(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
@@ -579,6 +598,7 @@ class AgenticAnalyst:
                 step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
                 output_summary="self-check call failed; corrections not applied", timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_self_check output: call failed, draft unchanged, notes=%r", notes)
             return draft, notes, step
 
         correction_result = _apply_self_check_corrections(draft, result)
@@ -591,6 +611,10 @@ class AgenticAnalyst:
                 output_summary=f"self-check returned {len(result.audits)} audit(s) for {len(_claims_for(draft))} claim(s); corrections not applied",
                 timestamp=datetime.now(timezone.utc),
             )
+            logger.debug(
+                "_step_self_check output: mismatched audit count (%s audits, %s claims), draft unchanged, notes=%r",
+                len(result.audits), len(_claims_for(draft)), notes,
+            )
             return draft, notes, step
 
         corrected_draft, flagged_claims = correction_result
@@ -602,6 +626,10 @@ class AgenticAnalyst:
             output_summary=f"audited {len(result.audits)} claim(s), {len(flagged_claims)} flagged",
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug(
+            "_step_self_check output: corrected_draft=%s, flagged_claims=%s, notes=%r",
+            corrected_draft.model_dump_json(), flagged_claims, notes,
+        )
         return corrected_draft, notes, step
 
     def _run_self_check(
@@ -609,11 +637,15 @@ class AgenticAnalyst:
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
     ) -> tuple[SelfCheckResult | None, str | None]:
         prompt = build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        logger.debug("_run_self_check prompt: %s", prompt)
         try:
-            return self._llm_client.generate_structured(prompt, SelfCheckResult), None
+            result = self._llm_client.generate_structured(prompt, SelfCheckResult)
         except LLMClientError as exc:
             self._degraded_reasons.append(f"self-check failed: {exc.kind}")
+            logger.debug("_run_self_check failed: %s", exc.kind)
             return None, exc.kind
+        logger.debug("_run_self_check result: %s", result.model_dump_json())
+        return result, None
 
     def _assemble_report(
         self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],
@@ -647,11 +679,14 @@ class AgenticAnalyst:
         )
 
     def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
+        logger.debug(
+            "_step_finalize_and_persist input: report_id=%s, alert_id=%s", report.report_id, alert.alert_id
+        )
         try:
             self._alert_store.save_report(report)
             self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
         except Exception as exc:
-            return InvestigationStep(
+            step = InvestigationStep(
                 step_name=Step.FINALIZE_AND_PERSIST.value,
                 action="degraded",
                 tool_used="alert_store",
@@ -659,7 +694,9 @@ class AgenticAnalyst:
                 output_summary=f"could not persist report or update alert status: {exc}",
                 timestamp=datetime.now(timezone.utc),
             )
-        return InvestigationStep(
+            logger.debug("_step_finalize_and_persist output: failed: %s", exc)
+            return step
+        step = InvestigationStep(
             step_name=Step.FINALIZE_AND_PERSIST.value,
             action="completed",
             tool_used="alert_store",
@@ -667,6 +704,8 @@ class AgenticAnalyst:
             output_summary=f"report {report.report_id} persisted, alert marked investigated",
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug("_step_finalize_and_persist output: persisted")
+        return step
 
     def investigate(self, alert: Alert) -> Report:
         self._degraded_reasons = []
