@@ -154,6 +154,28 @@ def test_pull_alerts_command_prints_summary(monkeypatch):
     assert "Pulled 1 new alert(s), skipped 0 already-stored" in result.stdout
 
 
+def test_pull_alerts_command_handles_missing_wazuh_config(monkeypatch):
+    def _raise_runtime_error(settings):
+        raise RuntimeError("Missing required Wazuh settings: WAZUH_INDEXER_URL")
+
+    monkeypatch.setattr("app.cli.build_siem_connector", _raise_runtime_error)
+
+    result = runner.invoke(app, ["pull-alerts"])
+
+    assert result.exit_code == 1
+    assert "Cannot pull alerts" in result.output
+
+
+def test_pull_alerts_command_rejects_invalid_since(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["pull-alerts", "--since", "not-a-date"])
+
+    assert result.exit_code == 1
+    assert "Invalid --since value" in result.output
+
+
 def test_add_alert_saves_alert_from_wazuh_shaped_file(tmp_path):
     store = _FakeAlertStore()
     source = {
@@ -241,6 +263,75 @@ def test_investigate_all_command_investigates_each_new_alert(monkeypatch, tmp_pa
     assert str(report.report_id) in result.stdout
 
 
+def test_investigate_all_command_succeeds_without_wazuh_config_when_no_new_alerts(monkeypatch):
+    store = _FakeAlertStore()
+
+    def _raise_runtime_error(settings, alert_store=None):
+        raise RuntimeError("Missing required Wazuh settings: WAZUH_INDEXER_URL")
+
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", _raise_runtime_error)
+
+    result = runner.invoke(app, ["investigate-all"])
+
+    assert result.exit_code == 0
+    assert "No new alerts to investigate." in result.stdout
+
+
+def test_investigate_all_command_handles_missing_wazuh_config_when_alerts_exist(monkeypatch):
+    new_alert = _make_alert(status=AlertStatus.NEW)
+    store = _FakeAlertStore(alerts=[new_alert])
+
+    def _raise_runtime_error(settings, alert_store=None):
+        raise RuntimeError("Missing required Wazuh settings: WAZUH_INDEXER_URL")
+
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", _raise_runtime_error)
+
+    result = runner.invoke(app, ["investigate-all"])
+
+    assert result.exit_code == 1
+    assert "Cannot investigate" in result.output
+
+
+def test_investigate_all_command_continues_after_one_alert_fails_to_write(monkeypatch, tmp_path):
+    alert_a = _make_alert(status=AlertStatus.NEW)
+    alert_b = _make_alert(alert_id=uuid4(), status=AlertStatus.NEW, timestamp=alert_a.timestamp - timedelta(seconds=1))
+    store = _FakeAlertStore(alerts=[alert_a, alert_b])
+    report_a = _make_report(alert_id=alert_a.alert_id)
+    report_b = _make_report(alert_id=alert_b.alert_id)
+
+    class _StubAnalyst:
+        def __init__(self):
+            self.investigated_alerts = []
+            self._reports = {str(alert_a.alert_id): report_a, str(alert_b.alert_id): report_b}
+
+        def investigate(self, alert):
+            self.investigated_alerts.append(alert)
+            return self._reports[str(alert.alert_id)]
+
+    analyst = _StubAnalyst()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", lambda settings, alert_store=None: analyst)
+
+    call_count = {"n": 0}
+
+    def _flaky_write(report, reports_dir):
+        call_count["n"] += 1
+        if call_count["n"] == 1:
+            raise OSError("disk full")
+        return reports_dir / f"{report.report_id}.json"
+
+    monkeypatch.setattr("app.cli.write_report_file", _flaky_write)
+
+    result = runner.invoke(app, ["investigate-all"])
+
+    assert result.exit_code == 0
+    assert len(analyst.investigated_alerts) == 2
+    assert "Failed to write report for alert" in result.output
+    assert str(report_b.report_id) in result.stdout
+
+
 def test_investigate_one_command_reports_not_found(monkeypatch):
     store = _FakeAlertStore()
     monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
@@ -267,6 +358,37 @@ def test_investigate_one_command_investigates_the_named_alert(monkeypatch, tmp_p
     assert result.exit_code == 0
     assert analyst.investigated_alerts == [alert]
     assert str(report.report_id) in result.stdout
+
+
+def test_investigate_one_command_reports_not_found_without_needing_wazuh_config(monkeypatch):
+    store = _FakeAlertStore()
+
+    def _raise_runtime_error(settings, alert_store=None):
+        raise RuntimeError("Missing required Wazuh settings: WAZUH_INDEXER_URL")
+
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", _raise_runtime_error)
+
+    result = runner.invoke(app, ["investigate-one", "nonexistent-id"])
+
+    assert result.exit_code == 1
+    assert "No alert found with id nonexistent-id" in result.output
+
+
+def test_investigate_one_command_handles_missing_wazuh_config(monkeypatch):
+    alert = _make_alert()
+    store = _FakeAlertStore(alerts=[alert])
+
+    def _raise_runtime_error(settings, alert_store=None):
+        raise RuntimeError("Missing required Wazuh settings: WAZUH_INDEXER_URL")
+
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setattr("app.cli.build_analyst", _raise_runtime_error)
+
+    result = runner.invoke(app, ["investigate-one", str(alert.alert_id)])
+
+    assert result.exit_code == 1
+    assert "Cannot investigate" in result.output
 
 
 def test_list_alerts_command_prints_table(monkeypatch):
@@ -320,6 +442,16 @@ def test_list_reports_command_rejects_invalid_severity(monkeypatch):
 
     assert result.exit_code == 1
     assert "Invalid severity" in result.output
+
+
+def test_list_reports_command_rejects_invalid_since(monkeypatch):
+    store = _FakeAlertStore()
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["list-reports", "--since", "not-a-date"])
+
+    assert result.exit_code == 1
+    assert "Invalid --since value" in result.output
 
 
 def test_show_report_command_reports_not_found(monkeypatch):

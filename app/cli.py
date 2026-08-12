@@ -4,11 +4,12 @@ from pathlib import Path
 
 import typer
 
+from app.agent.state_graph import AgenticAnalyst
 from app.config import get_settings
 from app.integration.siem_connector import SIEMConnector
 from app.integration.wazuh_connector import wazuh_source_to_alert
 from app.report_export import write_report_file
-from app.schemas import AlertStatus, Report, Severity
+from app.schemas import Alert, AlertStatus, Report, Severity
 from app.storage.alert_store import AlertStore
 from app.storage.sqlite_alert_store import AlertNotFoundError, DuplicateAlertError, ReportNotFoundError
 from app.wiring import build_alert_store, build_analyst, build_siem_connector
@@ -46,10 +47,14 @@ def pull_alerts_cmd(
     ),
     limit: int = typer.Option(500, "--limit"),
 ) -> None:
+    parsed_since = _parse_since(since)
     settings = get_settings()
-    siem = build_siem_connector(settings)
+    try:
+        siem = build_siem_connector(settings)
+    except RuntimeError as exc:
+        typer.echo(f"Cannot pull alerts: {exc}", err=True)
+        raise typer.Exit(code=1)
     alert_store = build_alert_store(settings)
-    parsed_since = datetime.fromisoformat(since) if since else None
     new_count, duplicate_count, resolved_since = _pull_alerts(siem, alert_store, parsed_since, limit)
     typer.echo(
         f"Pulled {new_count} new alert(s), skipped {duplicate_count} already-stored, "
@@ -76,7 +81,7 @@ def add_alert_cmd(file: Path = typer.Argument(..., exists=True, readable=True)) 
     typer.echo(f"Saved alert {alert.alert_id} (rule {alert.rule_id}).")
 
 
-def _investigate_alert(analyst, alert, reports_dir: Path) -> Report:
+def _investigate_alert(analyst: AgenticAnalyst, alert: Alert, reports_dir: Path) -> Report:
     report = analyst.investigate(alert)
     write_report_file(report, reports_dir)
     return report
@@ -90,16 +95,25 @@ def _summary_line(report: Report) -> str:
 def investigate_all_cmd() -> None:
     settings = get_settings()
     alert_store = build_alert_store(settings)
-    analyst = build_analyst(settings, alert_store=alert_store)
-    reports_dir = Path(settings.reports_dir)
 
     alerts = alert_store.list_alerts(status=AlertStatus.NEW)
     if not alerts:
         typer.echo("No new alerts to investigate.")
         return
 
+    try:
+        analyst = build_analyst(settings, alert_store=alert_store)
+    except RuntimeError as exc:
+        typer.echo(f"Cannot investigate: {exc}", err=True)
+        raise typer.Exit(code=1)
+    reports_dir = Path(settings.reports_dir)
+
     for alert in alerts:
-        report = _investigate_alert(analyst, alert, reports_dir)
+        try:
+            report = _investigate_alert(analyst, alert, reports_dir)
+        except OSError as exc:
+            typer.echo(f"Failed to write report for alert {alert.alert_id}: {exc}", err=True)
+            continue
         typer.echo(_summary_line(report))
 
 
@@ -107,8 +121,6 @@ def investigate_all_cmd() -> None:
 def investigate_one_cmd(alert_id: str = typer.Argument(...)) -> None:
     settings = get_settings()
     alert_store = build_alert_store(settings)
-    analyst = build_analyst(settings, alert_store=alert_store)
-    reports_dir = Path(settings.reports_dir)
 
     try:
         alert = alert_store.get_alert(alert_id)
@@ -116,8 +128,25 @@ def investigate_one_cmd(alert_id: str = typer.Argument(...)) -> None:
         typer.echo(f"No alert found with id {alert_id}.", err=True)
         raise typer.Exit(code=1)
 
+    try:
+        analyst = build_analyst(settings, alert_store=alert_store)
+    except RuntimeError as exc:
+        typer.echo(f"Cannot investigate: {exc}", err=True)
+        raise typer.Exit(code=1)
+    reports_dir = Path(settings.reports_dir)
+
     report = _investigate_alert(analyst, alert, reports_dir)
     typer.echo(_summary_line(report))
+
+
+def _parse_since(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError:
+        typer.echo(f"Invalid --since value {value!r}: must be an ISO-8601 timestamp.", err=True)
+        raise typer.Exit(code=1)
 
 
 def _parse_status(value: str | None) -> AlertStatus | None:
@@ -159,9 +188,9 @@ def list_alerts_cmd(
     status: str = typer.Option(None, "--status"),
     limit: int = typer.Option(100, "--limit"),
 ) -> None:
+    parsed_status = _parse_status(status)
     settings = get_settings()
     alert_store = build_alert_store(settings)
-    parsed_status = _parse_status(status)
     alerts = alert_store.list_alerts(status=parsed_status, limit=limit)
     typer.echo(_format_alerts_table(alerts))
 
@@ -183,10 +212,10 @@ def list_reports_cmd(
     since: str = typer.Option(None, "--since"),
     min_severity: str = typer.Option(None, "--min-severity"),
 ) -> None:
+    parsed_since = _parse_since(since)
+    parsed_min_severity = _parse_severity(min_severity)
     settings = get_settings()
     alert_store = build_alert_store(settings)
-    parsed_since = datetime.fromisoformat(since) if since else None
-    parsed_min_severity = _parse_severity(min_severity)
     reports = alert_store.list_reports(since=parsed_since, min_severity=parsed_min_severity)
     typer.echo(_format_reports_table(reports))
 
