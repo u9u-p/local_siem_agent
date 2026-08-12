@@ -350,6 +350,7 @@ class AgenticAnalyst:
     def _step_correlate(
         self, alert: Alert, model_available: bool
     ) -> tuple[PatternType, int, InvestigationStep]:
+        logger.debug("_step_correlate input: alert_id=%s, model_available=%s", alert.alert_id, model_available)
         queries, results, evidence_count, failed_count = self._run_canonical_searches(alert)
         failed_note = f"; {failed_count} canonical search(es) failed" if failed_count else ""
         if failed_count:
@@ -367,6 +368,7 @@ class AgenticAnalyst:
                 ),
                 timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_correlate output: pattern_type=other (skipped), evidence_count=%s", evidence_count)
             return PatternType.OTHER, evidence_count, step
 
         decision = self._classify_correlation(alert, results, evidence_count)
@@ -398,26 +400,37 @@ class AgenticAnalyst:
             ),
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug(
+            "_step_correlate output: pattern_type=%s, evidence_count=%s%s%s",
+            decision.pattern_type.value, evidence_count, follow_up_note, open_value_note,
+        )
         return decision.pattern_type, evidence_count, step
 
     def _classify_correlation(
         self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult], evidence_count: int
     ) -> CorrelationDecision:
         prompt = build_correlation_decision_prompt(alert, canonical_results, evidence_count)
+        logger.debug("_classify_correlation prompt: %s", prompt)
         try:
-            return self._llm_client.generate_structured(prompt, CorrelationDecision)
+            decision = self._llm_client.generate_structured(prompt, CorrelationDecision)
         except LLMClientError as exc:
             self._degraded_reasons.append(f"correlation classification failed: {exc.kind}")
+            logger.debug("_classify_correlation failed: %s, falling back to OTHER/NONE_NEEDED", exc.kind)
             return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+        logger.debug("_classify_correlation result: %s", decision.model_dump_json())
+        return decision
 
     def _run_open_value_search(
         self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult]
     ) -> str:
         prompt = build_open_value_search_prompt(alert, canonical_results)
+        logger.debug("_run_open_value_search prompt: %s", prompt)
         try:
             proposal = self._llm_client.generate_structured(prompt, OpenValueSearchProposal)
         except LLMClientError:
+            logger.debug("_run_open_value_search: proposal call failed, skipping")
             return ""
+        logger.debug("_run_open_value_search result: %s", proposal.model_dump_json())
 
         query = SearchQuery(
             clauses=[SearchClause(field="full_log", operator="contains", value=proposal.search_value)],
@@ -436,6 +449,10 @@ class AgenticAnalyst:
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], model_available: bool,
     ) -> tuple[RiskAssessment, InvestigationStep]:
+        logger.debug(
+            "_step_risk_assessment input: pattern_type=%s, evidence_count=%s, enrichment_count=%s, model_available=%s",
+            pattern_type.value, evidence_count, len(enrichment_results), model_available,
+        )
         if not model_available:
             assessment = RiskAssessment(
                 severity=Severity.LOW, confidence=Confidence.LOW,
@@ -445,6 +462,7 @@ class AgenticAnalyst:
                 step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None, input=None,
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
+            logger.debug("_step_risk_assessment output: skipped: %s", assessment.model_dump_json())
             return assessment, step
 
         assessment = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results)
@@ -453,6 +471,7 @@ class AgenticAnalyst:
             output_summary=f"severity={assessment.severity.value}, confidence={assessment.confidence.value}",
             timestamp=datetime.now(timezone.utc),
         )
+        logger.debug("_step_risk_assessment output: %s", assessment.model_dump_json())
         return assessment, step
 
     def _assess_risk(
@@ -460,14 +479,18 @@ class AgenticAnalyst:
         enrichment_results: list[EnrichmentResult],
     ) -> RiskAssessment:
         prompt = build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results)
+        logger.debug("_assess_risk prompt: %s", prompt)
         try:
-            return self._llm_client.generate_structured(prompt, RiskAssessment)
+            assessment = self._llm_client.generate_structured(prompt, RiskAssessment)
         except LLMClientError as exc:
             self._degraded_reasons.append(f"risk assessment failed: {exc.kind}")
+            logger.debug("_assess_risk failed: %s", exc.kind)
             return RiskAssessment(
                 severity=Severity.LOW, confidence=Confidence.LOW,
                 rationale=f"risk assessment failed: {exc.kind}",
             )
+        logger.debug("_assess_risk result: %s", assessment.model_dump_json())
+        return assessment
 
     def _step_draft_report(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,

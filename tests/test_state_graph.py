@@ -599,6 +599,28 @@ def test_step_risk_assessment_falls_back_on_llm_error():
     assert "risk assessment failed: timeout" in assessment.rationale
 
 
+def test_step_risk_assessment_logs_prompt_and_result(caplog):
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="matches known malicious IP"
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
+        analyst._step_risk_assessment(alert, PatternType.BRUTE_FORCE, 14, [], model_available=True)
+
+    assert "_step_risk_assessment input" in caplog.text
+    assert "_assess_risk prompt" in caplog.text
+    assert alert.rule_id in caplog.text
+    assert "_assess_risk result" in caplog.text
+    assert "matches known malicious IP" in caplog.text
+
+
 def test_step_draft_report_returns_canonical_and_experimental_drafts():
     draft_canonical = DraftReportCanonical(
         alert_summary="Brute-force attempts from 203.0.113.5.",
