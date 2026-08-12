@@ -1,0 +1,14 @@
+Jul 28 08:50:14 web-prod-01 sshd[9201]: Accepted password for mrahman from 203.0.113.30 port 51204 ssh2
+Jul 28 08:50:14 web-prod-01 sshd[9201]: pam_unix(sshd:session): session opened for user mrahman(uid=1010) by (uid=0)
+Jul 28 17:30:02 web-prod-01 sshd[9201]: pam_unix(sshd:session): session closed for user mrahman
+
+Jul 29 08:48:33 web-prod-01 sshd[9310]: Accepted password for mrahman from 203.0.113.30 port 51310 ssh2
+Jul 29 08:48:33 web-prod-01 sshd[9310]: pam_unix(sshd:session): session opened for user mrahman(uid=1010) by (uid=0)
+Jul 29 18:05:41 web-prod-01 sshd[9310]: pam_unix(sshd:session): session closed for user mrahman
+
+Jul 31 06:12:09 web-prod-01 sshd[9455]: Accepted publickey for mrahman from 100.72.44.19 port 61032 ssh2
+Jul 31 06:12:09 web-prod-01 sshd[9455]: pam_unix(sshd:session): session opened for user mrahman(uid=1010) by (uid=0)
+Jul 31 09:20:15 web-prod-01 sshd[9455]: pam_unix(sshd:session): session closed for user mrahman
+Jul 31 14:02:47 web-prod-01 sshd[9502]: Accepted publickey for mrahman from 100.72.44.19 port 61501 ssh2
+Jul 31 14:02:47 web-prod-01 sshd[9502]: pam_unix(sshd:session): session opened for user mrahman(uid=1010) by (uid=0)
+Jul 31 18:15:00 web-prod-01 sshd[9502]: pam_unix(sshd:session): session closed for user mrahman

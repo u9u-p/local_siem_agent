@@ -1,0 +1,10 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(\"/Users/keli.yam/.claude/plugins/cache/claude-plugins-official/superpowers/6.2.0/skills/subagent-driven-development/scripts/task-brief\" docs/superpowers/plans/2026-08-10-llm-client-implementation.md 3)"
+    ]
+  }
+}

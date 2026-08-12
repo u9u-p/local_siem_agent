@@ -1,0 +1,33 @@
+Jul 29 08:55:03 web-prod-01 sshd[10231]: Accepted password for jsmith from 203.0.113.10 port 52344 ssh2
+Jul 29 08:55:03 web-prod-01 sshd[10231]: pam_unix(sshd:session): session opened for user jsmith(uid=1001) by (uid=0)
+Jul 29 18:02:11 web-prod-01 sshd[10231]: pam_unix(sshd:session): session closed for user jsmith
+Jul 29 09:10:02 web-prod-01 sshd[10240]: Accepted password for araja from 203.0.113.20 port 52890 ssh2
+Jul 29 09:10:02 web-prod-01 sshd[10240]: pam_unix(sshd:session): session opened for user araja(uid=1002) by (uid=0)
+Jul 29 17:20:44 web-prod-01 sshd[10240]: pam_unix(sshd:session): session closed for user araja
+
+Jul 30 09:01:45 web-prod-01 sshd[10390]: Accepted password for jsmith from 203.0.113.10 port 52501 ssh2
+Jul 30 09:01:45 web-prod-01 sshd[10390]: pam_unix(sshd:session): session opened for user jsmith(uid=1001) by (uid=0)
+Jul 30 17:45:22 web-prod-01 sshd[10390]: pam_unix(sshd:session): session closed for user jsmith
+Jul 30 09:05:12 web-prod-01 sshd[10399]: Accepted password for araja from 203.0.113.20 port 53012 ssh2
+Jul 30 09:05:12 web-prod-01 sshd[10399]: pam_unix(sshd:session): session opened for user araja(uid=1002) by (uid=0)
+Jul 30 18:00:03 web-prod-01 sshd[10399]: pam_unix(sshd:session): session closed for user araja
+
+Jul 31 09:02:11 web-prod-01 sshd[10502]: Accepted password for jsmith from 203.0.113.10 port 52777 ssh2
+Jul 31 09:02:11 web-prod-01 sshd[10502]: pam_unix(sshd:session): session opened for user jsmith(uid=1001) by (uid=0)
+Jul 31 09:12:30 web-prod-01 sshd[10502]: pam_unix(sshd:session): session closed for user jsmith
+Jul 31 09:14:01 web-prod-01 sshd[10610]: Failed password for root from 185.220.101.45 port 41220 ssh2
+Jul 31 09:14:06 web-prod-01 sshd[10611]: Failed password for admin from 185.220.101.45 port 41221 ssh2
+Jul 31 09:14:12 web-prod-01 sshd[10612]: Failed password for test from 185.220.101.45 port 41222 ssh2
+Jul 31 09:14:18 web-prod-01 sshd[10613]: Failed password for oracle from 185.220.101.45 port 41223 ssh2
+Jul 31 09:14:24 web-prod-01 sshd[10614]: Failed password invalid user jenkins from 185.220.101.45 port 41224 ssh2
+Jul 31 09:14:31 web-prod-01 sshd[10615]: Failed password for jsmith from 185.220.101.45 port 41225 ssh2
+Jul 31 09:14:37 web-prod-01 sshd[10616]: Failed password for jsmith from 185.220.101.45 port 41226 ssh2
+Jul 31 09:14:44 web-prod-01 sshd[10617]: Failed password for jsmith from 185.220.101.45 port 41227 ssh2
+Jul 31 09:14:50 web-prod-01 sshd[10618]: pam_unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= rhost=185.220.101.45 user=jsmith
+Jul 31 09:15:02 web-prod-01 sshd[10630]: Accepted password for jsmith from 45.146.164.110 port 51122 ssh2
+Jul 31 09:15:02 web-prod-01 sshd[10630]: pam_unix(sshd:session): session opened for user jsmith(uid=1001) by (uid=0)
+Jul 31 09:16:10 web-prod-01 sudo[10645]:  jsmith : TTY=pts/1 ; PWD=/home/jsmith ; USER=root ; COMMAND=/usr/sbin/useradd -m -s /bin/bash svc_backup
+Jul 31 09:16:45 web-prod-01 sudo[10651]:  jsmith : TTY=pts/1 ; PWD=/home/jsmith ; USER=root ; COMMAND=/usr/bin/passwd svc_backup
+Jul 31 09:40:03 web-prod-01 sshd[10630]: pam_unix(sshd:session): session closed for user jsmith
+Jul 31 09:41:00 web-prod-01 sshd[10399]: Accepted password for araja from 203.0.113.20 port 53340 ssh2
+Jul 31 09:41:00 web-prod-01 sshd[10399]: pam_unix(sshd:session): session opened for user araja(uid=1002) by (uid=0)

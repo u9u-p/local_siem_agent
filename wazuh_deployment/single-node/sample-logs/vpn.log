@@ -1,0 +1,10 @@
+Jul 31 06:10:58 vpn-gw01 ocserv[4021]: main: user 'mrahman' connected from '85.214.132.201:44210'
+Jul 31 06:11:02 vpn-gw01 ocserv[4021]: main: user 'mrahman' assigned NAT/egress IP '100.72.44.19'
+Jul 31 06:11:02 vpn-gw01 ocserv[4021]: auth: mfa push sent to device 'mrahman-iphone' via DUO
+Jul 31 06:11:09 vpn-gw01 ocserv[4021]: auth: mfa push approved for user 'mrahman' (duo_txn=8f2a1c9e)
+Jul 31 09:20:20 vpn-gw01 ocserv[4021]: main: user 'mrahman' disconnected, session duration 3h09m
+Jul 31 13:58:11 vpn-gw01 ocserv[4051]: main: user 'mrahman' connected from '85.214.132.201:51820'
+Jul 31 13:58:14 vpn-gw01 ocserv[4051]: main: user 'mrahman' assigned NAT/egress IP '100.72.44.19'
+Jul 31 13:58:14 vpn-gw01 ocserv[4051]: auth: mfa push sent to device 'mrahman-iphone' via DUO
+Jul 31 13:58:22 vpn-gw01 ocserv[4051]: auth: mfa push approved for user 'mrahman' (duo_txn=8f2a2d10)
+Jul 31 18:15:05 vpn-gw01 ocserv[4051]: main: user 'mrahman' disconnected, session duration 4h16m

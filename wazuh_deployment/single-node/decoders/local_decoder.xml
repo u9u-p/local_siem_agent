@@ -1,0 +1,448 @@
+<!-- Place in /var/ossec/etc/decoders/local_decoder.xml on the manager -->
+
+<decoder name="ocserv">
+  <program_name>^ocserv</program_name>
+</decoder>
+
+<decoder name="ocserv-connected">
+  <parent>ocserv</parent>
+  <prematch>connected from</prematch>
+  <regex offset="after_prematch">^'(\S+)':(\d+)$</regex>
+  <order>srcip, srcport</order>
+</decoder>
+
+<decoder name="ocserv-nat">
+  <parent>ocserv</parent>
+  <prematch>assigned NAT/egress IP</prematch>
+  <regex offset="after_prematch">^'(\S+)'$</regex>
+  <order>dstip</order>
+</decoder>
+
+<decoder name="ocserv-mfa-sent">
+  <parent>ocserv</parent>
+  <prematch>mfa push sent to device</prematch>
+</decoder>
+
+<decoder name="ocserv-mfa-approved">
+  <parent>ocserv</parent>
+  <prematch>mfa push approved for user</prematch>
+</decoder>
+
+<decoder name="ocserv-user">
+  <parent>ocserv</parent>
+  <regex>user '(\S+)'</regex>
+  <order>dstuser</order>
+</decoder>
+
+<!--
+  Mimecast SIEM Logs — custom decoders
+  Place at: /var/ossec/etc/decoders/mimecast_decoders.xml
+-->
+
+<decoder name="mimecast">
+  <prematch type="pcre2">datetime=.*\|aCode=</prematch>
+</decoder>
+
+<decoder name="mimecast">
+  <prematch type="pcre2">datetime=.*\|acc=</prematch>
+</decoder>
+
+<decoder name="mimecast">
+  <prematch type="pcre2">datetime=.*Mimecast</prematch>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)datetime=(?:\\)?([^|]+)</regex>
+  <order>mimecast.datetime</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)aCode=(?:\\)?([^|]+)</regex>
+  <order>mimecast.aCode</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)acc=(?:\\)?([^|]+)</regex>
+  <order>mimecast.acc</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IP=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IP</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)RejType=(?:\\)?([^|]+)</regex>
+  <order>mimecast.RejType</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Error=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Error</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)RejCode=(?:\\)?([^|]+)</regex>
+  <order>mimecast.RejCode</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Dir=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Dir</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)headerFrom=(?:\\)?([^|]+)</regex>
+  <order>mimecast.headerFrom</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Sender=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Sender</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Rcpt=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Rcpt</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Act=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Act</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)RejInfo=(?:\\)?([^|]+)</regex>
+  <order>mimecast.RejInfo</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)TlsVer=(?:\\)?([^|]+)</regex>
+  <order>mimecast.TlsVer</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Cphr=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Cphr</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Hld=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Hld</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)AttSize=(?:\\)?([^|]+)</regex>
+  <order>mimecast.AttSize</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IPNewDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IPNewDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IPReplyMismatch=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IPReplyMismatch</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)AttCnt=(?:\\)?([^|]+)</regex>
+  <order>mimecast.AttCnt</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IPInternalName=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IPInternalName</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)AttNames=(?:\\)?([^|]+)</regex>
+  <order>mimecast.AttNames</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)MsgSize=(?:\\)?([^|]+)</regex>
+  <order>mimecast.MsgSize</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)MsgId=(?:\\)?([^|]+)</regex>
+  <order>mimecast.MsgId</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IPThreadDict=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IPThreadDict</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IPSimilarDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.IPSimilarDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Delivered=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Delivered</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Err=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Err</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)ReceiptAck=(?:\\)?([^|]+)</regex>
+  <order>mimecast.ReceiptAck</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Subject=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Subject</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Attempt=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Attempt</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Snt=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Snt</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)UseTls=(?:\\)?([^|]+)</regex>
+  <order>mimecast.UseTls</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)MimecastIP=(?:\\)?([^|]+)</regex>
+  <order>mimecast.MimecastIP</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)fileName=(?:\\)?([^|]+)</regex>
+  <order>mimecast.fileName</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)sha256=(?:\\)?([^|]+)</regex>
+  <order>mimecast.sha256</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Size=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Size</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Recipient=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Recipient</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SenderDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SenderDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)fileExt=(?:\\)?([^|]+)</regex>
+  <order>mimecast.fileExt</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Virus=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Virus</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)sha1=(?:\\)?([^|]+)</regex>
+  <order>mimecast.sha1</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SenderDomainInternal=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SenderDomainInternal</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)fileMime=(?:\\)?([^|]+)</regex>
+  <order>mimecast.fileMime</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)CustomerIP=(?:\\)?([^|]+)</regex>
+  <order>mimecast.CustomerIP</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Route=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Route</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)md5=(?:\\)?([^|]+)</regex>
+  <order>mimecast.md5</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SourceIP=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SourceIP</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)UrlCategory=(?:\\)?([^|]+)</regex>
+  <order>mimecast.UrlCategory</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)ScanResultInfo=(?:\\)?([^|]+)</regex>
+  <order>mimecast.ScanResultInfo</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)URL=(?:\\)?([^|]+)</regex>
+  <order>mimecast.URL</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Receipient=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Receipient</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Definition=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Definition</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Hits=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Hits</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)Action=(?:\\)?([^|]+)</regex>
+  <order>mimecast.Action</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)TaggedExternal=(?:\\)?([^|]+)</regex>
+  <order>mimecast.TaggedExternal</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)TaggedMalicious=(?:\\)?([^|]+)</regex>
+  <order>mimecast.TaggedMalicious</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)InternalName=(?:\\)?([^|]+)</regex>
+  <order>mimecast.InternalName</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)CustomName=(?:\\)?([^|]+)</regex>
+  <order>mimecast.CustomName</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)NewDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.NewDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SimilarInternalDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SimilarInternalDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SimilarCustomExternalDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SimilarCustomExternalDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)SimilarMimecastExternalDomain=(?:\\)?([^|]+)</regex>
+  <order>mimecast.SimilarMimecastExternalDomain</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)ReplyMismatch=(?:\\)?([^|]+)</regex>
+  <order>mimecast.ReplyMismatch</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)ThreatDictionary=(?:\\)?([^|]+)</regex>
+  <order>mimecast.ThreatDictionary</order>
+</decoder>
+
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)reason=(?:\\)?([^|]+)</regex>
+  <order>mimecast.reason</order>
+</decoder>
