@@ -2,6 +2,8 @@
 
 Master roadmap for the Local SIEM Alert Investigation Agent (see `CLAUDE.md` for the full design). This is a coarse-grained sequencing document, not a task-by-task implementation plan — each phase below gets its own brainstorm → spec → plan cycle (`docs/superpowers/specs/` and `docs/superpowers/plans/`) when it's actually started. See `PROGRESS.md` for current status.
 
+**Current active work is the Demo Readiness: HITCON 2026 section**, near the end of this file — Phases 1–5 are complete, and that section carries the remaining task list, what was verified on the Mac Studio, and the known-wrong behaviour being presented as-is.
+
 Phases are ordered by dependency, per CLAUDE.md §1.4: the Agentic Analyst depends on `SIEMConnector`, `AlertStore`, `EnrichmentRegistry`, and an `LLMClient` — so Integration must exist before the Agentic Analyst can be built, even though Enrichment was built first (it had no such dependency).
 
 ---
@@ -104,9 +106,68 @@ Final whole-branch review found 1 Critical and 2 Important findings, all fixed b
 
 **Deliberate scope reduction from CLAUDE.md §7's original design, decided during brainstorming:** this phase builds **one-shot CLI commands**, not the continuous poller-thread + in-process-queue + worker-thread daemon CLAUDE.md originally describes. Seven `typer` commands instead: `pull-alerts`, `add-alert` (manually inject a raw Wazuh-shaped alert from a file — no live Wazuh needed for demos), `investigate-all`, `investigate-one`, `list-alerts`, `list-reports`, `show-report`. Each does its one job and exits; meant to be invoked manually or via an external scheduler (cron/launchd). CLI only — no FastAPI viewer (CLAUDE.md's "optionally"). `wazuh_deployment/`'s docker-compose config was left untouched by this phase's plan — worth noting it already caps the indexer's JVM heap (`OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g` in `docker-compose.yml`), so §7.1's resource-budget guidance is in effect, not merely a documented-but-unapplied note.
 
-**Known limitation, confirmed and deliberately left unfixed at final review:** `pull-alerts`'s duplicate-alert detection does not actually work. `wazuh_source_to_alert()` (Phase 3) assigns a fresh random `alert_id` on every mapping, so the same Wazuh alert re-pulled twice gets two different primary keys and never collides — `DuplicateAlertError`/the unique-constraint mechanism the design assumed is unreachable in practice. Since `WazuhConnector.pull_alerts`'s `since` filter is inclusive (`gte`), **every `pull-alerts` run re-fetches and duplicates the newest already-stored alert**, and `investigate-all` then re-investigates that duplicate (~2.5 minutes of local LLM time per run, unbounded growth). Two real fixes exist — making `alert_id` deterministic (a hash of `source_alert_id`) so the existing mechanism works, or adding a `get_alert_by_source_id`-style lookup to the `AlertStore` Protocol — but both touch already-merged code from earlier phases (Phase 3's `wazuh_source_to_alert`, or Phase 1's `AlertStore` Protocol) rather than this phase's own new code, so the user explicitly chose to document this rather than fix it now. **Do not run `pull-alerts` unattended/on a schedule until this is fixed** — for now, treat it as safe only for deliberate, manually-checked one-off pulls, and expect at least one duplicate row per invocation.
+**Known limitation — FIXED 12 Aug 2026, see the Demo Readiness section below.** `alert_id` is now a `uuid5` of the source alert id, so re-pulled alerts collide on the primary key and the mechanism described here works as the design always assumed (verified: 71 new, then 0 new / 71 skipped). The original analysis is kept because the root cause is instructive. **Original entry:** `pull-alerts`'s duplicate-alert detection does not actually work. `wazuh_source_to_alert()` (Phase 3) assigns a fresh random `alert_id` on every mapping, so the same Wazuh alert re-pulled twice gets two different primary keys and never collides — `DuplicateAlertError`/the unique-constraint mechanism the design assumed is unreachable in practice. Since `WazuhConnector.pull_alerts`'s `since` filter is inclusive (`gte`), **every `pull-alerts` run re-fetches and duplicates the newest already-stored alert**, and `investigate-all` then re-investigates that duplicate (~2.5 minutes of local LLM time per run, unbounded growth). Two real fixes exist — making `alert_id` deterministic (a hash of `source_alert_id`) so the existing mechanism works, or adding a `get_alert_by_source_id`-style lookup to the `AlertStore` Protocol — but both touch already-merged code from earlier phases (Phase 3's `wazuh_source_to_alert`, or Phase 1's `AlertStore` Protocol) rather than this phase's own new code, so the user explicitly chose to document this rather than fix it now. **Do not run `pull-alerts` unattended/on a schedule until this is fixed** — for now, treat it as safe only for deliberate, manually-checked one-off pulls, and expect at least one duplicate row per invocation.
 
 §7.1's resource-budget guidance (cap the Wazuh indexer JVM heap, pick 7B vs 14B based on measured headroom) — the JVM heap cap is already applied (see above); model sizing (`gemma4:12b`, per Phase 4b's benchmarking) is unchanged. Worth re-measuring actual resident memory on the target host once real alert volume is flowing, per CLAUDE.md §7.1's own framing ("planning-only ranges, not guarantees").
+
+---
+
+## Demo Readiness: HITCON 2026 — 🚧 In progress
+
+Not a numbered phase — this is a date-scoped push on top of Phases 1–5, not a dependency-ordered stage.
+
+**Goal:** get the demo to run convincingly on stage. Scoped by a date, not by a feature set.
+
+> **Your First Agentic SOC Without the GPU Bill: Local LLM Triage on Apple Silicon**
+> Tommy Wong, Ke Li Yam — HACKING 101 track, English, Day 1 (Fri 21 Aug 2026)
+> https://hitcon.org/2026/en-US/agenda/9b7b1cd7-56da-4247-a0c9-2e2a23bc4c9e/
+
+**Prioritisation principle:** what breaks the demo, then what makes it land, then what is merely correct. This is conference-demo software, not production software. Development and the demo both run on a Mac Studio (128GB) — the earlier 8GB MacBook Air could not hold `gemma4:12b` plus the Wazuh containers at all, and CLAUDE.md §7.1's memory-contention budget is not a constraint on the current host.
+
+### Verified end to end on the Mac Studio, 12 Aug 2026
+
+The first real clean-clone run found that **three of seven sample log sources produced zero alerts** — invisible to the test suite, which mocks `SIEMConnector` and so never exercised real ingestion. All three are fixed; see `PROGRESS.md`'s Mac Studio section for the full diagnosis and measured numbers.
+
+| Breakage | Effect | Status |
+|---|---|---|
+| Stock Windows/Sysmon rules only fire for `windows_eventchannel`-decoded events, not `log_format json` | Entire endpoint half of the demo silent — no false positive, no password spray, no true-positive chain | Fixed — local rules `100060`–`100065` and `100070`–`100074` |
+| ocserv child decoders used `offset="after_prematch"` with a `^`-anchored regex, but the remainder starts with a space | All five VPN rules rendered empty `$(dstuser)`/`$(srcip)`, killing the false-positive pivot | Fixed — `pcre2`, children share one decoder name so Wazuh accumulates fields |
+| `endpoint_alerts_sample.json` held pre-baked alert documents rather than raw events | Fields nested under `data.data.win`; no rule could match | Fixed — reshaped to raw Sysmon events |
+| Windows carries the logon source at `data.win.eventdata.ipAddress`, never `data.srcip` | `Alert.source_ip` was `None` for every 4624/4625, so `SAME_SRC_IP_24H` was skipped outright | Fixed — fallback in `wazuh_source_to_alert`, plus the same gap on Sysmon `destinationIp` |
+| OpenAI SDK defaults to `max_retries=2`, silently tripling every timeout | A 120s timeout cost 361s; Self-Check timed out on *every* run, forcing `NEEDS_HUMAN_REVIEW` each time | Fixed — `max_retries=0`, default timeout 120s → 600s |
+
+Seeded stack went from 51 alerts over 4 sources to **71 over 7**. Suite is **314 passing, 0 skipped** with the live Wazuh and live LLM tests running.
+
+### Remaining work
+
+| # | Pri | Task | What it means | Status |
+|---|---|---|---|---|
+| 1 | P0 | Verify it runs from a clean clone | venv, install, pytest, stack up, seeded alerts reaching the indexer, model pulled, one timed `investigate-one` | ✅ Done |
+| 2 | P0 | Fix `pull-alerts` duplication | Deterministic `alert_id` so the existing `DuplicateAlertError` path fires | ✅ Done |
+| 3 | P0 | Decide run mode, time it against the slot | Fully live, or one live run plus pre-generated reports. Drives 5–7 | ⏸ Deferred by user |
+| 4 | P1 | Add a step event hook | Optional `on_step` callback on `AgenticAnalyst` at each `timeline.append`. `investigate()` is blocking with no progress stream — prerequisite for any frontend | ⬜ Open (~10 lines + test) |
+| 5 | P1 | Live pipeline view using `rich` | 9 steps with status, current LLM call showing which schema is enforced and elapsed time, enrichment and correlation results landing as they resolve. `ratatui` was considered and rejected — a second toolchain and an IPC boundary for no gain this close to the date | ⬜ Open (needs 4) |
+| 6 | P1 | Make the Self-Check visible | Surface a claim being flagged and dropped in `_apply_self_check_corrections` — "the model proposed this, the code rejected it" is the talk's thesis in one frame | ⛔ Blocked — see below |
+| 7 | P1 | Script demo alerts, confirm real output | Run both cases several times and record what the agent actually concludes; local model output varies | 🚧 Partial — one run each |
+| 8 | P2 | Settle Windows `source_ip` | Inspect a real alert document; normalise in the decoder or fall back in the mapper | ✅ Done |
+| 9 | P2 | Step 4's discarded context | `get_agent_context()`/`get_rule_metadata()` are called, logged, bound to `_agent_context`/`_rule_metadata`, then never read. Either feed them into the Risk/Draft prompts or stop calling them. Saying "we gather host context" on stage while it goes nowhere invites a question | ⬜ Open |
+| 10 | P2 | Triage fields dropped on persist | `Report.triage_verdict_experimental`/`triage_rationale_experimental` have no `ReportRecord` columns and neither mapper touches them — they survive in the exported JSON and vanish through SQLite, so `show-report --json` reads them as null. Existing tests assert only on the in-memory report | ⬜ Open (2 columns, both mappers, round-trip test) |
+| 11 | P3 | Committed key material | `wazuh_deployment/single-node/config/wazuh_indexer_ssl_certs/` tracks `root-ca.key`, `admin-key.pem` and the indexer/manager/dashboard private keys; `internal_users.yml` carries six bcrypt hashes. Generated demo certs with demo-default passwords, but if the repo is public treat them as burned. `wazuh_deployment/single-node/README.md:17` still calls that directory gitignored, which is false | ⬜ Open |
+| 12 | P3 | Stale `CLAUDE.md` Project status | Claimed the repo contained no code, tests or build tooling — the first thing a post-talk cloner reads | ✅ Done |
+
+### Known-wrong behaviour being presented as-is
+
+**The marquee false positive comes out `severity=high, confidence=high`.** `mrahman` logs into Windows from `100.72.44.19`, an address he has never used — which looks like compromise until you see `vpn.log` assign exactly that address as his ocserv NAT egress IP four minutes earlier, MFA approved. Resolvable only by correlating across two log sources, which is what makes it the most interesting demo case.
+
+It currently resolves the wrong way, and **not because the model is too small**: `_findings_block` (`app/agent/prompts.py`) passes only `pattern_type` and `evidence_count` into the Risk and Draft prompts, so the eight correlated alerts — his own VPN connect, the egress assignment, the approved MFA push — never reach the model at all. It sees "8 pieces of evidence for lateral movement" and escalates, reasonably. This is the same class of defect as item 9: context gathered, reduced to a scalar, substance discarded. **User decided to present this honestly as a limitation of count-only correlation rather than fix it before the talk.** Feeding a digest of correlated alert descriptions into the findings block is the fix when it is wanted, and CLAUDE.md §4.2 rule 2 already permits it (correlation counts and rule metadata are structured findings, not raw logs).
+
+**Item 6 is blocked for want of material.** Self-Check flagged 0 of 13 claims on the false positive and 0 of 9 on the true positive, so there is currently no naturally occurring example of a claim being flagged and dropped. An alert that reliably triggers a flag has to be found or constructed before that frame can be shown.
+
+**Measured latency is 3.5–7.5 minutes per alert, not the ~2.5 estimated from short probe prompts.** Self-Check dominates and scales badly with claim count (9 claims → 71s, 13 → 236s), and claim count is driven by how many actions Draft-A selects from the 16-member catalog. The true-positive chain runs in 212.8s and concludes correctly; the false positive takes 451.4s and concludes wrongly. Full per-step timings are in `PROGRESS.md`.
+
+### Operational note
+
+Config is fully env-driven, so `LLM_BASE_URL` and `WAZUH_*_URL` can point at another machine over the LAN with no code changes — useful if a second person wants to develop against the Studio's stack. Ollama needs `OLLAMA_HOST=0.0.0.0` to accept non-local connections. Trusted networks only; it is plain HTTP.
 
 ---
 
@@ -118,6 +179,5 @@ Not scheduled — pick up opportunistically or when a concrete need arises:
 - **Postgres swap for `AlertStore`** — CLAUDE.md's Context §4 designs for this ("a new `AlertStore` implementation, same Protocol") but it's not needed until the demo needs to scale past SQLite.
 - **Alembic migrations** — deferred in the Foundation plan's Global Constraints until the schema actually needs to evolve post-deployment.
 - **§6.7-style Risk/Compliance/Legal sign-off** — not applicable to this POC per CLAUDE.md §8, but the trigger condition (connecting to production SIEM data or acting on real customer-impacting alerts) should be watched for explicitly, not assumed away.
-- **`pull-alerts`'s duplicate-alert-detection gap** — see Phase 5's note above. Fix by either making `wazuh_source_to_alert()`'s `alert_id` deterministic (hash of `source_alert_id`) or adding an `AlertStore` lookup-by-`source_alert_id` capability. **Do this before running `pull-alerts` unattended/on a schedule** — every run currently duplicates the newest stored alert and re-investigates it.
 - **Continuous poller daemon** — CLAUDE.md §7's original design (poller thread + in-process queue + worker thread), deliberately not built in Phase 5 in favor of one-shot commands. Would build on top of Phase 5's existing `_pull_alerts`/`_investigate_all` logic functions (a scheduler loop calling them on an interval) rather than requiring a rewrite.
 - **FastAPI report viewer** — deferred per Phase 5's "CLI only" decision; a natural candidate if browsing via `list-alerts`/`list-reports`/`show-report`'s terminal tables proves insufficient.

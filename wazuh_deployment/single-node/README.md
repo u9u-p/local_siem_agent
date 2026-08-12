@@ -14,7 +14,7 @@ single-node/
 │   ├── wazuh_cluster/wazuh_manager.conf   # ossec.conf mounted into the manager
 │   ├── wazuh_indexer/             # opensearch.yml + internal_users.yml
 │   ├── wazuh_dashboard/           # opensearch_dashboards.yml + wazuh.yml
-│   └── wazuh_indexer_ssl_certs/   # generated certs land here (gitignored payload, tracked dir)
+│   └── wazuh_indexer_ssl_certs/   # generated demo certs — TRACKED IN GIT, keys included (see note below)
 ├── decoders/local_decoder.xml    # custom decoders: ocserv VPN, Mimecast SIEM logs
 ├── rules/local_rules.xml         # custom rules: ocserv VPN, Mimecast (with MITRE mappings)
 └── sample-logs/                  # synthetic demo logs, seeded into the manager on startup
@@ -55,6 +55,8 @@ docker compose down -v    # stop and wipe all volumes (indexer data, manager sta
 | Manager agent enrollment | `localhost:1514` (tcp), `localhost:1515` (tcp), `localhost:514` (udp) | — | for real Wazuh agents / syslog forwarders, not needed for the seeded demo logs |
 
 All credentials above are demo defaults baked into `docker-compose.yml` for this local POC — **not real secrets**, but still rotate them before pointing this stack at anything beyond a local demo.
+
+> **The generated certificates are committed, private keys included.** `config/wazuh_indexer_ssl_certs/` tracks `root-ca.key`, `root-ca-manager.key`, `admin-key.pem` and the indexer/manager/dashboard keys; `config/wazuh_indexer/internal_users.yml` carries six bcrypt hashes. None are gitignored. They exist so the stack comes up from a clean clone without a cert-generation step. If this repository is public, treat that key material as burned: do not reuse it anywhere, and regenerate before the stack is reachable from anything but localhost (`docker compose -f generate-indexer-certs.yml run --rm generator`).
 
 ## Demo log scenario
 
