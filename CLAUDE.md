@@ -4,7 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This repository currently contains only a requirements document (`app_requirement.md`) — no code, dependency manifests, tests, or build tooling exist yet. There are no commands to build, lint, or test because there is nothing to build, lint, or test. When implementation begins, update this file with the actual commands (e.g. `pytest`, `ruff`, `python -m ...`) and the real module layout.
+Phases 1–5 are implemented; Phase 6 items are deferred. See `ROADMAP.md` for what is built and why, and `PROGRESS.md` for empirical findings and known risks — including measured per-alert latency and the currently-known-wrong verdict on the VPN false positive.
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -q          # 314 passing, 0 skipped with the Wazuh stack up and gemma4:12b pulled
+```
+
+The CLI entry point is `agent` (`app/cli.py`): `pull-alerts`, `list-alerts`, `investigate-one`, `investigate-all`, `show-report`. Live tests skip unless `WAZUH_*` is configured in `.env` and `LLM_MODEL` is pulled and reachable. The demo Wazuh stack lives in `wazuh_deployment/single-node/` (`docker compose up -d`). There is no linter configured.
+
+The design document below is current; this status section is the only part that had gone stale.
 
 # Design Document: Local SIEM Alert Investigation Agent
 
