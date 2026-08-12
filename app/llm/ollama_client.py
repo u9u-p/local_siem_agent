@@ -14,7 +14,13 @@ _RETRY_NOTE = (
 
 class OllamaClient:
     def __init__(self, base_url: str, model: str, timeout_seconds: float = 120.0) -> None:
-        self._client = OpenAI(base_url=base_url, api_key="ollama", timeout=timeout_seconds)
+        # max_retries=0: the SDK otherwise retries a timeout twice on its own, so one
+        # slow call costs 3x timeout_seconds of wall clock while this class believes it
+        # made a single attempt. Retry-on-invalid-schema is handled in
+        # generate_structured; a local Ollama on localhost does not need transport retries.
+        self._client = OpenAI(
+            base_url=base_url, api_key="ollama", timeout=timeout_seconds, max_retries=0
+        )
         self._model = model
         self._last_raw_content: str | None = None
 

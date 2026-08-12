@@ -59,7 +59,7 @@ def test_settings_llm_fields_have_expected_defaults():
     settings = Settings(_env_file=None)
     assert settings.llm_base_url == "http://localhost:11434/v1/"
     assert settings.llm_model == "gemma4:12b"
-    assert settings.llm_timeout_seconds == 120.0
+    assert settings.llm_timeout_seconds == 600.0
 
 
 def test_settings_llm_fields_env_override(monkeypatch):

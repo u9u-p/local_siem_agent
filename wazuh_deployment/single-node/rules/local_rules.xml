@@ -18,7 +18,7 @@
   <rule id="100052" level="3">
     <if_sid>100050</if_sid>
     <match>assigned NAT/egress IP</match>
-    <description>ocserv: User $(dstuser) assigned internal egress IP $(dstip).</description>
+    <description>ocserv: User $(dstuser) assigned internal egress IP $(srcip).</description>
   </rule>
 
   <rule id="100053" level="3">
@@ -32,6 +32,126 @@
     <if_sid>100050</if_sid>
     <match>disconnected</match>
     <description>ocserv: User $(dstuser) disconnected from VPN.</description>
+  </rule>
+
+</group>
+
+<!--
+  Windows Security events arriving as JSON (log_format json).
+  The stock Wazuh Windows ruleset only fires for events decoded as
+  windows_eventchannel, so JSON-ingested Security events matched no rule at all
+  and produced zero alerts. These rules cover the sample-log scenario.
+-->
+<group name="windows,windows_security,">
+
+  <rule id="100060" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="win.system.providerName">Microsoft-Windows-Security-Auditing</field>
+    <description>Windows Security event.</description>
+  </rule>
+
+  <rule id="100061" level="3">
+    <if_sid>100060</if_sid>
+    <field name="win.system.eventID">^4624$</field>
+    <description>Windows: successful logon for user $(win.eventdata.targetUserName) from $(win.eventdata.ipAddress).</description>
+    <group>authentication_success,</group>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <rule id="100062" level="5">
+    <if_sid>100060</if_sid>
+    <field name="win.system.eventID">^4625$</field>
+    <description>Windows: failed logon for user $(win.eventdata.targetUserName) from $(win.eventdata.ipAddress).</description>
+    <group>authentication_failed,</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <rule id="100063" level="10" frequency="4" timeframe="600">
+    <if_matched_sid>100062</if_matched_sid>
+    <same_field>win.eventdata.ipAddress</same_field>
+    <description>Windows: possible password spray - repeated failed logons from $(win.eventdata.ipAddress).</description>
+    <group>authentication_failures,</group>
+    <mitre>
+      <id>T1110.003</id>
+    </mitre>
+  </rule>
+
+  <rule id="100064" level="8">
+    <if_sid>100060</if_sid>
+    <field name="win.system.eventID">^4720$</field>
+    <description>Windows: user account $(win.eventdata.targetUserName) was created.</description>
+    <group>account_changed,</group>
+    <mitre>
+      <id>T1136.001</id>
+    </mitre>
+  </rule>
+
+  <rule id="100065" level="2">
+    <if_sid>100060</if_sid>
+    <field name="win.system.eventID">^4634$</field>
+    <description>Windows: logoff for user $(win.eventdata.targetUserName).</description>
+  </rule>
+
+</group>
+
+<!--
+  Sysmon events arriving as JSON. Same gap as the Security rules above: the stock
+  Sysmon ruleset keys off windows_eventchannel decoding, so nothing matched.
+  These cover the phishing-to-C2 chain in endpoint_alerts_sample.json.
+-->
+<group name="windows,sysmon,">
+
+  <rule id="100070" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="win.system.providerName">Microsoft-Windows-Sysmon</field>
+    <description>Sysmon event.</description>
+  </rule>
+
+  <rule id="100071" level="3">
+    <if_sid>100070</if_sid>
+    <field name="win.system.eventID">^11$</field>
+    <description>Sysmon: file $(win.eventdata.targetFilename) created by $(win.eventdata.image).</description>
+    <group>sysmon_event11,</group>
+  </rule>
+
+  <rule id="100072" level="12">
+    <if_sid>100070</if_sid>
+    <field name="win.system.eventID">^11$</field>
+    <field name="win.eventdata.image">OUTLOOK.EXE</field>
+    <field name="win.eventdata.targetFilename">.xlsm$</field>
+    <description>Sysmon: Outlook wrote macro-enabled attachment $(win.eventdata.targetFilename).</description>
+    <group>sysmon_event11,</group>
+    <mitre>
+      <id>T1204.002</id>
+    </mitre>
+  </rule>
+
+  <rule id="100073" level="14">
+    <if_sid>100070</if_sid>
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.eventdata.parentImage">EXCEL.EXE|WINWORD.EXE|POWERPNT.EXE</field>
+    <field name="win.eventdata.commandLine">-Enc|-EncodedCommand</field>
+    <description>Sysmon: Office application spawned PowerShell with an encoded command.</description>
+    <group>sysmon_event1,</group>
+    <mitre>
+      <id>T1059.001</id>
+      <id>T1566.001</id>
+    </mitre>
+  </rule>
+
+  <rule id="100074" level="12">
+    <if_sid>100070</if_sid>
+    <field name="win.system.eventID">^3$</field>
+    <field name="win.eventdata.image">powershell.exe</field>
+    <description>Sysmon: PowerShell initiated a network connection to $(win.eventdata.destinationIp):$(win.eventdata.destinationPort).</description>
+    <group>sysmon_event3,</group>
+    <mitre>
+      <id>T1071.001</id>
+    </mitre>
   </rule>
 
 </group>
