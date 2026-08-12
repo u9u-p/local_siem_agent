@@ -328,7 +328,8 @@ class AgenticAnalyst:
         )
         logger.debug(
             "_step_gather_context output: agent_context=%s, rule_metadata=%s",
-            agent_context.model_dump_json(), rule_metadata.model_dump_json(),
+            agent_context.model_dump_json() if agent_context is not None else None,
+            rule_metadata.model_dump_json() if rule_metadata is not None else None,
         )
         return agent_context, rule_metadata, step
 
@@ -368,7 +369,10 @@ class AgenticAnalyst:
                 ),
                 timestamp=datetime.now(timezone.utc),
             )
-            logger.debug("_step_correlate output: pattern_type=other (skipped), evidence_count=%s", evidence_count)
+            logger.debug(
+                "_step_correlate output: pattern_type=other (skipped), evidence_count=%s%s",
+                evidence_count, failed_note,
+            )
             return PatternType.OTHER, evidence_count, step
 
         decision = self._classify_correlation(alert, results, evidence_count)
@@ -401,8 +405,8 @@ class AgenticAnalyst:
             timestamp=datetime.now(timezone.utc),
         )
         logger.debug(
-            "_step_correlate output: pattern_type=%s, evidence_count=%s%s%s",
-            decision.pattern_type.value, evidence_count, follow_up_note, open_value_note,
+            "_step_correlate output: pattern_type=%s, evidence_count=%s%s%s%s",
+            decision.pattern_type.value, evidence_count, failed_note, follow_up_note, open_value_note,
         )
         return decision.pattern_type, evidence_count, step
 
