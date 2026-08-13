@@ -92,3 +92,19 @@ def test_returns_empty_when_no_command_lines_set():
     assert segments == []
     assert attempted == 0
     assert discarded == 0
+
+
+def test_discards_ordinary_token_that_decodes_to_non_ascii_unicode_garbage():
+    """A 32-char mixed-case alphanumeric token (e.g. a GUID-without-dashes or session
+    token) that happens to satisfy the base64-alphabet regex, and whose raw bytes
+    happen to decode to Unicode text that is technically str.isprintable() (CJK/private-use
+    characters) but is not real deobfuscated ASCII content. The ASCII-only printable gate
+    must reject it rather than manufacturing a fake decoded segment."""
+    token = "OhbVrpoiVgRV5IfLBcbfnoGMbJmTPSIA"
+    process = ProcessExecutionFields(command_line=f"foo.exe {token}")
+
+    segments, attempted, discarded = decode_command_segments(process)
+
+    assert segments == []
+    assert attempted == 1
+    assert discarded == 1

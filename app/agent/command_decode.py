@@ -16,7 +16,7 @@ _PRINTABLE_RATIO_THRESHOLD = 0.9
 def _printable_ratio(text: str) -> float:
     if not text:
         return 0.0
-    printable = sum(1 for c in text if c.isprintable() or c in "\r\n\t")
+    printable = sum(1 for c in text if (32 <= ord(c) < 127) or c in "\r\n\t")
     return printable / len(text)
 
 
