@@ -8,6 +8,8 @@ from app.schemas import (
     AgentRef,
     Alert,
     AlertStatus,
+    CommandDecodeResult,
+    DecodedSegment,
     EnrichmentResult,
     EnrichmentVerdict,
     IndicatorType,
@@ -67,6 +69,35 @@ def test_get_alert_raises_when_missing(store):
         store.get_alert(str(uuid4()))
 
 
+def test_save_and_get_alert_round_trips_process_field_from_raw_sysmon_data(store):
+    """`Alert.process` isn't a stored column; it must be re-derived from the raw
+    Sysmon-shaped `data` dict on read, the same way `wazuh_source_to_alert` derives
+    both `data` and `process` from the same raw source in production."""
+    data = {
+        "win": {
+            "eventdata": {
+                "commandLine": "powershell.exe -EncodedCommand AAA",
+                "parentCommandLine": "explorer.exe",
+            }
+        }
+    }
+    alert = _make_alert(data=data)
+    store.save_raw_alert(alert)
+
+    loaded = store.get_alert(str(alert.alert_id))
+    assert loaded.process is not None
+    assert loaded.process.command_line == "powershell.exe -EncodedCommand AAA"
+    assert loaded.process.parent_command_line == "explorer.exe"
+
+
+def test_save_and_get_alert_round_trips_process_none_when_data_has_no_sysmon_shape(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+
+    loaded = store.get_alert(str(alert.alert_id))
+    assert loaded.process is None
+
+
 def test_update_alert_status(store):
     alert = _make_alert()
     store.save_raw_alert(alert)
@@ -117,6 +148,38 @@ def test_save_and_get_report_round_trips(store):
     assert loaded.risk_assessment.severity == Severity.MEDIUM
     assert loaded.generated_at == report.generated_at
     assert loaded.generated_at.tzinfo is not None
+
+
+def test_save_and_get_report_round_trips_command_analysis(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    command_analysis = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        parent_command_line="explorer.exe",
+        decoded_segments=[
+            DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="IEX (New-Object ...)")
+        ],
+    )
+    report = _make_report(alert.alert_id, command_analysis=command_analysis)
+
+    store.save_report(report)
+
+    loaded = store.get_report(str(report.report_id))
+    assert loaded.command_analysis is not None
+    assert loaded.command_analysis.command_line == "powershell.exe -EncodedCommand AAA"
+    assert len(loaded.command_analysis.decoded_segments) == 1
+    assert loaded.command_analysis.decoded_segments[0].decoded == "IEX (New-Object ...)"
+
+
+def test_save_and_get_report_round_trips_command_analysis_none(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(alert.alert_id)
+
+    store.save_report(report)
+
+    loaded = store.get_report(str(report.report_id))
+    assert loaded.command_analysis is None
 
 
 def test_get_report_for_alert(store):
