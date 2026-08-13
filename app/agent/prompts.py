@@ -24,13 +24,17 @@ def _command_context_block(command_context) -> str:
     )
 
 
-def build_extract_indicators_prompt(alert: Alert) -> str:
+def build_extract_indicators_prompt(alert: Alert, extra_texts: list[str] | None = None) -> str:
+    extra_block = ""
+    if extra_texts:
+        extra_block = "Additional decoded command-line text:\n" + "\n".join(f"- {t}" for t in extra_texts) + "\n\n"
     return (
         "You are extracting security indicators (IP addresses, file hashes, domains, URLs) "
         "from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged "
         "(e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\n"
         f"Raw log: {alert.full_log}\n"
         f"Additional decoded fields: {alert.data}\n\n"
+        f"{extra_block}"
         "List every candidate indicator you find, with its type (ip, file_hash, domain, or url) "
         "and its value in normal (de-obfuscated) form."
     )

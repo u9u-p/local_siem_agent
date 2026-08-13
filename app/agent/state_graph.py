@@ -237,7 +237,9 @@ class AgenticAnalyst:
             )
             return validated, command_decode_result, step
 
-        llm_validated, llm_candidate_count, llm_validated_count, llm_error = self._extract_indicators_via_llm(alert)
+        llm_validated, llm_candidate_count, llm_validated_count, llm_error = self._extract_indicators_via_llm(
+            alert, extra_texts
+        )
         merged = _merge_indicators(validated, llm_validated)
 
         if llm_error is not None:
@@ -266,8 +268,10 @@ class AgenticAnalyst:
         )
         return merged, command_decode_result, step
 
-    def _extract_indicators_via_llm(self, alert: Alert) -> tuple[list[Indicator], int, int, str | None]:
-        prompt = build_extract_indicators_prompt(alert)
+    def _extract_indicators_via_llm(
+        self, alert: Alert, extra_texts: list[str] | None = None
+    ) -> tuple[list[Indicator], int, int, str | None]:
+        prompt = build_extract_indicators_prompt(alert, extra_texts)
         logger.debug("_extract_indicators_via_llm prompt: %s", prompt)
         try:
             result = self._llm_client.generate_structured(prompt, ExtractedIndicators)

