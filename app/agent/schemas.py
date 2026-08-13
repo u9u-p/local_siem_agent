@@ -55,6 +55,9 @@ class RecommendedAction(str, Enum):
     PRESERVE_EVIDENCE = "Preserve logs and evidence for the affected host pending further investigation"
     MONITOR_NO_ACTION = "No immediate action needed — monitor for recurrence"
     ESCALATE_TO_HUMAN_ANALYST = "Escalate to a human analyst for manual review"
+    TERMINATE_SUSPICIOUS_PROCESS = "Terminate the suspicious process on the affected host"
+    REVIEW_PROCESS_EXECUTION_TREE = "Review the parent-child process execution tree for the affected host"
+    REVIEW_DECODED_COMMAND_PAYLOAD = "Manually review the decoded command payload for malicious intent"
 
 
 class TriageVerdict(str, Enum):

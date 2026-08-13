@@ -71,9 +71,16 @@ from app.agent.schemas import (
 )
 
 
-def test_recommended_action_has_sixteen_members():
-    assert len(RecommendedAction) == 16
+def test_recommended_action_has_nineteen_members():
+    assert len(RecommendedAction) == 19
     assert RecommendedAction.ESCALATE_TO_HUMAN_ANALYST.value == "Escalate to a human analyst for manual review"
+
+
+def test_recommended_action_includes_process_execution_entries():
+    values = {a.value for a in RecommendedAction}
+    assert "Terminate the suspicious process on the affected host" in values
+    assert "Review the parent-child process execution tree for the affected host" in values
+    assert "Manually review the decoded command payload for malicious intent" in values
 
 
 def test_triage_verdict_has_three_members():
