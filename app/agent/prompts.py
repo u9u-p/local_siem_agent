@@ -2,6 +2,27 @@
 from app.agent.schemas import RecommendedAction
 from app.schemas import Alert
 
+_COMMAND_CONTEXT_CHAR_CAP = 500
+
+
+def _truncate(text) -> str:
+    if not text:
+        return "none"
+    return text if len(text) <= _COMMAND_CONTEXT_CHAR_CAP else text[:_COMMAND_CONTEXT_CHAR_CAP] + "...(truncated)"
+
+
+def _command_context_block(command_context) -> str:
+    if command_context is None:
+        return ""
+    decoded_summary = "\n".join(
+        f"  - [{s.encoding}] {_truncate(s.decoded)}" for s in command_context.decoded_segments
+    ) or "  none"
+    return (
+        f"Command line: {_truncate(command_context.command_line)}\n"
+        f"Parent command line: {_truncate(command_context.parent_command_line)}\n"
+        f"Decoded command segments:\n{decoded_summary}\n\n"
+    )
+
 
 def build_extract_indicators_prompt(alert: Alert) -> str:
     return (
@@ -33,7 +54,7 @@ def build_correlation_decision_prompt(alert, canonical_results, evidence_count) 
     )
 
 
-def build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results) -> str:
+def build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results, command_context=None) -> str:
     enrichment_summary = "\n".join(
         f"- {e.indicator_type.value} {e.indicator_value}: {e.verdict.value} (provider {e.provider_id})"
         for e in enrichment_results
@@ -48,6 +69,7 @@ def build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment
         f"Known MITRE ATT&CK mapping: {mitre_summary}.\n"
         f"Correlation findings: pattern_type={pattern_type.value}, evidence_count={evidence_count}.\n"
         f"Enrichment findings:\n{enrichment_summary}\n\n"
+        f"{_command_context_block(command_context)}"
         "Assess the severity (low/medium/high/critical), your confidence in this assessment "
         "(low/medium/high), and a one-to-two-sentence rationale."
     )
@@ -68,7 +90,7 @@ def build_open_value_search_prompt(alert, canonical_results) -> str:
     )
 
 
-def _findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+def _findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context=None) -> str:
     enrichment_summary = "\n".join(
         f"- {e.indicator_type.value} {e.indicator_value}: {e.verdict.value} (provider {e.provider_id})"
         for e in enrichment_results
@@ -80,14 +102,15 @@ def _findings_block(alert, pattern_type, evidence_count, enrichment_results, ris
         f"Enrichment findings:\n{enrichment_summary}\n"
         f"Risk assessment: severity={risk_assessment.severity.value}, confidence={risk_assessment.confidence.value}, "
         f"rationale: {risk_assessment.rationale}\n"
+        f"{_command_context_block(command_context)}"
     )
 
 
-def build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+def build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context=None) -> str:
     action_menu = "\n".join(f"- {a.value}" for a in RecommendedAction)
     return (
         "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\n"
-        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)}\n"
+        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context)}\n"
         "Write a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining "
         "the risk assessment above in more detail, and select every recommended_action below that applies to "
         "this alert — you MUST only pick from this exact list:\n"
@@ -95,18 +118,18 @@ def build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment
     )
 
 
-def build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+def build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context=None) -> str:
     return (
         "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. "
         "This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\n"
-        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)}\n"
+        f"{_findings_block(alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context)}\n"
         "Freely propose any additional recommended actions in your own words (no fixed list this time), then "
         "classify whether this alert looks like a true_positive, false_positive, or uncertain, with a "
         "one-sentence rationale for that triage call."
     )
 
 
-def build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment) -> str:
+def build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context=None) -> str:
     claims = [draft.alert_summary, draft.rationale, *[a.value for a in draft.recommended_actions]]
     claims_block = "\n".join(f"{i + 1}. {claim}" for i, claim in enumerate(claims))
     enrichment_summary = "\n".join(
@@ -120,6 +143,7 @@ def build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_resu
         f"Correlation findings: pattern_type={pattern_type.value}, evidence_count={evidence_count}.\n"
         f"Enrichment findings:\n{enrichment_summary}\n"
         f"Risk assessment: severity={risk_assessment.severity.value}, confidence={risk_assessment.confidence.value}.\n\n"
+        f"{_command_context_block(command_context)}"
         f"Claims to audit, in order:\n{claims_block}\n\n"
         "Return exactly one audit per claim, in the same order."
     )
