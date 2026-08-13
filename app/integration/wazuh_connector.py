@@ -8,6 +8,7 @@ import httpx
 from app.integration.auth import BasicAuthStrategy, JWTBearerAuthStrategy
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchQuery, SearchResult
+from app.integration.process_field_extractors import extract_process_fields
 from app.schemas import AgentRef, Alert, MitreRef
 
 logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
         dst_user=data.get("dstuser"),
         data=data,
         raw_json=source,
+        process=extract_process_fields(data),
     )
 
 
