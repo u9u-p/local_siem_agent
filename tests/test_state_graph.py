@@ -1630,8 +1630,10 @@ def test_investigate_decodes_command_line_and_enriches_embedded_ioc(tmp_path):
     assert report.command_analysis is not None
     assert len(report.command_analysis.decoded_segments) == 1
     assert "185.220.101.1" in report.command_analysis.decoded_segments[0].decoded
-    assert any(f.indicator_value == "185.220.101.1" for f in report.enrichment_findings)
-    assert any(f.verdict == EnrichmentVerdict.MALICIOUS for f in report.enrichment_findings)
+    assert any(
+        f.indicator_value == "185.220.101.1" and f.verdict == EnrichmentVerdict.MALICIOUS
+        for f in report.enrichment_findings
+    )
     assert report.status == ReportStatus.COMPLETE
 
     risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
