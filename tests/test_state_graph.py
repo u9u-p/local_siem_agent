@@ -687,6 +687,24 @@ def test_step_risk_assessment_logs_prompt_and_result(caplog):
     assert "matches known malicious IP" in caplog.text
 
 
+def test_step_risk_assessment_passes_command_context_to_prompt():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    llm_client = _FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True, command_context=command_context)
+
+    assert "185.220.101.1" in llm_client.calls[0][0]
+
+
 def test_step_draft_report_returns_canonical_and_experimental_drafts():
     draft_canonical = DraftReportCanonical(
         alert_summary="Brute-force attempts from 203.0.113.5.",
@@ -765,6 +783,35 @@ def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
     canonical_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportCanonical)
     assert "scanning" in canonical_prompt
     assert "7" in canonical_prompt
+
+
+def test_step_draft_report_passes_command_context_to_prompts():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    llm_client = _FakeLLMClient(responses={
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="x", rationale="y", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=[], triage_verdict=TriageVerdict.UNCERTAIN, triage_rationale="z"
+        ),
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    analyst._step_draft_report(
+        alert, PatternType.OTHER, 0, [], risk_assessment, model_available=True, command_context=command_context
+    )
+
+    canonical_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportCanonical)
+    experimental_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportExperimental)
+    assert "185.220.101.1" in canonical_prompt
+    assert "185.220.101.1" in experimental_prompt
 
 
 def _draft_with_two_actions():
@@ -1082,6 +1129,35 @@ def test_self_check_prompt_contains_draft_alert_summary():
     assert draft.alert_summary in self_check_prompt
 
 
+def test_step_self_check_passes_command_context_to_prompt():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True, command_context=command_context,
+    )
+
+    self_check_prompt = next(p for p, schema in llm_client.calls if schema is SelfCheckResult)
+    assert "185.220.101.1" in self_check_prompt
+
+
 def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     engine = get_engine(str(tmp_path / "test.db"))
     init_db(engine)
@@ -1390,6 +1466,36 @@ def test_assemble_report_includes_experimental_fields_when_present():
     assert report.recommended_actions_freeform_experimental == ["do X"]
     assert report.triage_verdict_experimental == "false_positive"
     assert report.triage_rationale_experimental == "y"
+
+
+def test_assemble_report_includes_command_analysis_when_present():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+    command_analysis = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami")],
+    )
+
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, command_analysis=command_analysis,
+    )
+
+    assert report.command_analysis.decoded_segments[0].decoded == "whoami"
+
+
+def test_assemble_report_command_analysis_defaults_to_none():
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+
+    assert report.command_analysis is None
 
 
 def test_step_extract_indicators_logs_input_and_output(caplog):

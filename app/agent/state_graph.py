@@ -492,6 +492,7 @@ class AgenticAnalyst:
     def _step_risk_assessment(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], model_available: bool,
+        command_context: CommandDecodeResult | None = None,
     ) -> tuple[RiskAssessment, InvestigationStep]:
         logger.debug(
             "_step_risk_assessment input: pattern_type=%s, evidence_count=%s, enrichment_count=%s, model_available=%s",
@@ -509,7 +510,7 @@ class AgenticAnalyst:
             logger.debug("_step_risk_assessment output: skipped: %s", assessment.model_dump_json())
             return assessment, step
 
-        assessment = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results)
+        assessment = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results, command_context)
         step = InvestigationStep(
             step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm", input=None,
             output_summary=f"severity={assessment.severity.value}, confidence={assessment.confidence.value}",
@@ -520,9 +521,9 @@ class AgenticAnalyst:
 
     def _assess_risk(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
-        enrichment_results: list[EnrichmentResult],
+        enrichment_results: list[EnrichmentResult], command_context: CommandDecodeResult | None = None,
     ) -> RiskAssessment:
-        prompt = build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results)
+        prompt = build_risk_assessment_prompt(alert, pattern_type, evidence_count, enrichment_results, command_context)
         logger.debug("_assess_risk prompt: %s", prompt)
         try:
             assessment = self._llm_client.generate_structured(prompt, RiskAssessment)
@@ -539,6 +540,7 @@ class AgenticAnalyst:
     def _step_draft_report(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, model_available: bool,
+        command_context: CommandDecodeResult | None = None,
     ) -> tuple[DraftReportCanonical, DraftReportExperimental | None, InvestigationStep]:
         logger.debug(
             "_step_draft_report input: pattern_type=%s, evidence_count=%s, severity=%s, model_available=%s",
@@ -562,9 +564,12 @@ class AgenticAnalyst:
             return draft, None, step
 
         draft = self._draft_canonical(
-            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, fallback_summary
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, fallback_summary,
+            command_context,
         )
-        experimental = self._draft_experimental(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        experimental = self._draft_experimental(
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
+        )
         summary = f"draft-A: {len(draft.recommended_actions)} action(s) selected"
         summary += (
             "; draft-B failed" if experimental is None
@@ -583,8 +588,11 @@ class AgenticAnalyst:
     def _draft_canonical(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, fallback_summary: str,
+        command_context: CommandDecodeResult | None = None,
     ) -> DraftReportCanonical:
-        prompt = build_draft_canonical_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        prompt = build_draft_canonical_prompt(
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
+        )
         logger.debug("_draft_canonical prompt: %s", prompt)
         try:
             draft = self._llm_client.generate_structured(prompt, DraftReportCanonical)
@@ -602,8 +610,11 @@ class AgenticAnalyst:
     def _draft_experimental(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
+        command_context: CommandDecodeResult | None = None,
     ) -> DraftReportExperimental | None:
-        prompt = build_draft_experimental_prompt(alert, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        prompt = build_draft_experimental_prompt(
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
+        )
         logger.debug("_draft_experimental prompt: %s", prompt)
         try:
             experimental = self._llm_client.generate_structured(prompt, DraftReportExperimental)
@@ -617,6 +628,7 @@ class AgenticAnalyst:
         self, alert: Alert, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
         correlate_step: InvestigationStep, model_available: bool,
+        command_context: CommandDecodeResult | None = None,
     ) -> tuple[DraftReportCanonical, str, InvestigationStep]:
         logger.debug("_step_self_check input: draft=%s, model_available=%s", draft.model_dump_json(), model_available)
         if not model_available:
@@ -629,7 +641,9 @@ class AgenticAnalyst:
             logger.debug("_step_self_check output: skipped, draft unchanged, notes=%r", notes)
             return draft, notes, step
 
-        result, failure_kind = self._run_self_check(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        result, failure_kind = self._run_self_check(
+            draft, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
+        )
         if result is None:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = f"self-check could not run: {failure_kind}" + (f"; {notes}" if notes else "")
@@ -674,8 +688,11 @@ class AgenticAnalyst:
     def _run_self_check(
         self, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
+        command_context: CommandDecodeResult | None = None,
     ) -> tuple[SelfCheckResult | None, str | None]:
-        prompt = build_self_check_prompt(draft, pattern_type, evidence_count, enrichment_results, risk_assessment)
+        prompt = build_self_check_prompt(
+            draft, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
+        )
         logger.debug("_run_self_check prompt: %s", prompt)
         try:
             result = self._llm_client.generate_structured(prompt, SelfCheckResult)
@@ -689,7 +706,7 @@ class AgenticAnalyst:
     def _assemble_report(
         self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],
         risk_assessment: RiskAssessment, draft: DraftReportCanonical, experimental: DraftReportExperimental | None,
-        uncertainty_notes: str, model_available: bool,
+        uncertainty_notes: str, model_available: bool, command_analysis: CommandDecodeResult | None = None,
     ) -> Report:
         status = ReportStatus.NEEDS_HUMAN_REVIEW if self._degraded_reasons else ReportStatus.COMPLETE
         return Report(
@@ -715,6 +732,7 @@ class AgenticAnalyst:
                 model_version="none",
                 prompt_version="4d-v1",
             ),
+            command_analysis=command_analysis,
         )
 
     def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
@@ -766,23 +784,26 @@ class AgenticAnalyst:
         timeline.append(correlate_step)
 
         risk_assessment, risk_step = self._step_risk_assessment(
-            alert, pattern_type, evidence_count, enrichment_results, model_available
+            alert, pattern_type, evidence_count, enrichment_results, model_available,
+            command_context=command_decode_result,
         )
         timeline.append(risk_step)
 
         draft, experimental, draft_step = self._step_draft_report(
-            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, model_available
+            alert, pattern_type, evidence_count, enrichment_results, risk_assessment, model_available,
+            command_context=command_decode_result,
         )
         timeline.append(draft_step)
 
         draft, uncertainty_notes, self_check_step = self._step_self_check(
             alert, draft, pattern_type, evidence_count, enrichment_results, risk_assessment,
-            correlate_step, model_available,
+            correlate_step, model_available, command_context=command_decode_result,
         )
         timeline.append(self_check_step)
 
         report = self._assemble_report(
-            alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes, model_available,
+            alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes,
+            model_available, command_analysis=command_decode_result,
         )
         finalize_step = self._step_finalize_and_persist(alert, report)
         report.investigation_timeline.append(finalize_step)
