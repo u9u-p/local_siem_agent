@@ -20,8 +20,8 @@ def extract_candidates(text: str) -> list[str]:
     return candidates
 
 
-def extract_and_validate(alert: Alert) -> tuple[list[Indicator], int, int]:
-    text_sources = [alert.full_log] + [v for v in alert.data.values() if isinstance(v, str)]
+def extract_and_validate(alert: Alert, extra_texts: list[str] | None = None) -> tuple[list[Indicator], int, int]:
+    text_sources = [alert.full_log] + [v for v in alert.data.values() if isinstance(v, str)] + list(extra_texts or [])
     raw_candidates: list[str] = []
     for text in text_sources:
         raw_candidates.extend(extract_candidates(text))

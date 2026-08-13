@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from pydantic import ValidationError
 
+from app.agent.command_decode import decode_command_segments
 from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries
 from app.agent.indicator_extraction import extract_and_validate
 from app.agent.prompts import (
@@ -37,6 +38,7 @@ from app.llm.errors import LLMClientError
 from app.schemas import (
     Alert,
     AlertStatus,
+    CommandDecodeResult,
     Confidence,
     EnrichmentResult,
     EnrichmentVerdict,
@@ -69,6 +71,30 @@ def _merge_indicators(regex_validated: list[Indicator], llm_validated: list[Indi
             seen.add(key)
             merged.append(indicator)
     return merged
+
+
+def _decode_command(alert: Alert) -> tuple[CommandDecodeResult | None, int, int]:
+    if alert.process is None:
+        return None, 0, 0
+    segments, attempted, discarded = decode_command_segments(alert.process)
+    return (
+        CommandDecodeResult(
+            command_line=alert.process.command_line,
+            parent_command_line=alert.process.parent_command_line,
+            decoded_segments=segments,
+        ),
+        attempted,
+        discarded,
+    )
+
+
+def _command_extra_texts(alert: Alert, command_decode_result: CommandDecodeResult | None) -> list[str]:
+    if alert.process is None:
+        return []
+    texts = [alert.process.command_line, alert.process.parent_command_line, alert.process.process_hashes]
+    if command_decode_result is not None:
+        texts.extend(segment.decoded for segment in command_decode_result.decoded_segments)
+    return [t for t in texts if t]
 
 
 def _compute_uncertainty_notes(
@@ -178,11 +204,20 @@ class AgenticAnalyst:
 
     def _step_extract_indicators(
         self, alert: Alert, model_available: bool
-    ) -> tuple[list[Indicator], InvestigationStep]:
+    ) -> tuple[list[Indicator], CommandDecodeResult | None, InvestigationStep]:
         logger.debug(
             "_step_extract_indicators input: alert_id=%s, model_available=%s", alert.alert_id, model_available
         )
-        validated, candidate_count, validated_count = extract_and_validate(alert)
+        command_decode_result, decode_attempted, decode_discarded = _decode_command(alert)
+        decode_note = ""
+        if command_decode_result is not None:
+            decode_note = (
+                f"; command decode: {len(command_decode_result.decoded_segments)} segment(s) decoded, "
+                f"{decode_discarded} discarded"
+            )
+        extra_texts = _command_extra_texts(alert, command_decode_result)
+
+        validated, candidate_count, validated_count = extract_and_validate(alert, extra_texts=extra_texts)
 
         if not model_available:
             step = InvestigationStep(
@@ -191,7 +226,7 @@ class AgenticAnalyst:
                 tool_used="regex_extraction",
                 input=None,
                 output_summary=(
-                    f"regex: {candidate_count} candidates, {validated_count} validated "
+                    f"regex: {candidate_count} candidates, {validated_count} validated{decode_note} "
                     "(LLM-assisted extraction skipped: model unavailable)"
                 ),
                 timestamp=datetime.now(timezone.utc),
@@ -200,7 +235,7 @@ class AgenticAnalyst:
                 "_step_extract_indicators output: %s indicator(s): %s",
                 len(validated), [(type(i).__name__, i.value) for i in validated],
             )
-            return validated, step
+            return validated, command_decode_result, step
 
         llm_validated, llm_candidate_count, llm_validated_count, llm_error = self._extract_indicators_via_llm(alert)
         merged = _merge_indicators(validated, llm_validated)
@@ -208,12 +243,12 @@ class AgenticAnalyst:
         if llm_error is not None:
             self._degraded_reasons.append(f"indicator extraction LLM failed: {llm_error}")
             summary = (
-                f"regex: {candidate_count} candidates, {validated_count} validated; "
+                f"regex: {candidate_count} candidates, {validated_count} validated{decode_note}; "
                 f"LLM-assisted extraction failed: {llm_error}"
             )
         else:
             summary = (
-                f"regex: {candidate_count} candidates, {validated_count} validated; "
+                f"regex: {candidate_count} candidates, {validated_count} validated{decode_note}; "
                 f"LLM: {llm_candidate_count} candidates, {llm_validated_count} validated"
             )
 
@@ -229,7 +264,7 @@ class AgenticAnalyst:
             "_step_extract_indicators output: %s indicator(s): %s",
             len(merged), [(type(i).__name__, i.value) for i in merged],
         )
-        return merged, step
+        return merged, command_decode_result, step
 
     def _extract_indicators_via_llm(self, alert: Alert) -> tuple[list[Indicator], int, int, str | None]:
         prompt = build_extract_indicators_prompt(alert)
@@ -718,7 +753,7 @@ class AgenticAnalyst:
             self._degraded_reasons.append("model unavailable")
         timeline: list[InvestigationStep] = [self._step_ingest_and_parse(alert, model_available)]
 
-        indicators, extract_step = self._step_extract_indicators(alert, model_available)
+        indicators, command_decode_result, extract_step = self._step_extract_indicators(alert, model_available)
         timeline.append(extract_step)
 
         enrichment_results, enrich_step = self._step_enrich(indicators)
