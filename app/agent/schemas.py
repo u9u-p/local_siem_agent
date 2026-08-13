@@ -26,6 +26,7 @@ class SearchTemplate(str, Enum):
     SAME_SRC_IP_24H = "same_src_ip_24h"
     SAME_RULE_ID_HOST = "same_rule_id_host"
     SAME_DST_HOST = "same_dst_host"
+    SAME_COMMAND_LINE_ENV_WIDE = "same_command_line_env_wide"
     NONE_NEEDED = "none_needed"
 
 

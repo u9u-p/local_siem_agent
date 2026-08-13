@@ -35,4 +35,14 @@ def build_canonical_queries(alert: Alert) -> dict[SearchTemplate, SearchQuery | 
     else:
         queries[SearchTemplate.SAME_DST_HOST] = None
 
+    if alert.process and alert.process.command_line:
+        queries[SearchTemplate.SAME_COMMAND_LINE_ENV_WIDE] = SearchQuery(
+            clauses=[SearchClause(
+                field="data.win.eventdata.commandLine", operator="eq", value=alert.process.command_line
+            )],
+            time_range=window,
+        )
+    else:
+        queries[SearchTemplate.SAME_COMMAND_LINE_ENV_WIDE] = None
+
     return queries

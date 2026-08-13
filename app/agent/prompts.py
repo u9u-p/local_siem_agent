@@ -27,7 +27,8 @@ def build_correlation_decision_prompt(alert, canonical_results, evidence_count) 
         f"Total evidence count: {evidence_count}\n\n"
         "Classify the pattern_type (brute_force, scanning, lateral_movement, none, or other), "
         "and pick at most one follow_up_query from the closed menu "
-        "(same_src_ip_24h, same_rule_id_host, same_dst_host, or none_needed) if further investigation "
+        "(same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) "
+        "if further investigation "
         "of one of the canonical searches would help confirm the pattern."
     )
 

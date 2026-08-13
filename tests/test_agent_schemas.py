@@ -39,9 +39,9 @@ def test_pattern_type_has_five_members():
     }
 
 
-def test_search_template_has_four_members():
+def test_search_template_has_five_members():
     assert {t.value for t in SearchTemplate} == {
-        "same_src_ip_24h", "same_rule_id_host", "same_dst_host", "none_needed",
+        "same_src_ip_24h", "same_rule_id_host", "same_dst_host", "same_command_line_env_wide", "none_needed",
     }
 
 

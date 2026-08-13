@@ -576,6 +576,22 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
     assert "noisier" not in step.output_summary
 
 
+def test_correlation_decision_prompt_includes_command_line_template():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    analyst._classify_correlation(alert, {}, 0)
+
+    prompt = llm_client.calls[0][0]
+    assert "same_command_line_env_wide" in prompt
+
+
 def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
     siem = _FakeSIEMConnector(search_results={"full_log": SearchResult(alerts=[], total_count=5)})
     llm_client = _FakeLLMClient(

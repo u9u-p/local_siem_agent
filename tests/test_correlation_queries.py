@@ -75,3 +75,26 @@ def test_same_dst_host_query_is_none_when_destination_ip_absent():
     queries = build_canonical_queries(alert)
 
     assert queries[SearchTemplate.SAME_DST_HOST] is None
+
+
+from app.schemas import ProcessExecutionFields
+
+
+def test_builds_same_command_line_query_when_process_command_line_present():
+    alert = _make_alert(process=ProcessExecutionFields(command_line="powershell.exe -enc AAA"))
+
+    queries = build_canonical_queries(alert)
+
+    query = queries[SearchTemplate.SAME_COMMAND_LINE_ENV_WIDE]
+    assert query is not None
+    assert query.clauses[0].field == "data.win.eventdata.commandLine"
+    assert query.clauses[0].operator == "eq"
+    assert query.clauses[0].value == "powershell.exe -enc AAA"
+
+
+def test_same_command_line_query_is_none_when_process_absent():
+    alert = _make_alert()
+
+    queries = build_canonical_queries(alert)
+
+    assert queries[SearchTemplate.SAME_COMMAND_LINE_ENV_WIDE] is None
