@@ -138,6 +138,20 @@ One representative schema-constrained call per model, warmed first so model load
 
 Nothing was rejected, so the Stage 1 shortlist is unchanged. The gate's value was converting three assumptions into measurements, two of which were wrong.
 
+**End-to-end effort sweep, `gpt-oss:20b` on the PowerShell needle, one run each** (§6.4 verification, not a reliability measurement):
+
+| Effort | Wall | Severity | Triage | Self-Check | base64 C2 |
+|---|---|---|---|---|---|
+| `low` | **30s** | high | `true_positive` | 7 of 9 flagged | not found |
+| `high` | **836s** | high | `uncertain` | 4 of 10 flagged | not found |
+
+**28x on wall clock, and the fast configuration produced the better triage verdict** — more reasoning was not more accuracy here. Wall clock alone would have ranked these correctly by accident; throughput alone would have ranked them identically, since it is the same model.
+
+Two findings that reach past this benchmark:
+
+- **`gpt-oss:20b` flags claims where `gemma4:12b` does not.** 7 of 9 and 4 of 10 against `gemma4:12b`'s 0 of 13 and 0 of 9. `ROADMAP.md` Demo Readiness item 6 is blocked precisely for want of a naturally-occurring flagged-and-dropped claim, and this produces them on demand. Whether the flagging is *correct* is a separate question the graded clusters answer — over-flagging and under-flagging are both failures, and `self_check_flag_rate` measures the behaviour, not its quality.
+- **`gpt-oss:20b` did not decode the base64 C2 on either run**, where `gemma4:12b` finds `45.146.164.110` on 8 of 8. The capability probe discriminates between models exactly as §2 intends, and it discriminates against a model that is otherwise 8x faster.
+
 **Consequence for the design: the axis is (model × reasoning effort), not model alone**, wherever a candidate exposes the control. `muse-glimmer:30b` ships `low`/`medium`/`high`/`xhigh`; its 24.9s at 91% reasoning is a default-configuration number, not a ceiling. A model that is slow through over-reasoning is mis-configured rather than disqualified, and Stage 1 should sweep the effort levels for any candidate offering them before that candidate is ranked.
 
 ---
