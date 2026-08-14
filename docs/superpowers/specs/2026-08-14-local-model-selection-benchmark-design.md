@@ -39,7 +39,16 @@ Constraints on the new seed data, inherited from Scenario E's design:
 - Base64, addresses and hostnames stay genuine and internally consistent — `45.146.164.110` is already both the PowerShell needle's C2 and the successful SSH login, and the login flood should preserve that link rather than introduce a third unrelated address.
 - No application code changes. New rules follow the `100075` precedent: anything the Risk step needs must reach it through the rule description, which is the only channel carrying event fields into the prompts (`app/agent/prompts.py`).
 
-Resulting corpus: roughly **180 alerts**, balanced three ways, with ground truth true by construction.
+**Built and verified 14 Aug.** Corpus is **182 alerts**, of which **128 sit in four gradeable clusters**, each verified through `wazuh-logtest` and then end to end through `pull-alerts`:
+
+| Cluster | Rule / level | Benign : target | Discriminator carried in the description |
+|---|---|---|---|
+| AI PowerShell | `100075` / 10 | 40 : 1 | `wscript.exe` vs `node.exe`, `Cursor.exe`, … |
+| Emails | `106001` / 5 | 35 : 1 | `@secure-invoice-updates.com` vs `@atlassian-notify.net`, … |
+| Logins (SSH) | `100080` / 3 | 30 : 1 | `jsmith from 45.146.164.110` vs `ltan from 203.0.113.74` |
+| Logins (Windows) | `100061` / 3 | 18 : 2 | `mrahman from 100.72.44.19` vs `raj.kumar from 10.20.4.73` |
+
+One new rule was needed, `100080`. Stock rule `5715`'s description is a bare `"sshd: authentication success."` carrying neither user nor source address, and since neither `build_risk_assessment_prompt` nor `build_correlation_decision_prompt` is passed `source_ip`, all 31 SSH logons were identical from the model's point of view — the cluster would have contributed noise while looking like a real graded category. `100080` interpolates `$(dstuser)` and `$(srcip)`, inheriting level 3 and `5715`'s T1078/T1021 mapping, exactly as `100061` and `100075` already do on the Windows and Sysmon sides.
 
 ---
 
@@ -144,6 +153,8 @@ The data is present, ingested, retrieved, and thrown away one function short of 
 - **Domain over-extraction** (`_DOMAIN_RE`) pulls hostnames and dotted usernames (`victimcorp.com`, `ke.li.yam`) in as DOMAIN indicators, and with no VirusTotal key configured they resolve `unknown` and get narrated in the summary instead of the real signal. This corrupts report *prose*, not the graded fields, and hits every model equally. An optional near-free check — does `alert_summary` mention PowerShell or the parent process at all — surfaces the quality gap that severity alone cannot. `gemma4:12b` currently fails it.
 - **`evidence_count` varies by ingestion position**, neutralised by the shared DB snapshot (§5).
 - **Wazuh stamps ingestion time, not event time**, and every manager-side seeded alert is `agent.id 000`, so neither date-spreading nor host-spreading affects correlation. Do not attempt to control `evidence_count` by either.
+- **Enrichment runs with no providers registered, deliberately.** Neither API key is configured, so `EnrichmentRegistry` is empty and every alert degrades through the existing `no_provider_registered` path. This is a requirement, not an accident: without `EnrichmentCache` (deferred, Phase 6), a sweep of 182 alerts across several models with repeats would exhaust VirusTotal's shared 500/day partway through, and models run later would receive rate-limited `UNKNOWN` verdicts that models run earlier did not — making the ranking depend on run order. Every cluster above discriminates through the rule description alone, so nothing is lost by keeping providers off. **Do not enable keys mid-sweep.**
+- **Mimecast's `IP=` field is not mapped to `Alert.source_ip`** by `wazuh_source_to_alert`, so all 36 email alerts carry `source_ip=None` and `SAME_SRC_IP_24H` is skipped for them — the same shape as the Windows `data.win.eventdata.ipAddress` gap found on 12 Aug. Left as-is: the email cluster discriminates on the sender domain in `106001`'s description, so the gap costs correlation breadth but not gradeability.
 
 ---
 
