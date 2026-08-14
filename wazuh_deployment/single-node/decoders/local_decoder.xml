@@ -82,6 +82,25 @@
   <order>mimecast.IP</order>
 </decoder>
 
+<!--
+  The same sending IP is emitted a second time as srcip, deliberately.
+
+  build_canonical_queries' SAME_SRC_IP_24H template queries the indexer field
+  data.srcip (app/agent/correlation_queries.py). Mimecast only ever populated
+  data.mimecast.IP, so that search matched nothing for every email alert and the
+  whole category correlated on rule id alone — which counts ingest position, not
+  senders. Populating Alert.source_ip in the mapper is not sufficient: the mapper
+  is the read path, the canonical search queries the index. Both need the field.
+
+  Same reasoning as the ocserv NAT egress decoder above. The regex mirrors the
+  mimecast.IP one exactly, so the two can never disagree.
+-->
+<decoder name="mimecast-siem-logs">
+  <parent>mimecast</parent>
+  <regex type="pcre2">(?i)IP=(?:\\)?([^|]+)</regex>
+  <order>srcip</order>
+</decoder>
+
 <decoder name="mimecast-siem-logs">
   <parent>mimecast</parent>
   <regex type="pcre2">(?i)RejType=(?:\\)?([^|]+)</regex>
