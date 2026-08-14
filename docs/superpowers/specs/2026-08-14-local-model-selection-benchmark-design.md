@@ -130,7 +130,7 @@ Reuses the existing CLI; no framework, no new dependency. Roughly 150 lines acro
 
 ## 6. Prerequisite fixes
 
-Two application-code changes, both landing before the first benchmarked model runs. Nothing else under `app/` is touched.
+Three application-code changes, all landing before the first benchmarked model runs. Nothing else under `app/` is touched.
 
 ### 6.1 — `model_name` is hardcoded
 
@@ -146,6 +146,12 @@ The data is present, ingested, retrieved, and thrown away one function short of 
 
 `pattern_type` flows into the Risk prompt for **every** alert, so this must land before the first benchmarked model and stay frozen for the rest of the sweep — changing it mid-run would shift severity across the whole graded set, not just the one false positive. Re-verify the three demo scenarios afterwards. The base64 result is unaffected: step 2b runs upstream of Correlate.
 
+### 6.3 — Mimecast's sending IP is not mapped
+
+`wazuh_source_to_alert` populated `Alert.source_ip` from `data.srcip` with a fallback to `data.win.eventdata.ipAddress` (added 12 Aug for Windows logons), but Mimecast puts the sending IP at `data.mimecast.IP` and never sets `data.srcip`. All 36 email alerts therefore carried `source_ip=None`, and `SAME_SRC_IP_24H` — the first pivot a real analyst reaches for on a phishing alert — was skipped for the entire email category. Fixed by adding `mimecast.get("IP")` as a third fallback, with two tests covering the fallback and its precedence against an explicit `data.srcip`. Verified: 36/36 after a fresh pull.
+
+This is a mapper change, not a model-visible prompt change, but it alters `evidence_count` for email alerts and so is subject to the same freeze as §6.2 — it must land before the first benchmarked model, not during the sweep.
+
 ---
 
 ## 7. Known confounds — documented, not fixed
@@ -154,14 +160,14 @@ The data is present, ingested, retrieved, and thrown away one function short of 
 - **`evidence_count` varies by ingestion position**, neutralised by the shared DB snapshot (§5).
 - **Wazuh stamps ingestion time, not event time**, and every manager-side seeded alert is `agent.id 000`, so neither date-spreading nor host-spreading affects correlation. Do not attempt to control `evidence_count` by either.
 - **Enrichment runs with no providers registered, deliberately.** Neither API key is configured, so `EnrichmentRegistry` is empty and every alert degrades through the existing `no_provider_registered` path. This is a requirement, not an accident: without `EnrichmentCache` (deferred, Phase 6), a sweep of 182 alerts across several models with repeats would exhaust VirusTotal's shared 500/day partway through, and models run later would receive rate-limited `UNKNOWN` verdicts that models run earlier did not — making the ranking depend on run order. Every cluster above discriminates through the rule description alone, so nothing is lost by keeping providers off. **Do not enable keys mid-sweep.**
-- **Mimecast's `IP=` field is not mapped to `Alert.source_ip`** by `wazuh_source_to_alert`, so all 36 email alerts carry `source_ip=None` and `SAME_SRC_IP_24H` is skipped for them — the same shape as the Windows `data.win.eventdata.ipAddress` gap found on 12 Aug. Left as-is: the email cluster discriminates on the sender domain in `106001`'s description, so the gap costs correlation breadth but not gradeability.
+- **Benign email senders each use a unique sending IP**, which is less realistic than production bulk mail, where SendGrid, Mailchimp and Microsoft all send from shared pools. With §6.3's mapping in place, `SAME_SRC_IP_24H` therefore returns exactly 1 for every benign email and 3 for the phishing chain — a cleaner separation than reality offers. Low impact given `evidence_count` is near-inert in the model's judgement (§2), but if the email cluster turns out to separate on correlation count rather than on sender plausibility, assigning shared per-provider IPs to groups of benign senders is the fix.
 
 ---
 
 ## 8. Non-goals
 
 - Fixing the domain over-extraction defect (`_DOMAIN_RE`). It corrupts report prose but not the graded fields, and hits every model equally — see §7.
-- Any change under `app/` beyond §6's two fixes, and any further change to §6.2 once the sweep has started.
+- Any change under `app/` beyond §6's three fixes, and any further change to §6.2 or §6.3 once the sweep has started.
 - `EnrichmentCache`, `ReportRecord` triage columns, and the `on_step` hook — all remain deferred.
 - Benchmarking against public agentic-SOC benchmarks. Researched separately on 14 Aug: no reputable open benchmark scores a SIEM-alert-triage agent end to end, confirmed by the May 2026 survey (arXiv 2605.08316). CyberSOCEval (Meta/CrowdStrike) is the only reputable open defensive-SOC benchmark and grades models, not pipelines. Post-talk track.
 
