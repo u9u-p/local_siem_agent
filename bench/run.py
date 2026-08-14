@@ -23,6 +23,7 @@ import time
 from pathlib import Path
 
 from bench.labels import Role, label_for
+from bench.stage0 import footprint_bytes
 
 SNAPSHOT = Path("./data/bench_alerts.db")
 RESULTS = Path("./bench/results")
@@ -77,23 +78,16 @@ def select_alerts(db: Path, stage: str) -> list[tuple[str, str, Role, int]]:
     return selected
 
 
-def loaded_model_bytes() -> int | None:
-    """Resident size of the currently-loaded model, per `ollama ps`.
+def loaded_model_bytes(model: str) -> int | None:
+    """Resident size of `model`, per `ollama ps`.
 
-    ponytail: sampled once after a run rather than polled for a true peak. Good
-    enough for the fit gate, which asks whether a model fits ~17GB at all; swap in
-    a polling sampler if a candidate lands within a gigabyte of the ceiling.
+    Delegates to the gate's parser rather than keeping a second copy. The duplicate
+    that lived here read a fixed offset back from the end of the line and landed on
+    "minutes", so every run recorded a footprint of zero — caught by scoring the
+    control run before the sweep rather than after it.
     """
-    try:
-        out = subprocess.run(["ollama", "ps"], capture_output=True, text=True, timeout=15).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None
-    for line in out.splitlines()[1:]:
-        parts = line.split()
-        if len(parts) >= 4 and parts[-3].replace(".", "").isdigit():
-            value, unit = float(parts[-3]), parts[-2].upper()
-            return int(value * (1024**3 if unit.startswith("G") else 1024**2))
-    return None
+    measured = footprint_bytes(model)
+    return measured[0] if measured else None
 
 
 def run_one(model: str, alert_id: str, workdir: Path, repeat: int, effort: str | None) -> dict:
@@ -124,7 +118,7 @@ def run_one(model: str, alert_id: str, workdir: Path, repeat: int, effort: str |
         "elapsed_s": round(elapsed, 1),
         "exit_code": proc.returncode,
         "report_path": str(files[0]) if files else None,
-        "model_bytes": loaded_model_bytes(),
+        "model_bytes": loaded_model_bytes(model),
         # A crashed investigation is a result, not a gap — record it rather than
         # dropping the row, or a model that dies on every alert scores as absent.
         "stderr_tail": proc.stderr.strip()[-400:] if proc.returncode else "",

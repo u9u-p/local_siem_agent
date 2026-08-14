@@ -149,10 +149,17 @@ def _pct(numerator: int, denominator: int) -> str:
 
 
 def render(model: str, agg: dict) -> str:
-    benign = [(k, v) for k, v in agg["by_cluster"].items() if v["role"] != Role.NEEDLE.value]
-    needle = [(k, v) for k, v in agg["by_cluster"].items() if v["role"] == Role.NEEDLE.value]
-    benign_esc = sum(v["escalated"] for _, v in benign), sum(v["n"] for _, v in benign)
-    needle_rec = sum(v["escalated"] for _, v in needle), sum(v["n"] for _, v in needle)
+    # fp_control is reported apart from benign, not folded into it. Bundling them
+    # reported the incumbent at 50% when 3 of 4 benign alerts escalated (75%) and
+    # mrahman passed 0 of 2 — one number that flattered the model and buried the
+    # more interesting result.
+    def _rate(role: str) -> tuple[int, int]:
+        rows = [v for v in agg["by_cluster"].values() if v["role"] == role]
+        return sum(v["escalated"] for v in rows), sum(v["n"] for v in rows)
+
+    benign_esc = _rate(Role.BENIGN.value)
+    fp_esc = _rate(Role.FP_CONTROL.value)
+    needle_rec = _rate(Role.NEEDLE.value)
 
     lines = [
         f"### {model}",
@@ -160,7 +167,8 @@ def render(model: str, agg: dict) -> str:
         f"- runs {agg['runs']}  crashed {agg['crashed']}  no-report {agg['no_report']}  "
         f"degraded {_pct(agg['degraded'], agg['runs'])}",
         f"- **benign escalation {_pct(*benign_esc)}** ({benign_esc[0]}/{benign_esc[1]})   "
-        f"**needle recall {_pct(*needle_rec)}** ({needle_rec[0]}/{needle_rec[1]})",
+        f"**needle recall {_pct(*needle_rec)}** ({needle_rec[0]}/{needle_rec[1]})   "
+        f"fp-control escalation {_pct(*fp_esc)} ({fp_esc[0]}/{fp_esc[1]})",
         f"- triage accuracy {_pct(agg['triage_right'], agg['triage_scored'])}   "
         f"mean severity distance {statistics.mean(agg['sev_distance']):.2f}"
         if agg["sev_distance"] else "- triage accuracy —",
