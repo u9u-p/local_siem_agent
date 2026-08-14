@@ -16,12 +16,12 @@ from app.agent.schemas import (
     SelfCheckResult,
     TriageVerdict,
 )
-from app.agent.state_graph import AgenticAnalyst, Step
+from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.llm.errors import LLMClientError
-from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep
+from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep, ProcessExecutionFields
 from app.schemas import EnrichmentVerdict, IndicatorType
 from app.schemas import AlertStatus, Confidence, ReportStatus, RiskAssessment, Severity
 from app.storage.db import get_engine, init_db
@@ -447,7 +447,7 @@ def test_step_correlate_reports_failed_canonical_searches_without_crashing():
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=False)
 
     assert step.action == "completed"
     assert evidence_count == 0
@@ -459,7 +459,7 @@ def test_step_correlate_runs_searches_and_skips_classification_when_model_unavai
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=False)
 
     assert pattern_type == PatternType.OTHER
     assert evidence_count == 7
@@ -485,7 +485,7 @@ def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.BRUTE_FORCE
     # base evidence (14 from rule_id canonical search, source_ip canonical search also 14) + the
@@ -510,7 +510,7 @@ def test_step_correlate_skips_follow_up_when_none_needed():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.BRUTE_FORCE
     assert evidence_count == 1
@@ -523,7 +523,7 @@ def test_step_correlate_falls_back_to_other_when_classification_call_fails():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.OTHER
     assert evidence_count == 2
@@ -548,7 +548,7 @@ def test_step_correlate_runs_open_value_search_when_pattern_is_none():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.NONE
     assert "noisier, unstructured match" in step.output_summary
@@ -571,7 +571,7 @@ def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    _, _, step = analyst._step_correlate(alert, model_available=True)
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert "noisier" not in step.output_summary
     assert all(c.clauses[0].field != "full_log" for c in siem.search_calls)
@@ -598,7 +598,7 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
     analyst = _make_analyst(siem=siem, llm_client=_SequencedLLMClient())
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    _, _, step = analyst._step_correlate(alert, model_available=True)
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert "noisier" not in step.output_summary
 
@@ -613,7 +613,7 @@ def test_correlation_decision_prompt_includes_command_line_template():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert()
 
-    analyst._classify_correlation(alert, {}, 0)
+    analyst._classify_correlation(alert, {}, 0, [])
 
     prompt = llm_client.calls[0][0]
     assert "same_command_line_env_wide" in prompt
@@ -1716,3 +1716,153 @@ def test_investigate_non_process_alert_is_fully_unaffected(tmp_path):
     assert report.status == ReportStatus.COMPLETE
     risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
     assert "Command line:" not in risk_prompt
+
+
+def test_correlation_decision_prompt_includes_enrichment_verdicts():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    now = datetime.now(timezone.utc)
+    enrichment = EnrichmentResult(
+        indicator_type=IndicatorType.IP,
+        indicator_value="203.0.113.5",
+        provider_id="abuseipdb",
+        queried_at=now,
+        verdict=EnrichmentVerdict.MALICIOUS,
+        score=91.0,
+        cache_expires_at=now,
+    )
+
+    analyst._classify_correlation(_make_alert(), {}, 0, [enrichment])
+
+    prompt = llm_client.calls[0][0]
+    assert "203.0.113.5" in prompt
+    assert "malicious" in prompt
+
+
+def test_risk_assessment_prompt_receives_the_alerts_raw_log():
+    # Mail alerts carry their decisive fields (gateway verdict, sender, subject) only in
+    # full_log — nothing typed survives step 2 to represent them.
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="r"
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Sender=cfo.support@evil.test|ScanResultInfo=Malicious")
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True)
+
+    assert "ScanResultInfo=Malicious" in llm_client.calls[0][0]
+
+
+def test_self_check_prompt_receives_the_alerts_raw_log():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            SelfCheckResult: SelfCheckResult(audits=[]),
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Sender=cfo.support@evil.test|ScanResultInfo=Malicious")
+    draft = DraftReportCanonical(
+        alert_summary="s", rationale="r", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+    )
+    risk = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="r")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk, _passthrough_correlate_step(), model_available=True
+    )
+
+    assert "ScanResultInfo=Malicious" in llm_client.calls[0][0]
+
+
+def test_lacks_typed_context_is_true_when_only_the_raw_log_describes_the_alert():
+    # The mail shape: no process fields, no typed network/identity fields.
+    assert _lacks_typed_context(_make_alert()) is True
+
+
+def test_lacks_typed_context_is_false_when_any_typed_field_is_populated():
+    # command_context is None for every non-Sysmon alert, so it cannot gate alone —
+    # these alerts already reach the model through the typed channel.
+    assert _lacks_typed_context(_make_alert(source_ip="203.0.113.5")) is False
+    assert _lacks_typed_context(_make_alert(destination_ip="198.51.100.9")) is False
+    assert _lacks_typed_context(_make_alert(src_user="root")) is False
+    assert _lacks_typed_context(_make_alert(dst_user="root")) is False
+
+
+def test_lacks_typed_context_is_false_for_process_execution_alerts():
+    alert = _make_alert(process=ProcessExecutionFields(command_line="powershell.exe -enc AAA"))
+
+    assert _lacks_typed_context(alert) is False
+
+
+def test_risk_prompt_omits_raw_log_when_the_alert_has_typed_context():
+    # Always-on raw_log costs ~23% latency per call for no measured verdict gain, so it
+    # is spent only where nothing else describes the alert.
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="r")
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", full_log="Invalid user admin from 203.0.113.5")
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True)
+
+    assert "Raw log line" not in llm_client.calls[0][0]
+
+
+def test_self_check_prompt_gate_matches_the_risk_prompt_gate():
+    # Asymmetry would make Self-Check flag well-grounded claims as unsupported, because
+    # the evidence behind them would be invisible to it.
+    llm_client = _FakeLLMClient(model_available=True, responses={SelfCheckResult: SelfCheckResult(audits=[])})
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", full_log="Invalid user admin from 203.0.113.5")
+    draft = DraftReportCanonical(
+        alert_summary="s", rationale="r", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+    )
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="r")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk, _passthrough_correlate_step(), model_available=True
+    )
+
+    assert "Raw log line" not in llm_client.calls[0][0]
+
+
+def test_step_correlate_classifies_once_even_when_a_follow_up_runs():
+    # Every follow_up_query member is also a canonical template, so the follow-up re-runs a
+    # query whose hits the classification call already saw. A second "re-decide against the
+    # new evidence" call would be re-deciding against nothing.
+    siem = _FakeSIEMConnector(
+        search_results={
+            "data.srcip": SearchResult(alerts=[], total_count=6),
+            "rule.id": SearchResult(alerts=[], total_count=6),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.SAME_SRC_IP_24H
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    pattern_type, _, _ = analyst._step_correlate(alert, [], model_available=True)
+
+    assert pattern_type == PatternType.BRUTE_FORCE
+    assert [schema for _, schema in llm_client.calls] == [CorrelationDecision]

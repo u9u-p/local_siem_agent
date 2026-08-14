@@ -134,7 +134,11 @@ def test_search_translates_multiple_clauses_into_multiple_must_entries():
 
 
 @respx.mock
-def test_search_translates_contains_operator_to_match_query():
+def test_search_translates_contains_operator_to_match_phrase_query():
+    # Must be match_phrase, not match. `full_log` is a `text` field under the standard
+    # analyser, so a plain `match` ORs over tokens: searching "other-invoice-updates.com"
+    # matched every alert mentioning an unrelated "secure-invoice-updates.com", because
+    # `invoice` and `updates.com` are separate tokens. Verified against a live 4.x indexer.
     route = respx.post(f"{INDEXER_URL}/wazuh-alerts-*/_search").mock(
         return_value=httpx.Response(200, json={"hits": {"total": {"value": 0}, "hits": []}})
     )
@@ -145,7 +149,7 @@ def test_search_translates_contains_operator_to_match_query():
     import json
 
     parsed = json.loads(route.calls.last.request.content)
-    assert parsed["query"]["bool"]["must"] == [{"match": {"full_log": "Invalid user"}}]
+    assert parsed["query"]["bool"]["must"] == [{"match_phrase": {"full_log": "Invalid user"}}]
 
 
 @respx.mock

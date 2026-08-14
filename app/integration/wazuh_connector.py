@@ -197,7 +197,12 @@ class WazuhConnector:
             if clause.operator == "eq":
                 must_clauses.append({"term": {clause.field: clause.value}})
             elif clause.operator == "contains":
-                must_clauses.append({"match": {clause.field: clause.value}})
+                # match_phrase, not match: Wazuh's text fields use the standard analyser, so a
+                # plain `match` ORs over tokens and a multi-token value (domain, file path,
+                # subject line) matches any alert sharing a single token. match_phrase keeps the
+                # same recall on single-token values (IPs, hashes) with no false positives, and
+                # takes the value literally — no query-syntax escaping needed.
+                must_clauses.append({"match_phrase": {clause.field: clause.value}})
             elif clause.operator == "range":
                 must_clauses.append({"range": {clause.field: clause.value}})
             else:  # "terms"
