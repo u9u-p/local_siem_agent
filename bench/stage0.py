@@ -54,8 +54,17 @@ FIT_CEILING_BYTES = 17.5 * 1024**3
 #: parameter does survive, so the gate measures a baked variant — the thing we would
 #: actually deploy — rather than a number no deployment can reach.
 #:
-#: Ollama truncates silently past num_ctx. Re-check this margin once §6.2's
-#: correlation digest lands, since it grows every downstream prompt.
+#: Ollama truncates silently past num_ctx, but not invisibly here: OllamaClient catches
+#: LengthFinishReasonError, retries once, then records a degraded step, so hitting the
+#: ceiling surfaces as an elevated degraded count that the scorer already tracks.
+#:
+#: This stays 8192 even though the ladder below measures four sizes. Raising it to
+#: disambiguate "model failed" from "ran out of context" was considered and rejected:
+#: prompts measure 733 tokens (9% of this window), most sweep blocks run at low effort
+#: which cuts reasoning output roughly 10x, and inflating the KV allocation would push
+#: muse-glimmer:30b (17.0GB) and gemma4:26b-a4b past the 17.5GB ceiling — corrupting a
+#: primary criterion to solve a secondary interpretation problem. If one model shows
+#: anomalous degradation, re-gate that model alone at a larger context.
 CONTEXT_TOKENS = 8192
 
 #: Footprint is measured at three context sizes, because "does it fit 24GB" has a
