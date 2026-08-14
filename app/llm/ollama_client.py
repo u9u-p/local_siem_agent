@@ -13,7 +13,13 @@ _RETRY_NOTE = (
 
 
 class OllamaClient:
-    def __init__(self, base_url: str, model: str, timeout_seconds: float = 120.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        model: str,
+        timeout_seconds: float = 120.0,
+        reasoning_effort: str | None = None,
+    ) -> None:
         # max_retries=0: the SDK otherwise retries a timeout twice on its own, so one
         # slow call costs 3x timeout_seconds of wall clock while this class believes it
         # made a single attempt. Retry-on-invalid-schema is handled in
@@ -22,6 +28,14 @@ class OllamaClient:
             base_url=base_url, api_key="ollama", timeout=timeout_seconds, max_retries=0
         )
         self._model = model
+        # Left unset by default so each model keeps its own default. For reasoning
+        # models this dominates latency far more than throughput does: gpt-oss:20b
+        # emits 428 characters of reasoning at "low" against 3698 at "high" on the
+        # same prompt, and qwen3.5:9b spends 98% of its output reasoning. Ollama
+        # honours it on the OpenAI-compatible endpoint; there is no Modelfile
+        # equivalent (both `think` and `reasoning_effort` are rejected as unknown
+        # parameters), so it has to be sent per request.
+        self._reasoning_effort = reasoning_effort
         self._last_raw_content: str | None = None
 
     def generate_structured(self, prompt: str, schema: type[T]) -> T:
@@ -43,6 +57,7 @@ class OllamaClient:
                 messages=[{"role": "user", "content": prompt}],
                 response_format=schema,
                 temperature=0,
+                **({"reasoning_effort": self._reasoning_effort} if self._reasoning_effort else {}),
             )
         except openai.LengthFinishReasonError:
             self._last_raw_content = "(truncated — response exceeded the token limit)"
@@ -88,4 +103,14 @@ class OllamaClient:
             models = self._client.models.list()
         except openai.OpenAIError:
             return False
-        return any(model.id == self._model for model in models.data)
+        # Ollama resolves a bare repository name to its :latest tag — `ollama run
+        # mistral-small3.2` works — but lists it as "mistral-small3.2:latest". Exact
+        # matching therefore reported every untagged name as unavailable, which runs
+        # the whole pipeline as stubs and marks each report NEEDS_HUMAN_REVIEW with
+        # nothing naming the cause. Resolve the same way Ollama does, and no further:
+        # gemma4:12b must still not be satisfied by gemma4:latest.
+        wanted = self._model if ":" in self._model else f"{self._model}:latest"
+        return any(model.id == wanted for model in models.data)
+
+    def model_name(self) -> str:
+        return self._model

@@ -254,3 +254,71 @@ def test_model_available_returns_false_on_connection_error():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     assert client.model_available() is False
+
+
+@respx.mock
+def test_reasoning_effort_is_omitted_when_not_configured():
+    """Default must stay unset: sending an effort the server does not recognise, or
+    overriding a model's own default, would silently change every candidate's
+    behaviour in the benchmark."""
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "benign", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    client.generate_structured("classify this", Verdict)
+
+    assert "reasoning_effort" not in json.loads(route.calls[0].request.content)
+
+
+@respx.mock
+def test_reasoning_effort_is_sent_when_configured():
+    """Reasoning length, not throughput, dominates wall clock for reasoning models —
+    gpt-oss:20b emits 428 characters of reasoning at low against 3698 at high — so
+    the benchmark axis is (model x reasoning effort)."""
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "benign", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="gpt-oss:20b", reasoning_effort="low")
+
+    client.generate_structured("classify this", Verdict)
+
+    assert json.loads(route.calls[0].request.content)["reasoning_effort"] == "low"
+
+
+@respx.mock
+def test_model_available_resolves_an_untagged_name_to_latest():
+    """`ollama run mistral-small3.2` works, but the API lists it as
+    `mistral-small3.2:latest`. Exact matching made model_available() false for every
+    untagged name, which runs the whole pipeline as stubs and marks each report
+    NEEDS_HUMAN_REVIEW without anything naming the cause."""
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "mistral-small3.2:latest", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="mistral-small3.2")
+
+    assert client.model_available() is True
+
+
+@respx.mock
+def test_model_available_does_not_match_a_different_tag_of_the_same_model():
+    """Resolving bare names must not degrade into matching on the repository alone:
+    gemma4:12b and gemma4:latest are different models with different footprints."""
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "gemma4:latest", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="gemma4:12b")
+
+    assert client.model_available() is False

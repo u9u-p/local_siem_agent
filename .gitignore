@@ -8,3 +8,6 @@ data/
 *.db
 .pytest_cache/
 *.egg-info/
+
+# Benchmark run outputs (reports, per-run jsonl, scoreboards)
+bench/results/

@@ -192,7 +192,20 @@
   <rule id="106001" level="5">
     <if_sid>106000</if_sid>
     <field name="mimecast.Act">Hld</field>
-    <description>Message $(mimecast.MsgId) held for review.</description>
+    <!--
+      Sender, recipient, hold reason and subject are what an analyst triaging a held-mail
+      queue actually reads, and per app/agent/prompts.py the rule description is the
+      channel that carries them to the Risk step. They were all ingested and then
+      discarded: step 2's indicator vocabulary (ip/domain/hash/url) cannot express a
+      sender identity, a subject line, or a gateway verdict. The raw-log fallback in
+      _context_raw_log was built for exactly this gap but no longer fires for mail, whose
+      alerts now carry a typed source_ip. Same precedent as 100061, 100075 and 100080:
+      put the discriminating field in the description and change nothing else.
+
+      MsgId is dropped. It carried the sender domain only incidentally, and $(mimecast.Sender)
+      states it directly and more briefly — the description is prompt text, so length costs.
+    -->
+    <description>Mimecast held a message from $(mimecast.Sender) to $(mimecast.Rcpt) for review - reason $(mimecast.Definition), subject '$(mimecast.Subject)'.</description>
     <mitre>
      <id>T1566</id>
     </mitre>

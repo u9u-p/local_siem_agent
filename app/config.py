@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     llm_base_url: str = "http://localhost:11434/v1/"
     llm_model: str = "gemma4:12b"
     llm_timeout_seconds: float = 600.0
+    # low | medium | high | xhigh, model-dependent. Unset leaves each model on its own
+    # default. For reasoning models this drives latency more than throughput does.
+    llm_reasoning_effort: str | None = None
 
 
 def get_settings() -> Settings:

@@ -84,6 +84,8 @@ While Correlate sees only a count, this item is unusable as a discriminator and 
 
 **Speed and footprint**
 - Wall-clock per alert and per step, derived from `investigation_timeline` timestamps — no new instrumentation.
+- **Throughput and reasoning length, measured separately.** These are not proportional and ranking on either alone is wrong. Measured 14 Aug: `qwen3.5:9b` has the third-highest throughput of eight candidates and the slowest wall clock by 1.8x, because it emits 19,539 characters of reasoning for a 304-character answer — 98% reasoning. `mistral-small3.2` is the mirror image: lowest throughput of all eight, second-fastest wall clock, because it reasons not at all. A model that is slow through over-reasoning may be fixable with a reasoning-budget setting; one that is slow on throughput is not, so the two must never be collapsed into a single "speed" figure.
+- **Do not use `tok/s` from Ollama's OpenAI-compat `usage`.** Its `completion_tokens` does not account for reasoning consistently — `gemma4:12b` reported 49 completion tokens for roughly 1,600 characters of reasoning plus answer, off by about 8x — so any derived tok/s systematically flatters terse models and understates reasoning ones, which is precisely the bias this metric exists to expose. Characters generated are observed output and need no accounting from the server.
 - **Peak resident memory** via `ollama ps` for the loaded model, with `ps` polling during a live investigation for true peak including KV cache. Host-independent for a given model+quant, so the Studio measurement answers the laptop's fit question.
 - Tokens/sec as a secondary signal only.
 
@@ -112,7 +114,45 @@ Three finalists at Stage 2 is roughly 13 hours, unattended. Breadth for the floo
 | Mistral Small 3.2 24B | ~14 GB | Documented function-calling improvements |
 | `qwen3.6:27b` | ~16 GB | Already pulled; marginal against the ceiling |
 | Ternary Bonsai 27B | ~5.9 GB | Ternary quant of Qwen3.6-27B. Published ablation shows tool-calling degrades worst under aggressive quantization (−17.5% at 1-bit vs −3.8% math), which is exactly this pipeline's load-bearing capability. Informative either way |
-| Muse Glimmer 30B | 18 GB GGUF / 21 GB MLX | Meta, 10 Aug 2026, Apache 2.0, agentic-tuned. Does not fit the demo laptop. Benchmarked on the Studio as the measured "what 24GB costs you" datapoint |
+| Muse Glimmer 30B | 18 GB GGUF / 21 GB MLX | Meta, 10 Aug 2026, Apache 2.0, agentic-tuned. Expected not to fit — **wrong, see Stage 0 results below**: 17.0 GB at bounded context, marginally under the ceiling |
+
+### Stage 0 results — measured 14 Aug, Mac Studio
+
+Every candidate cleared all three schema probes, so **constrained decoding is now proven for this shortlist rather than assumed** — no MLX-style backend failure among them, all being GGUF. Footprints are at `num_ctx=8192`; probe seconds are Studio numbers and do **not** transfer to the M4 Pro (§ context decision 4).
+
+One representative schema-constrained call per model, warmed first so model load is not charged to it. Studio numbers; wall clock does **not** transfer to the M4 Pro (context decision 4). Single calls, so this measures capability and shape, not reliability.
+
+| Model | Footprint | Wall | chars/s | Reasoning share |
+|---|---|---|---|---|
+| `gpt-oss:20b` | 12.0 GB | 4.0s | **454** | 85% |
+| `gemma4:latest` (8B) | 9.6 GB | 5.6s | 344 | 88% |
+| `qwen3.5:9b` | 5.7 GB | **66.8s** | 297 | **98%** |
+| `gemma4:12b` (incumbent) | 8.4 GB | 8.2s | 185 | 84% |
+| `mistral-small3.2` | 15.0 GB | 2.0s | 121 | **0%** |
+| `muse-glimmer:30b` | 17.0 GB | 24.9s | 117 | 91% |
+| `qwen3.6:27b` | 16.0 GB | 37.2s | 99 | 93% |
+
+**Ranking by throughput and by wall clock produces almost unrelated orderings**, and only `gpt-oss:20b` is top-two on both. `qwen3.5:9b` is the clearest illustration — third-fastest generation, slowest end to end by 1.8x, because 98% of its output is reasoning. `mistral-small3.2` inverts it: the slowest generator finishes second-fastest by not reasoning at all, which is a prediction the graded clusters can test, since terse non-reasoning may cost accuracy.
+
+**Muse Glimmer fits after all**, at 17.0 GB against a 17.5 GB ceiling — correcting the shortlist row above, which reasoned from its 18 GB download. But that leaves about half a gigabyte before the agent process and anything else on the machine: viable-but-marginal, not safe.
+
+Nothing was rejected, so the Stage 1 shortlist is unchanged. The gate's value was converting three assumptions into measurements, two of which were wrong.
+
+**End-to-end effort sweep, `gpt-oss:20b` on the PowerShell needle, one run each** (§6.4 verification, not a reliability measurement):
+
+| Effort | Wall | Severity | Triage | Self-Check | base64 C2 |
+|---|---|---|---|---|---|
+| `low` | **30s** | high | `true_positive` | 7 of 9 flagged | not found |
+| `high` | **836s** | high | `uncertain` | 4 of 10 flagged | not found |
+
+**28x on wall clock, and the fast configuration produced the better triage verdict** — more reasoning was not more accuracy here. Wall clock alone would have ranked these correctly by accident; throughput alone would have ranked them identically, since it is the same model.
+
+Two findings that reach past this benchmark:
+
+- **`gpt-oss:20b` flags claims where `gemma4:12b` does not.** 7 of 9 and 4 of 10 against `gemma4:12b`'s 0 of 13 and 0 of 9. `ROADMAP.md` Demo Readiness item 6 is blocked precisely for want of a naturally-occurring flagged-and-dropped claim, and this produces them on demand. Whether the flagging is *correct* is a separate question the graded clusters answer — over-flagging and under-flagging are both failures, and `self_check_flag_rate` measures the behaviour, not its quality.
+- **`gpt-oss:20b` did not decode the base64 C2 on either run**, where `gemma4:12b` finds `45.146.164.110` on 8 of 8. The capability probe discriminates between models exactly as §2 intends, and it discriminates against a model that is otherwise 8x faster.
+
+**Consequence for the design: the axis is (model × reasoning effort), not model alone**, wherever a candidate exposes the control. `muse-glimmer:30b` ships `low`/`medium`/`high`/`xhigh`; its 24.9s at 91% reasoning is a default-configuration number, not a ceiling. A model that is slow through over-reasoning is mis-configured rather than disqualified, and Stage 1 should sweep the effort levels for any candidate offering them before that candidate is ranked.
 
 ---
 
@@ -130,7 +170,7 @@ Reuses the existing CLI; no framework, no new dependency. Roughly 150 lines acro
 
 ## 6. Prerequisite fixes
 
-Three application-code changes, all landing before the first benchmarked model runs. Nothing else under `app/` is touched.
+Three fixes plus one enabling change (§6.4), all landing before the first benchmarked model runs. Nothing else under `app/` is touched.
 
 ### 6.1 — `model_name` is hardcoded
 
@@ -163,12 +203,21 @@ This is a mapper change, not a model-visible prompt change, but it alters `evide
 
 ---
 
+### 6.4 — `OllamaClient` cannot send a reasoning budget
+
+Not a defect, an enabling change, and the only one that grew scope: Stage 0 measured reasoning length rather than throughput as the dominant driver of wall clock (§4), so ranking a reasoning model at whatever effort it happens to default to would rank a configuration, not a model. `muse-glimmer:30b` spends 91% of its output reasoning at its default and ships `low`/`medium`/`high`/`xhigh`; `qwen3.5:9b` spends 98%.
+
+Verified that Ollama honours `reasoning_effort` on the OpenAI-compatible endpoint — `gpt-oss:20b` emits 428 characters of reasoning at `low` against 3,698 at `high` on an identical prompt. There is **no Modelfile equivalent**: both `PARAMETER think` and `PARAMETER reasoning_effort` are rejected as unknown, so unlike `num_ctx` this cannot be baked into a variant and must be sent per request. That is why it needs a client change at all.
+
+`OllamaClient` takes an optional `reasoning_effort`, `Settings` grows `llm_reasoning_effort`, and `bench/run.py` takes `--effort`. **Default is unset and the parameter is then omitted from the request entirely** — covered by its own test — so with no configuration the pipeline behaves exactly as before. That default-off property is what keeps this outside the freeze that applies to §6.1–6.3: it changes nothing unless deliberately set.
+
 ## 7. Known confounds — documented, not fixed
 
 - **Domain over-extraction** (`_DOMAIN_RE`) pulls hostnames and dotted usernames (`victimcorp.com`, `ke.li.yam`) in as DOMAIN indicators, and with no VirusTotal key configured they resolve `unknown` and get narrated in the summary instead of the real signal. This corrupts report *prose*, not the graded fields, and hits every model equally. An optional near-free check — does `alert_summary` mention PowerShell or the parent process at all — surfaces the quality gap that severity alone cannot. `gemma4:12b` currently fails it.
 - **`evidence_count` varies by ingestion position**, neutralised by the shared DB snapshot (§5).
 - **Wazuh stamps ingestion time, not event time**, and every manager-side seeded alert is `agent.id 000`, so neither date-spreading nor host-spreading affects correlation. Do not attempt to control `evidence_count` by either.
 - **Enrichment runs with no providers registered, deliberately.** Neither API key is configured, so `EnrichmentRegistry` is empty and every alert degrades through the existing `no_provider_registered` path. This is a requirement, not an accident: without `EnrichmentCache` (deferred, Phase 6), a sweep of 182 alerts across several models with repeats would exhaust VirusTotal's shared 500/day partway through, and models run later would receive rate-limited `UNKNOWN` verdicts that models run earlier did not — making the ranking depend on run order. Every cluster above discriminates through the rule description alone, so nothing is lost by keeping providers off. **Do not enable keys mid-sweep.**
+- **Resolved 14 Aug, after PR #4 and rule `106001`'s description change.** Re-measured on `gemma4:12b`: phish `high`/`high`/`TRUE_POSITIVE`, benign `medium`/`medium`/`UNCERTAIN`, both `COMPLETE` — severity distance 0 on each. The phish rationale quotes *"impersonation techniques and urgent messaging ('Urgent', 'Invoice Payment')"*, content that reached no prompt before, which is direct evidence the description channel is what closed it. Two residues: triage is still `UNCERTAIN` rather than `FALSE_POSITIVE` because Correlate classifies the benign provider cluster `pattern_type=scanning` — one sender IP across many recipients is structurally identical to scanning without knowing the IP is a bulk-mail provider — and latency rose to 328s/298s from 186s/274s. The original finding, which the above supersedes:
 - **Benign email senders share provider IPs, which inverts the correlation signal — and the trap fires.** Bulk mail really does come from shared pools, so eight unrelated newsletter domains sit on one SendGrid address, seven on Mailchimp, five on Microsoft 365, four on Google Workspace, while the phishing chain has only three alerts on `185.220.101.47`. Four benign clusters out-correlate the needle. Confirmed empirically on 14 Aug: with §6.2 not yet landed, a routine Acme Cloud product newsletter came out `high`/`high`/`TRUE_POSITIVE`, its rationale stating that *"the high volume of evidence (10 indicators) strongly suggests a targeted phishing campaign"* — while the actual phish scored `evidence_count=2` and was escalated correctly, on domain plausibility. This is the mrahman defect reproduced in an independent category. Until §6.2 lands, the email cluster grades disposition rather than judgement, exactly as mrahman does.
 
 ---
@@ -176,7 +225,7 @@ This is a mapper change, not a model-visible prompt change, but it alters `evide
 ## 8. Non-goals
 
 - Fixing the domain over-extraction defect (`_DOMAIN_RE`). It corrupts report prose but not the graded fields, and hits every model equally — see §7.
-- Any change under `app/` beyond §6's three fixes, and any further change to §6.2 or §6.3 once the sweep has started.
+- Any change under `app/` beyond §6's four, and any further change to §6.2 or §6.3 once the sweep has started.
 - `EnrichmentCache`, `ReportRecord` triage columns, and the `on_step` hook — all remain deferred.
 - Benchmarking against public agentic-SOC benchmarks. Researched separately on 14 Aug: no reputable open benchmark scores a SIEM-alert-triage agent end to end, confirmed by the May 2026 survey (arXiv 2605.08316). CyberSOCEval (Meta/CrowdStrike) is the only reputable open defensive-SOC benchmark and grades models, not pipelines. Post-talk track.
 

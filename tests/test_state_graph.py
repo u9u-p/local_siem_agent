@@ -92,8 +92,10 @@ class _FakeAlertStore:
 
 
 class _FakeLLMClient:
-    def __init__(self, model_available=True, responses=None, error=None):
+    def __init__(self, model_available=True, responses=None, error=None,
+                 model_name="fake-model:test"):
         self._model_available = model_available
+        self._model_name = model_name
         self._responses = responses or {}  # {schema_class: return_value}
         self._error = error
         self.calls: list[tuple[str, type]] = []
@@ -111,6 +113,9 @@ class _FakeLLMClient:
 
     def model_available(self):
         return self._model_available
+
+    def model_name(self):
+        return self._model_name
 
 
 def test_fake_llm_client_records_prompt_and_schema_per_call():
@@ -593,6 +598,9 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
 
         def model_available(self):
             return True
+
+        def model_name(self):
+            return "fake-model:test"
 
     siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     analyst = _make_analyst(siem=siem, llm_client=_SequencedLLMClient())
@@ -1252,7 +1260,7 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
         RecommendedAction.BLOCK_SOURCE_IP.value, RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value,
     ]
     assert report.triage_verdict_experimental == "true_positive"
-    assert report.model_metadata.model_name == "gemma4:12b"
+    assert report.model_metadata.model_name == "fake-model:test"
     assert report.model_metadata.prompt_version == "4d-v1"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
