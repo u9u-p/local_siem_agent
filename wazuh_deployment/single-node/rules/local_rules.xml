@@ -154,6 +154,26 @@
     </mitre>
   </rule>
 
+  <!--
+    Deliberately parent-agnostic: fires on any encoded PowerShell, whether the parent is a
+    developer's AI coding assistant or an attacker's script host. Must stay AFTER 100073 so
+    the Office-macro case still matches the narrower level-14 rule first. The parent image is
+    interpolated into the description on purpose — it is the only discriminating evidence that
+    reaches the Agentic Analyst's risk step, which sees the rule description but never the
+    raw event fields (see app/agent/prompts.py).
+  -->
+  <rule id="100075" level="10">
+    <if_sid>100070</if_sid>
+    <field name="win.system.eventID">^1$</field>
+    <field name="win.eventdata.commandLine">-Enc|-EncodedCommand</field>
+    <description>Sysmon: PowerShell executed with an encoded command by $(win.eventdata.parentImage).</description>
+    <group>sysmon_event1,</group>
+    <mitre>
+      <id>T1027</id>
+      <id>T1059.001</id>
+    </mitre>
+  </rule>
+
 </group>
 
 <!--

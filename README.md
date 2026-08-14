@@ -76,7 +76,7 @@ cp .env.example .env
 
 ## Setting up Wazuh (local demo stack)
 
-The repo includes a ready-to-run Wazuh Docker Compose stack under `wazuh_deployment/single-node/`, pre-seeded with synthetic demo alerts (SSH auth, VPN, Windows Security events, Mimecast email security, Sysmon) — including deliberate false-positive/true-positive pairs, useful for exercising the agent's investigation logic. Full details, credentials, and troubleshooting are in **`wazuh_deployment/single-node/README.md`** — the short version:
+The repo includes a ready-to-run Wazuh Docker Compose stack under `wazuh_deployment/single-node/`, pre-seeded with 112 synthetic demo alerts (SSH auth, VPN, Windows Security events, Mimecast email security, Sysmon, and a 41-alert flood of encoded-PowerShell executions from AI developer tooling) — including deliberate false-positive/true-positive pairs, useful for exercising the agent's investigation logic. Full details, credentials, and troubleshooting are in **`wazuh_deployment/single-node/README.md`** — the short version:
 
 ```bash
 cd wazuh_deployment/single-node

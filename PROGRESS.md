@@ -19,6 +19,20 @@ Living status tracker for the Local SIEM Alert Investigation Agent. See `ROADMAP
 
 ---
 
+## Seeded-stack mechanics, 14 Aug 2026 — measured while adding Scenario E
+
+Two properties of manager-side seeded ingestion that defeat the obvious ways of controlling `evidence_count`. Both were measured against the live indexer, not assumed.
+
+**Wazuh stamps alerts with ingestion time, not event time.** The three Sysmon alerts of the phishing chain all carry the identical alert `timestamp` — the instant `log-pusher` wrote them — while their real event times survive only in `data.timestamp`. `Alert.timestamp` maps from the alert-level field (`app/integration/wazuh_connector.py:61`), and `build_canonical_queries` ranges on that same field. **Consequence: dating sample-log events across days does nothing for correlation.** Everything in one push lands inside everything else's 24h window.
+
+**Every seeded alert is `agent.id = 000` (`wazuh.manager`).** Manager-side `<localfile>` ingestion means there is exactly one agent no matter how many hostnames the events carry. `SAME_RULE_ID_HOST` filters on `rule.id` + `agent.id`, so it degenerates to "same rule.id anywhere in the corpus." **Consequence: spreading events across fake hostnames does nothing for correlation either.**
+
+What *does* vary `evidence_count` is position within the push: filebeat flushes in batches, so alerts pushed earlier see fewer predecessors. Across the 41-alert Scenario E cluster, two alerts measured 17 and 36. The only reliable lever on `evidence_count` is how many alerts share a rule id.
+
+**`gemma4:12b` decodes base64 during indicator extraction.** Scenario E's needle hides its C2 address inside a UTF-16LE `-EncodedCommand` payload; `45.146.164.110` and `http://45.146.164.110:8080/u` appear in no plaintext field of the alert (verified across every stored column — `source_ip` and `destination_ip` are both `None`). The step-2b extraction call recovered both, and both cleared the strict per-type validators, arriving as typed `ip`/`url` indicators. Reproduced 2 of 2 runs. This is CLAUDE.md §4.1.1's merge gate working as designed — the LLM adds recall the regex cannot, while the validator still gates everything. Two runs is not a reliability study.
+
+---
+
 ## Mac Studio verification, 12 Aug 2026 — first real end-to-end run
 
 Everything in this section was measured, not reasoned about. It supersedes the earlier per-alert latency estimates, which came from short probe prompts rather than the real per-step prompts.
