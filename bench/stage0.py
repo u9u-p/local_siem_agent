@@ -67,12 +67,17 @@ CONTEXT_TOKENS = 8192
 #: 8192 matches this corpus (prompts measure 733 tokens) and is what the sweep runs.
 #: 32768 is a defensible production size: a real full_log — Windows XML, an EDR process
 #: tree, a full header block — runs 10-50KB on its own, where the seeded corpus is one
-#: syslog line. 262144 is several models' own default, and the honest cost of their
-#: advertised context.
+#: syslog line. 131072 is the context several models advertise (muse-glimmer, gpt-oss
+#: and mistral-small3.2 all claim 128K), so it prices that claim. 262144 is several
+#: models' own default.
+#:
+#: Four rungs rather than three because the shape matters as much as the endpoints: a
+#: linear curve means cost is predictable per token, a knee means something changes —
+#: an attention scheme, a cache layout — at a specific size.
 #:
 #: Requesting more than a model supports is fine: the reported figure comes from
 #: `ollama ps`, so a clamp shows up as a smaller context rather than a wrong number.
-CONTEXT_LADDER = (8192, 32768, 262144)
+CONTEXT_LADDER = (8192, 32768, 131072, 262144)
 VARIANT_PREFIX = "-bench-ctx"
 
 
@@ -280,6 +285,25 @@ def accepts_reasoning_effort(model: str) -> bool:
         return False
 
 
+def kv_cost_per_1k(ladder: list[tuple[int, int, int]]) -> float | None:
+    """MB of resident memory per 1K tokens of context, from the ladder's endpoints.
+
+    The number that decides how much context a model can afford, and it varies by
+    roughly an order of magnitude between architectures — so two models of similar
+    size can differ completely in whether long context is usable. Reported from the
+    widest measured span; the intermediate rungs show whether that rate is constant.
+
+    None when fewer than two rungs loaded, or when a clamp collapsed the span.
+    """
+    usable = [(actual, size) for _, actual, size in ladder if actual]
+    if len(usable) < 2:
+        return None
+    (lo_ctx, lo_size), (hi_ctx, hi_size) = min(usable), max(usable)
+    if hi_ctx == lo_ctx:
+        return None
+    return ((hi_size - lo_size) / (1024**2)) / ((hi_ctx - lo_ctx) / 1024)
+
+
 def unload(model: str) -> None:
     """Free the model so the next candidate is measured without it resident."""
     subprocess.run(["ollama", "stop", model], capture_output=True, timeout=60)
@@ -369,6 +393,8 @@ def main() -> None:
             fits = "fits" if size <= FIT_CEILING_BYTES else "OVER"
             clamp = f" (clamped from {requested})" if actual and actual < requested else ""
             print(f"          ctx {actual or requested:>7} {size / 1024**3:>6.1f} GB  {fits}{clamp}")
+        if (kv := kv_cost_per_1k(result["ladder"])) is not None:
+            print(f"          KV cost {kv:.1f} MB per 1K tokens of context")
         if tp := result["throughput"]:
             print(f"          {tp['seconds']}s wall   {tp['chars_per_second']} chars/s   "
                   f"{tp['reasoning_chars']} reasoning + {tp['answer_chars']} answer chars "
