@@ -86,7 +86,9 @@ def local_models() -> list[str]:
     """Every pulled model except the bounded variants this gate creates itself."""
     with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=10) as response:
         names = (m["name"] for m in json.load(response).get("models", []))
-        return sorted(n for n in names if VARIANT_SUFFIX not in n)
+        # Match on the bare suffix: an untagged base model yields "model:bench-ctx8k",
+        # which does not contain the leading dash.
+        return sorted(n for n in names if VARIANT_SUFFIX.lstrip("-") not in n)
 
 
 def footprint_bytes(model: str) -> tuple[int, int] | None:
@@ -141,6 +143,64 @@ def bench_variant(model: str) -> str | None:
     return variant
 
 
+def measure_throughput(model: str) -> dict | None:
+    """Separate generation speed from reasoning length for one representative call.
+
+    Wall clock alone ranks these together and gets the ordering wrong. Measured on
+    the identical trivial prompt, mistral-small3.2 emits 2 completion tokens where
+    qwen3.6:27b emits 104 for the same two-character answer — a 50x difference in
+    work done, not in throughput. A model that generates quickly but reasons at
+    length can be slower end to end than a slower one that answers tersely, and the
+    two scale differently with prompt complexity.
+
+    Reported alongside wall clock so a candidate is never picked on a number that
+    conflates them. For models exposing a reasoning-budget control (Muse Glimmer has
+    low/medium/high/xhigh), this is also the knob that makes the real benchmark axis
+    (model x reasoning effort) rather than model alone.
+    """
+    _, schema, prompt = PROBES[1]  # flat-enum: mid-complexity, representative
+    body = json.dumps({
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "response_format": {
+            "type": "json_schema",
+            "json_schema": {"name": schema.__name__, "schema": schema.model_json_schema(), "strict": True},
+        },
+    }).encode()
+    request = urllib.request.Request(
+        "http://localhost:11434/v1/chat/completions", data=body,
+        headers={"Content-Type": "application/json"},
+    )
+    started = time.time()
+    try:
+        with urllib.request.urlopen(request, timeout=900) as response:
+            payload = json.load(response)
+    except Exception:  # noqa: BLE001 - a measurement failure must not fail the gate
+        return None
+    elapsed = time.time() - started
+
+    message = payload["choices"][0]["message"]
+    completion = payload.get("usage", {}).get("completion_tokens", 0)
+    reasoning_chars = len(message.get("reasoning") or "")
+    answer_chars = len(message.get("content") or "")
+    total_chars = reasoning_chars + answer_chars
+
+    # chars/s is the throughput figure to trust. Ollama's completion_tokens does not
+    # account for reasoning consistently across models — gemma4:12b reported 49
+    # completion tokens for ~1600 characters of reasoning plus answer, which is off by
+    # roughly 8x — so tok/s derived from it understates reasoning models badly.
+    # Characters are observed output and need no accounting from the server.
+    return {
+        "seconds": round(elapsed, 1),
+        "completion_tokens": completion,
+        "tokens_per_second": round(completion / elapsed, 1) if elapsed else 0.0,
+        "chars_per_second": round(total_chars / elapsed) if elapsed else 0,
+        "reasoning_chars": reasoning_chars,
+        "answer_chars": answer_chars,
+        "reasoning_share": round(reasoning_chars / total_chars, 2) if total_chars else 0.0,
+    }
+
+
 def unload(model: str) -> None:
     """Free the model so the next candidate is measured without it resident."""
     subprocess.run(["ollama", "stop", model], capture_output=True, timeout=60)
@@ -159,8 +219,15 @@ def probe_model(model: str) -> dict:
     )
     result: dict = {
         "model": model, "variant": variant, "probes": {},
-        "footprint_bytes": None, "context_tokens": None,
+        "footprint_bytes": None, "context_tokens": None, "throughput": None,
     }
+
+    # Warm up so model load time is not charged to the first probe. Unwarmed,
+    # gemma4:latest read 12.2s on the trivial probe against 5.7s on the harder one.
+    try:
+        client.generate_structured("Reply with the single word ok.", TrivialAnswer)
+    except Exception:  # noqa: BLE001 - a failed warmup is the probe's result to report
+        pass
 
     for name, schema, prompt in PROBES:
         started = time.time()
@@ -175,6 +242,7 @@ def probe_model(model: str) -> dict:
         if outcome != "pass":
             break  # harder probes tell us nothing once an easier one has failed
 
+    result["throughput"] = measure_throughput(variant)
     measured = footprint_bytes(variant)
     if measured:
         result["footprint_bytes"], result["context_tokens"] = measured
@@ -212,13 +280,23 @@ def main() -> None:
         timings = "  ".join(f"{n}={p['seconds']}s" for n, p in result["probes"].items())
         print(f"  {state:<7} {model:<26} {note}")
         print(f"          {timings}")
+        if tp := result["throughput"]:
+            print(f"          {tp['seconds']}s wall   {tp['chars_per_second']} chars/s   "
+                  f"{tp['reasoning_chars']} reasoning + {tp['answer_chars']} answer chars "
+                  f"({tp['reasoning_share']:.0%} reasoning)")
 
-    print("\n| model | verdict | footprint | trivial | flat-enum | nested-list |")
-    print("|---|---|---|---|---|---|")
+    print("\n| model | verdict | footprint | wall | chars/s | reasoning share | schema probes |")
+    print("|---|---|---|---|---|---|---|")
     for model, state, _, result in rows:
         size = result["footprint_bytes"]
-        cells = [result["probes"].get(n, {}).get("outcome", "—") for n, _, _ in PROBES]
-        print(f"| `{model}` | {state} | {f'{size / 1024**3:.1f} GB' if size else '—'} | " + " | ".join(cells) + " |")
+        tp = result["throughput"] or {}
+        probes = "/".join("ok" if result["probes"].get(n, {}).get("outcome") == "pass" else "FAIL"
+                          for n, _, _ in PROBES)
+        share = f"{tp['reasoning_share']:.0%}" if tp else "—"
+        print(
+            f"| `{model}` | {state} | {f'{size / 1024**3:.1f} GB' if size else '—'} "
+            f"| {tp.get('seconds', '—')}s | {tp.get('chars_per_second', '—')} | {share} | {probes} |"
+        )
 
 
 if __name__ == "__main__":

@@ -84,6 +84,8 @@ While Correlate sees only a count, this item is unusable as a discriminator and 
 
 **Speed and footprint**
 - Wall-clock per alert and per step, derived from `investigation_timeline` timestamps — no new instrumentation.
+- **Throughput and reasoning length, measured separately.** These are not proportional and ranking on either alone is wrong. Measured 14 Aug: `qwen3.5:9b` has the third-highest throughput of eight candidates and the slowest wall clock by 1.8x, because it emits 19,539 characters of reasoning for a 304-character answer — 98% reasoning. `mistral-small3.2` is the mirror image: lowest throughput of all eight, second-fastest wall clock, because it reasons not at all. A model that is slow through over-reasoning may be fixable with a reasoning-budget setting; one that is slow on throughput is not, so the two must never be collapsed into a single "speed" figure.
+- **Do not use `tok/s` from Ollama's OpenAI-compat `usage`.** Its `completion_tokens` does not account for reasoning consistently — `gemma4:12b` reported 49 completion tokens for roughly 1,600 characters of reasoning plus answer, off by about 8x — so any derived tok/s systematically flatters terse models and understates reasoning ones, which is precisely the bias this metric exists to expose. Characters generated are observed output and need no accounting from the server.
 - **Peak resident memory** via `ollama ps` for the loaded model, with `ps` polling during a live investigation for true peak including KV cache. Host-independent for a given model+quant, so the Studio measurement answers the laptop's fit question.
 - Tokens/sec as a secondary signal only.
 
@@ -118,19 +120,25 @@ Three finalists at Stage 2 is roughly 13 hours, unattended. Breadth for the floo
 
 Every candidate cleared all three schema probes, so **constrained decoding is now proven for this shortlist rather than assumed** — no MLX-style backend failure among them, all being GGUF. Footprints are at `num_ctx=8192`; probe seconds are Studio numbers and do **not** transfer to the M4 Pro (§ context decision 4).
 
-| Model | Footprint | trivial / flat-enum / nested-list | Probe total |
-|---|---|---|---|
-| `qwen3.5:9b` | 5.7 GB | 5.6 / 35.1 / 22.2 | 62.9s |
-| `gemma4:12b` (incumbent) | 8.4 GB | 3.4 / 9.9 / 10.9 | 24.2s |
-| `gemma4:latest` (8B) | 9.6 GB | 12.2 / 5.7 / 8.5 | 26.4s |
-| `gpt-oss:20b` | 12.0 GB | 6.5 / 3.4 / 6.7 | 16.6s |
-| `mistral-small3.2` | 15.0 GB | 8.2 / 1.9 / 3.3 | **13.4s** |
-| `qwen3.6:27b` | 16.0 GB | 13.0 / 37.5 / 51.5 | 102.0s |
-| `muse-glimmer:30b` | 17.0 GB | 14.7 / 31.0 / 34.6 | 80.3s |
+One representative schema-constrained call per model, warmed first so model load is not charged to it. Studio numbers; wall clock does **not** transfer to the M4 Pro (context decision 4). Single calls, so this measures capability and shape, not reliability.
 
-Two results worth carrying forward. **Muse Glimmer fits after all**, at 17.0 GB against a 17.5 GB ceiling — but with roughly half a gigabyte of margin before the agent process and anything else on the machine, which is thin for a live demo; treat it as viable-but-marginal, not safe. And **`mistral-small3.2` is far and away the fastest** on these probes, at roughly 8x `qwen3.6:27b`, which was not predictable from parameter count and is exactly why the gate exists.
+| Model | Footprint | Wall | chars/s | Reasoning share |
+|---|---|---|---|---|
+| `gpt-oss:20b` | 12.0 GB | 4.0s | **454** | 85% |
+| `gemma4:latest` (8B) | 9.6 GB | 5.6s | 344 | 88% |
+| `qwen3.5:9b` | 5.7 GB | **66.8s** | 297 | **98%** |
+| `gemma4:12b` (incumbent) | 8.4 GB | 8.2s | 185 | 84% |
+| `mistral-small3.2` | 15.0 GB | 2.0s | 121 | **0%** |
+| `muse-glimmer:30b` | 17.0 GB | 24.9s | 117 | 91% |
+| `qwen3.6:27b` | 16.0 GB | 37.2s | 99 | 93% |
 
-Since nothing was rejected, the shortlist reaching Stage 1 is unchanged — the gate's value here was converting two assumptions into measurements, one of which was wrong.
+**Ranking by throughput and by wall clock produces almost unrelated orderings**, and only `gpt-oss:20b` is top-two on both. `qwen3.5:9b` is the clearest illustration — third-fastest generation, slowest end to end by 1.8x, because 98% of its output is reasoning. `mistral-small3.2` inverts it: the slowest generator finishes second-fastest by not reasoning at all, which is a prediction the graded clusters can test, since terse non-reasoning may cost accuracy.
+
+**Muse Glimmer fits after all**, at 17.0 GB against a 17.5 GB ceiling — correcting the shortlist row above, which reasoned from its 18 GB download. But that leaves about half a gigabyte before the agent process and anything else on the machine: viable-but-marginal, not safe.
+
+Nothing was rejected, so the Stage 1 shortlist is unchanged. The gate's value was converting three assumptions into measurements, two of which were wrong.
+
+**Consequence for the design: the axis is (model × reasoning effort), not model alone**, wherever a candidate exposes the control. `muse-glimmer:30b` ships `low`/`medium`/`high`/`xhigh`; its 24.9s at 91% reasoning is a default-configuration number, not a ceiling. A model that is slow through over-reasoning is mis-configured rather than disqualified, and Stage 1 should sweep the effort levels for any candidate offering them before that candidate is ranked.
 
 ---
 
