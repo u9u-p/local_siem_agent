@@ -81,7 +81,7 @@ def loaded_model_bytes() -> int | None:
     return None
 
 
-def run_one(model: str, alert_id: str, workdir: Path, repeat: int) -> dict:
+def run_one(model: str, alert_id: str, workdir: Path, repeat: int, effort: str | None) -> dict:
     reports = workdir / "reports" / alert_id / str(repeat)
     reports.mkdir(parents=True, exist_ok=True)
     env = {
@@ -89,6 +89,9 @@ def run_one(model: str, alert_id: str, workdir: Path, repeat: int) -> dict:
         "LLM_MODEL": model,
         "DATABASE_PATH": str(workdir / "alerts.db"),
         "REPORTS_DIR": str(reports),
+        # Unset means "leave the model on its own default", which is what an
+        # unconfigured deployment does — so it has to be a real absence, not "".
+        **({"LLM_REASONING_EFFORT": effort} if effort else {}),
     }
     started = time.time()
     proc = subprocess.run(
@@ -100,6 +103,7 @@ def run_one(model: str, alert_id: str, workdir: Path, repeat: int) -> dict:
     files = list(reports.glob("*.json"))
     return {
         "model": model,
+        "reasoning_effort": effort or "default",
         "alert_id": alert_id,
         "repeat": repeat,
         "elapsed_s": round(elapsed, 1),
@@ -117,25 +121,33 @@ def main() -> None:
     ap.add_argument("--model", required=True)
     ap.add_argument("--stage", choices=sorted(STAGE_PLAN), default="screen")
     ap.add_argument("--snapshot", type=Path, default=SNAPSHOT)
+    ap.add_argument(
+        "--effort", default=None,
+        help="reasoning effort (low|medium|high|xhigh). Omit to leave the model on its "
+             "own default. Reasoning length drives wall clock more than throughput does, "
+             "so a reasoning model must be swept across efforts before it is ranked.",
+    )
     args = ap.parse_args()
 
     if not args.snapshot.exists():
         raise SystemExit(f"no snapshot at {args.snapshot} — run `agent pull-alerts` first")
 
-    workdir = RESULTS / args.model.replace(":", "_") / args.stage
+    label = f"{args.model.replace(':', '_')}@{args.effort or 'default'}"
+    workdir = RESULTS / label / args.stage
     workdir.mkdir(parents=True, exist_ok=True)
     shutil.copy(args.snapshot, workdir / "alerts.db")
 
     selected = select_alerts(args.snapshot, args.stage)
     total = sum(repeats for *_, repeats in selected)
-    print(f"{args.model} / {args.stage}: {len(selected)} alerts, {total} runs")
+    print(f"{args.model} @ {args.effort or 'default'} / {args.stage}: "
+          f"{len(selected)} alerts, {total} runs")
 
     results_file = workdir / "runs.jsonl"
     done = 0
     with results_file.open("w") as fh:
         for alert_id, cluster, role, repeats in selected:
             for repeat in range(repeats):
-                record = run_one(args.model, alert_id, workdir, repeat)
+                record = run_one(args.model, alert_id, workdir, repeat, args.effort)
                 record.update(cluster=cluster, role=role.value)
                 fh.write(json.dumps(record) + "\n")
                 fh.flush()

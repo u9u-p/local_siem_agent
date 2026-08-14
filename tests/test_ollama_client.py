@@ -254,3 +254,33 @@ def test_model_available_returns_false_on_connection_error():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     assert client.model_available() is False
+
+
+@respx.mock
+def test_reasoning_effort_is_omitted_when_not_configured():
+    """Default must stay unset: sending an effort the server does not recognise, or
+    overriding a model's own default, would silently change every candidate's
+    behaviour in the benchmark."""
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "benign", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    client.generate_structured("classify this", Verdict)
+
+    assert "reasoning_effort" not in json.loads(route.calls[0].request.content)
+
+
+@respx.mock
+def test_reasoning_effort_is_sent_when_configured():
+    """Reasoning length, not throughput, dominates wall clock for reasoning models —
+    gpt-oss:20b emits 428 characters of reasoning at low against 3698 at high — so
+    the benchmark axis is (model x reasoning effort)."""
+    route = respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "benign", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="gpt-oss:20b", reasoning_effort="low")
+
+    client.generate_structured("classify this", Verdict)
+
+    assert json.loads(route.calls[0].request.content)["reasoning_effort"] == "low"

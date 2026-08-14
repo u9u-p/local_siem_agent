@@ -188,12 +188,13 @@ def main() -> None:
         rows = load_runs(model_dir, args.stage)
         if not rows:
             continue
-        model = model_dir.name.replace("_", ":", 1)
+        model = model_dir.name.replace("_", ":", 1)  # "gemma4_12b@low" -> "gemma4:12b@low"
         blocks.append(render(model, score_model(rows)))
         for record in rows:
             report = record.get("report") or {}
             csv_rows.append({
                 "model": model,
+                "reasoning_effort": record.get("reasoning_effort", "default"),
                 "cluster": record["cluster"],
                 "role": record["role"],
                 "repeat": record["repeat"],

@@ -156,7 +156,7 @@ Reuses the existing CLI; no framework, no new dependency. Roughly 150 lines acro
 
 ## 6. Prerequisite fixes
 
-Three application-code changes, all landing before the first benchmarked model runs. Nothing else under `app/` is touched.
+Three fixes plus one enabling change (§6.4), all landing before the first benchmarked model runs. Nothing else under `app/` is touched.
 
 ### 6.1 — `model_name` is hardcoded
 
@@ -189,6 +189,14 @@ This is a mapper change, not a model-visible prompt change, but it alters `evide
 
 ---
 
+### 6.4 — `OllamaClient` cannot send a reasoning budget
+
+Not a defect, an enabling change, and the only one that grew scope: Stage 0 measured reasoning length rather than throughput as the dominant driver of wall clock (§4), so ranking a reasoning model at whatever effort it happens to default to would rank a configuration, not a model. `muse-glimmer:30b` spends 91% of its output reasoning at its default and ships `low`/`medium`/`high`/`xhigh`; `qwen3.5:9b` spends 98%.
+
+Verified that Ollama honours `reasoning_effort` on the OpenAI-compatible endpoint — `gpt-oss:20b` emits 428 characters of reasoning at `low` against 3,698 at `high` on an identical prompt. There is **no Modelfile equivalent**: both `PARAMETER think` and `PARAMETER reasoning_effort` are rejected as unknown, so unlike `num_ctx` this cannot be baked into a variant and must be sent per request. That is why it needs a client change at all.
+
+`OllamaClient` takes an optional `reasoning_effort`, `Settings` grows `llm_reasoning_effort`, and `bench/run.py` takes `--effort`. **Default is unset and the parameter is then omitted from the request entirely** — covered by its own test — so with no configuration the pipeline behaves exactly as before. That default-off property is what keeps this outside the freeze that applies to §6.1–6.3: it changes nothing unless deliberately set.
+
 ## 7. Known confounds — documented, not fixed
 
 - **Domain over-extraction** (`_DOMAIN_RE`) pulls hostnames and dotted usernames (`victimcorp.com`, `ke.li.yam`) in as DOMAIN indicators, and with no VirusTotal key configured they resolve `unknown` and get narrated in the summary instead of the real signal. This corrupts report *prose*, not the graded fields, and hits every model equally. An optional near-free check — does `alert_summary` mention PowerShell or the parent process at all — surfaces the quality gap that severity alone cannot. `gemma4:12b` currently fails it.
@@ -202,7 +210,7 @@ This is a mapper change, not a model-visible prompt change, but it alters `evide
 ## 8. Non-goals
 
 - Fixing the domain over-extraction defect (`_DOMAIN_RE`). It corrupts report prose but not the graded fields, and hits every model equally — see §7.
-- Any change under `app/` beyond §6's three fixes, and any further change to §6.2 or §6.3 once the sweep has started.
+- Any change under `app/` beyond §6's four, and any further change to §6.2 or §6.3 once the sweep has started.
 - `EnrichmentCache`, `ReportRecord` triage columns, and the `on_step` hook — all remain deferred.
 - Benchmarking against public agentic-SOC benchmarks. Researched separately on 14 Aug: no reputable open benchmark scores a SIEM-alert-triage agent end to end, confirmed by the May 2026 survey (arXiv 2605.08316). CyberSOCEval (Meta/CrowdStrike) is the only reputable open defensive-SOC benchmark and grades models, not pipelines. Post-talk track.
 
