@@ -19,7 +19,7 @@ Decisions confirmed with the user during brainstorming:
 4. **Latency is the only metric that does not transfer between hosts**, so the winning model gets a **calibration pass on the M4 Pro** — three needles, one run each. Laptop numbers are quoted for the demo alerts, Studio numbers for the accuracy scoreboard. No scaling factors.
 5. **Graded fields are `risk_assessment.severity` and `triage_verdict_experimental`.** Not prose, not recommended actions.
 6. **The corpus gains benign floods for email and logins** so all three headline use cases have Scenario E's shape.
-7. **No application behaviour is changed to make results better.** The `_findings_block`/Correlate defect and the domain over-extraction defect stay exactly as documented; both become graded items rather than bugs to hide.
+7. **Correlate's count-only prompt is fixed before the sweep starts, not after.** Grading models against an information-starved Correlate measures reluctance to classify rather than judgement, and rewards precisely the hedging disposition that would miss the needles — see §6.2. Beyond that, no application behaviour changes to make results better: the domain over-extraction defect stays exactly as documented.
 
 ---
 
@@ -51,7 +51,9 @@ These are never averaged into one number. A model can be excellent at one and us
 
 **Capability probe.** Does the model decode UTF-16LE base64 in-head at step 2b and surface `45.146.164.110` and `http://45.146.164.110:8080/u` as typed indicators? Neither value appears in any plaintext field of the alert; `source_ip` and `destination_ip` are both `None`. `gemma4:12b` does this on 8 of 8 runs. It is binary, objectively checkable against `Report.enrichment_findings`, and needs no rubric.
 
-**Precision pair.** The mrahman VPN false positive. Per the 14 Aug controlled follow-up, its escalation is driven by **Correlate classifying `pattern_type=lateral_movement`**, not by `evidence_count` (which is near-inert: a benign alert at count 41 still returns `medium`, the needle at 36 returns `high`). Correlate's classification is an LLM call, so this is a live test of whether a model over-classifies a pattern from counts alone — not, as first assumed, a harness-bound constant.
+**Precision pair.** The mrahman VPN false positive, graded only *after* §6.2 lands. Its escalation is driven by **Correlate classifying `pattern_type=lateral_movement`**, not by `evidence_count` (near-inert: a benign alert at count 41 still returns `medium`, the needle at 36 returns `high`).
+
+While Correlate sees only a count, this item is unusable as a discriminator and was wrongly placed here in the first draft. The eight alerts that resolve the case are retrieved and then discarded, so no model can reason to the right verdict — it can only decline to guess wrong. Scoring that rewards reluctance to classify, which is **anti-correlated with needle recall**: a hedging model wins here and misses the `wscript.exe` needle. Once Correlate receives a digest of what it actually found, the item becomes a genuine test of whether a model reads its own correlated evidence.
 
 ---
 
@@ -117,11 +119,23 @@ Reuses the existing CLI; no framework, no new dependency. Roughly 150 lines acro
 
 ---
 
-## 6. Prerequisite fix
+## 6. Prerequisite fixes
 
-`app/agent/state_graph.py:679` hardcodes `model_name="gemma4:12b"` in `_assemble_report`. Every exported report would misattribute its own model, making the entire benchmark unreadable. This is the Minor deferred three times across Phases 4b, 4c and 5; a model comparison is the first thing that actually breaks on it. Read it from the injected `LLMClient` or `Settings.llm_model`. Two lines plus a test.
+Two application-code changes, both landing before the first benchmarked model runs. Nothing else under `app/` is touched.
 
-This is the only application-code change in scope.
+### 6.1 — `model_name` is hardcoded
+
+`app/agent/state_graph.py:679` sets `model_name="gemma4:12b"` in `_assemble_report`, so every exported report would misattribute its own model and the scoreboard would be unreadable. Read it from the injected `LLMClient` or `Settings.llm_model`. Two lines plus a test. This is the Minor deferred three times across Phases 4b, 4c and 5; a model comparison is the first thing that actually breaks on it.
+
+### 6.2 — Correlate is given counts, not evidence
+
+`build_correlation_decision_prompt` ([prompts.py:18](app/agent/prompts.py:18)) receives `canonical_results`, whose `SearchResult` carries `alerts: list[Alert]` alongside `total_count`, and renders only the count. For mrahman the eight discarded alerts **are** the answer: his own ocserv connect, the `100.72.44.19` egress assignment, the approved MFA push. From the integer `8`, no model can reason to the right verdict; it can only decline to guess wrong. Benchmarking on that measures disposition rather than judgement, and selects for hedging — see §2.
+
+The data is present, ingested, retrieved, and thrown away one function short of the prompt. This is an implementation shortcut, not an architectural constraint: CLAUDE.md §4.2 rule 2 already permits the fix, since correlation results and rule metadata are structured findings, not raw logs.
+
+**Pass a deduplicated digest — distinct rule descriptions with counts — not the alert list.** mrahman expands to the three descriptions that matter; a Scenario E alert correlating 41 near-identical events collapses to roughly one line. That preserves §4.2 rule 2's small-prompt property and its latency, and yields more signal exactly where there is more diversity, at near-zero cost where there is not.
+
+`pattern_type` flows into the Risk prompt for **every** alert, so this must land before the first benchmarked model and stay frozen for the rest of the sweep — changing it mid-run would shift severity across the whole graded set, not just the one false positive. Re-verify the three demo scenarios afterwards. The base64 result is unaffected: step 2b runs upstream of Correlate.
 
 ---
 
@@ -135,19 +149,20 @@ This is the only application-code change in scope.
 
 ## 8. Non-goals
 
-- Fixing `_findings_block` or Correlate's `pattern_type` classification. It is a graded item now; changing it mid-benchmark would invalidate the mrahman comparison.
+- Fixing the domain over-extraction defect (`_DOMAIN_RE`). It corrupts report prose but not the graded fields, and hits every model equally — see §7.
+- Any change under `app/` beyond §6's two fixes, and any further change to §6.2 once the sweep has started.
 - `EnrichmentCache`, `ReportRecord` triage columns, and the `on_step` hook — all remain deferred.
 - Benchmarking against public agentic-SOC benchmarks. Researched separately on 14 Aug: no reputable open benchmark scores a SIEM-alert-triage agent end to end, confirmed by the May 2026 survey (arXiv 2605.08316). CyberSOCEval (Meta/CrowdStrike) is the only reputable open defensive-SOC benchmark and grades models, not pipelines. Post-talk track.
 
 ## 9. Open items
 
 - Whether Stage 2's benign sample of 10 per category gives enough resolution on `benign_escalation_rate`; 10 gives 10% granularity, and widening it is the first thing to spend spare compute on.
-- Whether the winner justifies revisiting Correlate's `pattern_type` before the talk, or whether the honest-limitation framing stands.
+- What replaces the talk's count-only-correlation limitation slide. The `evidence_count` diagnosis it rested on was already superseded by the 14 Aug controlled follow-up, and §6.2 removes the behaviour it described, so that narrative needs rewriting regardless of this benchmark.
 
 ## Verification
 
 This is a design document. Verification is review, not test execution:
 
 1. Confirm every graded item has ground truth derivable from seed-data structure alone, with no hand-labelling and no ID-keyed state that re-seeding would invalidate.
-2. Confirm no step of this design changes model-visible behaviour — prompts, schemas, findings blocks and extraction all stay as they are, so the benchmark measures models rather than a moving target.
+2. Confirm §6's two fixes both land before the first benchmarked model, and that nothing model-visible changes after that point — prompts, schemas and extraction stay frozen for the rest of the sweep, so the benchmark measures models rather than a moving target.
 3. Confirm the Stage 0 gate would actually reject a model whose backend ignores `response_format`, which is the failure mode that scores as caution rather than as breakage.
