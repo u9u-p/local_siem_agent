@@ -140,7 +140,7 @@ def main() -> None:
     selected = select_alerts(args.snapshot, args.stage)
     total = sum(repeats for *_, repeats in selected)
     print(f"{args.model} @ {args.effort or 'default'} / {args.stage}: "
-          f"{len(selected)} alerts, {total} runs")
+          f"{len(selected)} alerts, {total} runs", flush=True)
 
     results_file = workdir / "runs.jsonl"
     done = 0
@@ -152,9 +152,17 @@ def main() -> None:
                 fh.write(json.dumps(record) + "\n")
                 fh.flush()
                 done += 1
-                print(f"  [{done}/{total}] {cluster:<11} {role.value:<11} {record['elapsed_s']:>6}s")
+                # flush: stdout is block-buffered when redirected to a file, so an
+                # unattended multi-hour sweep would show nothing at all until it exited
+                # — indistinguishable from a hang. runs.jsonl is the durable record;
+                # this is the one you watch.
+                print(
+                    f"  [{done}/{total}] {cluster:<11} {role.value:<11} "
+                    f"{record['elapsed_s']:>6}s  exit={record['exit_code']}",
+                    flush=True,
+                )
 
-    print(f"wrote {results_file}")
+    print(f"wrote {results_file}", flush=True)
 
 
 if __name__ == "__main__":
