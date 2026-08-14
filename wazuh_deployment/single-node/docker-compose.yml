@@ -93,8 +93,15 @@ services:
       # - ./sample-logs:/var/ossec/logs/sample-logs
       - sample_logs_data:/var/ossec/logs/sample-logs
       # --- custom decoder/rules for the ocserv VPN sample log ---
-      - ./decoders/local_decoder.xml:/var/ossec/etc/decoders/local_decoder.xml
-      - ./rules/local_rules.xml:/var/ossec/etc/rules/local_rules.xml
+      # Mounted as DIRECTORIES, not single files, on purpose. Docker binds a single-file
+      # mount by inode, and git (rebase/checkout/stash) replaces files rather than editing
+      # them in place — which silently leaves the container's mount pointing at a deleted
+      # inode. The rule engine keeps running from memory so alerts still fire, but the
+      # Manager API's GET /rules then fails for every rule id and every report gets stamped
+      # NEEDS_HUMAN_REVIEW. Directory mounts survive file replacement. Both target dirs hold
+      # only these files. See PROGRESS.md.
+      - ./decoders:/var/ossec/etc/decoders
+      - ./rules:/var/ossec/etc/rules
 
   wazuh.indexer:
     image: wazuh/wazuh-indexer:4.14.6

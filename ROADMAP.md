@@ -165,6 +165,34 @@ It currently resolves the wrong way, and **not because the model is too small**:
 
 **Measured latency is 3.5–7.5 minutes per alert, not the ~2.5 estimated from short probe prompts.** Self-Check dominates and scales badly with claim count (9 claims → 71s, 13 → 236s), and claim count is driven by how many actions Draft-A selects from the 16-member catalog. The true-positive chain runs in 212.8s and concludes correctly; the false positive takes 451.4s and concludes wrongly. Full per-step timings are in `PROGRESS.md`.
 
+### Scenario E: encoded PowerShell from AI developer tooling — added 14 Aug 2026
+
+Prompted by SOC feedback that AI coding assistants on Windows invoke `powershell.exe -EncodedCommand`, so real SOCs now field a steady flood of encoded-PowerShell alerts that are indistinguishable from obfuscated malware at the rule layer.
+
+`sample-logs/dev_ai_tools.json` seeds 41 Sysmon process-creation events — 40 benign (Cursor, VS Code, Claude Code CLI via `node.exe`, Windows Terminal across six developer laptops, base64 decoding to `git status --porcelain`, `npm run build`, …) and **one** that is not (parent `wscript.exe`, decoding to a downloader aimed at `45.146.164.110`, the address that logs in successfully in `auth.log`). All 41 match a single deliberately parent-agnostic rule, `100075`, at level 10. The corpus goes from 71 alerts to 112, and encoded PowerShell becomes its largest single cluster — which is the point.
+
+Rule `100075` interpolates `$(win.eventdata.parentImage)` into its description on purpose: per `app/agent/prompts.py`, the rule description is the only channel by which the parent process reaches the Risk step, which never sees raw event fields. No application code changed.
+
+**Result — the agent discriminated correctly.** Benign Cursor alert: `severity=medium`, `pattern_type=none`. The `wscript.exe` needle: `severity=high, confidence=high`, correctly naming wscript-launched encoded PowerShell as obfuscation and the external address as likely C2, recommending isolation and IP blocking.
+
+**Unplanned finding: `gemma4:12b` decoded the base64 in-head.** `45.146.164.110` and `http://45.146.164.110:8080/u` appear in **no** plaintext field of the alert — verified against every stored column; `source_ip` and `destination_ip` are both `None`. They exist only as UTF-16LE base64 inside `commandLine`. The step-2b LLM extraction call proposed both, and both passed the same strict validators regex hits go through, so they reached `enrichment_findings` as typed `ip`/`url` indicators. **Reproduced on 8 of 8 runs** with identical values, all 8 also returning `severity=high, confidence=high`. This is the merge-gate design in CLAUDE.md §4.1.1 paying off exactly as intended — recall the regex cannot reach, with no path to inject unvalidated data — and it is a far stronger demo beat than the scenario was designed for. Reliable enough to build a slide on.
+
+**Caveat: the benign report's reasoning is wrong even though its verdict is defensible.** Its summary is built entirely around "multiple unknown domains" and never mentions PowerShell or the parent process. The domain over-extraction defect (`PROGRESS.md`, `_DOMAIN_RE`) pulled `dev-klyam01.victimcorp.com`, `victimcorp.com`, and the username `ke.li.yam` in as DOMAIN indicators; with no VirusTotal key configured all three resolved `unknown`, and the model narrated those instead of the actual signal. The dotted usernames in the seed data are mine and feed that defect directly — switching to undotted usernames would remove one junk indicator, but the hostname extractions would remain. Left as-is rather than tuning the data to dodge a documented defect.
+
+**`evidence_count` varies by ingestion position, not by host or event time.** The benign alert saw 17, the needle 36, both from the same 41-alert cluster. See `PROGRESS.md` for why date-spreading and host-spreading are both inert here.
+
+**Controlled follow-up: `evidence_count` is not what drives escalation — `pattern_type` is.** The needle/benign comparison above was initially confounded, since the needle sat at position 33 of 41 in ingest order and drew `evidence_count=36` against the benign alert's 17. Re-running against the *last*-ingested benign alert, which draws `evidence_count=41`, still returns `medium` — more correlated evidence than the needle, lower severity. Across every measurement to date:
+
+| Alert | `pattern_type` | `evidence_count` | Verdict |
+|---|---|---|---|
+| Scenario E benign (early) | `none` | 17 | medium |
+| Scenario E benign (last) | `none` | **41** | medium |
+| Scenario E needle | `none` | 36 | **high** |
+| mrahman VPN false positive | `lateral_movement` | 8 | **high** |
+| Scenario C true positive | `none` | 1 | **high** |
+
+So the count is close to inert, and **the mrahman diagnosis below needs sharpening**: the escalation is driven by Correlate classifying `pattern_type=lateral_movement`, not by "8 pieces of evidence." The substance-discarded critique still holds, but the fix has to reach the **Correlate** step — the step that makes the classification — or give Risk the means to overturn it. Enriching only the Draft-stage findings block would leave the wrong `pattern_type` in place.
+
 ### Operational note
 
 Config is fully env-driven, so `LLM_BASE_URL` and `WAZUH_*_URL` can point at another machine over the LAN with no code changes — useful if a second person wants to develop against the Studio's stack. Ollama needs `OLLAMA_HOST=0.0.0.0` to accept non-local connections. Trusted networks only; it is plain HTTP.

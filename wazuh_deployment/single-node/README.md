@@ -71,8 +71,11 @@ All credentials above are demo defaults baked into `docker-compose.yml` for this
 | `windows_security_fp.json` | json | Windows Security event log (false-positive counterpart) | uses stock Wazuh Windows rules |
 | `mimecast_sample.log` | syslog (pipe-delimited) | Mimecast email security (impersonation/malicious-link/attachment events) | custom `mimecast`/`mimecast-siem-logs` decoders + rules `106000`–`106015`, each mapped to MITRE ATT&CK techniques (T1566, T1114, T1036, T1204.002, …) |
 | `endpoint_alerts_sample.json` | json | Sysmon endpoint alert (file creation) | uses stock Sysmon rules |
+| `dev_ai_tools.json` | json | Sysmon process creation — AI coding assistants (Cursor, VS Code, Claude Code CLI, Windows Terminal) spawning `powershell.exe -EncodedCommand` on six developer laptops | custom rule `100075` |
 
 The false-positive pairs (`*-fp.*`) exist so the Agentic Analyst's investigation logic can be exercised against near-identical alerts that should and shouldn't escalate — useful for evaluating precision, not just recall.
+
+`dev_ai_tools.json` is a second, independent scenario rather than part of the `victimcorp` incident: 40 benign encoded-PowerShell executions from developer tooling plus **one** that is not benign (parent `wscript.exe`, decoding to a downloader aimed at `45.146.164.110`, the same address that logs in successfully in `auth.log`). Every one of the 41 matches the same rule at the same level, so the SIEM alone cannot separate them — the only discriminating evidence is the parent image, which rule `100075` interpolates into its description on purpose. The base64 is genuine UTF-16LE, so `-EncodedCommand` payloads decode to real commands (`git status --porcelain`, `npm run build`, …).
 
 ### How the logs get into the manager
 
@@ -85,7 +88,7 @@ Direct bind-mounting `sample-logs/` straight into the manager container did not 
 
 ## Adding new mock logs, decoders, or rules
 
-1. Add the log content (syslog or JSON) into **one of the existing files** in `sample-logs/`. New files added to the directory are *not* auto-detected — each file needs a matching `<localfile>` block added to `config/wazuh_cluster/wazuh_manager.conf`, plus a rebuild (`docker compose up -d --build` or a fresh `down -v && up`) to pick up the new mount/seed.
+1. Add the log content (syslog or JSON) to an existing file in `sample-logs/`, or as a new file — `seed-sample-logs` and `log-pusher` both enumerate the directory with `find`, so a new file is copied and tailed automatically with no compose changes. What is *not* automatic is ingestion: a new file needs a matching `<localfile>` block in `config/wazuh_cluster/wazuh_manager.conf`, plus a fresh `down -v && up` for the manager to reload its config.
 2. Add rules to `rules/local_rules.xml` (reserve local rule IDs ≥ 100050 per the file's own convention; the pre-existing `106000+` range is used by the Mimecast rules).
 3. Add decoders to `decoders/local_decoder.xml`.
 4. Restart the stack for the manager to reload `etc/rules`/`etc/decoders` — check `docker compose logs wazuh.manager` for a decoder/rule syntax error if alerts don't appear as expected.

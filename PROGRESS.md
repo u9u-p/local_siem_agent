@@ -19,6 +19,34 @@ Living status tracker for the Local SIEM Alert Investigation Agent. See `ROADMAP
 
 ---
 
+## Seeded-stack mechanics, 14 Aug 2026 — measured while adding Scenario E
+
+Two properties of manager-side seeded ingestion that defeat the obvious ways of controlling `evidence_count`. Both were measured against the live indexer, not assumed.
+
+**Wazuh stamps alerts with ingestion time, not event time.** The three Sysmon alerts of the phishing chain all carry the identical alert `timestamp` — the instant `log-pusher` wrote them — while their real event times survive only in `data.timestamp`. `Alert.timestamp` maps from the alert-level field (`app/integration/wazuh_connector.py:61`), and `build_canonical_queries` ranges on that same field. **Consequence: dating sample-log events across days does nothing for correlation.** Everything in one push lands inside everything else's 24h window.
+
+**Every seeded alert is `agent.id = 000` (`wazuh.manager`).** Manager-side `<localfile>` ingestion means there is exactly one agent no matter how many hostnames the events carry. `SAME_RULE_ID_HOST` filters on `rule.id` + `agent.id`, so it degenerates to "same rule.id anywhere in the corpus." **Consequence: spreading events across fake hostnames does nothing for correlation either.**
+
+What *does* vary `evidence_count` is position within the push: filebeat flushes in batches, so alerts pushed earlier see fewer predecessors. The whole 41-alert Scenario E cluster ingests inside a 4-second window, and across it `evidence_count` ranges 17 to 41 purely by flush order. The only reliable lever on `evidence_count` is how many alerts share a rule id.
+
+**This makes `evidence_count` both factually wrong and non-deterministic — but measurably it does not change the verdicts.** Wrong, because "41 similar alerts in the last 24 hours" describes a corpus that actually spans four days at ~10/day. Non-deterministic, because two structurally identical alerts draw different counts depending on where filebeat happened to flush. Yet a controlled comparison shows the model does not lean on it: the last-ingested benign alert (`evidence_count=41`) returns `medium`, while the needle (`evidence_count=36`) returns `high`. More evidence, lower severity.
+
+**The lever is `pattern_type`, not `evidence_count`.** Measured: `none`/41 → medium, `none`/17 → medium, `none`/36 → high, `none`/1 → high, `lateral_movement`/8 → high. The count barely moves the needle; the pattern classification and the rule description do. This sharpens the standing diagnosis of the mrahman false positive — the escalation comes from Correlate classifying `pattern_type=lateral_movement` without access to the evidence that would refute it, so a fix that only enriches the Draft-stage findings block would leave the wrong classification untouched. It has to reach Correlate, or let Risk overturn it.
+
+**`gemma4:12b` decodes base64 during indicator extraction — 8 of 8 runs.** Scenario E's needle hides its C2 address inside a UTF-16LE `-EncodedCommand` payload; `45.146.164.110` and `http://45.146.164.110:8080/u` appear in no plaintext field of the alert (verified across every stored column — `source_ip` and `destination_ip` are both `None`). The step-2b extraction call recovered both on **every one of 8 runs**, always with identical values, and both cleared the strict per-type validators each time, arriving as typed `ip`/`url` indicators. All 8 runs also returned `severity=high, confidence=high`. This is CLAUDE.md §4.1.1's merge gate working as designed — the LLM adds recall the regex cannot, while the validator still gates everything.
+
+**Single-file bind mounts break when git rewrites the host file, and the only symptom is reports silently downgrading to `NEEDS_HUMAN_REVIEW`.** Five consecutive needle runs came back `needs_human_review` while an earlier pair came back `complete`, with byte-identical step outputs otherwise. Cause: `rules/local_rules.xml` is bind-mounted as a single file, and Docker binds it by **inode**. A `git rebase`/`checkout` writes a new file and renames it, so the container's mount is left pointing at the deleted inode and the path vanishes inside the container. The Manager API's `GET /rules` then fails with HTTP 400 `error 1201 "Error reading rule files"` for **every** rule id — including stock rules in files never touched, because the parser loads all files before applying the `filename`/`rule_ids` filter. `gather_context` (step 4) catches that as `bad_response`, appends a degraded reason, and `state_graph.py:659` stamps the report `NEEDS_HUMAN_REVIEW`.
+
+The running rule engine is unaffected — it holds the rules in memory, so alerts keep firing correctly and nothing looks broken from the indexer side.
+
+**Fixed** by mounting `./rules` and `./decoders` as directories rather than as single files. Docker binds a directory by its own inode, so replacing a file *inside* it stays visible. Verified by swapping the inode the same way git does (`cp` + `mv` over the original): under the old single-file mount the path vanished inside the container and stayed gone until the container was recreated; under the directory mount the container re-reads the new file on its own, with a few seconds of Docker Desktop file-sharing propagation lag before it reappears. `GET /rules` stayed HTTP 200 throughout, and a full investigation afterwards returns `complete` with `gather_context` completed.
+
+`config/wazuh_cluster/wazuh_manager.conf` is **still a single-file mount** and carries the same fragility, but it is staged at `/wazuh-config-mount/etc/ossec.conf` and only read by the entrypoint at container start, so a broken inode there surfaces as config not applying on the next `up` rather than as a silent mid-session degradation. Converting it would mean shadowing the whole staging directory; left as-is deliberately.
+
+Recreating the manager is safe when needed: logcollector keeps its file offsets, so sample logs are not re-ingested (alert count went 112 → 113 → 114 across two recreates, each +1 being the rule-502 server-started notice).
+
+---
+
 ## Mac Studio verification, 12 Aug 2026 — first real end-to-end run
 
 Everything in this section was measured, not reasoned about. It supersedes the earlier per-alert latency estimates, which came from short probe prompts rather than the real per-step prompts.
