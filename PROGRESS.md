@@ -107,6 +107,42 @@ This means CLAUDE.md §6's stated reason for choosing Ollama — "native JSON-sc
 
 **Post-4b real-model probe (before starting 4c):** ran three one-off `generate_structured()` calls against `qwen3.5:9b` with schemas shaped like real future steps (not the live suite's toy `{answer: str}`) — a flat schema (the actual `app.schemas.RiskAssessment`), a multi-enum schema shaped like the Correlate step, and a `list[SubModel]` schema shaped like Self-Check. All three resolved risk #1 and risk #3 below: **the model produced correct, well-reasoned, schema-conforming output on every attempt**, including on the specific nested-list shape CLAUDE.md's real `Report`/Self-Check schemas need. This is genuinely good news for 4c/4d's prompt design. However, it surfaced a new, more concrete version of risk #5: **each call took 55–103 seconds** (qwen3.5 performs internal "thinking" before responding, per its Ollama `capabilities` listing — `["vision","completion","tools","thinking"]`). At ~80s/call average, CLAUDE.md's "6–7 calls per alert stays practical" assumption (§4.2 rule 6) would mean roughly **8–9 minutes per alert** — this needs to be measured against real alert volume expectations and, if too slow, needs an explicit decision in Phase 4c (e.g. suppressing/limiting the model's thinking budget per call, if Ollama exposes that knob for this model) before prompt design proceeds on the assumption that latency is a non-issue.
 
+## Local model selection benchmark, 14–15 Aug 2026
+
+Design: `docs/superpowers/specs/2026-08-14-local-model-selection-benchmark-design.md`. Harness: `bench/` (`labels.py`, `run.py`, `score.py`, `stage0.py`, `sweep.sh`). Corpus snapshot: `data/bench_alerts.db`, 182 alerts, 130 graded across four clusters. No sweep has run yet.
+
+### Findings that change how the demo is deployed
+
+**Ollama sizes the KV cache from the model's *default* context, and that allocation — not the weights — dominates resident memory.** Several candidates default to 262144 tokens. `qwen3.6:27b` measures **36.5 GB at default against 16 GB at `num_ctx=8192`**; `gemma4:12b` goes 10 GB → 8.4 GB from a 7.6 GB file. CLAUDE.md §4.2 rule 2 caps every prompt here at a few hundred to ~2k tokens, so the default is pure waste — invisible on a 128GB Studio, decisive on a 24GB laptop. **Per-request `num_ctx` does not survive**: the OpenAI-compat endpoint `OllamaClient` uses reloads the model at its default (8.4 GB at 8192 became 10 GB at 262144 on the next call). A Modelfile `PARAMETER num_ctx` does survive, so the deployment lever is a baked variant plus one `LLM_MODEL` change, no application code. Ollama truncates silently past the limit, but `OllamaClient` surfaces it — `LengthFinishReasonError` → retry → degraded step — so it shows up as an elevated degraded count rather than silent quality loss.
+
+**Measured prompt sizes** (largest cluster, with command context, post-PR #4): `draft_canonical` 733 tokens, `run_self_check` 693, `extract_indicators` 591, `draft_experimental` 440, `assess_risk` 336, `classify_correlation` 307. Roughly 9% of an 8192 window. The risk is generated output, not the prompt — `qwen3.5:9b` emitted 19,539 characters of reasoning (~4,900 tokens) on a *short* probe.
+
+**Frontier open-weights models are unreachable locally on 128GB.** Kimi K3 is 2.8T; DeepSeek V4 Flash is 284B/13B active and ~155 GB even at a quantisation-aware Q4; GLM-5.1/5.2 and DeepSeek V4 are `:cloud`-only tags in Ollama; Muse Spark 1.2 is announced but unreleased. The practical local ceiling is ~30B dense or ~35B MoE. Related: **MLX builds are only published by Google, Alibaba and Meta** (`gemma4` has 17 MLX variants, `qwen3.6` 4, `muse-glimmer` 1) — `mistral-small3.2`, `gpt-oss`, `lfm2`, `lfm2.5`, `nemotron-3-nano` and `glm-4.7-flash` ship GGUF only, so MLX cannot be a fair axis across a mixed field.
+
+### Findings about measurement itself
+
+**Token throughput and time-to-answer rank models almost independently.** Of eight gated models only `gpt-oss:20b` was top-two on both. `qwen3.5:9b` has the third-highest throughput and the slowest wall clock by 1.8×, spending 98% of its output on reasoning; `mistral-small3.2` is the slowest generator and second-fastest end to end, reasoning 0%. The two carry different diagnoses — slow-through-over-reasoning is mis-configured and fixable with a setting, slow-on-throughput is not.
+
+**Do not derive tok/s from Ollama's OpenAI-compat `usage`.** It does not account for reasoning consistently: `gemma4:12b` reported 49 `completion_tokens` for ~1,600 characters of reasoning plus answer, off by ~8×. It systematically flatters terse models and understates reasoning ones — the exact bias the metric exists to expose. Characters generated are observed output and need no server-side accounting.
+
+**Reasoning effort is the single largest latency lever.** `gpt-oss:20b` on the same alert: **30s at `low` against 836s at `high`, 28×** — and `low` produced the *better* triage verdict. Ollama honours `reasoning_effort` on the OpenAI-compat endpoint; there is **no Modelfile equivalent** (`PARAMETER think` and `PARAMETER reasoning_effort` are both rejected), so it must be sent per request. `OllamaClient` takes it optionally, default unset and omitted from the request entirely.
+
+### Findings about the pipeline
+
+**mrahman is fixed.** The marquee false positive returned `low` on both control runs after PR #4's grounded correlation, having been `high`/`high` for the entire project. The Demo Readiness "known-wrong behaviour" section and its honest-limitation framing now describe a solved problem.
+
+**Needle recall saturates; benign escalation discriminates.** The control verification returned **6 of 6 needles correct and 1 of 4 benign** on `gemma4:12b`. Needles are built to be findable, so repeating them buys precision on a metric that cannot separate models — Stage 2 was reallocated from 3 needle repeats to 15 benign per cluster. **This benchmark measures false positives and capability, not detection**, and a "100% needle recall" figure should never be quoted as if it did.
+
+**The incumbent's control scorecard:** benign escalation 75% (3/4), needle recall 100% (5/5), fp-control 0% (0/2), triage accuracy 40%, mean severity distance 0.27, base64 recall 100%, self-check flagged 10/115 claims, degraded 9%, zero crashes. Note the last figure corrects an earlier claim in this file's history that `gemma4:12b` never flags — that was generalised from two alerts returning 0/13 and 0/9.
+
+**`triage_verdict_experimental` is close to uninformative for `gemma4:12b`** — `true_positive` on 8 of 11 control alerts including both mrahman runs where severity came back `low`, and `None` once. Severity must be the primary graded field.
+
+### Process notes
+
+Three defects were caught by running instruments *before* committing hours to them, each of which would have silently corrupted results: the runner's footprint parser always returned zero (a stale copy of a bug already fixed in the gate); the scorer folded `fp_control` into benign, reporting 50% where benign was 75% and mrahman 0%; and `run.py`'s progress output was block-buffered, showing nothing for 25 minutes of a live run — indistinguishable from a hang over a multi-hour sweep. **Run the scorer against real data before the run that depends on it**, not after.
+
+**Two assumptions carried from research were wrong when measured**, both in the direction of pessimism: Muse Glimmer was ruled out on download size and actually fits at 17.0 GB bounded, and `evidence_count` was called "close to inert" from one alert but drove a benign newsletter from `medium` to `high` when it rose from 3 to 10.
+
 ## Known Risks & Foreseeable Problems
 
 Standing section, organized by phase — add to this whenever a real risk, gap, or development note surfaces (during implementation, review, or later analysis), not just when a phase completes. Unlike "Notes carried forward" below (cross-phase conventions and lessons), this section tracks phase-specific things that could still go wrong, ranked within each phase by how much damage they'd do if unnoticed, not just by likelihood.
