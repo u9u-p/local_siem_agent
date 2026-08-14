@@ -112,7 +112,25 @@ Three finalists at Stage 2 is roughly 13 hours, unattended. Breadth for the floo
 | Mistral Small 3.2 24B | ~14 GB | Documented function-calling improvements |
 | `qwen3.6:27b` | ~16 GB | Already pulled; marginal against the ceiling |
 | Ternary Bonsai 27B | ~5.9 GB | Ternary quant of Qwen3.6-27B. Published ablation shows tool-calling degrades worst under aggressive quantization (−17.5% at 1-bit vs −3.8% math), which is exactly this pipeline's load-bearing capability. Informative either way |
-| Muse Glimmer 30B | 18 GB GGUF / 21 GB MLX | Meta, 10 Aug 2026, Apache 2.0, agentic-tuned. Does not fit the demo laptop. Benchmarked on the Studio as the measured "what 24GB costs you" datapoint |
+| Muse Glimmer 30B | 18 GB GGUF / 21 GB MLX | Meta, 10 Aug 2026, Apache 2.0, agentic-tuned. Expected not to fit — **wrong, see Stage 0 results below**: 17.0 GB at bounded context, marginally under the ceiling |
+
+### Stage 0 results — measured 14 Aug, Mac Studio
+
+Every candidate cleared all three schema probes, so **constrained decoding is now proven for this shortlist rather than assumed** — no MLX-style backend failure among them, all being GGUF. Footprints are at `num_ctx=8192`; probe seconds are Studio numbers and do **not** transfer to the M4 Pro (§ context decision 4).
+
+| Model | Footprint | trivial / flat-enum / nested-list | Probe total |
+|---|---|---|---|
+| `qwen3.5:9b` | 5.7 GB | 5.6 / 35.1 / 22.2 | 62.9s |
+| `gemma4:12b` (incumbent) | 8.4 GB | 3.4 / 9.9 / 10.9 | 24.2s |
+| `gemma4:latest` (8B) | 9.6 GB | 12.2 / 5.7 / 8.5 | 26.4s |
+| `gpt-oss:20b` | 12.0 GB | 6.5 / 3.4 / 6.7 | 16.6s |
+| `mistral-small3.2` | 15.0 GB | 8.2 / 1.9 / 3.3 | **13.4s** |
+| `qwen3.6:27b` | 16.0 GB | 13.0 / 37.5 / 51.5 | 102.0s |
+| `muse-glimmer:30b` | 17.0 GB | 14.7 / 31.0 / 34.6 | 80.3s |
+
+Two results worth carrying forward. **Muse Glimmer fits after all**, at 17.0 GB against a 17.5 GB ceiling — but with roughly half a gigabyte of margin before the agent process and anything else on the machine, which is thin for a live demo; treat it as viable-but-marginal, not safe. And **`mistral-small3.2` is far and away the fastest** on these probes, at roughly 8x `qwen3.6:27b`, which was not predictable from parameter count and is exactly why the gate exists.
+
+Since nothing was rejected, the shortlist reaching Stage 1 is unchanged — the gate's value here was converting two assumptions into measurements, one of which was wrong.
 
 ---
 

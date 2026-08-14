@@ -83,8 +83,10 @@ PROBES: list[tuple[str, type[BaseModel], str]] = [
 
 
 def local_models() -> list[str]:
+    """Every pulled model except the bounded variants this gate creates itself."""
     with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=10) as response:
-        return sorted(m["name"] for m in json.load(response).get("models", []))
+        names = (m["name"] for m in json.load(response).get("models", []))
+        return sorted(n for n in names if VARIANT_SUFFIX not in n)
 
 
 def footprint_bytes(model: str) -> tuple[int, int] | None:
