@@ -128,6 +128,41 @@ def test_source_ip_is_none_when_neither_field_present():
     assert wazuh_source_to_alert(source).source_ip is None
 
 
+MIMECAST_HELD_SOURCE = {
+    "id": "1699999999.444444",
+    "timestamp": "2026-07-30T09:14:22.000+00:00",
+    "rule": {"id": "106001", "description": "Message <x@y.com> held for review.", "level": 5, "groups": ["mimecast"]},
+    "agent": {"id": "000", "name": "wazuh-manager", "ip": "127.0.0.1"},
+    "manager": {"name": "wazuh-manager"},
+    "location": "/var/ossec/logs/sample-logs/mimecast_sample.log",
+    "full_log": "datetime=2026-07-30T09:14:22Z|acc=VICTC-1|IP=185.220.101.47|Act=Hld",
+    "data": {
+        "mimecast": {
+            "acc": "VICTC-1",
+            "IP": "185.220.101.47",
+            "Act": "Hld",
+            "Sender": "cfo.support@secure-invoice-updates.com",
+            "Rcpt": "jane.tan@victimcorp.com",
+        }
+    },
+}
+
+
+def test_mimecast_source_ip_falls_back_to_mimecast_ip():
+    """Mimecast puts the sending IP at data.mimecast.IP and never populates data.srcip,
+    so without this fallback source_ip is None for every email alert and SAME_SRC_IP_24H
+    is skipped — the pivot a real analyst reaches for first on a phishing alert."""
+    alert = wazuh_source_to_alert(MIMECAST_HELD_SOURCE)
+
+    assert alert.source_ip == "185.220.101.47"
+
+
+def test_explicit_srcip_wins_over_mimecast_ip():
+    source = {**MIMECAST_HELD_SOURCE, "data": {**MIMECAST_HELD_SOURCE["data"], "srcip": "10.0.0.2"}}
+
+    assert wazuh_source_to_alert(source).source_ip == "10.0.0.2"
+
+
 SYSMON_NETWORK_SOURCE = {
     "id": "1699999999.333333",
     "timestamp": "2026-07-30T09:16:44.112+00:00",

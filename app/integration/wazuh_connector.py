@@ -38,11 +38,14 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
     agent = source.get("agent", {})
     data = source.get("data", {})
 
-    # Windows events carry the logon source at data.win.eventdata.ipAddress; only
-    # non-Windows decoders populate data.srcip. Without this fallback Alert.source_ip
-    # is None for every 4624/4625, so the SAME_SRC_IP_24H correlation is skipped
-    # entirely and no Windows alert can be pivoted on by IP.
+    # Windows events carry the logon source at data.win.eventdata.ipAddress, and
+    # Mimecast the sending IP at data.mimecast.IP; only non-Windows, non-Mimecast
+    # decoders populate data.srcip. Without these fallbacks Alert.source_ip is None
+    # for every 4624/4625 and every email alert, so the SAME_SRC_IP_24H correlation
+    # is skipped entirely and neither can be pivoted on by IP — which for a phishing
+    # alert is the first pivot a real analyst reaches for.
     win_eventdata = data.get("win", {}).get("eventdata", {})
+    mimecast = data.get("mimecast", {})
     dst_port = data.get("dstport") or win_eventdata.get("destinationPort")
 
     return Alert(
@@ -64,7 +67,7 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
         manager_name=source.get("manager", {}).get("name", ""),
         location=source.get("location", ""),
         full_log=source.get("full_log", ""),
-        source_ip=data.get("srcip") or win_eventdata.get("ipAddress"),
+        source_ip=data.get("srcip") or win_eventdata.get("ipAddress") or mimecast.get("IP"),
         source_port=int(data["srcport"]) if data.get("srcport") else None,
         destination_ip=data.get("dstip") or win_eventdata.get("destinationIp"),
         destination_port=int(dst_port) if dst_port else None,
