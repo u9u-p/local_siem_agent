@@ -181,6 +181,18 @@ Rule `100075` interpolates `$(win.eventdata.parentImage)` into its description o
 
 **`evidence_count` varies by ingestion position, not by host or event time.** The benign alert saw 17, the needle 36, both from the same 41-alert cluster. See `PROGRESS.md` for why date-spreading and host-spreading are both inert here.
 
+**Controlled follow-up: `evidence_count` is not what drives escalation — `pattern_type` is.** The needle/benign comparison above was initially confounded, since the needle sat at position 33 of 41 in ingest order and drew `evidence_count=36` against the benign alert's 17. Re-running against the *last*-ingested benign alert, which draws `evidence_count=41`, still returns `medium` — more correlated evidence than the needle, lower severity. Across every measurement to date:
+
+| Alert | `pattern_type` | `evidence_count` | Verdict |
+|---|---|---|---|
+| Scenario E benign (early) | `none` | 17 | medium |
+| Scenario E benign (last) | `none` | **41** | medium |
+| Scenario E needle | `none` | 36 | **high** |
+| mrahman VPN false positive | `lateral_movement` | 8 | **high** |
+| Scenario C true positive | `none` | 1 | **high** |
+
+So the count is close to inert, and **the mrahman diagnosis below needs sharpening**: the escalation is driven by Correlate classifying `pattern_type=lateral_movement`, not by "8 pieces of evidence." The substance-discarded critique still holds, but the fix has to reach the **Correlate** step — the step that makes the classification — or give Risk the means to overturn it. Enriching only the Draft-stage findings block would leave the wrong `pattern_type` in place.
+
 ### Operational note
 
 Config is fully env-driven, so `LLM_BASE_URL` and `WAZUH_*_URL` can point at another machine over the LAN with no code changes — useful if a second person wants to develop against the Studio's stack. Ollama needs `OLLAMA_HOST=0.0.0.0` to accept non-local connections. Trusted networks only; it is plain HTTP.
