@@ -365,3 +365,31 @@
   </rule>
 
 </group>
+
+<!--
+  SSH successful-logon detail.
+
+  Stock rule 5715's description is a bare "sshd: authentication success." carrying
+  neither the user nor the source address. Per app/agent/prompts.py the rule
+  description is the only channel by which event fields reach the Risk step — it
+  is never passed source_ip — so every successful SSH logon was indistinguishable
+  to the analyst, and the auth_noise.log flood could not be told apart from the
+  45.146.164.110 needle sitting inside it. Same fix and same reasoning as rule
+  100061 on the Windows side and 100075 on the Sysmon side: put the discriminating
+  field in the description, change nothing else.
+
+  Level 3 and the MITRE mapping are inherited from 5715 deliberately, so severity
+  semantics and technique attribution are unchanged.
+-->
+<group name="syslog,sshd,">
+
+  <rule id="100080" level="3">
+    <if_sid>5715</if_sid>
+    <description>SSH: successful logon for user $(dstuser) from $(srcip).</description>
+    <mitre>
+      <id>T1078</id>
+      <id>T1021</id>
+    </mitre>
+  </rule>
+
+</group>
