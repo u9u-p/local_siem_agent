@@ -89,10 +89,22 @@ def label_for(rule_id: str, rule_description: str, source_ip: str | None) -> Lab
 
 
 def demo() -> None:
-    phish = label_for("106001", "Message <x@secure-invoice-updates.com> held for review.", "185.220.101.47")
+    # Descriptions as rule 106001 now renders them: the sender carries the discriminator,
+    # so the predicate holds without depending on the (dropped) message id.
+    phish = label_for(
+        "106001",
+        "Mimecast held a message from cfo.support@secure-invoice-updates.com to jane.tan@victimcorp.com "
+        "for review - reason Impersonation, subject 'Urgent: Invoice Payment Confirmation Required'.",
+        "185.220.101.47",
+    )
     assert phish is not None and phish.role is Role.NEEDLE and phish.expect_triage == "true_positive"
 
-    benign_mail = label_for("106001", "Message <x@mailer.acmecloud.io> held for review.", "149.72.14.88")
+    benign_mail = label_for(
+        "106001",
+        "Mimecast held a message from news@mailer.acmecloud.io to jane.tan@victimcorp.com "
+        "for review - reason Bulk, subject 'Your July product update is here'.",
+        "149.72.14.88",
+    )
     assert benign_mail is not None and benign_mail.role is Role.BENIGN
     assert benign_mail.escalated_is_wrong
 
