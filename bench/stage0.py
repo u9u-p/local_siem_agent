@@ -57,7 +57,23 @@ FIT_CEILING_BYTES = 17.5 * 1024**3
 #: Ollama truncates silently past num_ctx. Re-check this margin once §6.2's
 #: correlation digest lands, since it grows every downstream prompt.
 CONTEXT_TOKENS = 8192
-VARIANT_SUFFIX = "-bench-ctx8k"
+
+#: Footprint is measured at three context sizes, because "does it fit 24GB" has a
+#: different answer at each and the cost per token varies enormously by architecture.
+#: From two measured points, gemma4:12b spends ~6.6MB per 1K tokens of context against
+#: qwen3.6:27b's ~84MB — a ~13x spread. Extrapolated to 32K that is 8.6GB against
+#: 18.1GB, so one model barely moves and the other stops fitting the laptop.
+#:
+#: 8192 matches this corpus (prompts measure 733 tokens) and is what the sweep runs.
+#: 32768 is a defensible production size: a real full_log — Windows XML, an EDR process
+#: tree, a full header block — runs 10-50KB on its own, where the seeded corpus is one
+#: syslog line. 262144 is several models' own default, and the honest cost of their
+#: advertised context.
+#:
+#: Requesting more than a model supports is fine: the reported figure comes from
+#: `ollama ps`, so a clamp shows up as a smaller context rather than a wrong number.
+CONTEXT_LADDER = (8192, 32768, 262144)
+VARIANT_PREFIX = "-bench-ctx"
 
 
 class TrivialAnswer(BaseModel):
@@ -88,7 +104,7 @@ def local_models() -> list[str]:
         names = (m["name"] for m in json.load(response).get("models", []))
         # Match on the bare suffix: an untagged base model yields "model:bench-ctx8k",
         # which does not contain the leading dash.
-        return sorted(n for n in names if VARIANT_SUFFIX.lstrip("-") not in n)
+        return sorted(n for n in names if VARIANT_PREFIX.lstrip("-") not in n)
 
 
 def footprint_bytes(model: str) -> tuple[int, int] | None:
@@ -119,20 +135,21 @@ def footprint_bytes(model: str) -> tuple[int, int] | None:
     return None
 
 
-def bench_variant(model: str) -> str | None:
+def bench_variant(model: str, context: int = CONTEXT_TOKENS) -> str | None:
     """Create a `num_ctx`-bounded variant of `model`, returning its name.
 
     Manifest-only — it reuses the base model's blobs, so this costs no download and
     negligible disk.
     """
+    suffix = f"{VARIANT_PREFIX}{context // 1024}k"
     # Keep a colon in the name. Without a tag Ollama appends ":latest", which then
     # will not match what `ollama ps` prints.
-    variant = f"{model}{VARIANT_SUFFIX}" if ":" in model else f"{model}:{VARIANT_SUFFIX.lstrip('-')}"
+    variant = f"{model}{suffix}" if ":" in model else f"{model}:{suffix.lstrip('-')}"
     # `ollama create -f -` does not read stdin in this version ("no Modelfile or
     # safetensors files found"), so the Modelfile has to exist on disk.
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "Modelfile"
-        path.write_text(f"FROM {model}\nPARAMETER num_ctx {CONTEXT_TOKENS}\n")
+        path.write_text(f"FROM {model}\nPARAMETER num_ctx {context}\n")
         proc = subprocess.run(
             ["ollama", "create", variant, "-f", str(path)],
             capture_output=True, text=True, timeout=600,
@@ -141,6 +158,40 @@ def bench_variant(model: str) -> str | None:
         print(f"    ! variant creation failed for {model}: {proc.stderr.strip()[-160:]}")
         return None
     return variant
+
+
+def footprint_ladder(model: str) -> list[tuple[int, int, int]]:
+    """(requested_ctx, actual_ctx, resident_bytes) at each rung of CONTEXT_LADDER.
+
+    Only loads the model — no probes. The schema checks run once at the benchmark
+    context; the extra rungs answer a different question, which is what the model
+    costs when the logs are real rather than seeded.
+    """
+    readings: list[tuple[int, int, int]] = []
+    for context in CONTEXT_LADDER:
+        variant = bench_variant(model, context)
+        if variant is None:
+            continue
+        try:
+            urllib.request.urlopen(
+                urllib.request.Request(
+                    "http://localhost:11434/v1/chat/completions",
+                    data=json.dumps({
+                        "model": variant,
+                        "messages": [{"role": "user", "content": "ok"}],
+                        "max_tokens": 1,
+                    }).encode(),
+                    headers={"Content-Type": "application/json"},
+                ), timeout=1800,
+            ).read()
+        except Exception:  # noqa: BLE001 - a rung that will not load is a blank, not a failure
+            unload(variant)
+            continue
+        measured = footprint_bytes(variant)
+        if measured:
+            readings.append((context, measured[1], measured[0]))
+        unload(variant)
+    return readings
 
 
 def measure_throughput(model: str) -> dict | None:
@@ -248,7 +299,7 @@ def probe_model(model: str) -> dict:
     result: dict = {
         "model": model, "variant": variant, "probes": {},
         "footprint_bytes": None, "context_tokens": None, "throughput": None,
-        "accepts_effort": None,
+        "accepts_effort": None, "ladder": [],
     }
 
     # Warm up so model load time is not charged to the first probe. Unwarmed,
@@ -277,6 +328,10 @@ def probe_model(model: str) -> dict:
     if measured:
         result["footprint_bytes"], result["context_tokens"] = measured
     unload(variant)
+    # Footprint across the context ladder, after the probes so a schema failure is
+    # reported without spending load time on rungs that cannot matter.
+    if not [p for p in result["probes"].values() if p["outcome"] != "pass"]:
+        result["ladder"] = footprint_ladder(model)
     return result
 
 
@@ -310,6 +365,10 @@ def main() -> None:
         timings = "  ".join(f"{n}={p['seconds']}s" for n, p in result["probes"].items())
         print(f"  {state:<7} {model:<26} {note}")
         print(f"          {timings}")
+        for requested, actual, size in result["ladder"]:
+            fits = "fits" if size <= FIT_CEILING_BYTES else "OVER"
+            clamp = f" (clamped from {requested})" if actual and actual < requested else ""
+            print(f"          ctx {actual or requested:>7} {size / 1024**3:>6.1f} GB  {fits}{clamp}")
         if tp := result["throughput"]:
             print(f"          {tp['seconds']}s wall   {tp['chars_per_second']} chars/s   "
                   f"{tp['reasoning_chars']} reasoning + {tp['answer_chars']} answer chars "
