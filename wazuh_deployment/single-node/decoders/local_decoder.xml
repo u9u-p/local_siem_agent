@@ -4,34 +4,41 @@
   <program_name>^ocserv</program_name>
 </decoder>
 
-<decoder name="ocserv-connected">
+<!--
+  All ocserv children share one decoder name so Wazuh accumulates their fields
+  instead of stopping at the first sibling that matches. pcre2 matches against the
+  whole message: the previous `offset="after_prematch"` regexes were anchored with
+  ^ but the remainder starts with a space, so they never matched and every field
+  came out empty.
+-->
+
+<decoder name="ocserv-fields">
   <parent>ocserv</parent>
-  <prematch>connected from</prematch>
-  <regex offset="after_prematch">^'(\S+)':(\d+)$</regex>
+  <regex type="pcre2">user '([^']+)'</regex>
+  <order>dstuser</order>
+</decoder>
+
+<decoder name="ocserv-fields">
+  <parent>ocserv</parent>
+  <regex type="pcre2">connected from '([^':]+):(\d+)'</regex>
   <order>srcip, srcport</order>
 </decoder>
 
-<decoder name="ocserv-nat">
+<!--
+  The NAT egress IP goes in srcip, not dstip: it is the address the DC records as
+  the logon source, so it is what SAME_SRC_IP_24H pivots on to resolve the mrahman
+  false positive against the Windows 4624.
+-->
+<decoder name="ocserv-fields">
   <parent>ocserv</parent>
-  <prematch>assigned NAT/egress IP</prematch>
-  <regex offset="after_prematch">^'(\S+)'$</regex>
-  <order>dstip</order>
+  <regex type="pcre2">assigned NAT/egress IP '([^']+)'</regex>
+  <order>srcip</order>
 </decoder>
 
-<decoder name="ocserv-mfa-sent">
+<decoder name="ocserv-fields">
   <parent>ocserv</parent>
-  <prematch>mfa push sent to device</prematch>
-</decoder>
-
-<decoder name="ocserv-mfa-approved">
-  <parent>ocserv</parent>
-  <prematch>mfa push approved for user</prematch>
-</decoder>
-
-<decoder name="ocserv-user">
-  <parent>ocserv</parent>
-  <regex>user '(\S+)'</regex>
-  <order>dstuser</order>
+  <regex type="pcre2">mfa push approved for user '([^']+)' \(duo_txn=([^)]+)\)</regex>
+  <order>dstuser, ocserv.duo_txn</order>
 </decoder>
 
 <!--

@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     wazuh_verify_ssl: bool = False
     llm_base_url: str = "http://localhost:11434/v1/"
     llm_model: str = "gemma4:12b"
-    llm_timeout_seconds: float = 120.0
+    llm_timeout_seconds: float = 600.0
 
 
 def get_settings() -> Settings:
