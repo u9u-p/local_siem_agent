@@ -20,6 +20,9 @@ class _FakeLLMClient:
     def model_available(self) -> bool:
         return self._available
 
+    def model_name(self) -> str:
+        return "fake-model:test"
+
 
 def test_fake_client_satisfies_llm_client_protocol():
     client: LLMClient = _FakeLLMClient()

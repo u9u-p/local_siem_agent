@@ -284,3 +284,41 @@ def test_reasoning_effort_is_sent_when_configured():
     client.generate_structured("classify this", Verdict)
 
     assert json.loads(route.calls[0].request.content)["reasoning_effort"] == "low"
+
+
+@respx.mock
+def test_model_available_resolves_an_untagged_name_to_latest():
+    """`ollama run mistral-small3.2` works, but the API lists it as
+    `mistral-small3.2:latest`. Exact matching made model_available() false for every
+    untagged name, which runs the whole pipeline as stubs and marks each report
+    NEEDS_HUMAN_REVIEW without anything naming the cause."""
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "mistral-small3.2:latest", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="mistral-small3.2")
+
+    assert client.model_available() is True
+
+
+@respx.mock
+def test_model_available_does_not_match_a_different_tag_of_the_same_model():
+    """Resolving bare names must not degrade into matching on the repository alone:
+    gemma4:12b and gemma4:latest are different models with different footprints."""
+    respx.get(f"{BASE_URL}models").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "object": "list",
+                "data": [{"id": "gemma4:latest", "object": "model", "created": 0, "owned_by": "library"}],
+            },
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="gemma4:12b")
+
+    assert client.model_available() is False

@@ -103,4 +103,14 @@ class OllamaClient:
             models = self._client.models.list()
         except openai.OpenAIError:
             return False
-        return any(model.id == self._model for model in models.data)
+        # Ollama resolves a bare repository name to its :latest tag — `ollama run
+        # mistral-small3.2` works — but lists it as "mistral-small3.2:latest". Exact
+        # matching therefore reported every untagged name as unavailable, which runs
+        # the whole pipeline as stubs and marks each report NEEDS_HUMAN_REVIEW with
+        # nothing naming the cause. Resolve the same way Ollama does, and no further:
+        # gemma4:12b must still not be satisfied by gemma4:latest.
+        wanted = self._model if ":" in self._model else f"{self._model}:latest"
+        return any(model.id == wanted for model in models.data)
+
+    def model_name(self) -> str:
+        return self._model

@@ -676,7 +676,9 @@ class AgenticAnalyst:
             uncertainty_notes=uncertainty_notes,
             status=status,
             model_metadata=ModelMetadata(
-                model_name="gemma4:12b" if model_available else "none",
+                # "none" when the model never ran: naming a model that produced nothing
+                # would misattribute a stub-shaped report to it.
+                model_name=self._llm_client.model_name() if model_available else "none",
                 model_version="none",
                 prompt_version="4d-v1",
             ),
