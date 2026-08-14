@@ -89,6 +89,12 @@ CONTEXT_TOKENS = 8192
 CONTEXT_LADDER = (8192, 32768, 131072, 262144)
 VARIANT_PREFIX = "-bench-ctx"
 
+#: The gate used to print and nothing else. A 17-model run scrolled past the terminal's
+#: retained output and took the per-model context ladders and KV costs with it — the
+#: summary table carries neither. Written per model rather than at the end, so a gate
+#: killed halfway still keeps what it had already measured.
+RESULTS_FILE = Path("bench/results/stage0.jsonl")
+
 
 class TrivialAnswer(BaseModel):
     answer: str
@@ -390,11 +396,16 @@ def main() -> None:
     models = args.models or local_models()
     print(f"Stage 0 — {len(models)} model(s), ceiling {FIT_CEILING_BYTES / 1024**3:.1f} GB, num_ctx {CONTEXT_TOKENS}\n")
 
+    RESULTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    RESULTS_FILE.write_text("")  # a fresh gate replaces the last one's record
+
     rows = []
     for model in models:
         result = probe_model(model)
         state, note = verdict(result)
         rows.append((model, state, note, result))
+        with RESULTS_FILE.open("a") as fh:
+            fh.write(json.dumps({"verdict": state, "note": note, **result}) + "\n")
         timings = "  ".join(f"{n}={p['seconds']}s" for n, p in result["probes"].items())
         print(f"  {state:<7} {model:<26} {note}")
         print(f"          {timings}")
