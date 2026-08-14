@@ -55,6 +55,28 @@ def test_mitre_ref_requires_all_fields():
         MitreRef(tactic="Initial Access", technique_id="T1190")
 
 
+from app.schemas import CommandDecodeResult, DecodedSegment, ProcessExecutionFields
+
+
+def test_process_execution_fields_all_optional():
+    fields = ProcessExecutionFields()
+    assert fields.command_line is None
+    assert fields.process_hashes is None
+
+
+def test_decoded_segment_requires_encoding_original_decoded():
+    segment = DecodedSegment(encoding="base64", original="Zm9v", decoded="foo")
+    assert segment.encoding == "base64"
+    with pytest.raises(ValidationError):
+        DecodedSegment(encoding="not_a_real_encoding", original="Zm9v", decoded="foo")
+
+
+def test_command_decode_result_defaults_empty_segments():
+    result = CommandDecodeResult(command_line="powershell.exe -enc AAA")
+    assert result.decoded_segments == []
+    assert result.parent_command_line is None
+
+
 def _make_alert(**overrides: Any) -> Alert:
     defaults: dict[str, Any] = dict(
         alert_id=uuid4(),
@@ -92,6 +114,16 @@ def test_alert_accepts_optional_network_fields():
     alert = _make_alert(source_ip="203.0.113.5", source_port=51820)
     assert alert.source_ip == "203.0.113.5"
     assert alert.destination_ip is None
+
+
+def test_alert_process_defaults_to_none():
+    alert = _make_alert()
+    assert alert.process is None
+
+
+def test_alert_accepts_process_execution_fields():
+    alert = _make_alert(process=ProcessExecutionFields(command_line="powershell.exe -enc AAA"))
+    assert alert.process.command_line == "powershell.exe -enc AAA"
 
 
 from app.schemas import (
@@ -157,6 +189,20 @@ def test_report_triage_experimental_fields_default_to_none():
     report = _make_report()
     assert report.triage_verdict_experimental is None
     assert report.triage_rationale_experimental is None
+
+
+def test_report_command_analysis_defaults_to_none():
+    report = _make_report()
+    assert report.command_analysis is None
+
+
+def test_report_accepts_command_analysis():
+    analysis = CommandDecodeResult(
+        command_line="powershell.exe -enc AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami")],
+    )
+    report = _make_report(command_analysis=analysis)
+    assert report.command_analysis.decoded_segments[0].decoded == "whoami"
 
 
 def test_report_accepts_nested_investigation_step_and_enrichment_finding():

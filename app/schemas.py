@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -59,6 +59,16 @@ class MitreRef(BaseModel):
     technique_name: str
 
 
+class ProcessExecutionFields(BaseModel):
+    command_line: str | None = None
+    parent_command_line: str | None = None
+    process_name: str | None = None
+    parent_process_name: str | None = None
+    process_id: str | None = None
+    parent_process_id: str | None = None
+    process_hashes: str | None = None
+
+
 class Alert(BaseModel):
     alert_id: UUID
     source_alert_id: str
@@ -83,6 +93,7 @@ class Alert(BaseModel):
     data: dict[str, Any] = Field(default_factory=dict)
     raw_json: dict[str, Any]
     status: AlertStatus = AlertStatus.NEW
+    process: ProcessExecutionFields | None = None
 
 
 class EnrichmentResult(BaseModel):
@@ -118,6 +129,18 @@ class ModelMetadata(BaseModel):
     prompt_version: str
 
 
+class DecodedSegment(BaseModel):
+    encoding: Literal["powershell_encoded", "base64", "hex", "url"]
+    original: str
+    decoded: str
+
+
+class CommandDecodeResult(BaseModel):
+    command_line: str | None = None
+    parent_command_line: str | None = None
+    decoded_segments: list[DecodedSegment] = Field(default_factory=list)
+
+
 class Report(BaseModel):
     report_id: UUID
     alert_id: UUID
@@ -133,3 +156,4 @@ class Report(BaseModel):
     uncertainty_notes: str = ""
     status: ReportStatus = ReportStatus.DRAFT
     model_metadata: ModelMetadata
+    command_analysis: CommandDecodeResult | None = None

