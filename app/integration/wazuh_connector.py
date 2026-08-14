@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 from typing import Any
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid5
 
 import httpx
 
@@ -39,8 +39,19 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
     agent = source.get("agent", {})
     data = source.get("data", {})
 
+    # Windows events carry the logon source at data.win.eventdata.ipAddress; only
+    # non-Windows decoders populate data.srcip. Without this fallback Alert.source_ip
+    # is None for every 4624/4625, so the SAME_SRC_IP_24H correlation is skipped
+    # entirely and no Windows alert can be pivoted on by IP.
+    win_eventdata = data.get("win", {}).get("eventdata", {})
+    dst_port = data.get("dstport") or win_eventdata.get("destinationPort")
+
     return Alert(
-        alert_id=uuid4(),
+        # Derived from the SIEM's own alert id, not random: re-pulling the same alert
+        # must collide on the alerts table primary key so save_raw_alert raises
+        # DuplicateAlertError. With uuid4 every pull-alerts run re-inserted the newest
+        # alert and investigate-all then re-investigated it.
+        alert_id=uuid5(NAMESPACE_URL, f"wazuh:{source['id']}"),
         source_alert_id=source["id"],
         source_system="wazuh",
         rule_id=str(rule.get("id", "")),
@@ -54,10 +65,10 @@ def wazuh_source_to_alert(source: dict[str, Any]) -> Alert:
         manager_name=source.get("manager", {}).get("name", ""),
         location=source.get("location", ""),
         full_log=source.get("full_log", ""),
-        source_ip=data.get("srcip"),
+        source_ip=data.get("srcip") or win_eventdata.get("ipAddress"),
         source_port=int(data["srcport"]) if data.get("srcport") else None,
-        destination_ip=data.get("dstip"),
-        destination_port=int(data["dstport"]) if data.get("dstport") else None,
+        destination_ip=data.get("dstip") or win_eventdata.get("destinationIp"),
+        destination_port=int(dst_port) if dst_port else None,
         src_user=data.get("srcuser"),
         dst_user=data.get("dstuser"),
         data=data,

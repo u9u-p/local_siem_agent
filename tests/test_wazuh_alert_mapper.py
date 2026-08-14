@@ -107,12 +107,83 @@ def test_maps_syslog_alert_with_no_mitre_and_network_fields():
     assert alert.source_system == "wazuh"
 
 
-def test_mapper_generates_a_fresh_alert_id_and_ingested_at_each_call():
+def test_mapper_derives_a_stable_alert_id_from_the_source_alert_id():
+    """alert_id is the alerts-table primary key, so re-pulling the same Wazuh alert
+    must produce the same id for save_raw_alert to reject it as a duplicate."""
     first = wazuh_source_to_alert(SYSLOG_EXAMPLE_SOURCE)
     second = wazuh_source_to_alert(SYSLOG_EXAMPLE_SOURCE)
 
-    assert first.alert_id != second.alert_id
+    assert first.alert_id == second.alert_id
     assert first.raw_json == SYSLOG_EXAMPLE_SOURCE
+
+
+def test_different_source_alerts_get_different_ids():
+    other = {**SYSLOG_EXAMPLE_SOURCE, "id": "1699999999.999999"}
+
+    assert wazuh_source_to_alert(SYSLOG_EXAMPLE_SOURCE).alert_id != wazuh_source_to_alert(other).alert_id
+
+
+WINDOWS_LOGON_SOURCE = {
+    "id": "1699999999.222222",
+    "timestamp": "2026-07-31T06:12:09.000+08:00",
+    "rule": {"id": "100061", "description": "Windows: successful logon", "level": 3, "groups": ["windows"]},
+    "agent": {"id": "000", "name": "wazuh-manager", "ip": "127.0.0.1"},
+    "manager": {"name": "wazuh-manager"},
+    "location": "/var/ossec/logs/sample-logs/windows_security_fp.json",
+    "full_log": "{}",
+    "data": {
+        "win": {
+            "system": {"eventID": "4624", "providerName": "Microsoft-Windows-Security-Auditing"},
+            "eventdata": {"targetUserName": "mrahman", "ipAddress": "100.72.44.19", "logonType": "3"},
+        }
+    },
+}
+
+
+def test_windows_logon_source_ip_falls_back_to_win_eventdata():
+    """Windows events have no data.srcip; without the fallback source_ip is None and
+    the SAME_SRC_IP_24H correlation is skipped for every 4624/4625."""
+    alert = wazuh_source_to_alert(WINDOWS_LOGON_SOURCE)
+
+    assert alert.source_ip == "100.72.44.19"
+
+
+def test_explicit_srcip_wins_over_win_eventdata():
+    source = {**WINDOWS_LOGON_SOURCE, "data": {**WINDOWS_LOGON_SOURCE["data"], "srcip": "10.0.0.1"}}
+
+    assert wazuh_source_to_alert(source).source_ip == "10.0.0.1"
+
+
+def test_source_ip_is_none_when_neither_field_present():
+    source = {**WINDOWS_LOGON_SOURCE, "data": {}}
+
+    assert wazuh_source_to_alert(source).source_ip is None
+
+
+SYSMON_NETWORK_SOURCE = {
+    "id": "1699999999.333333",
+    "timestamp": "2026-07-30T09:16:44.112+00:00",
+    "rule": {"id": "100074", "description": "Sysmon: PowerShell network connection", "level": 12, "groups": ["sysmon"]},
+    "agent": {"id": "000", "name": "wazuh-manager", "ip": "127.0.0.1"},
+    "manager": {"name": "wazuh-manager"},
+    "location": "/var/ossec/logs/sample-logs/endpoint_alerts_sample.json",
+    "full_log": "{}",
+    "data": {
+        "win": {
+            "system": {"eventID": "3", "providerName": "Microsoft-Windows-Sysmon"},
+            "eventdata": {"destinationIp": "185.220.101.47", "destinationPort": "443"},
+        }
+    },
+}
+
+
+def test_sysmon_destination_falls_back_to_win_eventdata():
+    """The TP chain pivots on the C2 address; without this the SAME_DST_HOST
+    correlation is skipped for every Sysmon network-connection alert."""
+    alert = wazuh_source_to_alert(SYSMON_NETWORK_SOURCE)
+
+    assert alert.destination_ip == "185.220.101.47"
+    assert alert.destination_port == 443
 
 
 def test_maps_sysmon_process_creation_fields():

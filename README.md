@@ -105,7 +105,7 @@ agent pull-alerts                                  # since the latest stored ale
 agent pull-alerts --since 2026-08-01T00:00:00+00:00 --limit 200
 ```
 
-> **Known limitation:** `pull-alerts` does not currently de-duplicate re-pulled alerts reliably — running it repeatedly (or with overlapping `--since` windows) will re-insert and re-investigate the newest already-stored alert each time. **Don't run this unattended or on a schedule yet.** See `PROGRESS.md`'s Phase 5 Known Risks for the root cause and planned fix.
+Re-pulled alerts are de-duplicated: `alert_id` is derived from the SIEM's own alert id, so a repeated pull (or an overlapping `--since` window) reports the alerts as already stored rather than re-inserting and re-investigating them.
 
 ### Add an alert manually (no live Wazuh needed)
 
