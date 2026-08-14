@@ -201,6 +201,34 @@ def measure_throughput(model: str) -> dict | None:
     }
 
 
+def accepts_reasoning_effort(model: str) -> bool:
+    """Whether `model` tolerates a reasoning_effort parameter without erroring.
+
+    Verified working on gpt-oss:20b and untested elsewhere. A model that rejects it
+    would fail its whole sweep block twenty minutes in, so the gate finds out first
+    and the batch can leave that model on its default.
+
+    Tolerating is not the same as honouring — a model may accept and ignore it. The
+    reasoning-share figure alongside is what shows whether it actually changed
+    anything.
+    """
+    body = json.dumps({
+        "model": model,
+        "reasoning_effort": "low",
+        "messages": [{"role": "user", "content": "Reply with the single word ok."}],
+    }).encode()
+    request = urllib.request.Request(
+        "http://localhost:11434/v1/chat/completions", data=body,
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=600) as response:
+            json.load(response)
+        return True
+    except Exception:  # noqa: BLE001 - any rejection is a "do not send it" answer
+        return False
+
+
 def unload(model: str) -> None:
     """Free the model so the next candidate is measured without it resident."""
     subprocess.run(["ollama", "stop", model], capture_output=True, timeout=60)
@@ -220,6 +248,7 @@ def probe_model(model: str) -> dict:
     result: dict = {
         "model": model, "variant": variant, "probes": {},
         "footprint_bytes": None, "context_tokens": None, "throughput": None,
+        "accepts_effort": None,
     }
 
     # Warm up so model load time is not charged to the first probe. Unwarmed,
@@ -242,6 +271,7 @@ def probe_model(model: str) -> dict:
         if outcome != "pass":
             break  # harder probes tell us nothing once an easier one has failed
 
+    result["accepts_effort"] = accepts_reasoning_effort(variant)
     result["throughput"] = measure_throughput(variant)
     measured = footprint_bytes(variant)
     if measured:
@@ -285,8 +315,8 @@ def main() -> None:
                   f"{tp['reasoning_chars']} reasoning + {tp['answer_chars']} answer chars "
                   f"({tp['reasoning_share']:.0%} reasoning)")
 
-    print("\n| model | verdict | footprint | wall | chars/s | reasoning share | schema probes |")
-    print("|---|---|---|---|---|---|---|")
+    print("\n| model | verdict | footprint | wall | chars/s | reasoning | effort | schema probes |")
+    print("|---|---|---|---|---|---|---|---|")
     for model, state, _, result in rows:
         size = result["footprint_bytes"]
         tp = result["throughput"] or {}
@@ -295,7 +325,8 @@ def main() -> None:
         share = f"{tp['reasoning_share']:.0%}" if tp else "—"
         print(
             f"| `{model}` | {state} | {f'{size / 1024**3:.1f} GB' if size else '—'} "
-            f"| {tp.get('seconds', '—')}s | {tp.get('chars_per_second', '—')} | {share} | {probes} |"
+            f"| {tp.get('seconds', '—')}s | {tp.get('chars_per_second', '—')} | {share} "
+            f"| {'ok' if result['accepts_effort'] else 'no'} | {probes} |"
         )
 
 
