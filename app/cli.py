@@ -265,6 +265,15 @@ def _format_report_detail(report: Report) -> str:
         "",
         "Recommended actions:",
         *[f"  - {a}" for a in report.recommended_actions],
+    ]
+    if report.command_analysis is not None:
+        lines += [
+            "",
+            "Command analysis:",
+            f"  Command line: {report.command_analysis.command_line or '(none)'}",
+            *[f"  - [{s.encoding}] {s.decoded}" for s in report.command_analysis.decoded_segments],
+        ]
+    lines += [
         "",
         f"Uncertainty notes: {report.uncertainty_notes or '(none)'}",
         "",

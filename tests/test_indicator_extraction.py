@@ -83,6 +83,27 @@ def test_extract_and_validate_scans_string_values_in_data_field():
     assert validated[0].value == "198.51.100.7"
 
 
+def test_extract_and_validate_scans_extra_texts():
+    alert = _make_alert(full_log="no indicators in the log line")
+
+    validated, candidate_count, validated_count = extract_and_validate(
+        alert, extra_texts=["decoded payload contacting 198.51.100.7"]
+    )
+
+    assert candidate_count == 1
+    assert validated_count == 1
+    assert validated[0].value == "198.51.100.7"
+
+
+def test_extract_and_validate_ignores_empty_extra_texts_by_default():
+    alert = _make_alert(full_log="203.0.113.5 contacted 203.0.113.5 again")
+
+    validated, candidate_count, validated_count = extract_and_validate(alert)
+
+    assert candidate_count == 2
+    assert validated_count == 1
+
+
 def test_extract_and_validate_deduplicates_identical_indicators():
     alert = _make_alert(full_log="203.0.113.5 contacted 203.0.113.5 again")
 

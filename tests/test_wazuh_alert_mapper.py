@@ -42,6 +42,38 @@ SYSLOG_EXAMPLE_SOURCE = {
     "timestamp": "2026-08-10T09:00:00.000+0000",
 }
 
+# A Sysmon Event ID 1 (process creation) alert, with an encoded PowerShell command line.
+SYSMON_PROCESS_CREATION_SOURCE = {
+    "agent": {"ip": "172.20.10.5", "name": "WIN-DESKTOP01", "id": "003"},
+    "manager": {"name": "wazuh-manager"},
+    "data": {
+        "win": {
+            "system": {"eventID": "1", "providerName": "Microsoft-Windows-Sysmon"},
+            "eventdata": {
+                "utcTime": "2026-08-13 10:15:00.000",
+                "processId": "4820",
+                "image": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                "commandLine": "powershell.exe -EncodedCommand SQBFAFgA",
+                "parentProcessId": "3344",
+                "parentImage": "C:\\Windows\\explorer.exe",
+                "parentCommandLine": "C:\\Windows\\explorer.exe",
+                "hashes": "MD5=44D88612FEA8A8F36DE82E1278ABB02F,SHA256=" + "a" * 64,
+                "user": "WIN-DESKTOP01\\alice",
+            },
+        }
+    },
+    "rule": {
+        "level": 12,
+        "description": "Sysmon - Process creation via encoded PowerShell command",
+        "groups": ["windows", "sysmon"],
+        "id": "92009",
+    },
+    "location": "EventChannel",
+    "full_log": "",
+    "id": "1700000000.987654",
+    "timestamp": "2026-08-13T10:15:00.000+0000",
+}
+
 
 def test_maps_mitre_parallel_arrays_into_mitre_ref_list():
     alert = wazuh_source_to_alert(MITRE_EXAMPLE_SOURCE)
@@ -187,3 +219,22 @@ def test_sysmon_destination_falls_back_to_win_eventdata():
 
     assert alert.destination_ip == "185.220.101.47"
     assert alert.destination_port == 443
+
+
+def test_maps_sysmon_process_creation_fields():
+    alert = wazuh_source_to_alert(SYSMON_PROCESS_CREATION_SOURCE)
+
+    assert alert.process is not None
+    assert alert.process.command_line == "powershell.exe -EncodedCommand SQBFAFgA"
+    assert alert.process.parent_command_line == "C:\\Windows\\explorer.exe"
+    assert alert.process.process_name == "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe"
+    assert alert.process.parent_process_name == "C:\\Windows\\explorer.exe"
+    assert alert.process.process_id == "4820"
+    assert alert.process.parent_process_id == "3344"
+    assert alert.process.process_hashes == "MD5=44D88612FEA8A8F36DE82E1278ABB02F,SHA256=" + "a" * 64
+
+
+def test_process_is_none_for_non_sysmon_alert():
+    alert = wazuh_source_to_alert(SYSLOG_EXAMPLE_SOURCE)
+
+    assert alert.process is None

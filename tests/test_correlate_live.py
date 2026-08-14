@@ -90,7 +90,7 @@ def test_live_correlate_produces_a_valid_pattern_classification(live_analyst):
         raw_json={"rule": {"id": "5710"}},
     )
 
-    pattern_type, evidence_count, step = live_analyst._step_correlate(alert, model_available=True)
+    pattern_type, evidence_count, step = live_analyst._step_correlate(alert, [], model_available=True)
 
     assert pattern_type == PatternType.BRUTE_FORCE
     assert step.action == "completed"
