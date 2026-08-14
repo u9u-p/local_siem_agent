@@ -27,11 +27,24 @@ from bench.labels import Role, label_for
 SNAPSHOT = Path("./data/bench_alerts.db")
 RESULTS = Path("./bench/results")
 
-#: Stage 1 screens breadth-first to kill non-viable models cheaply; stage 2 spends
-#: repeats only on the alerts that must be stable on stage (spec §4).
+#: Stage 1 screens breadth-first to kill non-viable models cheaply; stage 2 spends its
+#: budget where the metrics actually separate models.
+#:
+#: Needles get one run each, not three. The 14 Aug control verification returned 6 of 6
+#: needles correct on the incumbent — detection saturates, because the needles are built
+#: to be findable, so repeating them buys precision on a metric that cannot discriminate.
+#: The earlier 3-repeat allocation spent a third of the expensive stage there.
+#:
+#: The benign floods get that budget instead: 15 per cluster rather than 10, taking the
+#: escalation-rate confidence interval from roughly ±9% to ±7%. Benign escalation is the
+#: metric that separates candidates, and it is the talk's subject.
+#:
+#: fp_control keeps three repeats. mrahman came back `low` on both control runs after
+#: PR #4's grounded correlation — it stopped being a known failure and became a real
+#: discriminator, so its stability is now worth measuring.
 STAGE_PLAN = {
-    "screen": {"benign_per_cluster": 1, "needle_repeats": 1, "benign_repeats": 1},
-    "deep": {"benign_per_cluster": 10, "needle_repeats": 3, "benign_repeats": 1},
+    "screen": {"benign_per_cluster": 1, "needle_repeats": 1, "fp_repeats": 1, "benign_repeats": 1},
+    "deep": {"benign_per_cluster": 15, "needle_repeats": 1, "fp_repeats": 3, "benign_repeats": 1},
 }
 
 
@@ -57,6 +70,8 @@ def select_alerts(db: Path, stage: str) -> list[tuple[str, str, Role, int]]:
                 continue
             benign_taken[label.cluster] = benign_taken.get(label.cluster, 0) + 1
             selected.append((alert_id, label.cluster, label.role, plan["benign_repeats"]))
+        elif label.role is Role.FP_CONTROL:
+            selected.append((alert_id, label.cluster, label.role, plan["fp_repeats"]))
         else:
             selected.append((alert_id, label.cluster, label.role, plan["needle_repeats"]))
     return selected
