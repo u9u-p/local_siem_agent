@@ -23,7 +23,7 @@ import time
 from pathlib import Path
 
 from bench.labels import Role, label_for
-from bench.stage0 import footprint_bytes
+from bench.stage0 import CONTEXT_TOKENS, bench_variant, footprint_bytes
 
 SNAPSHOT = Path("./data/bench_alerts.db")
 RESULTS = Path("./bench/results")
@@ -146,17 +146,28 @@ def main() -> None:
     workdir.mkdir(parents=True, exist_ok=True)
     shutil.copy(args.snapshot, workdir / "alerts.db")
 
+    # Run the num_ctx-bounded variant, not the base model. Ollama sizes KV from the
+    # model's *default* context when the base name is used -- 128000 for lfm2.5, 262144
+    # for several others -- so the base model measures a footprint the gate never
+    # measured, and each model measures at a different context from every other. The
+    # per-request num_ctx does not survive the OpenAI-compat path; the Modelfile
+    # PARAMETER does, which is what bench_variant bakes in. Results directories stay
+    # keyed on the base name, so the variant is invisible to the scorer.
+    model = bench_variant(args.model) or args.model
+    if model == args.model:
+        print(f"  ! no bounded variant for {args.model} — running its default context", flush=True)
+
     selected = select_alerts(args.snapshot, args.stage)
     total = sum(repeats for *_, repeats in selected)
-    print(f"{args.model} @ {args.effort or 'default'} / {args.stage}: "
-          f"{len(selected)} alerts, {total} runs", flush=True)
+    print(f"{model} @ {args.effort or 'default'} / {args.stage}: "
+          f"{len(selected)} alerts, {total} runs, num_ctx {CONTEXT_TOKENS}", flush=True)
 
     results_file = workdir / "runs.jsonl"
     done = 0
     with results_file.open("w") as fh:
         for alert_id, cluster, role, repeats in selected:
             for repeat in range(repeats):
-                record = run_one(args.model, alert_id, workdir, repeat, args.effort)
+                record = run_one(model, alert_id, workdir, repeat, args.effort)
                 record.update(cluster=cluster, role=role.value)
                 fh.write(json.dumps(record) + "\n")
                 fh.flush()
@@ -172,6 +183,9 @@ def main() -> None:
                 )
 
     print(f"wrote {results_file}", flush=True)
+    # Unload here rather than in sweep.sh: only this process knows the variant name, and
+    # stopping the base name leaves the variant resident alongside the next block's model.
+    subprocess.run(["ollama", "stop", model], capture_output=True)
 
 
 if __name__ == "__main__":
