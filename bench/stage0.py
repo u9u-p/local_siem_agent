@@ -27,8 +27,10 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import tempfile
 import time
 import urllib.request
+from pathlib import Path
 
 from pydantic import BaseModel
 
@@ -40,6 +42,22 @@ from app.schemas import RiskAssessment
 
 #: Demo laptop budget: 24GB total, less ~3GB macOS and ~3GB slides/browser/mirroring.
 FIT_CEILING_BYTES = 17.5 * 1024**3
+
+#: Ollama sizes the KV cache from the model's default context, which for several
+#: candidates is 262144 tokens — and that allocation, not the weights, is most of the
+#: resident footprint (qwen3.6:27b measured 36.5 GB by default against 16 GB here).
+#: CLAUDE.md §4.2 rule 2 keeps every prompt to a few hundred to ~2k tokens of
+#: structured JSON, so 8192 is roughly 4x headroom.
+#:
+#: Per-request num_ctx does not survive: the OpenAI-compat endpoint that OllamaClient
+#: uses reloads the model at its default context, verified 14 Aug. A Modelfile
+#: parameter does survive, so the gate measures a baked variant — the thing we would
+#: actually deploy — rather than a number no deployment can reach.
+#:
+#: Ollama truncates silently past num_ctx. Re-check this margin once §6.2's
+#: correlation digest lands, since it grows every downstream prompt.
+CONTEXT_TOKENS = 8192
+VARIANT_SUFFIX = "-bench-ctx8k"
 
 
 class TrivialAnswer(BaseModel):
@@ -69,24 +87,56 @@ def local_models() -> list[str]:
         return sorted(m["name"] for m in json.load(response).get("models", []))
 
 
-def footprint_bytes(model: str) -> int | None:
-    """Resident size of the loaded model, per `ollama ps`."""
+def footprint_bytes(model: str) -> tuple[int, int] | None:
+    """(resident_bytes, context_tokens) for `model`, per `ollama ps`.
+
+    Matches the full name: `gemma4` as a prefix would also match `gemma4:latest`.
+    """
     try:
         out = subprocess.run(["ollama", "ps"], capture_output=True, text=True, timeout=15).stdout
     except (OSError, subprocess.SubprocessError):
         return None
     for line in out.splitlines()[1:]:
-        if not line.startswith(model.split(":")[0]):
-            continue
         parts = line.split()
+        if not parts or parts[0] not in {model, f"{model}:latest"}:
+            continue
         for i, token in enumerate(parts):
-            if token.upper() in {"GB", "MB"} and i:
-                try:
-                    value = float(parts[i - 1])
-                except ValueError:
-                    continue
-                return int(value * (1024**3 if token.upper() == "GB" else 1024**2))
+            if token.upper() not in {"GB", "MB"} or not i:
+                continue
+            try:
+                value = float(parts[i - 1])
+            except ValueError:
+                continue
+            # PROCESSOR sits between SIZE and CONTEXT and is not a fixed token count
+            # ("100% GPU" is two, a split load may be one), so find CONTEXT by shape:
+            # the first bare integer after the size unit.
+            context = next((int(t) for t in parts[i + 1:] if t.isdigit()), 0)
+            return int(value * (1024**3 if token.upper() == "GB" else 1024**2)), context
     return None
+
+
+def bench_variant(model: str) -> str | None:
+    """Create a `num_ctx`-bounded variant of `model`, returning its name.
+
+    Manifest-only — it reuses the base model's blobs, so this costs no download and
+    negligible disk.
+    """
+    # Keep a colon in the name. Without a tag Ollama appends ":latest", which then
+    # will not match what `ollama ps` prints.
+    variant = f"{model}{VARIANT_SUFFIX}" if ":" in model else f"{model}:{VARIANT_SUFFIX.lstrip('-')}"
+    # `ollama create -f -` does not read stdin in this version ("no Modelfile or
+    # safetensors files found"), so the Modelfile has to exist on disk.
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "Modelfile"
+        path.write_text(f"FROM {model}\nPARAMETER num_ctx {CONTEXT_TOKENS}\n")
+        proc = subprocess.run(
+            ["ollama", "create", variant, "-f", str(path)],
+            capture_output=True, text=True, timeout=600,
+        )
+    if proc.returncode != 0 or "Error:" in proc.stderr:
+        print(f"    ! variant creation failed for {model}: {proc.stderr.strip()[-160:]}")
+        return None
+    return variant
 
 
 def unload(model: str) -> None:
@@ -96,12 +146,19 @@ def unload(model: str) -> None:
 
 def probe_model(model: str) -> dict:
     settings = Settings()
+    # Probe the bounded variant, since that is what a deployment would run. Fall back
+    # to the base model rather than skipping if creation fails — a missing footprint
+    # is a weaker result than none at all.
+    variant = bench_variant(model) or model
     client = OllamaClient(
         base_url=settings.llm_base_url,
-        model=model,
+        model=variant,
         timeout_seconds=settings.llm_timeout_seconds,
     )
-    result: dict = {"model": model, "probes": {}, "footprint_bytes": None}
+    result: dict = {
+        "model": model, "variant": variant, "probes": {},
+        "footprint_bytes": None, "context_tokens": None,
+    }
 
     for name, schema, prompt in PROBES:
         started = time.time()
@@ -116,8 +173,10 @@ def probe_model(model: str) -> dict:
         if outcome != "pass":
             break  # harder probes tell us nothing once an easier one has failed
 
-    result["footprint_bytes"] = footprint_bytes(model)
-    unload(model)
+    measured = footprint_bytes(variant)
+    if measured:
+        result["footprint_bytes"], result["context_tokens"] = measured
+    unload(variant)
     return result
 
 
@@ -131,8 +190,8 @@ def verdict(result: dict) -> tuple[str, str]:
     if size is None:
         return "PASS?", "schema ok, footprint unmeasured"
     if size > FIT_CEILING_BYTES:
-        return "STUDY", f"schema ok but {size / 1e9:.1f} GB exceeds the laptop budget"
-    return "PASS", f"{len(outcomes)} probes, {size / 1e9:.1f} GB"
+        return "STUDY", f"schema ok but {size / 1024**3:.1f} GB exceeds the laptop budget"
+    return "PASS", f"{len(outcomes)} probes, {size / 1024**3:.1f} GB @ {result['context_tokens']} ctx"
 
 
 def main() -> None:
@@ -141,7 +200,7 @@ def main() -> None:
     args = ap.parse_args()
 
     models = args.models or local_models()
-    print(f"Stage 0 — {len(models)} model(s), ceiling {FIT_CEILING_BYTES / 1e9:.1f} GB\n")
+    print(f"Stage 0 — {len(models)} model(s), ceiling {FIT_CEILING_BYTES / 1024**3:.1f} GB, num_ctx {CONTEXT_TOKENS}\n")
 
     rows = []
     for model in models:
@@ -157,7 +216,7 @@ def main() -> None:
     for model, state, _, result in rows:
         size = result["footprint_bytes"]
         cells = [result["probes"].get(n, {}).get("outcome", "—") for n, _, _ in PROBES]
-        print(f"| `{model}` | {state} | {f'{size / 1e9:.1f} GB' if size else '—'} | " + " | ".join(cells) + " |")
+        print(f"| `{model}` | {state} | {f'{size / 1024**3:.1f} GB' if size else '—'} | " + " | ".join(cells) + " |")
 
 
 if __name__ == "__main__":
