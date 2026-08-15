@@ -28,6 +28,10 @@ case "$BATCH" in
     BLOCKS=(
       "lfm2:24b-a2b|"              # ~12 min -- fastest in the sweep, 60% needle recall
       "gpt-oss:20b|low"            # ~28 min
+      # Reference arm, not a candidate -- 68.7 GB cannot run the demo. It is here
+      # because its screen result (3/5 needles against the 9 GB incumbent's 5/5) is
+      # the sweep's most quotable claim and currently rests on two alerts.
+      "gpt-oss:120b|low"           # ~45 min
       "gemma4:26b-a4b-it-qat|"     # ~3.1h
       "gemma4:12b|"                # ~5.2h -- the incumbent and current pick
     ) ;;
