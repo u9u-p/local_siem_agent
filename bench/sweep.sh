@@ -19,6 +19,18 @@ mkdir -p bench/results
 
 # "model|effort" — empty effort leaves the model on its own default.
 case "$BATCH" in
+  # Stage 2. Run with `deep`, not the default screen stage:
+  #   ./bench/sweep.sh finalists deep
+  # Screen sized benign escalation on 4 alerts and the FP control on 2, which is one
+  # alert wide either way; deep spends 60 and 6. Estimates are each block's screen
+  # median times 71 runs.
+  finalists)
+    BLOCKS=(
+      "lfm2:24b-a2b|"              # ~12 min -- fastest in the sweep, 60% needle recall
+      "gpt-oss:20b|low"            # ~28 min
+      "gemma4:26b-a4b-it-qat|"     # ~3.1h
+      "gemma4:12b|"                # ~5.2h -- the incumbent and current pick
+    ) ;;
   candidates)
     BLOCKS=(
       "nemotron-3-nano:4b|"
