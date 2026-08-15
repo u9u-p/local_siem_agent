@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Drive a batch of Stage 1 blocks unattended.
 #
-#   ./bench/sweep.sh candidates    # ~3.5-4h, decides the pick
-#   ./bench/sweep.sh reference     # ~2.7-3.5h, explains it
+#   ./bench/sweep.sh candidates    # ~6h measured, decides the pick
+#   ./bench/sweep.sh reference     # ~1.7h, explains it
 #
 # Blocks are ordered cheapest-first so an interrupted batch still leaves the widest
 # spread of results. A failing block is logged and the sweep continues -- one model
@@ -39,8 +39,14 @@ case "$BATCH" in
       "gpt-oss:120b|low"
       "qwen3.6:35b-a3b|low"
       "glm-4.7-flash|low"
+      # Kept despite failing the Stage 0 gate: it costs 0 min (the loader rejects it
+      # before generation) and the logged failure is the evidence that a ternary build
+      # does not load under Ollama -- `tensor "output.weight" size overflow`.
       "hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0|"
-      "qwen3.6:27b-bf16|low"
+      # Dropped: qwen3.6:27b-bf16, ~5.3h for a Q4-vs-bf16 comparison on a model already
+      # out on both speed (786s/alert at Q4) and footprint (17.2 GB of a 17.5 GB
+      # ceiling). The quantisation question is worth asking of a model still in
+      # contention -- gemma4:26b-a4b-it-qat, QAT vs PTQ -- not of one that is not.
     ) ;;
   *) echo "unknown batch '$BATCH' (candidates|reference)" >&2; exit 2 ;;
 esac
