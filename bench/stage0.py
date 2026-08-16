@@ -128,30 +128,28 @@ def local_models() -> list[str]:
 
 
 def footprint_bytes(model: str) -> tuple[int, int] | None:
-    """(resident_bytes, context_tokens) for `model`, per `ollama ps`.
+    """(resident_bytes, context_tokens) for `model`, from Ollama's /api/ps.
 
     Matches the full name: `gemma4` as a prefix would also match `gemma4:latest`.
+
+    Reads the JSON API rather than parsing `ollama ps`. The text output is rounded
+    for humans and, worse, is *decimal* GB — the parser this replaced multiplied
+    "8.4 GB" by 1024^3 and overstated every footprint by 7.7%, which wrongly put
+    muse-glimmer:30b over the fit ceiling. The rounding also hid real growth: at
+    64 GB the text has ~1 GB of resolution, so gpt-oss:120b's KV cost read as
+    exactly zero across three rungs when it is 240 MB per 122,880 tokens.
     """
     try:
-        out = subprocess.run(["ollama", "ps"], capture_output=True, text=True, timeout=15).stdout
-    except (OSError, subprocess.SubprocessError):
+        with urllib.request.urlopen("http://localhost:11434/api/ps", timeout=15) as response:
+            loaded = json.load(response).get("models", [])
+    except Exception:  # noqa: BLE001 - an unreachable daemon is a missing reading, not a crash
         return None
-    for line in out.splitlines()[1:]:
-        parts = line.split()
-        if not parts or parts[0] not in {model, f"{model}:latest"}:
+    for entry in loaded:
+        if entry.get("name") not in {model, f"{model}:latest"}:
             continue
-        for i, token in enumerate(parts):
-            if token.upper() not in {"GB", "MB"} or not i:
-                continue
-            try:
-                value = float(parts[i - 1])
-            except ValueError:
-                continue
-            # PROCESSOR sits between SIZE and CONTEXT and is not a fixed token count
-            # ("100% GPU" is two, a split load may be one), so find CONTEXT by shape:
-            # the first bare integer after the size unit.
-            context = next((int(t) for t in parts[i + 1:] if t.isdigit()), 0)
-            return int(value * (1024**3 if token.upper() == "GB" else 1024**2)), context
+        size, context = entry.get("size"), entry.get("context_length")
+        if size:
+            return int(size), int(context or 0)
     return None
 
 
