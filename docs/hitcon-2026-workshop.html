@@ -1,4 +1,4 @@
-<title>Your First Agentic SOC Without the GPU Bill — HITCON 2026</title>
+<title>Local LLM Triage — HITCON 2026 Skeleton</title>
 <style>
   :root {
     --ground:      #EDF0F3;
@@ -70,9 +70,7 @@
     scroll-behavior: smooth;
     counter-reset: slide;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .deck { scroll-behavior: auto; }
-  }
+  @media (prefers-reduced-motion: reduce) { .deck { scroll-behavior: auto; } }
 
   .slide {
     counter-increment: slide;
@@ -90,9 +88,8 @@
     margin: 0 auto;
   }
 
-  /* ---- instrument rail ---- */
   .slide::after {
-    content: attr(data-act) " · " attr(data-min) " min";
+    content: attr(data-sec);
     position: absolute;
     left: var(--pad);
     bottom: 1.5rem;
@@ -109,12 +106,10 @@
     bottom: 1.5rem;
     font-family: var(--mono);
     font-size: 0.7rem;
-    letter-spacing: 0.08em;
     color: var(--ink-faint);
     font-variant-numeric: tabular-nums;
   }
 
-  /* ---- type ---- */
   .eyebrow {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -131,9 +126,8 @@
     font-weight: 700;
     margin: 0;
     text-wrap: balance;
-    max-width: 22ch;
+    max-width: 20ch;
   }
-
   h2 {
     font-size: clamp(1.9rem, 4.2vw, 3.2rem);
     line-height: 1.06;
@@ -143,25 +137,16 @@
     text-wrap: balance;
     max-width: 20ch;
   }
-
-  h3 {
-    font-size: clamp(1.1rem, 2vw, 1.45rem);
-    line-height: 1.2;
-    letter-spacing: -0.01em;
-    font-weight: 660;
-    margin: 0;
-  }
+  h3 { font-size: clamp(1.05rem, 1.9vw, 1.4rem); line-height: 1.2; font-weight: 660; margin: 0; }
 
   p, li {
-    font-size: clamp(1rem, 1.55vw, 1.3rem);
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
     line-height: 1.5;
     color: var(--ink-dim);
     margin: 0;
     max-width: 62ch;
   }
-
-  .lead { color: var(--ink); font-size: clamp(1.15rem, 2vw, 1.6rem); }
-
+  .lead { color: var(--ink); font-size: clamp(1.15rem, 2vw, 1.55rem); }
   strong { color: var(--ink); font-weight: 640; }
   em { font-style: normal; color: var(--accent); }
 
@@ -177,34 +162,35 @@
     color: var(--ink);
   }
 
-  /* ---- act dividers ---- */
-  .act {
-    justify-content: flex-end;
-    background: var(--surface);
-  }
-  .act h1 { max-width: 18ch; }
-  .act .act-no {
+  /* section dividers */
+  .sec { justify-content: flex-end; background: var(--surface); }
+  .sec h1 { max-width: 18ch; }
+  .sec .no {
     font-family: var(--mono);
     font-size: clamp(4rem, 14vw, 11rem);
     line-height: 0.8;
     color: var(--accent-soft);
     letter-spacing: -0.04em;
-    font-variant-numeric: tabular-nums;
   }
-  .act .runs {
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
+  .queue {
     border-top: 1px solid var(--rule);
     padding-top: 1rem;
     margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
   }
+  .queue .qh {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .queue ul { padding-left: 1.1em; gap: 0.25rem; }
+  .queue li { font-size: 0.95rem; color: var(--ink-faint); }
 
-  /* ---- title slide ---- */
   .title { background: var(--surface); }
-  .title h1 { font-size: clamp(2.6rem, 7.5vw, 6rem); max-width: 17ch; }
   .byline {
     font-family: var(--mono);
     font-size: 0.85rem;
@@ -217,50 +203,33 @@
     padding-top: 1.2rem;
   }
 
-  /* ---- data / measurement ---- */
-  .metric-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: clamp(1.5rem, 4vw, 4rem);
-    align-items: flex-end;
-  }
+  .metric-row { display: flex; flex-wrap: wrap; gap: clamp(1.5rem, 4vw, 4rem); align-items: flex-end; }
   .metric { display: flex; flex-direction: column; gap: 0.3rem; }
   .metric .val {
     font-family: var(--mono);
-    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-size: clamp(2.2rem, 5.5vw, 4.2rem);
     line-height: 0.95;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.03em;
-    color: var(--ink);
   }
   .metric .val.hot { color: var(--bad); }
-  .metric .val.ok { color: var(--good); }
+  .metric .val.ok  { color: var(--good); }
   .metric .val.acc { color: var(--accent); }
   .metric .cap {
     font-family: var(--mono);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-faint);
-    max-width: 24ch;
+    max-width: 26ch;
   }
 
   .scroller { overflow-x: auto; max-width: 100%; }
-
-  table {
-    border-collapse: collapse;
-    font-size: clamp(0.85rem, 1.3vw, 1.05rem);
-    min-width: 100%;
-  }
-  th, td {
-    text-align: left;
-    padding: 0.6rem 1.4rem 0.6rem 0;
-    border-bottom: 1px solid var(--rule);
-    white-space: nowrap;
-  }
+  table { border-collapse: collapse; font-size: clamp(0.82rem, 1.25vw, 1rem); min-width: 100%; }
+  th, td { text-align: left; padding: 0.55rem 1.3rem 0.55rem 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
   th {
     font-family: var(--mono);
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--ink-faint);
@@ -268,111 +237,33 @@
   }
   td { color: var(--ink-dim); }
   td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
-  tr.total td { border-bottom: none; border-top: 1px solid var(--rule-strong); color: var(--ink); font-weight: 640; }
+  tr.pick td { background: var(--accent-soft); color: var(--ink); }
+  tr.pick td.num { color: var(--ink); }
 
-  /* ---- command blocks ---- */
-  pre {
-    font-family: var(--mono);
-    font-size: clamp(0.82rem, 1.35vw, 1.05rem);
-    line-height: 1.6;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-left: 3px solid var(--accent);
-    padding: 1.1rem 1.4rem;
-    margin: 0;
-    overflow-x: auto;
-    color: var(--ink);
-  }
-  pre .c { color: var(--ink-faint); }
-
-  /* ---- two-column ---- */
-  .cols {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
-    gap: clamp(1.5rem, 3.5vw, 3.5rem);
-    align-items: start;
-  }
-  .col { display: flex; flex-direction: column; gap: 0.9rem; }
-
-  /* ---- callout ---- */
-  .note {
-    border-left: 3px solid var(--rule-strong);
-    padding-left: 1.2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
+  .note { border-left: 3px solid var(--rule-strong); padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
   .note.warn { border-color: var(--bad); }
   .note.good { border-color: var(--good); }
   .note.acc  { border-color: var(--accent); }
-  .note .tag {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
+  .note .tag { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
   .note.warn .tag { color: var(--bad); }
   .note.good .tag { color: var(--good); }
   .note.acc  .tag { color: var(--accent); }
 
-  /* ---- checkpoint ---- */
-  .checkpoint { background: var(--surface); }
-  .check-list { display: flex; flex-direction: column; gap: 0.8rem; }
-  .check-item {
-    display: flex;
-    gap: 0.9rem;
-    align-items: baseline;
-    font-size: clamp(1rem, 1.6vw, 1.3rem);
-    color: var(--ink);
-  }
-  .check-item .box {
-    font-family: var(--mono);
-    color: var(--accent);
-    flex: none;
-  }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px,100%),1fr)); gap: clamp(1.5rem,3.5vw,3.5rem); align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 0.8rem; }
 
-  /* ---- TODO marker ---- */
-  .todo {
-    border: 1px dashed var(--bad);
-    padding: 1.1rem 1.4rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .todo .tag {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--bad);
-  }
-  .todo p { color: var(--ink-dim); }
-
-  /* ---- figures ---- */
   figure { margin: 0; display: flex; flex-direction: column; gap: 0.8rem; }
-  figure svg { max-width: 100%; height: auto; max-height: 44dvh; display: block; }
-  figcaption {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-    color: var(--ink-faint);
-    max-width: 70ch;
-    line-height: 1.5;
-  }
+  figure svg { max-width: 100%; height: auto; max-height: 42dvh; display: block; }
+  figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); max-width: 70ch; line-height: 1.5; }
   .fig-wrap { overflow-x: auto; }
 
-  /* ---- speaker chip ---- */
-  .who {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ground);
-    background: var(--ink-dim);
-    padding: 0.2em 0.6em;
-    border-radius: 2px;
-    align-self: flex-start;
+  /* Short projectors: tighten rather than overflow the snap point. */
+  @media (max-height: 820px) {
+    .slide { gap: 1rem; }
+    p, li { font-size: clamp(0.9rem, 1.3vw, 1.08rem); }
+    .lead { font-size: clamp(1rem, 1.7vw, 1.3rem); }
+    th, td { padding: 0.4rem 1.1rem 0.4rem 0; }
+    .metric .val { font-size: clamp(1.9rem, 4.5vw, 3.2rem); }
   }
 
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
@@ -380,784 +271,365 @@
 
 <div class="deck" id="deck" tabindex="-1">
 
-<!-- ============ TITLE ============ -->
-<section class="slide title" data-act="Title" data-min="0">
+<section class="slide title" data-sec="Title">
   <p class="eyebrow">HITCON 2026 · Hacking 101 · Day 1</p>
   <h1>Your First Agentic SOC Without the GPU Bill</h1>
   <p class="lead">Local LLM triage on Apple Silicon.</p>
   <div class="byline">
-    <span>Tommy Wong</span>
-    <span>Ke Li Yam</span>
-    <span>Fri 21 Aug 2026</span>
-    <span>90 min · follow along optional</span>
+    <span>Tommy Wong</span><span>Ke Li Yam</span><span>Fri 21 Aug 2026</span>
   </div>
 </section>
 
-<!-- ============ ACT 1 ============ -->
-<section class="slide act" data-act="Act 1" data-min="0">
-  <div class="act-no">01</div>
-  <h1>Why you'd do this at all</h1>
-  <p class="runs">7 minutes · no laptop needed yet</p>
-</section>
-
-<section class="slide" data-act="Act 1 · Why" data-min="0">
-  <p class="eyebrow">Cold open</p>
-  <h2>Here is an alert. Here is what our agent said about it.</h2>
-  <div class="metric-row">
-    <div class="metric">
-      <span class="val hot">HIGH</span>
-      <span class="cap">Severity</span>
-    </div>
-    <div class="metric">
-      <span class="val hot">HIGH</span>
-      <span class="cap">Confidence</span>
-    </div>
-    <div class="metric">
-      <span class="val">451.4<span style="font-size:0.4em">s</span></span>
-      <span class="cap">Time spent deciding</span>
-    </div>
-  </div>
-  <p class="lead"><code>mrahman</code> logged into Windows from an address he has never used before. The agent escalated it.</p>
-  <div class="note warn">
-    <span class="tag">The catch</span>
-    <p><strong>It is wrong.</strong> By minute 60 you will know exactly why — and it is not because the model is small.</p>
+<!-- ═══ 1 PROBLEM ═══ -->
+<section class="slide sec" data-sec="1 · Problem">
+  <div class="no">01</div>
+  <h1>Problem statement</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>SOC economics — cost per alert, why cloud triage is a non-starter for log data</li>
+      <li>The 24 GB laptop constraint, and what actually fits on it</li>
+      <li>Why "just pick a model off a leaderboard" fails for this task</li>
+    </ul>
   </div>
 </section>
 
-<section class="slide" data-act="Act 1 · Why" data-min="2">
-  <p class="eyebrow">The actual pain</p>
-  <h2>Alert fatigue isn't only volume. It's re-deriving the same context, alert after alert.</h2>
-  <p>Who owns this host? Has this IP appeared before? Is this user's VPN egress? Was there an MFA push?</p>
-  <p class="lead">Every analyst answers those same four questions from scratch, every time. <em>That</em> is the time sink — not the size of the queue.</p>
+<section class="slide" data-sec="1 · Problem">
+  <p class="eyebrow">The work being automated</p>
+  <h2>Every alert costs an analyst the same four questions.</h2>
+  <p>Who owns this host? Has this address appeared before? Is this the user's own VPN egress? Was there an MFA push?</p>
+  <p class="lead">The queue length isn't the pain. <em>Re-deriving the same context, from scratch, per alert</em> is the pain.</p>
 </section>
 
-<section class="slide" data-act="Act 1 · Why" data-min="4">
-  <p class="eyebrow">Why not cloud</p>
-  <h2>Three reasons, and only one of them is money.</h2>
-  <div class="cols">
-    <div class="col">
-      <h3>Your logs are the payload</h3>
-      <p>Alert triage means sending hostnames, usernames, internal IPs and raw log lines to the model. That is exactly the data you are not allowed to paste into a chat box.</p>
-    </div>
-    <div class="col">
-      <h3>Per-token pricing punishes the loop</h3>
-      <p>Six LLM calls per alert. Multiply by your queue, then by every re-run while you tune the prompts.</p>
-    </div>
-    <div class="col">
-      <h3>It works on a mountain</h3>
-      <p>No egress, no API key, no rate limit, no vendor deprecating your model mid-quarter.</p>
-    </div>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 1 · Why" data-min="6">
-  <p class="eyebrow">Position</p>
-  <h2>This builds the hypothesis. You still make the call.</h2>
-  <p class="lead">It is strictly read-only. There is no remediation tool wired to the model — not disabled, <em>not present</em>. The only output is a report.</p>
-  <div class="note acc">
-    <span class="tag">Say this out loud</span>
-    <p>We are not claiming an autonomous SOC. We will show you exactly what stands between here and there, with file names.</p>
-  </div>
-</section>
-
-<!-- ============ ACT 2 ============ -->
-<section class="slide act" data-act="Act 2" data-min="7">
-  <div class="act-no">02</div>
-  <h1>Get running</h1>
-  <p class="runs">16 minutes · laptops open · Tommy</p>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="7">
-  <p class="eyebrow">Before anything else</p>
-  <h2>Start the model download now. We will talk over it.</h2>
-  <pre>ollama pull gemma4:12b</pre>
-  <p><strong>7.6 GB.</strong> On conference wifi this is the longest thing in the workshop, so it starts first and runs while Act 3 happens.</p>
-  <div class="note warn">
-    <span class="tag">Not gemma4:12b-mlx</span>
-    <p>The MLX build of the identical model silently breaks everything downstream. That is Act 7, and it is the most useful thing we learned all project.</p>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="9">
-  <p class="eyebrow">Hardware reality</p>
-  <h2>Can your laptop actually hold this?</h2>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>Component</th><th>Resident</th><th>Note</th></tr></thead>
-      <tbody>
-        <tr><td>macOS baseline</td><td class="num">~5 GB</td><td>Before you start anything</td></tr>
-        <tr><td>Wazuh stack (3 containers)</td><td class="num">~4 GB</td><td>Indexer JVM heap capped at 1 GB in our compose file</td></tr>
-        <tr><td><code>gemma4:12b</code> under Ollama</td><td class="num">~8 GB</td><td>Q4_K_M weights plus KV cache</td></tr>
-        <tr class="total"><td>Total</td><td class="num">~17 GB</td><td>24 GB machine is comfortable</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="note warn">
-    <span class="tag">If you have 8 or 16 GB</span>
-    <p>An 8 GB MacBook Air could not hold this at all — we tried, that is why development moved to a Mac Studio. Use the fallback model on the next slide, or just watch this act.</p>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="11">
-  <p class="eyebrow">Escape hatch</p>
-  <h2>Smaller machine? Swap the model, keep everything else.</h2>
-  <div class="todo">
-    <span class="tag">Fill before 21 Aug</span>
-    <p>Fallback model goes here once the go/no-go smoke test has confirmed one. It must be <strong>GGUF</strong> and it must pass <code>generate_structured()</code> on a nested-list schema — being small is not enough, as Act 7 explains.</p>
-  </div>
-  <pre><span class="c"># everything else is identical — the model is one env var</span>
-LLM_MODEL=&lt;fallback&gt;   <span class="c"># in .env</span></pre>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="12">
-  <p class="eyebrow">Step 1 of 3</p>
-  <h2>Clone and install</h2>
-  <pre>git clone &lt;repo&gt; &amp;&amp; cd local_siem_agent
-
-python3 -m venv .venv &amp;&amp; source .venv/bin/activate
-pip install -e ".[dev]"
-
-cp .env.example .env</pre>
-  <p>Python 3.11 or newer. The CLI installs as <code>agent</code>.</p>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="14">
-  <p class="eyebrow">Step 2 of 3</p>
-  <h2>Bring up Wazuh</h2>
-  <pre>cd wazuh_deployment/single-node
-
-<span class="c"># one-time: generate self-signed TLS certs</span>
-docker compose -f generate-indexer-certs.yml run --rm generator
-
-docker compose up -d   <span class="c"># first boot ~1 min</span></pre>
-  <p>Manager, indexer and dashboard, pre-seeded with <strong>71 synthetic alerts across 7 log sources</strong> — SSH auth, VPN, Windows Security, Mimecast email, Sysmon, plus deliberate false-positive pairs.</p>
-</section>
-
-<section class="slide" data-act="Act 2 · Setup" data-min="16">
-  <p class="eyebrow">Step 3 of 3</p>
-  <h2>Point the agent at both</h2>
-  <pre><span class="c"># .env</span>
-WAZUH_INDEXER_URL=https://localhost:9200
-WAZUH_MANAGER_URL=https://localhost:55000
-WAZUH_VERIFY_SSL=false        <span class="c"># self-signed, demo only</span>
-
-LLM_BASE_URL=http://localhost:11434/v1/
-LLM_MODEL=gemma4:12b
-LLM_TIMEOUT_SECONDS=600</pre>
-  <p>Enrichment API keys are optional — without them indicator lookups skip cleanly rather than crashing.</p>
-</section>
-
-<section class="slide checkpoint" data-act="Act 2 · Checkpoint" data-min="19">
-  <p class="eyebrow">Checkpoint · everyone here before we move on</p>
-  <h2>Three things should be true.</h2>
-  <div class="check-list">
-    <div class="check-item"><span class="box">[ ]</span><span><code>pytest -q</code> → <strong>314 passed</strong></span></div>
-    <div class="check-item"><span class="box">[ ]</span><span><code>agent list-alerts</code> → 71 rows</span></div>
-    <div class="check-item"><span class="box">[ ]</span><span><code>ollama pull</code> still running is <em>fine</em> — you don't need it until Act 5</span></div>
-  </div>
-  <div class="note good">
-    <span class="tag">Behind? Not a problem</span>
-    <p>Nothing after this point requires your machine to keep up. Watch Acts 3 and 4, and rejoin at Act 5 — or take the repo home.</p>
-  </div>
-</section>
-
-<!-- ============ ACT 3 ============ -->
-<section class="slide act" data-act="Act 3" data-min="23">
-  <div class="act-no">03</div>
-  <h1>While it downloads: the landscape</h1>
-  <p class="runs">10 minutes · no typing · Yam</p>
-</section>
-
-<section class="slide" data-act="Act 3 · Landscape" data-min="23">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Runtimes</p>
-  <h2>What else besides Ollama, and why we picked it anyway</h2>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>Option</th><th>For</th><th>Against</th></tr></thead>
-      <tbody>
-        <tr><td><strong>Ollama</strong></td><td>Simplest model lifecycle on Apple Silicon; OpenAI-compatible API; real grammar-constrained decoding on its GGUF backend</td><td>That last part is <em>backend-dependent</em> and undocumented — see Act 7</td></tr>
-        <tr><td>MLX-LM</td><td>Apple-native, genuinely fast on Silicon</td><td>No schema-constrained decoding path we could rely on</td></tr>
-        <tr><td>llama.cpp direct</td><td>The grammar engine Ollama is wrapping; full control</td><td>You build the lifecycle and the server yourself</td></tr>
-        <tr><td>LM Studio</td><td>Friendly GUI, good for exploring</td><td>Less scriptable for an unattended pipeline</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p>All four can sit behind the same <code>LLMClient</code> protocol. We swap one file, not the pipeline.</p>
-</section>
-
-<section class="slide" data-act="Act 3 · Landscape" data-min="27">
-  <span class="who">Yam</span>
-  <p class="eyebrow">SIEM, briefly</p>
-  <h2>A SIEM is a log pile with a query engine and a rule engine bolted on.</h2>
-  <p>Agents ship logs. Decoders parse them into fields. Rules match fields and fire alerts with a severity. Alerts land in a searchable index. That is the whole idea.</p>
-  <p class="lead">Everything our agent does is: <em>read that index, ask it follow-up questions, write a report.</em> No SIEM-specific magic.</p>
-</section>
-
-<section class="slide" data-act="Act 3 · Landscape" data-min="30">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Why Wazuh for a workshop</p>
-  <h2>Free, self-hosted, and it runs in Docker on your laptop.</h2>
+<section class="slide" data-sec="1 · Problem">
+  <p class="eyebrow">The second problem, which nobody writes about</p>
+  <h2>No leaderboard tells you which local model can do this.</h2>
   <ul>
-    <li>Open source, no license, no trial clock</li>
-    <li>Two backends we actually use: the <strong>indexer</strong> (OpenSearch — alert corpus and search) and the <strong>manager</strong> API (agent and rule metadata)</li>
-    <li>Real decoders and rules you can break and fix in front of an audience</li>
+    <li>Benchmarks measure reasoning, coding, trivia — not "does it escalate benign Windows logons"</li>
+    <li>The failures are <strong>per alert class</strong>, and they invert between models</li>
+    <li>Nothing published tells you what a model costs in RAM at the context you need</li>
   </ul>
-  <div class="note">
-    <span class="tag">Caveat</span>
-    <p>Two backends means two auth strategies — HTTP Basic for the indexer, JWT for the manager. One connector, two clients inside it.</p>
+  <p class="lead">So we had to measure it ourselves. That measurement is most of this talk.</p>
+</section>
+
+<!-- ═══ 2 HYPOTHESIS ═══ -->
+<section class="slide sec" data-sec="2 · Hypothesis">
+  <div class="no">02</div>
+  <h1>Hypothesis</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Why free-form ReAct fails at this model size</li>
+      <li>The closed-schema rule and its two deliberate exceptions</li>
+      <li>Read-only by construction — no remediation tool exists to be called</li>
+    </ul>
   </div>
 </section>
 
-<section class="slide" data-act="Act 3 · Landscape" data-min="33">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Portability</p>
-  <h2>What would it take to point this at a different SIEM?</h2>
-  <pre>class SIEMConnector(Protocol):
-    def health_check(self) -> bool: ...
-    def pull_alerts(self, since, until, limit) -> list[RawAlert]: ...
-    def search(self, query: SearchQuery) -> SearchResult: ...
-    def get_agent_context(self, agent_id) -> AgentContext: ...
-    def get_rule_metadata(self, rule_id) -> RuleMetadata: ...</pre>
-  <p class="lead">Five methods. <code>SearchQuery</code> is a constrained object — field, operator from a fixed enum, value, time range — <em>never</em> a raw query string, so any backend can satisfy it.</p>
-  <div class="todo">
-    <span class="tag">Decide before 21 Aug</span>
-    <p>Panther: is this real work done outside the repo, or aspirational? Nothing in the codebase references it. If aspirational, this slide is the honest answer and the next one gets cut.</p>
-  </div>
+<section class="slide" data-sec="2 · Hypothesis">
+  <p class="eyebrow">The bet</p>
+  <h2>Constrain the model. Don't scale it.</h2>
+  <p class="lead">A small local model, inside a deterministic state graph, answering one narrow schema-constrained question at a time — should beat a larger model given freedom.</p>
+  <p>The model never picks a tool, never chooses the next step, never sees a transcript of its own earlier output.</p>
 </section>
 
-<!-- ============ ACT 4 ============ -->
-<section class="slide act" data-act="Act 4" data-min="33">
-  <div class="act-no">04</div>
-  <h1>The harness</h1>
-  <p class="runs">16 minutes · Tommy</p>
-</section>
-
-<section class="slide" data-act="Act 4 · Harness" data-min="33">
-  <p class="eyebrow">Start with what went wrong</p>
-  <h2>Three things a small local model does that break naive agent designs.</h2>
+<section class="slide" data-sec="2 · Hypothesis">
+  <p class="eyebrow">Three things we assumed, and then tested</p>
+  <h2>All three turned out to be wrong.</h2>
   <div class="cols">
     <div class="col">
-      <h3>It hallucinates confidently</h3>
-      <p>Ask for an IP address and you get something IP-shaped that was never in the log.</p>
+      <h3>Bigger is better</h3>
+      <p>Assumed scaling up would improve everything.</p>
     </div>
     <div class="col">
-      <h3>It cannot juggle tools</h3>
-      <p>Give it five tools and a goal and it picks wrong, or loops. Free-form ReAct is not available to us at this size.</p>
+      <h3>More reasoning is better</h3>
+      <p>Assumed a higher effort setting was a free upgrade.</p>
     </div>
     <div class="col">
-      <h3>Alert shape changes everything</h3>
-      <p>An SSH brute force and a Mimecast email alert want completely different questions asked. One generic prompt serves neither.</p>
+      <h3>A screening run predicts the real one</h3>
+      <p>Assumed a cheap n=4 pass would rank models correctly.</p>
     </div>
   </div>
-  <p class="lead">So the design rule became: <em>the model never decides what happens next.</em></p>
+  <div class="note acc">
+    <span class="tag">Section 5 pays these off</span>
+    <p>Each was refuted by measurement, and the reasoning one was refuted in the dangerous direction.</p>
+  </div>
 </section>
 
-<section class="slide" data-act="Act 4 · Harness" data-min="37">
+<!-- ═══ 3 RESULTS ═══ -->
+<section class="slide sec" data-sec="3 · Results">
+  <div class="no">03</div>
+  <h1>Results</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Corpus design — 182 alerts, 130 graded, four clusters, needle vs benign vs FP-control</li>
+      <li>Stage 1 screen: 16 configurations, 522 + 187 min</li>
+      <li>Why needle recall saturates and benign escalation discriminates</li>
+      <li>Triage-accuracy collapse between stages — a metric artefact, not a model property</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">What was run</p>
+  <h2>602 investigations. Zero crashes.</h2>
+  <div class="metric-row">
+    <div class="metric"><span class="val acc">602</span><span class="cap">Investigations · 176 screen, 426 deep</span></div>
+    <div class="metric"><span class="val">16</span><span class="cap">Configurations screened</span></div>
+    <div class="metric"><span class="val">5</span><span class="cap">Finalists at n=71</span></div>
+    <div class="metric"><span class="val">3.2–68.7<span style="font-size:0.4em"> GB</span></span><span class="cap">Model size span</span></div>
+  </div>
+  <p>Zero missing reports across the whole field. <strong>~21 hours of local inference</strong> on a 128 GB Mac Studio.</p>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">Stage 2 · n=71</p>
+  <h2>The pick is the smallest serious candidate.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>model</th><th>benign esc.↓</th><th>needle↑</th><th>fp-control↓</th><th>sev. dist.↓</th><th>median</th><th>footprint</th></tr></thead>
+      <tbody>
+        <tr><td><code>gpt-oss:120b</code>@low</td><td class="num">20%</td><td class="num">60%</td><td class="num">0/6</td><td class="num">0.20</td><td class="num">35s</td><td class="num">64.0 GiB</td></tr>
+        <tr><td><code>gpt-oss:20b</code>@low</td><td class="num">45%</td><td class="num">80%</td><td class="num">0/6</td><td class="num">0.39</td><td class="num">24s</td><td class="num">12.0 GiB</td></tr>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">47%</td><td class="num">100%</td><td class="num">0/6</td><td class="num">0.39</td><td class="num">259s</td><td class="num">8.4 GiB</td></tr>
+        <tr><td><code>gemma4:26b-a4b-it-qat</code></td><td class="num">53%</td><td class="num">100%</td><td class="num">3/6</td><td class="num">0.49</td><td class="num">155s</td><td class="num">15.0 GiB</td></tr>
+        <tr><td><code>lfm2:24b-a2b</code></td><td class="num">58%</td><td class="num">60%</td><td class="num">0/6</td><td class="num">0.52</td><td class="num">10s</td><td class="num">14.0 GiB</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>One criterion nothing else meets:</strong> the only configuration with full needle recall <em>and</em> a clean false-positive control, at the smallest footprint.</p>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">The cost of that pick</p>
+  <h2>259 seconds per alert, and reasoning effort can't fix it.</h2>
+  <div class="metric-row">
+    <div class="metric"><span class="val hot">259<span style="font-size:0.4em">s</span></span><span class="cap">Per alert, 128 GB Studio</span></div>
+    <div class="metric"><span class="val">1.34<span style="font-size:0.4em">×</span></span><span class="cap">gemma4 low→high spread</span></div>
+    <div class="metric"><span class="val">28<span style="font-size:0.4em">×</span></span><span class="cap">gpt-oss:20b low→high spread</span></div>
+  </div>
+  <p class="lead">gemma4 barely responds to the effort knob, so ~220s is the floor. <em>A live demo needs 60–90s.</em></p>
+  <div class="note warn">
+    <span class="tag">Consequence for this talk</span>
+    <p>The demo is pre-recorded or cut away from. That is a measured conclusion, not a staging preference.</p>
+  </div>
+</section>
+
+<!-- ═══ 4 DEEPDIVE ═══ -->
+<section class="slide sec" data-sec="4 · Deepdive">
+  <div class="no">04</div>
+  <h1>Deepdive</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Grounded correlation (PR #4) — mrahman went <code>high</code>/<code>high</code> → <code>low</code></li>
+      <li><code>contains</code> was OR-over-tokens: two decoy domains returned the same 4 hits as the real one</li>
+      <li>Self-check as a re-read, and what it does and doesn't catch</li>
+      <li>Wazuh seeding mechanics — why <code>evidence_count</code> is non-deterministic</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
   <p class="eyebrow">The shape</p>
   <h2>Nine steps, fixed order, six LLM calls.</h2>
   <div class="fig-wrap">
   <figure>
-    <svg viewBox="0 0 1180 300" role="img" aria-label="Nine-step linear pipeline; steps 2, 5, 6, 7 and 8 make schema-constrained LLM calls, steps 1, 3, 4 and 9 are deterministic code. Control flow never branches on a model decision.">
+    <svg viewBox="0 0 1180 290" role="img" aria-label="Nine-step linear pipeline; steps 2, 5, 6, 7 and 8 make schema-constrained LLM calls while steps 1, 3, 4 and 9 are deterministic code. Control flow never branches on a model decision.">
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <polygon points="0,1 9,5 0,9" fill="currentColor"/>
         </marker>
       </defs>
-
-      <!-- lane labels -->
       <text x="0" y="60" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">LLM CALL</text>
       <text x="0" y="196" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">CODE ONLY</text>
-
-      <!-- spine -->
       <line x1="95" y1="140" x2="1150" y2="140" stroke="currentColor" stroke-width="1.5" opacity="0.35" marker-end="url(#ar)"/>
-
       <g font-family="ui-monospace, monospace" font-size="11">
-        <!-- step boxes: y=118 for code lane, y=40 for llm lane -->
-        <!-- 1 Ingest : code -->
         <rect x="100" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
         <text x="152" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">1 Ingest</text>
         <text x="152" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">&amp; parse</text>
         <line x1="152" y1="160" x2="152" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
 
-        <!-- 2 Extract : llm -->
         <rect x="216" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
         <text x="268" y="95" text-anchor="middle" fill="var(--accent)">2 Extract</text>
         <text x="268" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">indicators</text>
         <line x1="268" y1="120" x2="268" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
 
-        <!-- 3 Enrich : code -->
         <rect x="332" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
         <text x="384" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">3 Enrich</text>
         <text x="384" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">registry</text>
         <line x1="384" y1="160" x2="384" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
 
-        <!-- 4 Context : code -->
         <rect x="448" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
         <text x="500" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">4 Context</text>
         <text x="500" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">host / rule</text>
         <line x1="500" y1="160" x2="500" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
 
-        <!-- 5 Correlate : llm -->
         <rect x="564" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
         <text x="616" y="95" text-anchor="middle" fill="var(--accent)">5 Correlate</text>
         <text x="616" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">+ pattern</text>
         <line x1="616" y1="120" x2="616" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
 
-        <!-- 6 Risk : llm -->
         <rect x="680" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
         <text x="732" y="95" text-anchor="middle" fill="var(--accent)">6 Risk</text>
         <text x="732" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">severity</text>
         <line x1="732" y1="120" x2="732" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
 
-        <!-- 7 Draft : llm -->
         <rect x="796" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
         <text x="848" y="95" text-anchor="middle" fill="var(--accent)">7 Draft</text>
         <text x="848" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">A + B</text>
         <line x1="848" y1="120" x2="848" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
 
-        <!-- 8 Self-check : llm -->
         <rect x="912" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
         <text x="964" y="95" text-anchor="middle" fill="var(--accent)">8 Self-check</text>
         <text x="964" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">audit</text>
         <line x1="964" y1="120" x2="964" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
 
-        <!-- 9 Persist : code -->
         <rect x="1028" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
         <text x="1080" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">9 Persist</text>
         <text x="1080" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">report</text>
         <line x1="1080" y1="160" x2="1080" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
       </g>
-
-      <text x="95" y="260" font-family="ui-monospace, monospace" font-size="12" fill="currentColor" opacity="0.6">order is fixed in code · no step chooses the next step</text>
-      <text x="95" y="278" font-family="ui-monospace, monospace" font-size="12" fill="var(--accent)" opacity="0.9">every amber box returns a validated Pydantic object, or a safe default</text>
+      <text x="95" y="258" font-family="ui-monospace, monospace" font-size="12" fill="var(--accent)" opacity="0.9">every amber box returns a validated object, or a safe default</text>
     </svg>
-    <figcaption>The model answers one narrow, schema-constrained question per amber box. It never names a tool, never picks the next step, and never sees the raw log again after step 2.</figcaption>
+    <figcaption>Order is fixed in code. No step chooses the next step. The model answers one narrow question per amber box.</figcaption>
   </figure>
   </div>
 </section>
 
-<section class="slide" data-act="Act 4 · Harness" data-min="41">
-  <p class="eyebrow">The mechanism that makes it safe</p>
-  <h2>The model proposes. Code decides what survives.</h2>
-  <div class="fig-wrap">
-  <figure>
-    <svg viewBox="0 0 900 250" role="img" aria-label="Regex extraction and LLM extraction both feed the same strict per-type validator; candidates failing validation are discarded, never corrected, so hallucinated indicators cannot reach enrichment.">
-      <defs>
-        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <polygon points="0,1 9,5 0,9" fill="currentColor"/>
-        </marker>
-      </defs>
-      <g font-family="ui-monospace, monospace" font-size="12">
-        <rect x="10" y="30" width="180" height="50" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.6"/>
-        <text x="100" y="52" text-anchor="middle" fill="currentColor" opacity="0.8">regex extraction</text>
-        <text x="100" y="68" text-anchor="middle" fill="currentColor" opacity="0.45">precise, misses defanged</text>
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The mechanism, proven on a real payload</p>
+  <h2>It decoded base64 out of a PowerShell command and found the C2 — 8 runs out of 8.</h2>
+  <p>The address <code>45.146.164.110</code> appears in <strong>no plaintext field</strong> of the alert. It is inside a UTF-16LE <code>-EncodedCommand</code> payload. Both <code>source_ip</code> and <code>destination_ip</code> are <code>None</code>.</p>
+  <div class="metric-row">
+    <div class="metric"><span class="val ok">8/8</span><span class="cap">Runs recovering IP and URL</span></div>
+    <div class="metric"><span class="val ok">100%</span><span class="cap">Passed the strict validator</span></div>
+  </div>
+  <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
+</section>
 
-        <rect x="10" y="150" width="180" height="50" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
-        <text x="100" y="172" text-anchor="middle" fill="var(--accent)">LLM candidates</text>
-        <text x="100" y="188" text-anchor="middle" fill="var(--accent)" opacity="0.7">catches 185[.]220[.]101[.]1</text>
-
-        <line x1="190" y1="55" x2="330" y2="105" stroke="currentColor" stroke-width="1.3" opacity="0.5" marker-end="url(#ar2)"/>
-        <line x1="190" y1="175" x2="330" y2="125" stroke="var(--accent)" stroke-width="1.3" marker-end="url(#ar2)"/>
-
-        <rect x="340" y="88" width="180" height="54" fill="none" stroke="currentColor" stroke-width="2"/>
-        <text x="430" y="110" text-anchor="middle" fill="currentColor">same validator</text>
-        <text x="430" y="127" text-anchor="middle" fill="currentColor" opacity="0.55">IPIndicator, HashIndicator…</text>
-
-        <line x1="520" y1="115" x2="640" y2="115" stroke="currentColor" stroke-width="1.3" opacity="0.6" marker-end="url(#ar2)"/>
-        <text x="580" y="105" text-anchor="middle" fill="currentColor" opacity="0.55" font-size="11">passes</text>
-
-        <rect x="650" y="88" width="180" height="54" fill="none" stroke="var(--good)" stroke-width="1.6"/>
-        <text x="740" y="112" text-anchor="middle" fill="var(--good)">enrichment</text>
-        <text x="740" y="129" text-anchor="middle" fill="var(--good)" opacity="0.7">AbuseIPDB · VirusTotal</text>
-
-        <line x1="430" y1="142" x2="430" y2="205" stroke="var(--bad)" stroke-width="1.3" marker-end="url(#ar2)"/>
-        <text x="445" y="180" fill="var(--bad)" font-size="11">fails → discarded</text>
-        <text x="445" y="196" fill="var(--bad)" font-size="11" opacity="0.7">never corrected, never retried</text>
-      </g>
-    </svg>
-    <figcaption>A hallucinated indicator can add recall but can never inject bad data, because it passes through exactly the same validator a regex hit does. Discard counts are logged for prompt tuning.</figcaption>
-  </figure>
+<!-- ═══ 5 LEARNINGS ═══ -->
+<section class="slide sec" data-sec="5 · Learnings">
+  <div class="no">05</div>
+  <h1>Learnings</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>GGUF vs MLX — same weights, one silently ignores your schema</li>
+      <li>The harness completes an investigation with <em>no working model at all</em> — and scores like a cautious one</li>
+      <li>Models fail by cluster, and the clusters invert between models</li>
+      <li>Screen-stage ranking moved 28 points at real sample size</li>
+      <li>Don't derive tok/s from Ollama's <code>usage</code> — off by 8×</li>
+      <li>Docker binds single files by inode; git rewrites break the mount silently</li>
+    </ul>
   </div>
 </section>
 
-<section class="slide" data-act="Act 4 · Harness" data-min="44">
-  <p class="eyebrow">Guardrails</p>
-  <h2>Four rules, applied to all six calls.</h2>
-  <ul>
-    <li><strong>Closed vocabulary everywhere a choice is made.</strong> Severity, confidence, pattern type, recommended actions — all enums. Two deliberate exceptions, both prose, both grounded.</li>
-    <li><strong>Narrow input windows.</strong> Only step 2 sees the raw log. Everything after sees typed findings — never the raw alert again, never a transcript of earlier model output.</li>
-    <li><strong>Validate or fall back.</strong> Schema failure retries once with the error appended, then takes a safe default and marks the report <code>NEEDS_HUMAN_REVIEW</code>. No unbounded retries.</li>
-    <li><strong>Self-check is a re-read, not a continuation.</strong> Step 8 gets a fresh prompt with the same findings — never step 7's reasoning — so it cannot rubber-stamp itself.</li>
-  </ul>
-</section>
-
-<section class="slide" data-act="Act 4 · Harness" data-min="47">
-  <p class="eyebrow">The obvious question</p>
-  <h2>If code decides everything, in what sense is this agentic?</h2>
-  <p>Fair. Here is the honest boundary.</p>
-  <div class="cols">
-    <div class="col">
-      <h3>It is</h3>
-      <p>It chooses <em>which</em> follow-up query to run from a menu, decides whether one is needed at all, judges what pattern the evidence shows, and audits its own draft against the findings. Those are judgement calls, made per alert, that change what happens next.</p>
-    </div>
-    <div class="col">
-      <h3>It isn't</h3>
-      <p>It has no goal loop, no tool selection, no ability to take an action, and no way to change the order of the nine steps. If "agentic" means the model drives control flow — then no, deliberately.</p>
-    </div>
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 1 · the counterintuitive one</p>
+  <h2>More reasoning made it worse, in the dangerous direction.</h2>
+  <p><code>gpt-oss:20b</code>, same model, <code>low</code> against default effort, n=71:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>metric</th><th>@low</th><th>@default</th></tr></thead>
+      <tbody>
+        <tr><td>benign escalation</td><td class="num">45%</td><td class="num">58%</td></tr>
+        <tr><td>severity distance</td><td class="num">0.39</td><td class="num">0.63</td></tr>
+        <tr><td>needle recall</td><td class="num">80%</td><td class="num">80%</td></tr>
+        <tr class="pick"><td><strong>false-positive control</strong></td><td class="num">0/6 correct</td><td class="num">6/6 wrong</td></tr>
+      </tbody>
+    </table>
   </div>
-  <p class="lead">We think that trade is correct <em>at this model size</em>. Ask us at the end whether a 70B changes it.</p>
+  <p class="lead">The VPN egress <em>is</em> a real anomaly — reason about it long enough and you argue yourself into flagging it. <strong>Three independent models show the same inversion.</strong></p>
 </section>
 
-<!-- ============ ACT 5 ============ -->
-<section class="slide act" data-act="Act 5" data-min="49">
-  <div class="act-no">05</div>
-  <h1>Run it</h1>
-  <p class="runs">16 minutes · Tommy · kick off the slow one first</p>
-</section>
-
-<section class="slide" data-act="Act 5 · Demo" data-min="49">
-  <p class="eyebrow">Start this now, talk over it</p>
-  <h2>The false positive takes seven and a half minutes. Let it run.</h2>
-  <pre>agent investigate-one &lt;mrahman-logon-alert-id&gt;</pre>
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 2 · the deployment one</p>
+  <h2>KV cache, not weights, decides what fits on your laptop.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>model</th><th>MB per 1K ctx</th><th>max context under 17.5 GiB</th></tr></thead>
+      <tbody>
+        <tr><td><code>gpt-oss:120b</code></td><td class="num">2.0</td><td>does not fit</td></tr>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">6.5</td><td class="num">262,144</td></tr>
+        <tr><td><code>qwen3.6:27b</code></td><td class="num">69.2</td><td class="num">32,768</td></tr>
+        <tr><td><code>mistral-small3.2</code></td><td class="num">167.9</td><td class="num">8,192</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>84× spread, uncorrelated with model size.</strong> Quantisation shrinks weights but leaves KV identical — q4 and q8 of the same model measure exactly 69.2 MB/1K.</p>
   <div class="note acc">
-    <span class="tag">Presenter note</span>
-    <p>Kick off, then move straight to the next slide. Come back when the pipeline view lands on step 9. If the <code>rich</code> live view is not built by the 21st, this slide falls back to a pre-recorded run.</p>
+    <span class="tag">And the default will surprise you</span>
+    <p>Ollama sizes KV from the model's <em>default</em> context. <code>qwen3.6:27b</code> is 36.5 GB at default and 16 GB at <code>num_ctx=8192</code>. Invisible on a 128 GB Studio. Decisive on a laptop.</p>
   </div>
 </section>
 
-<section class="slide" data-act="Act 5 · Demo" data-min="51">
-  <p class="eyebrow">What's in the box</p>
-  <h2>71 alerts, 7 log sources, built to contain arguments.</h2>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>Source</th><th>Format</th><th>Carries</th></tr></thead>
-      <tbody>
-        <tr><td><code>auth.log</code></td><td>syslog</td><td>SSH brute force, the true-positive baseline</td></tr>
-        <tr><td><code>auth-fp.log</code></td><td>syslog</td><td>Benign auth noise that looks like the above</td></tr>
-        <tr><td><code>vpn.log</code></td><td>syslog</td><td>ocserv connects and NAT egress assignment</td></tr>
-        <tr><td><code>windows_security.json</code></td><td>json</td><td>4624 / 4625 logon events</td></tr>
-        <tr><td><code>windows_security_fp.json</code></td><td>json</td><td>The mrahman logon — <em>the argument</em></td></tr>
-        <tr><td><code>mimecast_sample.log</code></td><td>syslog</td><td>Email security verdicts</td></tr>
-        <tr><td><code>endpoint_alerts_sample.json</code></td><td>json</td><td>Sysmon process and network events</td></tr>
-      </tbody>
-    </table>
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 3 · the measurement one</p>
+  <h2>Every footprint we published was 7.7% too heavy.</h2>
+  <p><code>ollama ps</code> prints <em>decimal</em> GB. The parser multiplied by 1024³. Every number in the project was wrong by the same constant.</p>
+  <div class="note warn">
+    <span class="tag">Why it survived</span>
+    <p>It cleared a full gate, a 16-configuration sweep and two writeups — because <strong>a uniform multiplier reorders nothing</strong>. Every ranking was still correct. It eliminated one model for the wrong reason.</p>
   </div>
-  <p>The false-positive pairs exist so the agent has to <em>correlate across sources</em> to be right, not just pattern-match one line.</p>
+  <p class="lead">It surfaced only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB/1K, flat across three rungs.</p>
+  <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
 </section>
 
-<section class="slide" data-act="Act 5 · Demo" data-min="54">
-  <p class="eyebrow">Use case 1 · Auth</p>
-  <h2>SSH brute force into a Sysmon C2 beacon.</h2>
-  <p>The true-positive chain. Repeated failures, then a success, then an outbound connection from the same host to an address with a reputation.</p>
-  <div class="metric-row">
-    <div class="metric"><span class="val ok">212.8<span style="font-size:0.4em">s</span></span><span class="cap">End to end</span></div>
-    <div class="metric"><span class="val ok">correct</span><span class="cap">Verdict</span></div>
-  </div>
-  <p class="lead">This is the case the design was built for, and it works.</p>
-</section>
-
-<section class="slide" data-act="Act 5 · Demo" data-min="58">
-  <p class="eyebrow">Use case 2 · Email</p>
-  <h2>Mimecast verdicts as alert input.</h2>
-  <p>A different alert shape entirely — no source IP to enrich, no host to correlate against, the interesting fields are sender, subject and disposition.</p>
-  <div class="note">
-    <span class="tag">Why this is in the deck</span>
-    <p>It demonstrates the point from Act 4: one generic prompt cannot serve both this and an SSH brute force. Watch which steps get skipped.</p>
+<!-- ═══ 6 CONCLUSIONS ═══ -->
+<section class="slide sec" data-sec="6 · Conclusions">
+  <div class="no">06</div>
+  <h1>Conclusions</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>The go/no-go smoke test as the take-home artifact</li>
+      <li>Named gaps between here and autonomous, each with a file</li>
+      <li>Repo, slides, contact</li>
+    </ul>
   </div>
 </section>
 
-<section class="slide" data-act="Act 5 · Demo" data-min="61">
-  <p class="eyebrow">Use case 3</p>
-  <div class="todo">
-    <span class="tag">Decide before 21 Aug</span>
-    <p>Outline listed "command execution on AI tools" — nothing matching it is in the seeded stack. Either seed it into <code>endpoint_alerts_sample.json</code> as Sysmon process-creation events, or replace this slot with a third story from the seven sources you already have. The second option costs nothing and is the safer call this close to the date.</p>
-  </div>
-</section>
-
-<!-- ============ ACT 6 ============ -->
-<section class="slide act" data-act="Act 6" data-min="65">
-  <div class="act-no">06</div>
-  <h1>Where it breaks</h1>
-  <p class="runs">8 minutes · Tommy · the payoff</p>
-</section>
-
-<section class="slide" data-act="Act 6 · Failure" data-min="65">
-  <p class="eyebrow">Back to the cold open</p>
-  <h2>The agent escalated mrahman. Here is what it never saw.</h2>
+<section class="slide" data-sec="6 · Conclusions">
+  <p class="eyebrow">What we'd tell you to do</p>
+  <h2>Four things, all measured.</h2>
   <ul>
-    <li>mrahman's own ocserv VPN connect, four minutes earlier</li>
-    <li><code>100.72.44.19</code> assigned to him as NAT egress — the exact address that looked foreign</li>
-    <li>An MFA push, approved</li>
+    <li><strong>Constrain before you scale.</strong> The harness carries the structure; extra model capacity mostly buys room to argue away the grounded answer.</li>
+    <li><strong>Use <code>low</code> reasoning effort</strong> wherever the model honours it — and verify it honours it by counting reasoning characters, not by checking the request didn't error.</li>
+    <li><strong>Size by KV at your real context</strong>, not by download size. Bake <code>num_ctx</code> into a Modelfile variant; per-request doesn't survive.</li>
+    <li><strong>Measure on your own alert classes.</strong> Failures cluster, and clusters invert between models. A leaderboard position does not transfer.</li>
   </ul>
-  <p class="lead">Eight correlated alerts. All in the index. All retrieved. <em>None of them reached the model.</em></p>
 </section>
 
-<section class="slide" data-act="Act 6 · Failure" data-min="68">
-  <p class="eyebrow">The actual bug</p>
-  <h2>Context gathered, reduced to a scalar, substance discarded.</h2>
-  <div class="fig-wrap">
-  <figure>
-    <svg viewBox="0 0 940 260" role="img" aria-label="Eight correlated alerts are retrieved from the indexer, then the findings block passes only pattern type and an evidence count of 8 to the model, discarding every alert description. The model escalates on the number alone.">
-      <defs>
-        <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <polygon points="0,1 9,5 0,9" fill="currentColor"/>
-        </marker>
-      </defs>
-      <g font-family="ui-monospace, monospace" font-size="12">
-        <text x="10" y="24" fill="currentColor" opacity="0.5" font-size="11">RETRIEVED FROM INDEXER</text>
-        <rect x="10" y="36" width="230" height="24" fill="none" stroke="var(--good)" stroke-width="1.2"/>
-        <text x="20" y="52" fill="var(--good)" font-size="11">ocserv connect · mrahman</text>
-        <rect x="10" y="66" width="230" height="24" fill="none" stroke="var(--good)" stroke-width="1.2"/>
-        <text x="20" y="82" fill="var(--good)" font-size="11">egress assign · 100.72.44.19</text>
-        <rect x="10" y="96" width="230" height="24" fill="none" stroke="var(--good)" stroke-width="1.2"/>
-        <text x="20" y="112" fill="var(--good)" font-size="11">MFA push · approved</text>
-        <rect x="10" y="126" width="230" height="24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
-        <text x="20" y="142" fill="currentColor" opacity="0.5" font-size="11">+ 5 more</text>
-
-        <line x1="250" y1="93" x2="360" y2="93" stroke="currentColor" stroke-width="1.3" opacity="0.6" marker-end="url(#ar3)"/>
-
-        <rect x="370" y="60" width="190" height="66" fill="none" stroke="var(--bad)" stroke-width="2"/>
-        <text x="465" y="86" text-anchor="middle" fill="var(--bad)" font-size="12">_findings_block</text>
-        <text x="465" y="104" text-anchor="middle" fill="var(--bad)" font-size="11" opacity="0.75">app/agent/prompts.py</text>
-
-        <line x1="560" y1="93" x2="670" y2="93" stroke="var(--bad)" stroke-width="1.3" marker-end="url(#ar3)"/>
-        <text x="615" y="83" text-anchor="middle" fill="var(--bad)" font-size="11">passes on</text>
-
-        <rect x="680" y="60" width="240" height="66" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="800" y="84" text-anchor="middle" fill="currentColor" font-size="12">pattern_type: lateral_movement</text>
-        <text x="800" y="104" text-anchor="middle" fill="currentColor" font-size="12">evidence_count: 8</text>
-
-        <line x1="800" y1="126" x2="800" y2="176" stroke="currentColor" stroke-width="1.3" opacity="0.6" marker-end="url(#ar3)"/>
-        <rect x="680" y="184" width="240" height="44" fill="none" stroke="var(--bad)" stroke-width="1.6"/>
-        <text x="800" y="211" text-anchor="middle" fill="var(--bad)" font-size="12">severity HIGH · confidence HIGH</text>
-
-        <line x1="465" y1="126" x2="465" y2="170" stroke="var(--bad)" stroke-width="1.2" stroke-dasharray="3 3"/>
-        <text x="465" y="184" text-anchor="middle" fill="var(--bad)" font-size="14">✕</text>
-        <text x="465" y="204" text-anchor="middle" fill="var(--bad)" font-size="11">every description</text>
-        <text x="465" y="220" text-anchor="middle" fill="var(--bad)" font-size="11">dropped here</text>
-      </g>
-    </svg>
-    <figcaption>The model sees the integer 8 and the word "lateral movement". Given only that, escalating is the correct inference. It was reasoning correctly about the wrong input.</figcaption>
-  </figure>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 6 · Failure" data-min="71">
-  <p class="eyebrow">The lesson we actually want you to take home</p>
-  <h2>"The model was too small" is the wrong diagnosis nine times out of ten.</h2>
-  <p class="lead">A bigger model would have escalated this too. It had nothing to reason <em>from</em>.</p>
-  <div class="note acc">
-    <span class="tag">Generalise it</span>
-    <p>When your local agent gets something wrong, check what actually reached the prompt before you reach for more parameters. Log the rendered prompt. Read it. It is almost never what you assumed.</p>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 6 · Failure" data-min="74">
-  <p class="eyebrow">And the self-check didn't save us</p>
-  <h2>Zero of thirteen claims flagged.</h2>
+<section class="slide" data-sec="6 · Conclusions">
+  <p class="eyebrow">Position</p>
+  <h2>It builds the hypothesis. You still make the call.</h2>
+  <p class="lead">Strictly read-only. No remediation tool is wired to the model — not disabled, <em>not present</em>.</p>
   <div class="metric-row">
-    <div class="metric"><span class="val">0<span style="opacity:0.4">/13</span></span><span class="cap">Claims flagged · false positive run</span></div>
-    <div class="metric"><span class="val">0<span style="opacity:0.4">/9</span></span><span class="cap">Claims flagged · true positive run</span></div>
-    <div class="metric"><span class="val hot">236<span style="font-size:0.4em">s</span></span><span class="cap">Cost of the 13-claim audit</span></div>
-  </div>
-  <p>Step 8 audits each claim against the same findings step 7 saw. Both saw <code>evidence_count: 8</code>. Both concluded the same thing. <em>An audit against the same impoverished input cannot catch an impoverished input.</em></p>
-</section>
-
-<section class="slide" data-act="Act 6 · Failure" data-min="76">
-  <p class="eyebrow">So</p>
-  <h2>It builds the hypothesis. You make the call.</h2>
-  <p class="lead">The most expensive part of tier-1 work is assembling the picture — pulling the VPN log, checking the MFA push, finding out whose laptop this is. That is what got automated.</p>
-  <p>The judgement did not, and on this evidence it should not.</p>
-</section>
-
-<!-- ============ ACT 7 ============ -->
-<section class="slide act" data-act="Act 7" data-min="77">
-  <div class="act-no">07</div>
-  <h1>Lessons</h1>
-  <p class="runs">10 minutes · Yam</p>
-</section>
-
-<section class="slide" data-act="Act 7 · Lessons" data-min="77">
-  <span class="who">Yam</span>
-  <p class="eyebrow">The trap</p>
-  <h2>Same weights. Same name. One silently ignores your schema.</h2>
-  <div class="fig-wrap">
-  <figure>
-    <svg viewBox="0 0 900 260" role="img" aria-label="The same gemma4 12B model served through Ollama's GGUF backend honours the response format constraint and returns raw JSON, while the MLX backend ignores it and returns markdown-fenced text that fails validation.">
-      <defs>
-        <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <polygon points="0,1 9,5 0,9" fill="currentColor"/>
-        </marker>
-      </defs>
-      <g font-family="ui-monospace, monospace" font-size="12">
-        <rect x="300" y="10" width="300" height="42" fill="none" stroke="currentColor" stroke-width="1.4"/>
-        <text x="450" y="30" text-anchor="middle" fill="currentColor">response_format: json_schema</text>
-        <text x="450" y="45" text-anchor="middle" fill="currentColor" opacity="0.5" font-size="11">strict: true — identical request both sides</text>
-
-        <line x1="380" y1="52" x2="230" y2="92" stroke="currentColor" stroke-width="1.2" opacity="0.6" marker-end="url(#ar4)"/>
-        <line x1="520" y1="52" x2="670" y2="92" stroke="currentColor" stroke-width="1.2" opacity="0.6" marker-end="url(#ar4)"/>
-
-        <!-- GGUF -->
-        <rect x="90" y="100" width="280" height="46" fill="none" stroke="var(--good)" stroke-width="1.6"/>
-        <text x="230" y="121" text-anchor="middle" fill="var(--good)">gemma4:12b</text>
-        <text x="230" y="137" text-anchor="middle" fill="var(--good)" opacity="0.75" font-size="11">GGUF · llama.cpp grammar decoding</text>
-
-        <line x1="230" y1="146" x2="230" y2="186" stroke="var(--good)" stroke-width="1.3" marker-end="url(#ar4)"/>
-        <rect x="90" y="194" width="280" height="46" fill="none" stroke="var(--good)" stroke-width="1.2"/>
-        <text x="230" y="215" text-anchor="middle" fill="var(--good)" font-size="12">{"answer": "ok"}</text>
-        <text x="230" y="231" text-anchor="middle" fill="var(--good)" opacity="0.7" font-size="11">validates · pipeline runs</text>
-
-        <!-- MLX -->
-        <rect x="530" y="100" width="280" height="46" fill="none" stroke="var(--bad)" stroke-width="1.6"/>
-        <text x="670" y="121" text-anchor="middle" fill="var(--bad)">gemma4:12b-mlx</text>
-        <text x="670" y="137" text-anchor="middle" fill="var(--bad)" opacity="0.75" font-size="11">safetensors · constraint is a no-op</text>
-
-        <line x1="670" y1="146" x2="670" y2="186" stroke="var(--bad)" stroke-width="1.3" marker-end="url(#ar4)"/>
-        <rect x="530" y="194" width="280" height="46" fill="none" stroke="var(--bad)" stroke-width="1.2"/>
-        <text x="670" y="213" text-anchor="middle" fill="var(--bad)" font-size="11">json```json {"answer": "ok"}```</text>
-        <text x="670" y="231" text-anchor="middle" fill="var(--bad)" opacity="0.75" font-size="11">invalid from position 0 · every call fails</text>
-      </g>
-    </svg>
-    <figcaption>Confirmed with a raw HTTP probe against both builds. The model's natural habit is markdown-fencing either way — what differs is whether the backend enforces the grammar at decode time.</figcaption>
-  </figure>
-  </div>
-</section>
-
-<section class="slide" data-act="Act 7 · Lessons" data-min="81">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Why this is worse than a crash</p>
-  <h2>Nothing tells you. Every report just quietly says "needs human review".</h2>
-  <ul>
-    <li>The model is pulled, reachable, and answers unconstrained prompts fine</li>
-    <li><code>model_available()</code> returns true — it only checks the model exists, not that it is <em>usable</em></li>
-    <li>The retry-once mechanism gives zero protection: the failure is deterministic, not flaky</li>
-    <li>Every alert degrades to a stub report with none of the real analysis, forever</li>
-  </ul>
-  <p class="lead">If you take one command home from this workshop, take the next slide.</p>
-</section>
-
-<section class="slide" data-act="Act 7 · Lessons" data-min="84">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Take this home</p>
-  <h2>Before you trust any model with structured output, gate it.</h2>
-  <div class="todo">
-    <span class="tag">Build before 21 Aug</span>
-    <p>Go/no-go smoke test script. Point it at a model, get back <strong>usable / not usable</strong> plus latency per schema shape — flat, multi-enum, nested list. This is the take-home artifact and the fallback-model answer in Act 2.</p>
-  </div>
-  <p>Not a leaderboard. A binary gate. "Can I build on this at all?" is the question nobody publishes an answer to.</p>
-</section>
-
-<section class="slide" data-act="Act 7 · Lessons" data-min="86">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Measured, not estimated</p>
-  <h2>Where the seven and a half minutes actually go.</h2>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>Step</th><th>True positive</th><th>False positive</th></tr></thead>
-      <tbody>
-        <tr><td>extract_indicators</td><td class="num">12.6s</td><td class="num">32.6s</td></tr>
-        <tr><td>correlate</td><td class="num">57.0s</td><td class="num">94.5s</td></tr>
-        <tr><td>risk_assessment</td><td class="num">20.6s</td><td class="num">14.0s</td></tr>
-        <tr><td>draft_report</td><td class="num">51.0s</td><td class="num">73.8s</td></tr>
-        <tr><td>self_check</td><td class="num">71.1s</td><td class="num">236.1s</td></tr>
-        <tr class="total"><td>total</td><td class="num">212.8s</td><td class="num">451.4s</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p><strong>Self-check dominates and scales badly.</strong> 9 claims took 71s; 13 took 236s. Claim count is driven by how many actions the draft selects from a 16-member catalog — so a chattier draft is quadratically more expensive to audit.</p>
-</section>
-
-<section class="slide" data-act="Act 7 · Lessons" data-min="89">
-  <span class="who">Yam</span>
-  <p class="eyebrow">Observability, minimum viable</p>
-  <h2>Two things we wish we had logged from day one.</h2>
-  <div class="cols">
-    <div class="col">
-      <h3>The rendered prompt</h3>
-      <p>Not the template — the final string. The <code>evidence_count: 8</code> bug was invisible for weeks because everyone read the template and assumed.</p>
-    </div>
-    <div class="col">
-      <h3>Per-step wall clock</h3>
-      <p>An SDK default of <code>max_retries=2</code> was tripling every timeout. A 120s budget was costing 361s while the client believed it had made one attempt. Only per-step timing exposed it.</p>
-    </div>
-  </div>
-  <p class="lead">Every step appends to a timeline on the report — including skipped steps, with the reason. The whole run is reconstructable after the fact.</p>
-</section>
-
-<!-- ============ ACT 8 ============ -->
-<section class="slide act" data-act="Act 8" data-min="90">
-  <div class="act-no">08</div>
-  <h1>What stands between here and autonomous</h1>
-  <p class="runs">3 minutes · both</p>
-</section>
-
-<section class="slide" data-act="Act 8 · Next" data-min="90">
-  <p class="eyebrow">Named, not hand-waved</p>
-  <h2>Five things. Each one has a file.</h2>
-  <div class="scroller">
-    <table>
-      <thead><tr><th>Gap</th><th>Where</th></tr></thead>
-      <tbody>
-        <tr><td>Correlated alerts flattened to a count</td><td><code>_findings_block</code> · prompts.py</td></tr>
-        <tr><td>Sequential by design — one model, one alert at a time</td><td>design §7 · ~130 alerts overnight</td></tr>
-        <tr><td>No enrichment cache — every lookup burns live API quota</td><td>deferred · blocks sustained use</td></tr>
-        <tr><td>No poller daemon; one-shot CLI only</td><td>deferred</td></tr>
-        <tr><td>Host context gathered, then never read</td><td>step 4 · bound and dropped</td></tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="lead">That is the honest distance. None of it is research — all five are known, scoped, and boring. Which is the point.</p>
-</section>
-
-<section class="slide" data-act="Act 8 · Next" data-min="92">
-  <p class="eyebrow">Take it home</p>
-  <h2>Everything you saw runs on a laptop, offline, for free.</h2>
-  <div class="metric-row">
-    <div class="metric"><span class="val acc">71</span><span class="cap">Seeded alerts across 7 sources</span></div>
-    <div class="metric"><span class="val acc">314</span><span class="cap">Tests, 0 skipped</span></div>
+    <div class="metric"><span class="val acc">8.4<span style="font-size:0.4em"> GiB</span></span><span class="cap">Everything you saw, resident</span></div>
     <div class="metric"><span class="val acc">0</span><span class="cap">Bytes sent to a cloud model</span></div>
-  </div>
-  <div class="todo">
-    <span class="tag">Add before 21 Aug</span>
-    <p>Repo URL, slide URL, contact handles.</p>
-  </div>
-</section>
-
-<section class="slide title" data-act="End" data-min="93">
-  <p class="eyebrow">Thank you</p>
-  <h1>Questions.</h1>
-  <div class="byline">
-    <span>Tommy Wong</span>
-    <span>Ke Li Yam</span>
-    <span>HITCON 2026</span>
   </div>
 </section>
 
 </div>
 
 <script>
-  // Reliable slide advance — arrow/space/page keys move exactly one panel.
-  // Native snap scrolling is unreliable enough on stage to be worth 10 lines.
   (function () {
     var deck = document.getElementById('deck');
     var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
-
     function current() {
-      var top = deck.scrollTop;
-      var best = 0, bestGap = Infinity;
+      var top = deck.scrollTop, best = 0, bestGap = Infinity;
       slides.forEach(function (s, i) {
         var gap = Math.abs(s.offsetTop - top);
         if (gap < bestGap) { bestGap = gap; best = i; }
       });
       return best;
     }
-
-    function go(delta) {
-      var next = Math.min(slides.length - 1, Math.max(0, current() + delta));
-      deck.scrollTo({ top: slides[next].offsetTop, behavior: 'instant' });
+    function go(d) {
+      var n = Math.min(slides.length - 1, Math.max(0, current() + d));
+      deck.scrollTo({ top: slides[n].offsetTop, behavior: 'instant' });
     }
-
     document.addEventListener('keydown', function (e) {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       switch (e.key) {
