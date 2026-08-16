@@ -109,7 +109,35 @@ This means CLAUDE.md §6's stated reason for choosing Ollama — "native JSON-sc
 
 ## Local model selection benchmark, 14–15 Aug 2026
 
-Design: `docs/superpowers/specs/2026-08-14-local-model-selection-benchmark-design.md`. Harness: `bench/` (`labels.py`, `run.py`, `score.py`, `stage0.py`, `sweep.sh`). Corpus snapshot: `data/bench_alerts.db`, 182 alerts, 130 graded across four clusters. Stage 1 is complete — 12 candidate blocks (522 min) and 4 reference blocks (187 min) at the screen stage, 16 configurations, zero crashes. Stage 2 (`finalists deep`, 5 blocks × 71 runs) is in flight.
+Design: `docs/superpowers/specs/2026-08-14-local-model-selection-benchmark-design.md`. Harness: `bench/` (`labels.py`, `run.py`, `score.py`, `stage0.py`, `sweep.sh`). Corpus snapshot: `data/bench_alerts.db`, 182 alerts, 130 graded across four clusters. Both stages are complete: Stage 1 screened 16 configurations (12 candidate blocks, 522 min; 4 reference blocks, 187 min) and Stage 2 ran 5 finalists at 71 runs each (619 min). 731 investigations, **zero crashes and zero missing reports** across models spanning 3.2 GB to 68.7 GB.
+
+### Results — the pick
+
+**`gemma4:12b` (Q4_K_M, GGUF, `num_ctx=8192`), on one criterion nothing else meets: it is the only configuration with 100% needle recall *and* a clean FP control at n=6.** Five of five needles including both halves of the true-positive chain, mrahman correct on all six runs, at the smallest footprint of any serious candidate.
+
+Stage 2, all figures at n=71:
+
+| model | benign esc.↓ | needle↑ | fp-control↓ | sev. distance↓ | median | footprint |
+|---|---|---|---|---|---|---|
+| `gpt-oss:120b`@low | **20%** (12/60) | 60% | 0% (0/6) | **0.20** | 35s | 68.7 GB |
+| `gpt-oss:20b`@low | 45% (27/60) | 80% | 0% (0/6) | 0.39 | **24s** | 12.9 GB |
+| **`gemma4:12b`** | 47% (28/60) | **100%** | **0%** (0/6) | 0.39 | 259s | **9.0 GB** |
+| `gemma4:26b-a4b-it-qat` | 53% (32/60) | **100%** | **50%** (3/6) | 0.49 | 155s | 16.1 GB |
+| `lfm2:24b-a2b` | 58% (35/60) | 60% | 0% (0/6) | 0.52 | **10s** | 15.0 GB |
+
+**The decision is narrower than the screen stage implied, and the runner-up is `gpt-oss:20b`.** Benign escalation separates them by one alert (28/60 against 27/60); `gemma4:12b` buys the fifth needle and 3.9 GB, and pays **11× in latency**. At 259s per alert — 4.3 minutes, measured on the 128 GB Studio, so worse on the M4 Pro — this is a pre-recorded or cutaway demo unless reasoning effort brings it down. That makes the effort 2×2 (see "Findings about measurement itself") the highest-value remaining experiment rather than a methodological nicety.
+
+**Screen-stage numbers are indicative only; benign escalation moved by up to 28 points at real sample size.** Every model shifted between n=4 and n=60, and the two gemmas shifted most and in the flattering direction (`gemma4:12b` 75% → 47%, `gemma4:26b-a4b` 75% → 53%). A prediction made from the screen scoreboard — that `gpt-oss:20b` would be substantially quieter than `gemma4:12b` — was wrong by 28 points.
+
+**Triage accuracy collapses between stages for almost every model** (`lfm2:24b-a2b` 45%→7%, `gpt-oss:20b` 36%→14%, `gemma4:12b` 40%→21%, `gemma4:26b-a4b` 45%→28%); only `gpt-oss:120b` held (27%→23%). It is scored on the *free-form* `triage_verdict_experimental`, and deep runs 60 benign against screen's 4, so any model that leans `true_positive` scored well on a needle-rich corpus and badly on a realistic one. The collapse is a property of the metric and the corpus mix, not of the models.
+
+**Scaling up buys noise suppression and costs detection — it is a move along a trade-off curve, not a quality difference.** Within one family, 12.9 GB → 68.7 GB takes benign escalation from 45% to 20% while needle recall falls 80% → 60%. The three most conservative configurations measured anywhere (`qwen3.6:27b`, `qwen3.6:35b-a3b`, `gpt-oss:120b`, all at 20–25% benign) are the three heaviest reasoners. An earlier framing of this as "bigger is worse" was too simple and should not be used.
+
+**Models fail by cluster, not diffusely, and the clusters invert between them.** `lfm2:24b-a2b` escalates **15/15** benign PowerShell but only 4/15 winlogon; `gemma4:26b-a4b-it-qat` is **0/15** on benign PowerShell and **14/15** on winlogon. `gemma4:26b-a4b`'s two failures share one log source — 93% of ordinary Windows logons plus half the VPN-egress control — which is a systematic misreading of Windows authentication, not noise. The practical consequence is that a model must be evaluated on the alert classes it will actually see; a leaderboard position does not transfer.
+
+**The FP control held at 0/6 for four of the five finalists**, so PR #4's grounded correlation is robust at proper sample size rather than a two-alert fluke. The exception, `gemma4:26b-a4b-it-qat` at 3/6, is disqualifying for the demo independently of its 100% needle recall: mrahman is the alert the demo exists to show being reasoned about correctly.
+
+**The harness completes an investigation with no working model at all.** The Bonsai `Q2_0` block never loaded (`tensor "output.weight" size overflow` — Ollama's loader cannot read the ternary GGUF, so ternary quantisation is not currently reachable through Ollama at any quality). Each of its 11 runs still exited 0 in ~2.1s, having run every deterministic step (regex extraction 5 validated, enrichment, host/rule context) and degraded every LLM step to its safe default: `model_version: 'none'`, `severity: low`, `status: needs_human_review`. This is §4.2 rule 1 demonstrated end to end. **It is also a benchmark hazard**: a dead model produces `exit_code 0` and `ok 0 min` in the sweep log and is indistinguishable in the scoreboard from a maximally-conservative model. It escaped this run only because the `hf.co/…` name has slashes and the scorer globs one directory level. `model_version == 'none'` is the field that should gate it, and does not yet.
 
 ### Findings that change how the demo is deployed
 
@@ -134,6 +162,8 @@ Design: `docs/superpowers/specs/2026-08-14-local-model-selection-benchmark-desig
 **mrahman is fixed.** The marquee false positive returned `low` on both control runs after PR #4's grounded correlation, having been `high`/`high` for the entire project. The Demo Readiness "known-wrong behaviour" section and its honest-limitation framing now describe a solved problem.
 
 **Needle recall saturates; benign escalation discriminates.** The control verification returned **6 of 6 needles correct and 1 of 4 benign** on `gemma4:12b`. Needles are built to be findable, so repeating them buys precision on a metric that cannot separate models — Stage 2 was reallocated from 3 needle repeats to 15 benign per cluster. **This benchmark measures false positives and capability, not detection**, and a "100% needle recall" figure should never be quoted as if it did.
+
+*Amended after Stage 2:* the reallocation was right — benign escalation moved up to 28 points at n=60 and is where the finalists actually separate — but "cannot separate models" was too strong. Needle recall spread 60%/80%/100% across the five finalists and is the criterion that decides the pick. It remains n=5 even at the deep stage, so the spread is two alerts wide and should be quoted with that number attached, never as a percentage alone.
 
 **The incumbent's control scorecard:** benign escalation 75% (3/4), needle recall 100% (5/5), fp-control 0% (0/2), triage accuracy 40%, mean severity distance 0.27, base64 recall 100%, self-check flagged 10/115 claims, degraded 9%, zero crashes. Note the last figure corrects an earlier claim in this file's history that `gemma4:12b` never flags — that was generalised from two alerts returning 0/13 and 0/9.
 
