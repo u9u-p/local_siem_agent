@@ -119,11 +119,13 @@ Stage 2, all figures at n=71:
 
 | model | benign esc.↓ | needle↑ | fp-control↓ | sev. distance↓ | median | footprint |
 |---|---|---|---|---|---|---|
-| `gpt-oss:120b`@low | **20%** (12/60) | 60% | 0% (0/6) | **0.20** | 35s | 68.7 GB |
-| `gpt-oss:20b`@low | 45% (27/60) | 80% | 0% (0/6) | 0.39 | **24s** | 12.9 GB |
-| **`gemma4:12b`** | 47% (28/60) | **100%** | **0%** (0/6) | 0.39 | 259s | **9.0 GB** |
-| `gemma4:26b-a4b-it-qat` | 53% (32/60) | **100%** | **50%** (3/6) | 0.49 | 155s | 16.1 GB |
-| `lfm2:24b-a2b` | 58% (35/60) | 60% | 0% (0/6) | 0.52 | **10s** | 15.0 GB |
+| `gpt-oss:120b`@low | **20%** (12/60) | 60% | 0% (0/6) | **0.20** | 35s | 64.0 GiB |
+| `gpt-oss:20b`@low | 45% (27/60) | 80% | 0% (0/6) | 0.39 | **24s** | 12.0 GiB |
+| **`gemma4:12b`** | 47% (28/60) | **100%** | **0%** (0/6) | 0.39 | 259s | **8.4 GiB** |
+| `gemma4:26b-a4b-it-qat` | 53% (32/60) | **100%** | **50%** (3/6) | 0.49 | 155s | 15.0 GiB |
+| `lfm2:24b-a2b` | 58% (35/60) | 60% | 0% (0/6) | 0.52 | **10s** | 14.0 GiB |
+
+*Footprints restated in true GiB on 16 Aug — the figures the runner recorded were 7.7% high, see "Every footprint this project measured was 7.7% too heavy" below. These are under-generation readings; the load-time ladder in the same section reads slightly lower.*
 
 **The decision is narrower than the screen stage implied, and the runner-up is `gpt-oss:20b`.** Benign escalation separates them by one alert (28/60 against 27/60); `gemma4:12b` buys the fifth needle and 3.9 GB, and pays **11× in latency**. At 259s per alert — 4.3 minutes, measured on the 128 GB Studio, so worse on the M4 Pro — this is a pre-recorded or cutaway demo unless reasoning effort brings it down. That makes the effort 2×2 (see "Findings about measurement itself") the highest-value remaining experiment rather than a methodological nicety.
 
@@ -144,6 +146,31 @@ Stage 2, all figures at n=71:
 **The harness completes an investigation with no working model at all.** The Bonsai `Q2_0` block never loaded (`tensor "output.weight" size overflow` — Ollama's loader cannot read the ternary GGUF, so ternary quantisation is not currently reachable through Ollama at any quality). Each of its 11 runs still exited 0 in ~2.1s, having run every deterministic step (regex extraction 5 validated, enrichment, host/rule context) and degraded every LLM step to its safe default: `model_version: 'none'`, `severity: low`, `status: needs_human_review`. This is §4.2 rule 1 demonstrated end to end. **It is also a benchmark hazard**: a dead model produces `exit_code 0` and `ok 0 min` in the sweep log and is indistinguishable in the scoreboard from a maximally-conservative model. It escaped this run only because the `hf.co/…` name has slashes and the scorer globs one directory level. `model_version == 'none'` is the field that should gate it, and does not yet.
 
 ### Findings that change how the demo is deployed
+
+**Every footprint this project measured was 7.7% too heavy, because `ollama ps` prints *decimal* GB and the parser multiplied it by 1024³.** `gemma4:12b` printing "8.4 GB" is 8,377,314,835 bytes — 7.80 GiB — and was recorded as 9.02 GB. Fixed 16 Aug by reading `/api/ps`, which returns exact bytes and the context length directly, deleting the text parser rather than correcting its arithmetic. **One conclusion flips: `muse-glimmer:30b` at a reported "18.3 GB" is 17.04 GiB and *fits* the 17.5 GiB ceiling** — it was eliminated citing footprint, and that reason was wrong. Its correctness reasons stand independently (fp-control 100% at `low`, triage accuracy 18% at default), so the shortlist is unchanged. No ranking moves, because a uniform multiplier reorders nothing — **which is exactly why this survived a full gate, a 16-configuration sweep and two writeups.** It surfaced only because a *different* number looked impossible: `gpt-oss:120b` reading a KV cost of exactly 0.0 MB/1K, flat across three rungs. At 64 GB the text output carries about 1 GB of resolution, so its real growth of 240 MB per 122,880 tokens was invisible. **Chase the implausible reading; the systematic error is underneath it.**
+
+**KV cost per 1K tokens of context spans 84× across the field and is uncorrelated with model size.** Measured exactly, at four context rungs (`python -m bench.stage0 --ladder-only`, persisted to `bench/results/stage0-ladder.jsonl`):
+
+| model | 8K | 32K | 128K | 256K | MB/1K | max context under 17.5 GiB |
+|---|---|---|---|---|---|---|
+| `gpt-oss:120b` | 60.0 | 60.1 | 60.2 | — | **2.0** | does not fit |
+| `gemma4:26b-a4b-it-qat` | 14.2 | 14.2 | 15.1 | 15.6 | 5.7 | **262,144** |
+| `gpt-oss:20b` | 12.0 | 12.0 | 12.7 | — | 6.1 | 131,072 |
+| `gemma4:latest` | 9.0 | 9.0 | 9.7 | — | 6.2 | 131,072 |
+| **`gemma4:12b`** | 7.8 | 7.8 | 8.9 | 9.4 | 6.5 | **262,144** |
+| `muse-glimmer:30b` | 16.3 | 16.3 | 17.1 | — | 6.9 | 131,072 |
+| `lfm2.5:8b-a1b` | 5.0 | 5.3 | — | — | 17.0 | 128,000 (model cap) |
+| `nemotron-3-nano:4b` | 2.8 | 3.2 | 5.3 | 7.8 | 20.8 | 262,144 |
+| `lfm2:24b-a2b` | 13.7 | 14.3 | — | — | 22.0 | 32,768 (model cap) |
+| `qwen3.6:35b-a3b` | 21.3 | 21.8 | 24.2 | 27.2 | 24.6 | does not fit |
+| `qwen3.5:9b` | 5.4 | 6.1 | 9.8 | 14.3 | 36.8 | 262,144 |
+| `glm-4.7-flash` | 18.2 | 19.5 | 24.6 | — | 53.4 | does not fit |
+| `qwen3.6:27b-bf16` | 48.9 | 50.3 | 56.4 | 64.5 | 64.4 | does not fit |
+| `qwen3.6:27b` | 15.6 | 17.2 | 23.9 | 32.4 | **69.2** | 32,768 |
+| `qwen3.6:27b-q8_0` | 26.5 | 28.1 | 34.8 | 43.3 | **69.2** | does not fit |
+| `mistral-small3.2` | 14.8 | 18.6 | 34.5 | — | **167.9** | **8,192** |
+
+**Quantisation shrinks weights, not KV.** `qwen3.6:27b` at q4 and q8_0 have *identical* KV cost (69.2 MB/1K) and identical absolute growth (+16.8 GiB from 8K to 256K); bf16 is 64.4. So quantising buys a constant, not a proportional saving, and the more context you want the less it helps. **The last column is the number that matters for deployment** — it converts KV cost into how much context a model can actually afford on the demo laptop, and it eliminates models the 8192 column does not: `mistral-small3.2` and `muse-glimmer:30b` sit 1.5 GiB apart loaded, and 17.4 GiB apart at 128K. Two models you would size identically from their weights. The pick affords full 262,144 at 9.4 GiB.
 
 **Ollama sizes the KV cache from the model's *default* context, and that allocation — not the weights — dominates resident memory.** Several candidates default to 262144 tokens. `qwen3.6:27b` measures **36.5 GB at default against 16 GB at `num_ctx=8192`**; `gemma4:12b` goes 10 GB → 8.4 GB from a 7.6 GB file. CLAUDE.md §4.2 rule 2 caps every prompt here at a few hundred to ~2k tokens, so the default is pure waste — invisible on a 128GB Studio, decisive on a 24GB laptop. **Per-request `num_ctx` does not survive**: the OpenAI-compat endpoint `OllamaClient` uses reloads the model at its default (8.4 GB at 8192 became 10 GB at 262144 on the next call). A Modelfile `PARAMETER num_ctx` does survive, so the deployment lever is a baked variant plus one `LLM_MODEL` change, no application code. Ollama truncates silently past the limit, but `OllamaClient` surfaces it — `LengthFinishReasonError` → retry → degraded step — so it shows up as an elevated degraded count rather than silent quality loss.
 
