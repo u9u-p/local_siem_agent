@@ -391,9 +391,35 @@ def verdict(result: dict) -> tuple[str, str]:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--models", nargs="*", help="defaults to every locally pulled model")
+    ap.add_argument(
+        "--ladder-only", action="store_true",
+        help="context ladder and KV cost only, skipping probes, throughput and effort. "
+             "The rungs are model loads with no generation, so this is a fraction of a "
+             "full gate — enough to recover ladder data without re-running everything.",
+    )
     args = ap.parse_args()
 
     models = args.models or local_models()
+
+    if args.ladder_only:
+        out = RESULTS_FILE.with_name("stage0-ladder.jsonl")
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("")  # its own file: a partial pass must not clobber a full gate's record
+        print(f"Stage 0 ladder — {len(models)} model(s), rungs {CONTEXT_LADDER}\n")
+        for model in models:
+            ladder = footprint_ladder(model)
+            kv = kv_cost_per_1k(ladder)
+            with out.open("a") as fh:
+                fh.write(json.dumps({"model": model, "ladder": ladder, "kv_mb_per_1k": kv}) + "\n")
+            if not ladder:
+                print(f"  {model:<44} no rung loaded", flush=True)
+                continue
+            rungs = "  ".join(f"{a or r}:{s / 1024**3:.1f}G" for r, a, s in ladder)
+            print(f"  {model:<44} {rungs}"
+                  f"{f'   KV {kv:.1f} MB/1K' if kv is not None else ''}", flush=True)
+        print(f"\nwrote {out}")
+        return
+
     print(f"Stage 0 — {len(models)} model(s), ceiling {FIT_CEILING_BYTES / 1024**3:.1f} GB, num_ctx {CONTEXT_TOKENS}\n")
 
     RESULTS_FILE.parent.mkdir(parents=True, exist_ok=True)
