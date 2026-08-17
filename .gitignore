@@ -4,10 +4,18 @@
 __pycache__/
 *.pyc
 .env
-data/
+# data/* not data/ — git cannot re-include a file whose parent directory is excluded,
+# so excluding the directory itself would make the negation below silently do nothing.
+data/*
 *.db
 .pytest_cache/
 *.egg-info/
+
+# The one exception, and it must come after *.db to win: the frozen 182-alert graded
+# corpus every benchmark result was measured against. Committing the evidence without
+# its input leaves the findings unreproducible from a clone. Self-authored synthetic
+# logs only — seeded from wazuh_deployment/single-node/, no real alert data.
+!data/bench_alerts.db
 
 # Benchmark evidence IS committed — the reports, per-run records, gate results and
 # sweep logs are what the findings in PROGRESS.md rest on, and they cannot be
