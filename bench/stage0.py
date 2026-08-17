@@ -96,6 +96,25 @@ VARIANT_PREFIX = "-bench-ctx"
 RESULTS_FILE = Path("bench/results/stage0.jsonl")
 
 
+def upsert_result(path: Path, record: dict) -> None:
+    """Replace `record`'s model row in `path`, keeping every other model's.
+
+    Not an append and not a truncate. Truncating meant `--models qwen3.8:27b` silently
+    destroyed the other seventeen rows; appending would leave two rows for a re-gated
+    model with no way to tell which is current. Rewriting whole is O(n^2) over a run
+    and n is the number of local models, so it does not matter.
+    """
+    rows: dict[str, dict] = {}
+    if path.exists():
+        for line in path.read_text().splitlines():
+            if line.strip():
+                row = json.loads(line)
+                rows[row["model"]] = row
+    rows[record["model"]] = record
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows.values()))
+
+
 class TrivialAnswer(BaseModel):
     answer: str
 
@@ -400,15 +419,12 @@ def main() -> None:
     models = args.models or local_models()
 
     if args.ladder_only:
-        out = RESULTS_FILE.with_name("stage0-ladder.jsonl")
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text("")  # its own file: a partial pass must not clobber a full gate's record
+        out = RESULTS_FILE.with_name("stage0-ladder.jsonl")  # its own file, not the gate's
         print(f"Stage 0 ladder — {len(models)} model(s), rungs {CONTEXT_LADDER}\n")
         for model in models:
             ladder = footprint_ladder(model)
             kv = kv_cost_per_1k(ladder)
-            with out.open("a") as fh:
-                fh.write(json.dumps({"model": model, "ladder": ladder, "kv_mb_per_1k": kv}) + "\n")
+            upsert_result(out, {"model": model, "ladder": ladder, "kv_mb_per_1k": kv})
             if not ladder:
                 print(f"  {model:<44} no rung loaded", flush=True)
                 continue
@@ -420,16 +436,12 @@ def main() -> None:
 
     print(f"Stage 0 — {len(models)} model(s), ceiling {FIT_CEILING_BYTES / 1024**3:.1f} GB, num_ctx {CONTEXT_TOKENS}\n")
 
-    RESULTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS_FILE.write_text("")  # a fresh gate replaces the last one's record
-
     rows = []
     for model in models:
         result = probe_model(model)
         state, note = verdict(result)
         rows.append((model, state, note, result))
-        with RESULTS_FILE.open("a") as fh:
-            fh.write(json.dumps({"verdict": state, "note": note, **result}) + "\n")
+        upsert_result(RESULTS_FILE, {"verdict": state, "note": note, **result})
         timings = "  ".join(f"{n}={p['seconds']}s" for n, p in result["probes"].items())
         print(f"  {state:<7} {model:<26} {note}")
         print(f"          {timings}")
