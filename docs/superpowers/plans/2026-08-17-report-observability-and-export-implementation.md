@@ -25,13 +25,15 @@
 
 ### Task 1: LLM call instrumentation
 
-Everything the LLM client needs to report about a call. Nothing outside `app/llm/` changes yet, so the state graph is temporarily broken at the type level — Task 2 fixes it. Run only this task's tests at the end of this task; the full suite goes green again after Task 2.
+The LLM client learns to report on itself, and the state graph starts collecting what it reports. These are one task because splitting them leaves the suite red in between: changing the Protocol's return type breaks all seven call sites at once, so the two halves have no independently green state to commit at.
 
 **Files:**
 - Modify: `app/llm/client.py` (whole file)
 - Modify: `app/llm/errors.py` (whole file)
 - Modify: `app/llm/ollama_client.py:41-92`
-- Test: `tests/test_ollama_client.py`
+- Modify: `app/schemas.py` — `InvestigationStep`
+- Modify: `app/agent/state_graph.py` — the seven LLM helpers and their callers
+- Test: `tests/test_ollama_client.py`, `tests/test_llm_client_protocol.py`, `tests/test_state_graph.py`
 
 **Interfaces:**
 - Consumes: nothing.
@@ -40,10 +42,17 @@ Everything the LLM client needs to report about a call. Nothing outside `app/llm
   - `app.llm.client.LLMResponse[T]` — Pydantic generic with `.value: T` and `.call: LLMCallRecord`.
   - `LLMClient.generate_structured(self, prompt: str, schema: type[T], prompt_ref: str) -> LLMResponse[T]` — `prompt_ref` is required and positional.
   - `LLMClientError.call: LLMCallRecord | None` — populated on every raise from `OllamaClient`.
+  - `InvestigationStep.llm_calls: list[LLMCallRecord]` and `.output: dict | None` (the latter added here, populated in Task 2).
+  - Each of the seven LLM helpers in `state_graph.py` returns its records alongside its value — exact signatures in Step 6.
 
-- [ ] **Step 1: Add usage to the test helper and write the failing tests**
+**Measured backend behaviour this task encodes** (verified 17 Aug 2026 against `gemma4:12b`, spec §1.1.1):
+- Ollama populates `usage`; `prompt_tokens` tracks input size and is trustworthy.
+- `completion_tokens` counts the JSON content only — a response with 1,608 characters of reasoning reported `completion_tokens: 18`. Never treat it as a cost or throughput figure.
+- The reasoning trace is exposed as `message.reasoning` via the SDK's `model_extra`, and is captured because it is the majority of what the model produces.
 
-In `tests/test_ollama_client.py`, replace `_chat_completion_response` with a version that emits a `usage` block, and add an `include_usage` switch so the "backend omits usage" case is testable:
+- [ ] **Step 1: Add usage and reasoning to the test helper, and write the failing client tests**
+
+In `tests/test_ollama_client.py`, replace `_chat_completion_response` with a version that emits a `usage` block and an optional reasoning trace. The `include_usage` switch keeps the "backend omits usage" path tested even though the current backend always sends it — a different model or a future Ollama build may not:
 
 ```python
 def _chat_completion_response(
@@ -52,19 +61,19 @@ def _chat_completion_response(
     prompt_tokens: int = 120,
     completion_tokens: int = 40,
     include_usage: bool = True,
+    reasoning: str | None = None,
 ) -> httpx.Response:
+    message = {"role": "assistant", "content": parsed_content, "refusal": None}
+    if reasoning is not None:
+        # Ollama returns the reasoning trace as a non-standard sibling of `content`;
+        # the OpenAI SDK surfaces it through model_extra rather than a typed field.
+        message["reasoning"] = reasoning
     body = {
         "id": "chatcmpl-1",
         "object": "chat.completion",
         "created": 1234567890,
         "model": "qwen3.5:9b",
-        "choices": [
-            {
-                "index": 0,
-                "message": {"role": "assistant", "content": parsed_content, "refusal": None},
-                "finish_reason": finish_reason,
-            }
-        ],
+        "choices": [{"index": 0, "message": message, "finish_reason": finish_reason}],
     }
     if include_usage:
         body["usage"] = {
@@ -119,6 +128,39 @@ def test_call_record_reports_none_tokens_when_backend_omits_usage():
     # The rest of the record is unaffected by a backend that does not report usage.
     assert call.attempts == 1
     assert call.parsed_output == {"label": "clean", "confidence": "low"}
+
+
+@respx.mock
+def test_call_record_captures_the_reasoning_trace():
+    """completion_tokens counts the JSON only; the reasoning is where the output went.
+
+    Measured on gemma4:12b: 1,608 characters of reasoning reported as 18 completion
+    tokens. Without this the record would claim a 40-token call that in fact generated
+    several hundred tokens' worth of text.
+    """
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response(
+            '{"label": "malicious", "confidence": "high"}',
+            reasoning="The source IP appears in three prior alerts, so this is not isolated.",
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.reasoning == "The source IP appears in three prior alerts, so this is not isolated."
+
+
+@respx.mock
+def test_call_record_reasoning_is_none_for_a_model_that_does_not_emit_one():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "clean", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.reasoning is None
 
 
 @respx.mock
@@ -224,11 +266,19 @@ class LLMCallRecord(BaseModel):
     # Only populated when an attempt failed to parse — on a clean first attempt the
     # parsed object is the faithful record and the raw text adds nothing.
     raw_response: str | None = None
+    # The last attempt's reasoning trace. Measured on gemma4:12b, this is the bulk of
+    # what the model generates and `usage` does not count a token of it: 1,608
+    # characters of reasoning were reported as 18 completion tokens. Kept for the
+    # last attempt only — a failed attempt's reasoning led to output already preserved
+    # in raw_response.
+    reasoning: str | None = None
     parsed_output: dict[str, Any] | None = None
     attempts: int
     # None when the backend does not report usage; never 0, which would read as
     # "measured, and it was free".
     prompt_tokens: int | None = None
+    # Counts the structured content only, NOT the reasoning trace. Not a cost or
+    # throughput figure — use latency_ms for that.
     completion_tokens: int | None = None
     latency_ms: int
     error_kind: str | None = None
@@ -286,12 +336,15 @@ Add the tally just below `_RETRY_NOTE`:
 
 ```python
 @dataclass
-class _UsageTally:
-    """Running totals across the attempts of one logical call."""
+class _CallTally:
+    """What accumulated across the attempts of one logical call."""
 
     attempts: int = 0
     prompt_tokens: int | None = 0
     completion_tokens: int | None = 0
+    # Last attempt wins: on a retry the earlier trace led to output that failed
+    # validation, and that output is already kept in raw_response.
+    reasoning: str | None = None
 
     def add_usage(self, usage) -> None:
         # One attempt without usage poisons the total: a sum missing an unknown term is
@@ -310,7 +363,7 @@ Replace `generate_structured` (currently lines 41-51):
 ```python
     def generate_structured(self, prompt: str, schema: type[T], prompt_ref: str) -> LLMResponse[T]:
         started = time.monotonic()
-        tally = _UsageTally()
+        tally = _CallTally()
         try:
             result = self._attempt(prompt, schema, tally)
             if result is not None:
@@ -341,7 +394,7 @@ Replace `generate_structured` (currently lines 41-51):
             raise
 
     def _record(
-        self, prompt_ref: str, prompt: str, tally: _UsageTally, started: float,
+        self, prompt_ref: str, prompt: str, tally: _CallTally, started: float,
         parsed=None, raw_response: str | None = None, error_kind: str | None = None,
     ) -> LLMCallRecord:
         return LLMCallRecord(
@@ -349,6 +402,7 @@ Replace `generate_structured` (currently lines 41-51):
             prompt=prompt,
             retried=tally.attempts > 1,
             raw_response=raw_response,
+            reasoning=tally.reasoning,
             parsed_output=parsed.model_dump(mode="json") if parsed is not None else None,
             attempts=tally.attempts,
             prompt_tokens=tally.prompt_tokens,
@@ -358,10 +412,10 @@ Replace `generate_structured` (currently lines 41-51):
         )
 ```
 
-Change `_attempt`'s signature to take the tally, count the attempt on entry, and record usage once the response arrives. The two edits inside the existing body:
+Change `_attempt`'s signature to take the tally, count the attempt on entry, and record usage and reasoning once the response arrives. The edits inside the existing body:
 
 ```python
-    def _attempt(self, prompt: str, schema: type[T], tally: _UsageTally) -> T | None:
+    def _attempt(self, prompt: str, schema: type[T], tally: _CallTally) -> T | None:
         tally.attempts += 1
         try:
             completion = self._client.beta.chat.completions.parse(
@@ -371,12 +425,16 @@ Change `_attempt`'s signature to take the tally, count the attempt on entry, and
 
         tally.add_usage(completion.usage)
         message = completion.choices[0].message
+        # Ollama returns the reasoning trace as a non-standard field, so the SDK parks
+        # it in model_extra rather than a typed attribute. Read both: a future SDK that
+        # types it would otherwise silently stop being captured.
+        tally.reasoning = getattr(message, "reasoning", None) or (message.model_extra or {}).get("reasoning")
         ...rest unchanged...
 ```
 
 Counting on entry rather than on success is what makes a transport failure still report `attempts == 1`.
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [ ] **Step 6: Run the client tests to verify they pass**
 
 Run: `pytest tests/test_ollama_client.py tests/test_llm_client_protocol.py -q`
 Expected: PASS.
@@ -404,34 +462,9 @@ def test_fake_client_satisfies_llm_client_protocol():
 
 with `from app.llm.client import LLMCallRecord, LLMClient, LLMResponse` at the top.
 
-`pytest -q` as a whole will still fail in `tests/test_state_graph.py` — expected, and fixed by Task 2.
+`pytest -q` as a whole is still red at this point — `tests/test_state_graph.py` calls the old signature. That is expected mid-task and is what Steps 7-11 close. Do not commit here.
 
-- [ ] **Step 7: Commit**
-
-```bash
-git add app/llm/ tests/test_ollama_client.py tests/test_llm_client_protocol.py
-git commit -m "feat(llm): return a call record with every structured generation
-
-Token usage, latency and attempt count had nowhere to come out — the
-completion object was discarded inside _attempt. generate_structured now
-returns LLMResponse[T], and LLMClientError carries the same record so a
-call that times out after six minutes is measured rather than reduced to
-'call failed'."
-```
-
----
-
-### Task 2: State graph collects call records
-
-**Files:**
-- Modify: `app/agent/state_graph.py` — the seven LLM helpers and their callers
-- Test: `tests/test_state_graph.py`
-
-**Interfaces:**
-- Consumes: `LLMResponse`, `LLMCallRecord`, `LLMClientError.call` from Task 1.
-- Produces: every `InvestigationStep` that involved the model carries `llm_calls: list[LLMCallRecord]`. Helper return types become `tuple[<value>, list[LLMCallRecord]]`.
-
-- [ ] **Step 1: Update the fake client and write the failing tests**
+- [ ] **Step 7: Update the state graph's fake client and write the failing tests**
 
 In `tests/test_state_graph.py`, replace `_FakeLLMClient.generate_structured` and add the record factory:
 
@@ -552,12 +585,12 @@ def test_steps_without_a_model_call_record_no_llm_calls():
     assert step.llm_calls == []
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 8: Run the tests to verify they fail**
 
 Run: `pytest tests/test_state_graph.py -q`
 Expected: FAIL — `AttributeError: 'InvestigationStep' object has no attribute 'llm_calls'`.
 
-- [ ] **Step 3: Add the field to the schema**
+- [ ] **Step 9: Add the fields to the schema**
 
 In `app/schemas.py`, extend `InvestigationStep` (currently lines 111-117):
 
@@ -573,11 +606,11 @@ class InvestigationStep(BaseModel):
     timestamp: datetime
 ```
 
-with `from app.llm.client import LLMCallRecord` at the top. `output` is added here so Task 3 does not have to touch the schema again; nothing populates it yet.
+with `from app.llm.client import LLMCallRecord` at the top. `output` is added here so Task 2 does not have to touch the schema again; nothing populates it yet.
 
 Both new fields default, so every stored report still validates — `tests/test_schemas.py` proves it without modification.
 
-- [ ] **Step 4: Thread records through the seven call sites**
+- [ ] **Step 10: Thread records through the seven call sites**
 
 Each LLM helper returns its records alongside its value. In `app/agent/state_graph.py`:
 
@@ -644,33 +677,39 @@ and passes `llm_calls=calls` when it builds its `InvestigationStep`. Each of the
 
 **Do not touch any `output_summary` string.**
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [ ] **Step 11: Run the whole suite to verify it is green again**
 
 Run: `pytest -q`
-Expected: PASS, full suite (live tests skipped unless the stack is up).
+Expected: PASS, full suite (live tests skipped unless the stack is up). This is the first green point since Step 5, and the task is not complete until it is green.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 12: Commit**
 
 ```bash
-git add app/schemas.py app/agent/state_graph.py tests/test_state_graph.py
-git commit -m "feat(agent): attach LLM call records to each investigation step
+git add app/llm/ app/schemas.py app/agent/state_graph.py tests/
+git commit -m "feat(llm): measure every structured generation, step by step
 
-Every step that talks to the model now carries what it asked, what came
-back, how long it took and what it cost. Failed calls contribute a record
-too, so a timeout is visible as a measured six-minute call rather than a
-one-line summary."
+Token usage, latency and attempt count had nowhere to come out — the
+completion object was discarded inside _attempt. generate_structured now
+returns LLMResponse[T] and each investigation step keeps the records of
+the calls it made, so a self-check that times out after six minutes is a
+measured call rather than the string 'call failed'.
+
+Captures the reasoning trace too: Ollama's usage counts the JSON content
+only, reporting 18 completion tokens for a response carrying 1,608
+characters of reasoning, so without it the record would describe a
+fraction of what the model generated."
 ```
 
 ---
 
-### Task 3: Per-step inputs and outputs
+### Task 2: Per-step inputs and outputs
 
 **Files:**
 - Modify: `app/agent/state_graph.py` — every `InvestigationStep(...)` construction
 - Test: `tests/test_state_graph.py`
 
 **Interfaces:**
-- Consumes: `InvestigationStep.output` (added in Task 2, Step 3).
+- Consumes: `InvestigationStep.output` (added in Task 1, Step 9).
 - Produces: every step in a completed timeline has a non-`None` `input`; every non-skipped step has a non-`None` `output`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -919,7 +958,7 @@ and these outputs, in the order the branches appear in the function:
             },
 ```
 
-`_step_finalize_and_persist` is left alone here — Task 5 rewrites it.
+`_step_finalize_and_persist` is left alone here — Task 4 rewrites it.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
@@ -939,7 +978,7 @@ rule context and assigned it to unused locals; it now reaches the report."
 
 ---
 
-### Task 4: Report-level LLM usage totals
+### Task 3: Report-level LLM usage totals
 
 **Files:**
 - Modify: `app/schemas.py`
@@ -947,7 +986,7 @@ rule context and assigned it to unused locals; it now reaches the report."
 - Test: `tests/test_state_graph.py`, `tests/test_schemas.py`
 
 **Interfaces:**
-- Consumes: `InvestigationStep.llm_calls` from Task 2.
+- Consumes: `InvestigationStep.llm_calls` from Task 1.
 - Produces: `app.schemas.LLMUsageTotals` and `Report.llm_usage`, defaulting to an all-zero instance so existing reports validate.
 
 - [ ] **Step 1: Write the failing tests**
@@ -975,6 +1014,26 @@ def test_report_rolls_up_llm_usage_across_the_timeline():
     assert report.llm_usage.prompt_tokens == sum(c.prompt_tokens for c in recorded)
     assert report.llm_usage.llm_latency_ms == sum(c.latency_ms for c in recorded)
     assert report.llm_usage.wall_clock_ms >= report.llm_usage.llm_latency_ms
+
+
+def test_llm_usage_sums_reasoning_characters():
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning="four"),
+            LLMCallRecord(prompt_ref="b", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning=None),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.reasoning_chars == 4
+    # The gap this field exists to expose: 4 completion tokens reported against a
+    # reasoning trace that usage never counted.
+    assert totals.completion_tokens == 4
 
 
 def test_llm_usage_tokens_are_none_when_any_call_lacks_them():
@@ -1058,7 +1117,12 @@ class LLMUsageTotals(BaseModel):
     failed_calls: int = 0
     attempts: int = 0
     prompt_tokens: int | None = 0
+    # Structured output only — the reasoning trace is not counted here. Compare against
+    # reasoning_chars before reading this as "what the model produced".
     completion_tokens: int | None = 0
+    # Characters, deliberately not tokens: usage never tokenises the reasoning trace,
+    # and a characters-to-tokens estimate would look authoritative while being made up.
+    reasoning_chars: int = 0
     llm_latency_ms: int = 0
     # Total time inside investigate(). The difference against llm_latency_ms is what
     # was spent on SIEM searches and enrichment HTTP, which is worth seeing separately.
@@ -1078,7 +1142,7 @@ In `app/agent/state_graph.py`, a module-level function next to `_compute_uncerta
 ```python
 def _roll_up_usage(timeline: list[InvestigationStep], wall_clock_ms: int) -> LLMUsageTotals:
     calls = [c for step in timeline for c in step.llm_calls]
-    # A single unmeasured call makes the whole total unknown — see _UsageTally.
+    # A single unmeasured call makes the whole total unknown — see _CallTally.
     known = all(c.prompt_tokens is not None for c in calls)
     return LLMUsageTotals(
         calls=len(calls),
@@ -1086,6 +1150,7 @@ def _roll_up_usage(timeline: list[InvestigationStep], wall_clock_ms: int) -> LLM
         attempts=sum(c.attempts for c in calls),
         prompt_tokens=sum(c.prompt_tokens for c in calls) if known else None,
         completion_tokens=sum(c.completion_tokens for c in calls) if known else None,
+        reasoning_chars=sum(len(c.reasoning or "") for c in calls),
         llm_latency_ms=sum(c.latency_ms for c in calls),
         wall_clock_ms=wall_clock_ms,
     )
@@ -1111,7 +1176,7 @@ when any contributing call had no usage to give."
 
 ---
 
-### Task 5: The finalize step reaches the database
+### Task 4: The finalize step reaches the database
 
 **Files:**
 - Modify: `app/agent/state_graph.py:775-802` (`_step_finalize_and_persist`) and `:847-849` (`investigate`)
@@ -1239,7 +1304,7 @@ then save; on failure replace it in place so the JSON stays honest."
 
 ---
 
-### Task 6: Persist the columns the report table never had
+### Task 5: Persist the columns the report table never had
 
 **Files:**
 - Modify: `app/storage/models.py:35-50`
@@ -1247,7 +1312,7 @@ then save; on failure replace it in place so the JSON stays honest."
 - Test: `tests/test_sqlite_alert_store.py`
 
 **Interfaces:**
-- Consumes: `Report.llm_usage` (Task 4), `Report.triage_*_experimental` (already on the model).
+- Consumes: `Report.llm_usage` (Task 3), `Report.triage_*_experimental` (already on the model).
 - Produces: `ReportRecord.triage_verdict_experimental`, `.triage_rationale_experimental`, `.llm_usage` — round-tripped by `save_report`/`get_report`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1376,7 +1441,7 @@ show-report could never display them. Adds those two plus llm_usage."
 
 ---
 
-### Task 7: Shared report section renderer
+### Task 6: Shared report section renderer
 
 **Files:**
 - Create: `app/report_render.py`
@@ -1615,14 +1680,14 @@ now defined once and rendered twice."
 
 ---
 
-### Task 8: Experimental output in `show-report`
+### Task 7: Experimental output in `show-report`
 
 **Files:**
 - Modify: `app/report_render.py` — `report_sections`
 - Test: `tests/test_report_render.py`, `tests/test_cli.py`
 
 **Interfaces:**
-- Consumes: `report_sections` (Task 7), the triage columns (Task 6).
+- Consumes: `report_sections` (Task 6), the triage columns (Task 5).
 - Produces: an `Experimental (unvetted)` section, present only when the report carries experimental output.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1783,7 +1848,7 @@ the section body so the content cannot be rendered without it."
 
 ---
 
-### Task 9: Markdown export alongside the JSON
+### Task 8: Markdown export alongside the JSON
 
 **Files:**
 - Modify: `app/report_export.py` (whole file)
@@ -1791,7 +1856,7 @@ the section body so the content cannot be rendered without it."
 - Test: `tests/test_report_export.py`
 
 **Interfaces:**
-- Consumes: `render_markdown`, `report_sections` (Tasks 7-8).
+- Consumes: `render_markdown`, `report_sections` (Tasks 6-7).
 - Produces: `write_report_file(report: Report, reports_dir: Path) -> tuple[Path, Path]` — `(json_path, markdown_path)`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1909,7 +1974,7 @@ there is an artefact an analyst can paste into a ticket."
 
 ---
 
-### Task 10: Documentation and prompt version
+### Task 9: Documentation and prompt version
 
 **Files:**
 - Modify: `app/agent/state_graph.py` — `prompt_version` in `_assemble_report`
@@ -1946,16 +2011,16 @@ In `CLAUDE.md` §2.3, add three rows to the `Report` table:
 
 | Field | Type | Notes |
 |---|---|---|
-| `llm_usage` | `LLMUsageTotals` | calls, failed calls, attempts, token totals, model latency and wall clock for the whole investigation. Token totals are `null` rather than partial when any call reported no usage |
+| `llm_usage` | `LLMUsageTotals` | calls, failed calls, attempts, token totals, reasoning characters, model latency and wall clock for the whole investigation. Token totals are `null` rather than partial when any call reported no usage. `completion_tokens` counts structured output only — the reasoning trace is uncounted, hence `reasoning_chars` alongside it |
 | `investigation_timeline[].input` / `.output` | dict \| None | the typed values each step consumed and produced |
-| `investigation_timeline[].llm_calls` | list[LLMCallRecord] | one record per `generate_structured` call: verbatim prompt, raw response on a parse failure, parsed output, attempts, tokens, latency, error kind |
+| `investigation_timeline[].llm_calls` | list[LLMCallRecord] | one record per `generate_structured` call: verbatim prompt, raw response on a parse failure, verbatim reasoning trace, parsed output, attempts, tokens, latency, error kind |
 
 Also amend §2.3's `investigation_timeline` row to note that the finalize step is now inside the persisted payload.
 
 In `PROGRESS.md`, add an entry recording:
 - The database and the exported JSON previously disagreed by one step, and why.
 - `ReportRecord` silently dropped both triage fields; `show-report` could never have displayed them.
-- Whether Ollama populated `usage` on the OpenAI-compatible endpoint — **fill in the observed answer from Step 5, do not guess**.
+- The measured behaviour of Ollama's `usage` (spec §1.1.1, verified 17 Aug 2026 on `gemma4:12b`): it is populated; `prompt_tokens` tracks input size; `completion_tokens` counts the JSON content only and reported 18 against 1,608 characters of reasoning trace, so it is not a cost or throughput figure. Confirm the same pattern holds on the end-to-end run in Step 5 and record the observed numbers.
 - That `data/alerts.db` must be deleted and re-pulled, because `create_all` does not add columns to an existing table.
 - That `bench/score.py::_step_seconds` still infers step latency from timestamp diffs and is now superseded by `llm_calls[].latency_ms`, left unchanged so the committed benchmark results stay comparable.
 - That verbatim prompt capture puts `full_log` into every report file and row, which needs a data-handling decision before this points at real SIEM data.
@@ -1984,13 +2049,18 @@ ls data/reports/
 agent show-report <report_id>
 diff <(agent show-report <report_id>) <(cat data/reports/<report_id>.md)   # expect formatting-only differences
 
-# 3. Did Ollama report token usage?
+# 3. Token accounting: prompt_tokens real, completion_tokens smaller than the
+#    reasoning trace it does not count (spec §1.1.1).
 python3 -c "
 import json, glob
 d = json.load(open(sorted(glob.glob('data/reports/*.json'))[-1]))
-print('usage totals:', d['llm_usage'])
-print('per call:', [(c['prompt_ref'], c['prompt_tokens'], c['latency_ms'])
+u = d['llm_usage']
+print('usage totals:', u)
+print('per call:', [(c['prompt_ref'], c['prompt_tokens'], c['completion_tokens'],
+                     len(c['reasoning'] or ''), c['latency_ms'])
                     for s in d['investigation_timeline'] for c in s['llm_calls']])
+assert u['prompt_tokens'], 'prompt_tokens should be populated on this backend'
+print('reasoning chars vs completion tokens:', u['reasoning_chars'], u['completion_tokens'])
 "
 
 # 4. The benchmark harness still parses a fresh report.
@@ -2023,7 +2093,7 @@ records did, and that is what tells two report shapes apart."
 
 ## Verification
 
-Run after Task 10, all from the repo root with `.venv` active:
+Run after Task 9, all from the repo root with `.venv` active:
 
 1. `pytest -q` — passes with no failures.
 2. `sqlite3 data/alerts.db "select json_array_length(investigation_timeline) from reports"` returns `9` for every freshly written report.
