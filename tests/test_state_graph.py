@@ -161,7 +161,14 @@ def _make_alert(**overrides):
 
 def _make_analyst(**overrides):
     defaults = dict(
-        siem=_FakeSIEMConnector(),
+        # A real SIEMConnector's get_agent_context()/get_rule_metadata() always return a
+        # value or raise — never a silent None — so the default fake matches that here,
+        # letting a full investigate() run through gather_context's success branch (which
+        # now reads real fields off these objects) without every test having to set them.
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
         alert_store=_FakeAlertStore(),
         enrichment_registry=EnrichmentRegistry(),
         llm_client=_FakeLLMClient(),
@@ -1966,3 +1973,97 @@ def test_step_correlate_classifies_once_even_when_a_follow_up_runs():
 
     assert pattern_type == PatternType.BRUTE_FORCE
     assert [schema for _, schema in llm_client.calls] == [CorrelationDecision]
+
+
+def test_every_step_records_its_input(_tmp_path=None):
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+    alert = _make_alert()
+
+    report = analyst.investigate(alert)
+
+    for step in report.investigation_timeline:
+        assert step.input is not None, f"{step.step_name} recorded no input"
+
+
+def test_gather_context_records_the_context_it_fetched():
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(
+            id="001", name="web-01", ip="10.0.0.5", os_platform="ubuntu", status="active"
+        ),
+        rule_metadata=RuleMetadata(
+            rule_id="5710", description="sshd failure", level=5,
+            groups=["syslog", "sshd"], mitre_technique_ids=["T1110"],
+        ),
+    )
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    _agent_context, _rule_metadata, step = analyst._step_gather_context(alert)
+
+    assert step.output["agent_context"]["os_platform"] == "ubuntu"
+    assert step.output["rule_metadata"]["mitre_technique_ids"] == ["T1110"]
+
+
+def test_gather_context_records_null_output_when_the_siem_is_unavailable():
+    siem = _FakeSIEMConnector(context_error=SIEMConnectorError("timeout", "gone"))
+    analyst = _make_analyst(siem=siem)
+
+    _agent_context, _rule_metadata, step = analyst._step_gather_context(_make_alert())
+
+    assert step.output == {"agent_context": None, "rule_metadata": None}
+    assert step.action == "degraded"
+
+
+def test_extract_indicators_records_the_indicators_it_validated():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    _indicators, _decode, step = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert {"type": "ip", "value": "203.0.113.5"} in step.output["indicators"]
+    assert step.output["regex"]["validated"] >= 1
+
+
+def test_risk_assessment_records_its_typed_output():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(
+            severity=Severity.HIGH, confidence=Confidence.MEDIUM, rationale="because"
+        )
+    }))
+
+    _assessment, step = analyst._step_risk_assessment(
+        _make_alert(), PatternType.BRUTE_FORCE, 12, [], model_available=True
+    )
+
+    assert step.input["pattern_type"] == "brute_force"
+    assert step.input["evidence_count"] == 12
+    assert step.output == {
+        "severity": "high", "confidence": "medium", "rationale": "because"
+    }
+
+
+def test_output_summary_wording_is_unchanged_for_the_self_check_step():
+    """bench/score.py and bench/analyze.py regex this string; it must not drift."""
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim="a", supported=True),
+            ClaimAudit(claim="b", supported=True),
+            ClaimAudit(claim="c", supported=False, correction=None),
+        ])
+    }))
+    draft = DraftReportCanonical(
+        alert_summary="a", rationale="b",
+        recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+    )
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+    correlate_step = InvestigationStep(
+        step_name="correlate", action="completed", output_summary="pattern_type=none",
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    _draft, _notes, step = analyst._step_self_check(
+        _make_alert(), draft, PatternType.NONE, 0, [], risk, correlate_step,
+        model_available=True,
+    )
+
+    assert step.output_summary == "audited 3 claim(s), 1 flagged"

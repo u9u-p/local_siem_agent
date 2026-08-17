@@ -6,7 +6,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from app.agent.command_decode import decode_command_segments
-from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries
+from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries, distinct_value_counts
 from app.agent.indicator_extraction import extract_and_validate
 from app.agent.prompts import (
     build_correlation_decision_prompt,
@@ -228,7 +228,13 @@ class AgenticAnalyst:
             step_name=Step.INGEST_AND_PARSE.value,
             action="completed",
             tool_used=None,
-            input=None,
+            input={
+                "alert_id": str(alert.alert_id),
+                "rule_id": alert.rule_id,
+                "rule_level": alert.rule_level,
+                "model_available": model_available,
+            },
+            output={},
             output_summary=f"alert {alert.alert_id} ingested; model available: {model_available}",
             timestamp=datetime.now(timezone.utc),
         )
@@ -257,7 +263,22 @@ class AgenticAnalyst:
                 step_name=Step.EXTRACT_INDICATORS.value,
                 action="completed",
                 tool_used="regex_extraction",
-                input=None,
+                input={
+                    "full_log_chars": len(alert.full_log),
+                    "data_keys": sorted(alert.data),
+                    "extra_texts_count": len(extra_texts),
+                },
+                output={
+                    "regex": {"candidates": candidate_count, "validated": validated_count},
+                    "llm": {"candidates": 0, "validated": 0},
+                    "decode": {
+                        "segments": len(command_decode_result.decoded_segments) if command_decode_result else 0,
+                        "discarded": decode_discarded,
+                    },
+                    "indicators": [
+                        {"type": i.indicator_type.value, "value": i.value} for i in validated
+                    ],
+                },
                 output_summary=(
                     f"regex: {candidate_count} candidates, {validated_count} validated{decode_note} "
                     "(LLM-assisted extraction skipped: model unavailable)"
@@ -291,7 +312,22 @@ class AgenticAnalyst:
             step_name=Step.EXTRACT_INDICATORS.value,
             action="completed",
             tool_used="regex_extraction+llm_extraction",
-            input=None,
+            input={
+                "full_log_chars": len(alert.full_log),
+                "data_keys": sorted(alert.data),
+                "extra_texts_count": len(extra_texts),
+            },
+            output={
+                "regex": {"candidates": candidate_count, "validated": validated_count},
+                "llm": {"candidates": llm_candidate_count, "validated": llm_validated_count},
+                "decode": {
+                    "segments": len(command_decode_result.decoded_segments) if command_decode_result else 0,
+                    "discarded": decode_discarded,
+                },
+                "indicators": [
+                    {"type": i.indicator_type.value, "value": i.value} for i in merged
+                ],
+            },
             output_summary=summary,
             llm_calls=llm_calls,
             timestamp=datetime.now(timezone.utc),
@@ -338,7 +374,8 @@ class AgenticAnalyst:
                 step_name=Step.ENRICH.value,
                 action="skipped",
                 tool_used=None,
-                input=None,
+                input={"indicators": []},
+                output={"results": []},
                 output_summary="skipped: no validated indicators to enrich",
                 timestamp=datetime.now(timezone.utc),
             )
@@ -367,7 +404,17 @@ class AgenticAnalyst:
             step_name=Step.ENRICH.value,
             action="completed",
             tool_used="enrichment_registry",
-            input=None,
+            input={"indicators": [
+                {"type": i.indicator_type.value, "value": i.value} for i in indicators
+            ]},
+            output={"results": [
+                {
+                    "type": r.indicator_type.value, "value": r.indicator_value,
+                    "provider_id": r.provider_id, "verdict": r.verdict.value,
+                    "score": r.score, "error": r.error,
+                }
+                for r in results
+            ]},
             output_summary=f"enriched {len(results)} indicator(s)",
             timestamp=datetime.now(timezone.utc),
         )
@@ -387,7 +434,8 @@ class AgenticAnalyst:
                 step_name=Step.GATHER_CONTEXT.value,
                 action="degraded",
                 tool_used="siem_connector",
-                input=None,
+                input={"agent_id": alert.agent.id, "rule_id": alert.rule_id},
+                output={"agent_context": None, "rule_metadata": None},
                 output_summary=f"could not gather host/rule context: {exc.kind}",
                 timestamp=datetime.now(timezone.utc),
             )
@@ -398,7 +446,11 @@ class AgenticAnalyst:
             step_name=Step.GATHER_CONTEXT.value,
             action="completed",
             tool_used="siem_connector",
-            input=None,
+            input={"agent_id": alert.agent.id, "rule_id": alert.rule_id},
+            output={
+                "agent_context": agent_context.model_dump(mode="json"),
+                "rule_metadata": rule_metadata.model_dump(mode="json"),
+            },
             output_summary=f"gathered context for agent {alert.agent.id}, rule {alert.rule_id}",
             timestamp=datetime.now(timezone.utc),
         )
@@ -441,7 +493,25 @@ class AgenticAnalyst:
                 step_name=Step.CORRELATE.value,
                 action="completed",
                 tool_used="siem_connector",
-                input=None,
+                input={
+                    "templates_built": sorted(t.value for t, q in queries.items() if q is not None),
+                    "enrichment_verdicts": [
+                        {"value": e.indicator_value, "verdict": e.verdict.value}
+                        for e in enrichment_results
+                    ],
+                },
+                output={
+                    "canonical": {
+                        t.value: {
+                            "total_count": r.total_count,
+                            "distinct_counts": distinct_value_counts(r.alerts),
+                        }
+                        for t, r in results.items()
+                    },
+                    "pattern_type": PatternType.OTHER.value,
+                    "evidence_count": evidence_count,
+                    "failed_searches": failed_count,
+                },
                 output_summary=(
                     f"ran {len(results)} canonical search(es), {evidence_count} total evidence"
                     f"{failed_note} (classification skipped: model unavailable)"
@@ -478,7 +548,25 @@ class AgenticAnalyst:
             step_name=Step.CORRELATE.value,
             action="completed",
             tool_used="siem_connector+llm",
-            input=None,
+            input={
+                "templates_built": sorted(t.value for t, q in queries.items() if q is not None),
+                "enrichment_verdicts": [
+                    {"value": e.indicator_value, "verdict": e.verdict.value}
+                    for e in enrichment_results
+                ],
+            },
+            output={
+                "canonical": {
+                    t.value: {
+                        "total_count": r.total_count,
+                        "distinct_counts": distinct_value_counts(r.alerts),
+                    }
+                    for t, r in results.items()
+                },
+                "pattern_type": pattern_type.value,
+                "evidence_count": evidence_count,
+                "failed_searches": failed_count,
+            },
             output_summary=(
                 f"pattern_type={pattern_type.value}, evidence_count={evidence_count}"
                 f"{failed_note}{follow_up_note}{open_value_note}"
@@ -557,7 +645,15 @@ class AgenticAnalyst:
                 rationale="risk assessment skipped: model unavailable",
             )
             step = InvestigationStep(
-                step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None,
+                input={
+                    "pattern_type": pattern_type.value,
+                    "evidence_count": evidence_count,
+                    "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                    "has_command_context": command_context is not None,
+                    "has_raw_log": _context_raw_log(alert) is not None,
+                },
+                output=assessment.model_dump(mode="json"),
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_risk_assessment output: skipped: %s", assessment.model_dump_json())
@@ -565,7 +661,15 @@ class AgenticAnalyst:
 
         assessment, calls = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results, command_context)
         step = InvestigationStep(
-            step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm", input=None,
+            step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm",
+            input={
+                "pattern_type": pattern_type.value,
+                "evidence_count": evidence_count,
+                "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                "has_command_context": command_context is not None,
+                "has_raw_log": _context_raw_log(alert) is not None,
+            },
+            output=assessment.model_dump(mode="json"),
             output_summary=f"severity={assessment.severity.value}, confidence={assessment.confidence.value}",
             llm_calls=calls,
             timestamp=datetime.now(timezone.utc),
@@ -613,7 +717,18 @@ class AgenticAnalyst:
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
             )
             step = InvestigationStep(
-                step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None,
+                input={
+                    "pattern_type": pattern_type.value,
+                    "evidence_count": evidence_count,
+                    "severity": risk_assessment.severity.value,
+                    "confidence": risk_assessment.confidence.value,
+                    "has_command_context": command_context is not None,
+                },
+                output={
+                    "canonical": draft.model_dump(mode="json"),
+                    "experimental": None,
+                },
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_draft_report output: skipped: %s", draft.model_dump_json())
@@ -632,7 +747,18 @@ class AgenticAnalyst:
             else f"; draft-B: experimental triage={experimental.triage_verdict.value}"
         )
         step = InvestigationStep(
-            step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm", input=None,
+            step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm",
+            input={
+                "pattern_type": pattern_type.value,
+                "evidence_count": evidence_count,
+                "severity": risk_assessment.severity.value,
+                "confidence": risk_assessment.confidence.value,
+                "has_command_context": command_context is not None,
+            },
+            output={
+                "canonical": draft.model_dump(mode="json"),
+                "experimental": experimental.model_dump(mode="json") if experimental else None,
+            },
             output_summary=summary, llm_calls=canonical_calls + experimental_calls,
             timestamp=datetime.now(timezone.utc),
         )
@@ -694,7 +820,9 @@ class AgenticAnalyst:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = "self-check skipped: model unavailable" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None,
+                input={"claims": _claims_for(draft)},
+                output={"audits": [], "flagged_claims": [], "corrections_applied": False},
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_self_check output: skipped, draft unchanged, notes=%r", notes)
@@ -707,7 +835,9 @@ class AgenticAnalyst:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = f"self-check could not run: {failure_kind}" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm",
+                input={"claims": _claims_for(draft)},
+                output={"audits": [], "flagged_claims": [], "corrections_applied": False},
                 output_summary="self-check call failed; corrections not applied", llm_calls=calls,
                 timestamp=datetime.now(timezone.utc),
             )
@@ -720,7 +850,13 @@ class AgenticAnalyst:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = "self-check audit count did not match claim count; corrections not applied" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm",
+                input={"claims": _claims_for(draft)},
+                output={
+                    "audits": [a.model_dump(mode="json") for a in result.audits],
+                    "flagged_claims": [],
+                    "corrections_applied": False,
+                },
                 output_summary=f"self-check returned {len(result.audits)} audit(s) for {len(_claims_for(draft))} claim(s); corrections not applied",
                 llm_calls=calls,
                 timestamp=datetime.now(timezone.utc),
@@ -736,7 +872,13 @@ class AgenticAnalyst:
             self._degraded_reasons.append(f"self-check flagged {len(flagged_claims)} unsupported claim(s)")
         notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, flagged_claims)
         step = InvestigationStep(
-            step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm", input=None,
+            step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm",
+            input={"claims": _claims_for(draft)},
+            output={
+                "audits": [a.model_dump(mode="json") for a in result.audits],
+                "flagged_claims": flagged_claims,
+                "corrections_applied": True,
+            },
             output_summary=f"audited {len(result.audits)} claim(s), {len(flagged_claims)} flagged",
             llm_calls=calls,
             timestamp=datetime.now(timezone.utc),
@@ -811,7 +953,8 @@ class AgenticAnalyst:
                 step_name=Step.FINALIZE_AND_PERSIST.value,
                 action="degraded",
                 tool_used="alert_store",
-                input=None,
+                input={"report_id": str(report.report_id), "alert_id": str(alert.alert_id)},
+                output={"persisted": False},
                 output_summary=f"could not persist report or update alert status: {exc}",
                 timestamp=datetime.now(timezone.utc),
             )
@@ -821,7 +964,8 @@ class AgenticAnalyst:
             step_name=Step.FINALIZE_AND_PERSIST.value,
             action="completed",
             tool_used="alert_store",
-            input=None,
+            input={"report_id": str(report.report_id), "alert_id": str(alert.alert_id)},
+            output={"persisted": True},
             output_summary=f"report {report.report_id} persisted, alert marked investigated",
             timestamp=datetime.now(timezone.utc),
         )
