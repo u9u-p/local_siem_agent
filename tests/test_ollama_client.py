@@ -558,6 +558,9 @@ def _malformed_usage_response(parsed_content: str) -> httpx.Response:
 
 
 @respx.mock
+# The malformed usage block is the whole point of this test, and pydantic warns when the
+# openai SDK serialises it. Filtered here rather than fixed, so `pytest -q` stays pristine.
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_generate_structured_degrades_gracefully_when_usage_is_malformed():
     """A regression test: pre-branch code parsed a body with usage={"prompt_tokens": 5}
     fine. HEAD raises pydantic.ValidationError out of CompletionUsage.model_validate,
