@@ -16,7 +16,7 @@ from app.agent.schemas import (
     SelfCheckResult,
     TriageVerdict,
 )
-from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context
+from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context, _roll_up_usage
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
@@ -93,8 +93,11 @@ class _FakeAlertStore:
 
 
 def _fake_call(prompt: str, prompt_ref: str = "fake_ref") -> LLMCallRecord:
+    # latency_ms=0: a fake client does no real work, so it cannot honestly report a
+    # nonzero latency without also making investigate()'s real wall clock exceed it
+    # (see test_report_rolls_up_llm_usage_across_the_timeline).
     return LLMCallRecord(
-        prompt_ref=prompt_ref, prompt=prompt, attempts=1, latency_ms=7,
+        prompt_ref=prompt_ref, prompt=prompt, attempts=1, latency_ms=0,
         prompt_tokens=11, completion_tokens=5,
     )
 
@@ -175,6 +178,34 @@ def _make_analyst(**overrides):
     )
     defaults.update(overrides)
     return AgenticAnalyst(**defaults)
+
+
+def _all_canned_responses():
+    return {
+        ExtractedIndicators: ExtractedIndicators(candidates=[
+            IndicatorCandidate(type=IndicatorType.IP, value="203.0.113.5")
+        ]),
+        CorrelationDecision: CorrelationDecision(
+            pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+        ),
+        OpenValueSearchProposal: OpenValueSearchProposal(search_value="admin"),
+        RiskAssessment: RiskAssessment(
+            severity=Severity.MEDIUM, confidence=Confidence.MEDIUM, rationale="r"
+        ),
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="s", rationale="r",
+            recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=["f"],
+            triage_verdict=TriageVerdict.TRUE_POSITIVE, triage_rationale="tr",
+        ),
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim="s", supported=True),
+            ClaimAudit(claim="r", supported=True),
+            ClaimAudit(claim="Escalate to the incident response / Tier 2 team", supported=True),
+        ]),
+    }
 
 
 def test_risk_assessment_step_records_its_llm_call():
@@ -1564,7 +1595,7 @@ def test_assemble_report_status_complete_when_nothing_degraded(tmp_path):
     risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
 
     report = analyst._assemble_report(
-        alert, [], [], risk_assessment, draft, None, "", model_available=True,
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
     )
 
     assert report.status == ReportStatus.COMPLETE
@@ -1581,7 +1612,9 @@ def test_assemble_report_status_needs_human_review_when_degraded():
     draft = _draft_with_two_actions()
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
 
@@ -1595,7 +1628,9 @@ def test_assemble_report_includes_experimental_fields_when_present():
     )
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, experimental, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, experimental, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.recommended_actions_freeform_experimental == ["do X"]
     assert report.triage_verdict_experimental == "false_positive"
@@ -1615,7 +1650,8 @@ def test_assemble_report_includes_command_analysis_when_present():
     )
 
     report = analyst._assemble_report(
-        alert, [], [], risk_assessment, draft, None, "", model_available=True, command_analysis=command_analysis,
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+        command_analysis=command_analysis,
     )
 
     assert report.command_analysis.decoded_segments[0].decoded == "whoami"
@@ -1627,7 +1663,9 @@ def test_assemble_report_command_analysis_defaults_to_none():
     draft = _draft_with_two_actions()
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.command_analysis is None
 
@@ -2067,3 +2105,71 @@ def test_output_summary_wording_is_unchanged_for_the_self_check_step():
     )
 
     assert step.output_summary == "audited 3 claim(s), 1 flagged"
+
+
+def test_report_rolls_up_llm_usage_across_the_timeline():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses=_all_canned_responses()))
+    alert = _make_alert()
+
+    report = analyst.investigate(alert)
+
+    recorded = [c for s in report.investigation_timeline for c in s.llm_calls]
+    assert report.llm_usage.calls == len(recorded)
+    assert report.llm_usage.prompt_tokens == sum(c.prompt_tokens for c in recorded)
+    assert report.llm_usage.llm_latency_ms == sum(c.latency_ms for c in recorded)
+    assert report.llm_usage.wall_clock_ms >= report.llm_usage.llm_latency_ms
+
+
+def test_llm_usage_sums_reasoning_characters():
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning="four"),
+            LLMCallRecord(prompt_ref="b", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning=None),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.reasoning_chars == 4
+    # The gap this field exists to expose: 4 completion tokens reported against a
+    # reasoning trace that usage never counted.
+    assert totals.completion_tokens == 4
+
+
+def test_llm_usage_tokens_are_none_when_any_call_lacks_them():
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2),
+            LLMCallRecord(prompt_ref="b", prompt="p", attempts=1, latency_ms=5),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.calls == 2
+    assert totals.prompt_tokens is None
+    assert totals.llm_latency_ms == 10
+
+
+def test_llm_usage_counts_failed_calls_separately():
+    step = InvestigationStep(
+        step_name="self_check", action="degraded", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=2, latency_ms=360000,
+                          error_kind="timeout", prompt_tokens=0, completion_tokens=0),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=400000)
+
+    assert totals.calls == 1
+    assert totals.failed_calls == 1
+    assert totals.attempts == 2

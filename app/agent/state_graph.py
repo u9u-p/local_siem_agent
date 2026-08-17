@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
@@ -44,6 +45,7 @@ from app.schemas import (
     EnrichmentVerdict,
     IndicatorType,
     InvestigationStep,
+    LLMUsageTotals,
     ModelMetadata,
     Report,
     ReportStatus,
@@ -149,6 +151,22 @@ def _compute_uncertainty_notes(
         gaps.append("no MITRE ATT&CK mapping available for this alert")
 
     return "; ".join(gaps)
+
+
+def _roll_up_usage(timeline: list[InvestigationStep], wall_clock_ms: int) -> LLMUsageTotals:
+    calls = [c for step in timeline for c in step.llm_calls]
+    # A single unmeasured call makes the whole total unknown — see _CallTally.
+    known = all(c.prompt_tokens is not None for c in calls)
+    return LLMUsageTotals(
+        calls=len(calls),
+        failed_calls=sum(1 for c in calls if c.error_kind is not None),
+        attempts=sum(c.attempts for c in calls),
+        prompt_tokens=sum(c.prompt_tokens for c in calls) if known else None,
+        completion_tokens=sum(c.completion_tokens for c in calls) if known else None,
+        reasoning_chars=sum(len(c.reasoning or "") for c in calls),
+        llm_latency_ms=sum(c.latency_ms for c in calls),
+        wall_clock_ms=wall_clock_ms,
+    )
 
 
 def _claims_for(draft: DraftReportCanonical) -> list[str]:
@@ -910,7 +928,8 @@ class AgenticAnalyst:
     def _assemble_report(
         self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],
         risk_assessment: RiskAssessment, draft: DraftReportCanonical, experimental: DraftReportExperimental | None,
-        uncertainty_notes: str, model_available: bool, command_analysis: CommandDecodeResult | None = None,
+        uncertainty_notes: str, model_available: bool, wall_clock_ms: int,
+        command_analysis: CommandDecodeResult | None = None,
     ) -> Report:
         status = ReportStatus.NEEDS_HUMAN_REVIEW if self._degraded_reasons else ReportStatus.COMPLETE
         return Report(
@@ -931,6 +950,7 @@ class AgenticAnalyst:
             triage_rationale_experimental=experimental.triage_rationale if experimental is not None else None,
             uncertainty_notes=uncertainty_notes,
             status=status,
+            llm_usage=_roll_up_usage(timeline, wall_clock_ms),
             model_metadata=ModelMetadata(
                 # "none" when the model never ran: naming a model that produced nothing
                 # would misattribute a stub-shaped report to it.
@@ -973,6 +993,7 @@ class AgenticAnalyst:
         return step
 
     def investigate(self, alert: Alert) -> Report:
+        started = time.monotonic()
         self._degraded_reasons = []
         model_available = self._llm_client.model_available()
         if not model_available:
@@ -1011,9 +1032,10 @@ class AgenticAnalyst:
         )
         timeline.append(self_check_step)
 
+        wall_clock_ms = int((time.monotonic() - started) * 1000)
         report = self._assemble_report(
             alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes,
-            model_available, command_analysis=command_decode_result,
+            model_available, wall_clock_ms, command_analysis=command_decode_result,
         )
         finalize_step = self._step_finalize_and_persist(alert, report)
         report.investigation_timeline.append(finalize_step)
