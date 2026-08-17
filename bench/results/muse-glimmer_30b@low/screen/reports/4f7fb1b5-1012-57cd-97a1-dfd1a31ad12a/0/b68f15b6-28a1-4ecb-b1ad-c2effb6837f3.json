@@ -1,0 +1,130 @@
+{
+  "report_id": "b68f15b6-28a1-4ecb-b1ad-c2effb6837f3",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T19:28:16.456631Z",
+  "alert_summary": "A brute-force pattern was observed with 42 related evidence events. Source IP 100.72.44.19 is unknown with no enrichment available. No user identity or successful authentication is confirmed in the structured findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T19:26:20.865620Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-14T19:26:31.941464Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T19:26:31.941501Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T19:26:32.381413Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=42; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-14T19:26:52.015871Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T19:27:05.126054Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T19:27:42.730086Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 10 flagged",
+      "timestamp": "2026-08-14T19:28:16.456540Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b68f15b6-28a1-4ecb-b1ad-c2effb6837f3 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T19:28:16.465509Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:26:31.941486Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:26:31.941486Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:26:31.941497Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:26:31.941497Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "Pattern type is brute-force with evidence count 42. Source IP 100.72.44.19 is unknown with no enrichment. Risk assessment is severity high, confidence medium. Successful authentication and T1078 attribution are not present in structured findings."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Review recent authentication logs for mrahman across all domain controllers to identify anomalous logon times, source IPs, and accessed resources.",
+    "Force password reset for mrahman and require MFA re-enrollment before next logon.",
+    "Block or quarantine 100.72.44.19 at perimeter and internal egress controls pending validation.",
+    "Correlate the 42 evidence events with failed logon attempts to confirm brute-force timeline and identify other targeted accounts.",
+    "Enable enhanced logging for the affected account and monitor for lateral movement, privilege escalation, or data access.",
+    "Check for concurrent valid logons from mrahman's normal locations/devices to detect session hijacking or credential reuse."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful logon follows a brute-force pattern with high severity indicators, but lack of IP/domain enrichment prevents confirming whether the source is legitimate or compromised, so confidence remains medium.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,143 @@
+{
+  "report_id": "20663d70-91cf-4e71-990e-736a8aba7b75",
+  "alert_id": "156e110b-5a8c-5cfb-a570-d82fac0730e3",
+  "generated_at": "2026-08-15T10:22:37.217166Z",
+  "alert_summary": "A successful Windows logon was recorded for user **raj.kumar** from the internal address **10.20.4.73**, and this event is linked to a lateral‑movement pattern with fifteen supporting evidences.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 156e110b-5a8c-5cfb-a570-d82fac0730e3 ingested; model available: True",
+      "timestamp": "2026-08-15T10:22:04.825067Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:22:07.949274Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:22:07.949375Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:22:08.376143Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:22:12.646307Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:22:15.383190Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:22:30.329499Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T10:22:37.217108Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 20663d70-91cf-4e71-990e-736a8aba7b75 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:22:37.226465Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:07.949335Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:07.949335Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:07.949363Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:07.949363Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:07.949370Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:07.949370Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The findings indicate a lateral‑movement pattern with fifteen evidences and identify the user raj.kumar logging on from IP 10.20.4.73, but they do not provide any specific evidence of credential theft (T1078) or broader activity beyond this single event. Therefore the claim that the logon uses a legitimate credential (T1078) and suggests credential compromise is not directly supported by the structured findings."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin a focused investigation on the host at 10.20.4.73: collect recent process creation logs, PowerShell transcript data, and any newly created scheduled tasks or services that might indicate post‑logon activity.",
+    "Query Active Directory for recent changes to the raj.kumar account (password resets, group membership modifications, delegation settings) and verify whether the account is privileged or has been recently granted elevated rights.",
+    "Correlate this logon event with other authentication events from the same source IP across the environment (e.g., SMB connections, RDP sessions, remote PowerShell invocations) to see if the same credential is being reused elsewhere.",
+    "If possible, retrieve NetLogon and Kerberos ticket data for the session to determine whether a pass‑the‑hash or pass‑the‑ticket technique was employed; look for anomalous ticket lifetimes or encryption types.",
+    "Isolate the endpoint (10.20.4.73) from the network pending further analysis, especially if any suspicious processes are discovered, to prevent potential lateral spread.",
+    "Engage the user (raj.kumar) through a secure channel: confirm whether they performed a legitimate logon from that IP at the reported time and whether they recognize any recent activity on their workstation.",
+    "Update detection rules to flag successful logons from internal IP ranges that have not been seen before for a given account, and enrich future alerts with threat‑intel lookups for the source host’s MAC address or DHCP lease history.",
+    "Document all findings in the case management system, preserving raw logs (Windows Security Event ID 4624) and any extracted artifacts for potential escalation to incident response if malicious intent is confirmed."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event matches a known credential‑reuse technique (T1078) and is linked to multiple lateral‑movement evidences, but the lack of reputation data on the source IP/domain prevents confident determination of malicious intent.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

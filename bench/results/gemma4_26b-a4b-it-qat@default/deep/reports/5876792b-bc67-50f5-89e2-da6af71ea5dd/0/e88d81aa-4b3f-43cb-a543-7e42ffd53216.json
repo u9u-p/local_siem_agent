@@ -1,0 +1,130 @@
+{
+  "report_id": "e88d81aa-4b3f-43cb-a543-7e42ffd53216",
+  "alert_id": "5876792b-bc67-50f5-89e2-da6af71ea5dd",
+  "generated_at": "2026-08-15T12:53:26.957421Z",
+  "alert_summary": "User 'dwilson' successfully logged in via SSH from an unknown IP address following a brute-force attack consisting of 15 failed attempts. This indicates a high probability that the account has been compromised by an external actor.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5876792b-bc67-50f5-89e2-da6af71ea5dd ingested; model available: True",
+      "timestamp": "2026-08-15T12:49:19.717732Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T12:49:25.686706Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T12:49:25.686759Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T12:49:26.112783Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=15",
+      "timestamp": "2026-08-15T12:49:55.714255Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T12:50:01.198272Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T12:50:46.608458Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T12:53:26.957370Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e88d81aa-4b3f-43cb-a543-7e42ffd53216 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:53:26.967291Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:49:25.686740Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:49:25.686740Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high severity and confidence are driven by the direct correlation between a detected brute-force pattern and a subsequent successful authentication for user 'dwilson'. Because an unknown IP address successfully gained access after multiple failed attempts, there is a significant risk that the account credentials have been compromised. This unauthorized access provides an attacker with a foothold to perform lateral movement or data exfiltration within the network."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'dwilson' user account to prevent further unauthorized access.",
+    "Terminate all active SSH sessions associated with the 'dwilson' username across the environment.",
+    "Implement a temporary block on IP 203.0.113.41 at the perimeter firewall/IPS.",
+    "Conduct an immediate forensic audit of the user's activity post-login to identify any lateral movement, unauthorized file access, or creation of persistence mechanisms (e.g., new SSH keys).",
+    "Initiate a mandatory password reset and review Multi-Factor Authentication (MFA) configurations for this account."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The direct correlation between a high volume of failed authentication attempts and a subsequent successful login from an unknown external IP is a definitive indicator of a successful brute-force attack.",
+  "uncertainty_notes": "self-check could not run: validation_failed; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

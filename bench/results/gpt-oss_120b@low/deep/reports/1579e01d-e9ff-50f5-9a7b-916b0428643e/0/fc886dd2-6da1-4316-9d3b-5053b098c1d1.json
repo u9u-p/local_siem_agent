@@ -1,0 +1,143 @@
+{
+  "report_id": "fc886dd2-6da1-4316-9d3b-5053b098c1d1",
+  "alert_id": "1579e01d-e9ff-50f5-9a7b-916b0428643e",
+  "generated_at": "2026-08-15T10:23:11.605251Z",
+  "alert_summary": "Mimecast blocked a bulk phishing email from alerts@cloudmetrics-io.com to ops@victimcorp.com; the email is associated with a high‑volume brute‑force campaign (48 attempts).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1579e01d-e9ff-50f5-9a7b-916b0428643e ingested; model available: True",
+      "timestamp": "2026-08-15T10:22:37.706050Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:22:40.385854Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:22:40.385925Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:22:40.799866Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=48; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T10:22:44.561141Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:22:47.470001Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:23:04.518060Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:23:11.605177Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fc886dd2-6da1-4316-9d3b-5053b098c1d1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:23:11.613867Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:40.385889Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:40.385889Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cloudmetrics-io.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:40.385910Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:40.385910Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:22:40.385918Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:22:40.385918Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The intercepted message is classified as a bulk phishing attempt (T1566) and coincides with an active credential‑spraying operation, indicating the attacker may be targeting the ops@victimcorp.com account. Although the sender domain and source IP have no known malicious reputation, the combination of phishing content and repeated brute‑force attempts justifies a medium‑severity alert that requires analyst follow‑up."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Pull the full MIME source of the held message from Mimecast and perform a deep‑content inspection (HTML, attachments, embedded URLs) using sandbox analysis to confirm whether any malicious payloads or credential‑harvesting forms are present.",
+    "Query internal authentication logs for the victim user ‘ops@victimcorp.com’ and any other accounts that may have been targeted around the same timeframe; look for failed login spikes that align with the 48 brute‑force events.",
+    "Enrich the source IP (149.72.14.88) via passive DNS, ASN lookup, and reputation feeds (e.g., VirusTotal, AbuseIPDB) to see if it has been observed in other credential‑spraying or phishing campaigns since this alert was generated.",
+    "Check for any recent DMARC/DKIM/SPF failures on mail from cloudmetrics-io.com; a mis‑configured or spoofed sender domain could indicate that the email is being forged rather than legitimately sent by the purported organization.",
+    "If the content analysis reveals malicious links, generate URL blocking rules in your web proxy and add the IP/domain to your threat intelligence platform (TIP) as an indicator of compromise (IOC).",
+    "Notify the affected user (ops@victimcorp.com) and broader security team that a potential credential‑spraying attempt has been observed; advise them to reset passwords if any suspicious login attempts were recorded.",
+    "Consider adding cloudmetrics-io.com to a temporary “watchlist” in your email gateway with stricter scrutiny (e.g., sandbox all attachments, enforce MFA prompts for any links) until the investigation concludes.",
+    "Document findings and update the incident ticket with timestamps, evidence artifacts, and any IOC hashes or URLs discovered so that future automated correlation can benefit from this enriched context."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a bulk phishing email blocked by Mimecast and a correlated high volume of brute‑force login attempts strongly indicates an active credential‑spraying campaign rather than a benign bulk message.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

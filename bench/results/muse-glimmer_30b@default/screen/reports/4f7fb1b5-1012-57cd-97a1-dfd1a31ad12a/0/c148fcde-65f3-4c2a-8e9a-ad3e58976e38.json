@@ -1,0 +1,132 @@
+{
+  "report_id": "c148fcde-65f3-4c2a-8e9a-ad3e58976e38",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-15T01:20:26.476255Z",
+  "alert_summary": "An authentication-related event involving IP 100.72.44.19 and domain dc01.corp.local was observed. Enrichment for IP 100.72.44.19 is unknown (provider none) and enrichment for domain dc01.corp.local is unknown (provider none). Correlation pattern_type is none.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-15T01:10:20.849105Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T01:11:22.942314Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T01:11:22.942377Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T01:11:23.370288Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T01:14:30.369783Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=low",
+      "timestamp": "2026-08-15T01:15:20.426821Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T01:17:44.345297Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T01:20:26.476202Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c148fcde-65f3-4c2a-8e9a-ad3e58976e38 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T01:20:26.483394Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T01:11:22.942349Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T01:11:22.942349Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T01:11:22.942369Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T01:11:22.942369Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "low",
+    "rationale": "Enrichment for IP 100.72.44.19 is unknown (provider none) and enrichment for domain dc01.corp.local is unknown (provider none). Correlation pattern_type is none. Risk assessment is severity=low, confidence=low."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Review user mrahman’s historical login baselines for time-of-day, source subnet, and device to see if 100.72.44.19 is consistent with normal behavior.",
+    "Attempt manual enrichment of 100.72.44.19 via internal IPAM or network logs to determine if it belongs to a corporate asset, VPN pool, or is external.",
+    "Check for co-occurring events around the same timestamps such as process creation, logoff, or authentication failures that could contextualize the 22 successful logons.",
+    "Validate account status and recent changes for mrahman including password resets, privilege changes, or offboarding status.",
+    "If enrichment remains unavailable, consider raising data collection gaps for IP and domain resolution to improve future triage confidence."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "Successful logon events lack anomalous source or behavioral context due to missing enrichment and no detected pattern, so compromise cannot be confirmed nor ruled out.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

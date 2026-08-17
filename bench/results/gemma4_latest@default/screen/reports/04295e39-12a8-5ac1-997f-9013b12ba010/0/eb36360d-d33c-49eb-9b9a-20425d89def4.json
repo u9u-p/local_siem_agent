@@ -1,0 +1,149 @@
+{
+  "report_id": "eb36360d-d33c-49eb-9b9a-20425d89def4",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-14T18:16:41.838049Z",
+  "alert_summary": "A successful logon occurred for user tommy.wong from an unknown source IP, which is flagged as part of a lateral movement pattern. This strongly suggests that the account may be compromised and used by an attacker to pivot within the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-14T18:15:06.155917Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 4 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:15:16.039427Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:15:16.039498Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T18:15:16.459745Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-14T18:15:29.631388Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T18:15:38.667065Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:16:08.042531Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 3 flagged",
+      "timestamp": "2026-08-14T18:16:41.837925Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report eb36360d-d33c-49eb-9b9a-20425d89def4 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:16:41.847172Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:15:16.039463Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:15:16.039463Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:15:16.039484Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:15:16.039484Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:15:16.039492Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:15:16.039492Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "While the successful logon itself is routine, the correlation finding explicitly flags this event as part of a 'lateral_movement' pattern (T1078). This indicates that an attacker or compromised credential set is actively attempting to move through the internal network using valid credentials. Given the high severity and the lack of context for both the source IP and user account, immediate containment and forensic investigation are required to determine if this activity represents a breach."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a deep dive into the source machine (10.20.4.94). Review its process execution logs, network connections, and recent user activity to determine if it has been compromised or if the logon was initiated by an unusual script.",
+    "Review the historical baseline for the `tommy.wong` account. Determine if this specific type of successful logon (e.g., source IP range, time of day, service used) is consistent with their normal operational behavior. If not, consider temporarily restricting or forcing a password reset on the account.",
+    "Analyze the full sequence of events contributing to the 'lateral_movement' pattern. Specifically, examine the protocols and services utilized (e.g., RDP, SMB, PowerShell remoting) across all 8 correlated evidence points to identify the attacker's preferred method of movement or privilege escalation.",
+    "If the source machine is critical infrastructure, consider placing it under enhanced monitoring or temporary network segmentation until its integrity can be verified by a forensic team."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The explicit 'lateral_movement' flag elevates this to high risk, suggesting malicious intent (True Positive), but without context regarding the user's normal activity or the source machine's integrity, it cannot be definitively classified as anything other than requiring immediate investigation.",
+  "uncertainty_notes": "unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

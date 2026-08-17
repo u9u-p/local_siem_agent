@@ -1,0 +1,167 @@
+{
+  "report_id": "09457d12-3488-4486-b45b-8b4ab6830ee8",
+  "alert_id": "60412d81-75d0-555f-bab8-117417100965",
+  "generated_at": "2026-08-15T09:42:43.948966Z",
+  "alert_summary": "A bulk regulatory bulletin was sent from apac-tradebody.org to raj.kumar@victimcorp.com, likely containing sensitive information and showing signs of phishing; immediate investigation is recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 60412d81-75d0-555f-bab8-117417100965 ingested; model available: True",
+      "timestamp": "2026-08-15T09:42:34.591850Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:42:36.186577Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T09:42:36.186648Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:42:36.612849Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=48; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T09:42:37.173585Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:42:37.788847Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:42:41.164430Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:42:43.948859Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 09457d12-3488-4486-b45b-8b4ab6830ee8 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:42:43.957418Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:36.186597Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:36.186597Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "apac-tradebody.org",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:36.186622Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:36.186622Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:36.186630Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:36.186630Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:36.186636Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:36.186636Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://b0e3d7f1-6c20-4e81-8b90-2f4a6d8e1b09.apac-tradebody.org",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:36.186642Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:36.186642Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The message originated from a suspicious domain linked to potential phishing activity. The content appears to be a mass regulatory notice, which often contains confidential or critical data that could be targeted for misuse. Combined with the scanning pattern and unknown domains, there’s a high risk of exposure or compromise."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate technical analysis of the email headers and attachments to identify any embedded tracking pixels or malicious payloads.",
+    "Perform a targeted threat intelligence search on the sender’s domain and associated IP addresses for known phishing campaigns or malware distribution patterns.",
+    "Engage with internal incident response teams to review endpoint logs for signs of compromise linked to the recipient address.",
+    "Initiate user awareness training focused on regulatory bulletin phishing tactics, emphasizing verification procedures before acting on urgent communications."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of bulk distribution, regulatory subject matter, and suspicious technical indicators strongly suggests this message is a genuine threat rather than an error or benign communication.",
+  "uncertainty_notes": "5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

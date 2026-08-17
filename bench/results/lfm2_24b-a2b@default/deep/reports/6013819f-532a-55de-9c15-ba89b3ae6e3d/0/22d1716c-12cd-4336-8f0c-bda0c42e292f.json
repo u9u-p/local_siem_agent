@@ -1,0 +1,148 @@
+{
+  "report_id": "22d1716c-12cd-4336-8f0c-bda0c42e292f",
+  "alert_id": "6013819f-532a-55de-9c15-ba89b3ae6e3d",
+  "generated_at": "2026-08-15T09:42:34.047064Z",
+  "alert_summary": "Suspicious logon detected from an unknown IP address using brute force methods; immediate action recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6013819f-532a-55de-9c15-ba89b3ae6e3d ingested; model available: True",
+      "timestamp": "2026-08-15T09:42:25.374092Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:42:26.548150Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:42:26.548197Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:42:26.970356Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=16; follow-up same_rule_id_host added 8",
+      "timestamp": "2026-08-15T09:42:27.483661Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:42:28.058169Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:42:31.066877Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:42:34.047011Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 22d1716c-12cd-4336-8f0c-bda0c42e292f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:42:34.055702Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:26.548175Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:26.548175Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:26.548190Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:26.548190Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:26.548194Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:26.548194Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The successful login from a non-public, unidentified IP combined with evidence of repeated unauthorized access attempts indicates that the account may have been compromised or is being targeted by attackers. This raises concerns about potential credential theft and unauthorized use of the user's privileges."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper forensic analysis of the authentication logs to identify any anomalous patterns beyond brute force attempts.",
+    "Initiate an internal review of user account privileges and recent changes in access policies for the affected systems.",
+    "Engage with network security teams to correlate this event with broader traffic flows from IP 10.20.4.61, looking for lateral movement indicators.",
+    "Consider temporarily disabling or requiring MFA re-verification for accounts associated with the dc01.corp.local domain until further validation is completed."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon from an unknown IP, brute force correlation evidence, and high confidence in credential compromise strongly supports this being a genuine security incident.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

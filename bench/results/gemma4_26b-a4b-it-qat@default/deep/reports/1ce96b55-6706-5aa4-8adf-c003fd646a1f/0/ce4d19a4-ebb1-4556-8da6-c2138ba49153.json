@@ -1,0 +1,146 @@
+{
+  "report_id": "ce4d19a4-ebb1-4556-8da6-c2138ba49153",
+  "alert_id": "1ce96b55-6706-5aa4-8adf-c003fd646a1f",
+  "generated_at": "2026-08-15T11:38:46.301444Z",
+  "alert_summary": "A successful logon by user jane.tan from IP 10.20.4.61 has been flagged as potential lateral movement. This activity is supported by a high volume of evidence, suggesting an attacker may be using legitimate credentials to move through the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1ce96b55-6706-5aa4-8adf-c003fd646a1f ingested; model available: True",
+      "timestamp": "2026-08-15T11:36:36.703415Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T11:36:58.660293Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T11:36:58.660331Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T11:36:59.083411Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T11:37:20.676516Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T11:37:28.355298Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T11:38:05.244242Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:38:46.301351Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ce4d19a4-ebb1-4556-8da6-c2138ba49153 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:38:46.308324Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:36:58.660312Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:36:58.660312Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:36:58.660326Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:36:58.660326Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:36:58.660329Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:36:58.660329Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert's high severity and confidence are driven by 15 distinct correlation findings that align with lateral movement patterns (T1078). This suggests an adversary is leveraging valid user credentials to traverse the environment, making it difficult to distinguish from legitimate administrative activity. Immediate investigation is required to determine the scope of the compromise and prevent further unauthorized access."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Disable or reset credentials for the affected user account",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the source host (10.20.4.61) from the network to prevent further movement while investigation is underway.",
+    "Perform a 'sanity check' by contacting Jane Tan via an out-of-band communication channel (e.g., Teams, phone) to confirm if she initiated this session.",
+    "Review process execution logs on the target machine for any suspicious child processes spawned immediately after the logon, such as cmd.exe, powershell.exe, or wmic.exe.",
+    "Cross-reference Jane Tan's recent login history to see if this IP address is a known/authorized device for her user profile.",
+    "Audit all other systems accessed by 'jane.tan' within the last 4 hours to determine the scope of the potential lateral movement."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high evidence count suggests a repetitive pattern characteristic of lateral movement, the lack of enrichment data regarding the user's role and the source device makes it impossible to distinguish between an attacker using stolen credentials and legitimate administrative activity.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

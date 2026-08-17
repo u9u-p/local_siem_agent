@@ -1,0 +1,143 @@
+{
+  "report_id": "f79b37da-2522-43f7-b007-233c3eade32b",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-15T10:52:48.192037Z",
+  "alert_summary": "An Excel macro launched PowerShell with an encoded command, indicating possible malicious activity such as credential theft or payload download.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "timestamp": "2026-08-15T10:52:09.739320Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T10:52:12.135178Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:52:12.135245Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "timestamp": "2026-08-15T10:52:12.549164Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=3; follow-up same_command_line_env_wide added 1; open-value search for '-EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:52:17.325035Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:52:20.079954Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:52:36.723866Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T10:52:48.191988Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f79b37da-2522-43f7-b007-233c3eade32b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:52:48.199524Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:52:12.135215Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:52:12.135215Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:52:12.135236Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:52:12.135236Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The findings indicate the use of PowerShell with an encoded command launched from an Excel macro, which aligns with ATT&CK technique T1059.001 (Command‑Line Interface: PowerShell). However, there is no evidence in the provided data for technique T1566.001 (Phishing: Spearphishing Attachment) nor for credential theft or payload download. The severity rating of “high” and confidence of “medium” are derived from the risk assessment, not from the specific techniques mentioned. A more accurate statement would be: \"The observed behavior matches ATT&CK technique T1059.001 where an Office document executes obfuscated PowerShell code. The encoded payload suggests intent to hide malicious actions, leading to a high severity rating with medium confidence due to limited enrichment information.\""
+  },
+  "recommended_actions": [
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate the endpoint (or at least suspend the Excel process) while preserving volatile memory for forensic capture; this prevents any further lateral movement or credential exfiltration that might be occurring via the PowerShell payload.",
+    "Collect full Sysmon logs, Windows Security Event logs, and PowerShell transcription logs from the host to reconstruct the exact command chain and identify any additional child processes (e.g., network connections, file writes).",
+    "Decode the complete Base64‑encoded PowerShell string (the snippet shown is only a fragment) in a sandboxed analysis environment; run it with `-NoProfile -ExecutionPolicy Bypass` under monitoring to see what commands are ultimately executed.",
+    "Search for any newly created files or scheduled tasks on the host that match the timestamps of this event, especially scripts saved to `%TEMP%`, `%APPDATA%`, or user profile directories.",
+    "Query Active Directory and Azure AD logs for anomalous authentication attempts from the compromised account (if one can be identified) within the last 24‑48 hours; look for pass‑the‑hash, credential‑dumping, or lateral movement indicators.",
+    "Check network traffic captures (or proxy logs) for outbound connections to known malicious domains/IPs that may have been contacted by the PowerShell payload; block any suspicious destinations at the firewall level.",
+    "Perform a threat‑intel lookup on the domain strings observed (`jtan-lt01.victimcorp.com`, `jane.tan`) and on any IOC hashes generated from the decoded script to see if they map to known campaigns or actor infrastructure.",
+    "If the payload is confirmed malicious, initiate a full endpoint remediation: remove the malicious macro, delete any dropped files, reset credentials for affected users, and apply Office macro hardening (e.g., disable macros by default, enforce protected view).",
+    "Document all findings in the incident response ticket and update detection rules to flag future occurrences of Excel spawning PowerShell with `-EncodedCommand` flags."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an Office macro launching PowerShell with a Base64‑encoded command is a well‑known malicious technique (ATT&CK T1059.001/T1566.001), and the event includes multiple corroborating Sysmon logs, indicating active exploitation rather than benign automation.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Escalate to a human analyst for manual review'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  }
+}

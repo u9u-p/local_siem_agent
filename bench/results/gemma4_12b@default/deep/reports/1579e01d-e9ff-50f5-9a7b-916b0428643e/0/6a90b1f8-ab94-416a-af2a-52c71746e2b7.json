@@ -1,0 +1,144 @@
+{
+  "report_id": "6a90b1f8-ab94-416a-af2a-52c71746e2b7",
+  "alert_id": "1579e01d-e9ff-50f5-9a7b-916b0428643e",
+  "generated_at": "2026-08-15T15:04:25.149436Z",
+  "alert_summary": "A high-severity threat involving multiple instances of unknown source IP and domain indicators was detected.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1579e01d-e9ff-50f5-9a7b-916b0428643e ingested; model available: True",
+      "timestamp": "2026-08-15T15:00:43.396634Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T15:01:09.226128Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T15:01:09.226198Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T15:01:09.622028Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'cloudmetrics-io.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T15:01:50.439302Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T15:02:07.466368Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T15:03:05.268924Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T15:04:25.149385Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 6a90b1f8-ab94-416a-af2a-52c71746e2b7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:04:25.157737Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:01:09.226162Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:01:09.226162Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cloudmetrics-io.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:01:09.226185Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:01:09.226185Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:01:09.226193Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:01:09.226193Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert identifies a high-confidence, high-severity threat with a significant evidence count from unknown sources, indicating a systematic campaign requiring investigation."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deep-dive analysis on the 'cloudmetrics-io.com' domain to check for recent registration dates or potential typosquatting of known cloud service providers.",
+    "Detonate any links or attachments contained within the held email in a controlled sandbox environment to identify credential harvesting sites or malware delivery.",
+    "Conduct an internal search across the mail gateway logs to determine if other employees received messages from 'cloudmetrics-io.com' or similar high-urgency financial lures.",
+    "Implement a proactive block on the source IP (149.72.14.88) and the domain 'cloudmetrics-io.com' across all corporate security layers.",
+    "Brief the operations team regarding this specific phishing lure to increase awareness of 'spend summary' themed social engineering."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The use of a high-urgency financial lure ('Weekly spend summary') combined with a 'Bulk' classification and the identification of T1566 phishing tactics confirms this is a deliberate malicious campaign.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

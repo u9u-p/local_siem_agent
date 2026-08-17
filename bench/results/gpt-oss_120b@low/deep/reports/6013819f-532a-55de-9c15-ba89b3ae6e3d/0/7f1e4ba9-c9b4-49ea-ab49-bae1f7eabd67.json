@@ -1,0 +1,144 @@
+{
+  "report_id": "7f1e4ba9-c9b4-49ea-ab49-bae1f7eabd67",
+  "alert_id": "6013819f-532a-55de-9c15-ba89b3ae6e3d",
+  "generated_at": "2026-08-15T10:43:53.691653Z",
+  "alert_summary": "The structured findings only indicate a lateral‑movement pattern with eight evidences and list the IP 10.20.4.61, domain dc01.corp.local and user jane.tan as unknown entities. There is no explicit evidence of a successful Windows logon for jane.tan from that IP.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6013819f-532a-55de-9c15-ba89b3ae6e3d ingested; model available: True",
+      "timestamp": "2026-08-15T10:43:24.716461Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:43:27.250094Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:43:27.250167Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:43:27.668153Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T10:43:30.750454Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:43:33.762281Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:43:46.111548Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T10:43:53.691603Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7f1e4ba9-c9b4-49ea-ab49-bae1f7eabd67 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:43:53.699300Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:43:27.250132Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:43:27.250132Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:43:27.250154Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:43:27.250154Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:43:27.250162Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:43:27.250162Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings provide a medium‑severity, high‑confidence assessment for lateral movement but do not contain details about the source being an internal host versus a typical workstation, nor any explicit statement about credential compromise or insider activity. A more accurate claim would be: “The evidence shows eight lateral‑movement events associated with IP 10.20.4.61 and user jane.tan, leading to a medium‑severity, high‑confidence risk assessment that warrants further investigation.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture a memory dump and recent event logs from the host at 10.20.4.61 for forensic analysis, focusing on LSASS, PowerShell, and scheduled task activity.",
+    "Isolate the endpoint (network quarantine) while preserving its state to prevent further lateral movement but allow investigators to continue data collection.",
+    "Query Active Directory for recent changes to Jane.Tan’s group memberships, privileged attribute modifications, and any newly created service accounts that might be tied to this credential.",
+    "Search for concurrent logons of the same user from disparate hosts (especially privileged workstations) within a short time window; flag any anomalies as potential credential stuffing.",
+    "Deploy a rapid credential‑theft detection rule (e.g., Windows Event ID 4624 with Logon Type 3 from internal IPs, paired with subsequent SMB or WMI activity) across the environment to surface similar patterns.",
+    "Force a password reset for Jane.Tan and any other accounts that share the same privileged groups; enforce MFA on all high‑value accounts if not already enabled.",
+    "Review recent patch levels on 10.20.4.61 and adjacent systems; prioritize applying any missing security updates, especially those addressing credential dumping or remote execution vulnerabilities.",
+    "Coordinate with the threat intel team to see whether the internal IP range (10.20.x.x) has been associated with known adversary infrastructure in prior incidents.",
+    "If feasible, conduct a short‑term honeypot deployment on a decoy system that mimics Jane.Tan’s typical access patterns to capture attacker techniques and tools."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful logon of a legitimate user from an internal host coincides with eight lateral‑movement evidences, strongly indicating credential misuse rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,123 @@
+{
+  "report_id": "cbf69627-fedb-431b-8d1f-5a7d53c048d1",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-15T03:25:25.293769Z",
+  "alert_summary": "A lateral movement pattern was detected across the environment with 32 correlated evidence items originating from IP address 45.146.164.110, which lacks enrichment data. This activity is assessed as high severity with medium confidence, indicating a potential compromise requiring immediate investigation.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-15T03:21:35.543764Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T03:21:52.266981Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T03:21:52.267012Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T03:21:52.697923Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=32",
+      "timestamp": "2026-08-15T03:22:56.027787Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T03:23:16.841053Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T03:24:20.415584Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T03:25:25.293669Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cbf69627-fedb-431b-8d1f-5a7d53c048d1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:25:25.303393Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:21:52.267003Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:21:52.267003Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The detection of 32 correlated events indicating a lateral movement pattern presents a high-severity risk of an active breach. Confidence is rated as medium because the source IP (45.146.164.110) lacks enrichment data, making it impossible to immediately rule out legitimate administrative access or automated services. Without confirmation that this activity is authorized, the scenario aligns with typical post-exploitation behavior where an attacker pivots across systems. Immediate validation of the activity's legitimacy and containment of affected hosts are necessary."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the source and destination hosts involved in the 32 correlated lateral movement events to contain potential spread.",
+    "Conduct a deep forensic review of jsmith’s account, including recent login locations, MFA usage, privilege escalation history, and associated SSH keys.",
+    "Enrich IP 45.146.164.110 through multiple threat intelligence platforms, reverse DNS lookups, and ASN/geolocation databases to determine if it belongs to a known cloud provider, hosting service, or malicious infrastructure.",
+    "Correlate the SSH session with EDR telemetry to identify post-authentication command execution, credential dumping attempts, or persistence mechanisms.",
+    "If jsmith is not an active administrator, enforce immediate password reset and revoke all active sessions; if legitimate, validate the access against approved change management records."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert remains uncertain because while the lateral movement pattern and successful SSH authentication are highly suspicious, the absence of IP enrichment and user context prevents definitive attribution without further investigative validation.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

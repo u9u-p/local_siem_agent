@@ -1,0 +1,122 @@
+{
+  "report_id": "862a445e-381b-4ed4-a58c-1c425654bc66",
+  "alert_id": "261d7e62-92be-5144-8473-3eb20b3735be",
+  "generated_at": "2026-08-15T10:27:21.864278Z",
+  "alert_summary": "A successful SSH login was observed for user **nprakash** from the unknown external IP **203.0.113.63**, which matches a lateral‑movement pattern that has occurred 26 times.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 261d7e62-92be-5144-8473-3eb20b3735be ingested; model available: True",
+      "timestamp": "2026-08-15T10:26:44.653926Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:26:46.511383Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:26:46.511431Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:26:46.925587Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=26; follow-up same_rule_id_host added 12",
+      "timestamp": "2026-08-15T10:26:50.216229Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:26:53.115250Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:27:08.305429Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 13 flagged",
+      "timestamp": "2026-08-15T10:27:21.864171Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 862a445e-381b-4ed4-a58c-1c425654bc66 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:27:21.873202Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:26:46.511417Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:26:46.511417Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The login originates from an IP address with no known provider or business relationship, indicating it may be an adversary-controlled host. ATT&CK’s Valid Accounts and Remote Services techniques are consistent with this behavior, and the correlation engine has linked it to a repeated lateral‑movement pattern, raising the likelihood of malicious intent. Although the severity is rated medium, confidence in the detection is high, justifying immediate investigative steps, including containment and credential review."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host where user *nprakash* logged in (or the source workstation if identifiable) to prevent any further lateral spread while you investigate.",
+    "Pull full SSH session logs, including command history and any SFTP transfers, for the timeframe surrounding the login and correlate them with other internal hosts that show similar activity.",
+    "Query your identity provider or directory service for recent password changes, MFA enrollment status, and last successful logins for *nprakash* to determine if this credential may have been compromised.",
+    "Run a rapid endpoint detection response (EDR) scan on the target host for known malware artifacts, suspicious processes, or newly created privileged accounts that could have been planted during the session.",
+    "Check DNS query logs and NetFlow/Zeek data for connections from the same source IP (203.0.113.63) to other internal assets; flag any new outbound connections as potentially part of a pivoting chain.",
+    "If you have network segmentation, enforce stricter firewall rules that block SSH access from unknown external ranges until the investigation concludes, and consider moving critical services behind jump hosts with MFA enforcement.",
+    "Document the timeline in your ticketing system, noting the correlation engine’s count (26) as evidence of a recurring pattern; this will help prioritize resources if additional alerts surface.",
+    "Engage threat intel teams to see whether 203.0.113.63 appears in any external malicious IP feeds or has been associated with known adversary infrastructure since its “unknown” provider status may be due to recent re‑use.",
+    "Consider resetting *nprakash*’s password and enforcing MFA on the account, even if it proves to be a false alarm; this reduces risk of credential reuse in future attempts."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful SSH login from an unknown external IP and its inclusion in a repeated lateral‑movement pattern (26 occurrences) strongly suggests malicious use of valid credentials rather than benign activity.",
+  "uncertainty_notes": "unsupported claim: 'A successful SSH login was observed for user **nprakash** from the unknown external IP **203.0.113.63**, which matches a lateral‑movement pattern that has occurred 26 times.'; unsupported claim: 'The login originates from an IP address with no known provider or business relationship, indicating it may be an adversary-controlled host. ATT&CK’s Valid Accounts and Remote Services techniques are consistent with this behavior, and the correlation engine has linked it to a repeated lateral‑movement pattern, raising the likelihood of malicious intent. Although the severity is rated medium, confidence in the detection is high, justifying immediate investigative steps, including containment and credential review.'; unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,120 @@
+{
+  "report_id": "80690c02-a423-4944-ba90-dc2cfc993997",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-16T10:13:03.985229Z",
+  "alert_summary": "No evidence of a successful SSH login by user nprakash is present; only 44 lateral‑movement events are recorded from IP 203.0.113.63.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-16T10:12:00.087018Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T10:12:03.912946Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T10:12:03.913009Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T10:12:04.358822Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=44; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-16T10:12:12.804534Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:12:17.188741Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:12:46.744534Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 13 flagged",
+      "timestamp": "2026-08-16T10:13:03.985129Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 80690c02-a423-4944-ba90-dc2cfc993997 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:13:03.993566Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:12:03.912987Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:12:03.912987Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The findings do not confirm a login event or that the IP is unrecognized for internal traffic; they only indicate external IP involvement in lateral movement."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected host(s) from the internal network to contain any potential spread while preserving volatile memory for forensic analysis.",
+    "Perform a detailed audit of recent SSH sessions, cross‑checking timestamps with other suspicious events and looking for anomalous command execution or file transfers that could indicate lateral movement.",
+    "Verify the legitimacy of user nprakash’s credentials: review password change history, enforce an immediate mandatory reset, and enable multi‑factor authentication if not already in place.",
+    "Run host‑based intrusion detection tools (e.g., OSSEC, Tripwire) to detect unauthorized modifications to critical system files or configuration changes that may have been introduced during the session.",
+    "Correlate this event with other logs—Windows Event Logs, NetFlow, endpoint telemetry—to identify any additional compromised accounts or hosts within the same subnet.",
+    "If possible, capture a memory dump of the affected machine and run volatility modules to search for hidden processes, injected code, or evidence of credential‑dumping tools such as Mimikatz.",
+    "Notify relevant stakeholders (IT security team, system owners, compliance officer) about the potential breach and coordinate with incident response procedures."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the successful SSH login from an unknown external IP combined with numerous lateral‑movement indicators raises strong suspicion, the lack of definitive evidence linking the activity to a known threat actor or confirmed compromise prevents a definitive true‑positive classification at this stage.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

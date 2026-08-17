@@ -1,0 +1,135 @@
+{
+  "report_id": "be3ee4f5-ac91-4e06-a528-c3fc5a64c576",
+  "alert_id": "6f5c6415-dc68-5ade-97e7-4697181d4d16",
+  "generated_at": "2026-08-15T09:44:12.573297Z",
+  "alert_summary": "Suspicious logon detected from an unknown IP to a corporate account; possible credential abuse but no further compromise evidence found.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6f5c6415-dc68-5ade-97e7-4697181d4d16 ingested; model available: True",
+      "timestamp": "2026-08-15T09:44:03.305194Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 6 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:44:04.788396Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T09:44:04.788472Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:44:05.218902Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-15T09:44:05.755724Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:44:06.359495Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:44:09.616518Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:44:12.573194Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report be3ee4f5-ac91-4e06-a528-c3fc5a64c576 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:12.582759Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:04.788441Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:04.788441Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:04.788465Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:04.788465Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The attempt originated from an unrecognized source and targeted a corporate domain, suggesting potential credential misuse. However, since there is no additional proof of broader compromise or data exfiltration, the risk remains medium rather than high or critical."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate deeper forensic analysis of the user account and associated logon sessions to identify any lateral movement or privilege escalation attempts.",
+    "Correlate this event with other authentication logs across the network to detect broader patterns of suspicious activity, especially involving similar credentials or timeframes.",
+    "Review recent changes to security policies, password resets, or domain controller configurations that could have inadvertently enabled credential reuse.",
+    "Engage incident response teams for continuous monitoring and alerting on any anomalous behavior tied to this user account or related network assets."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful but unexpected logon from an unknown IP into a corporate domain strongly suggests credential compromise, warranting classification as a true positive despite limited additional evidence at this stage.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

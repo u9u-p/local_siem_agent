@@ -1,0 +1,144 @@
+{
+  "report_id": "d9288798-2460-4c7d-972e-bbda59c08d5d",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-15T03:37:13.182349Z",
+  "alert_summary": "An Excel spreadsheet triggered a hidden PowerShell process running an encoded command designed to download and execute remote code. This behavior strongly indicates a malicious macro executing a spearphishing payload rather than legitimate administrative activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "timestamp": "2026-08-15T03:33:26.064682Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T03:33:58.993175Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T03:33:58.993243Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "timestamp": "2026-08-15T03:33:59.427641Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=2; open-value search for '-enc' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T03:34:50.760496Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T03:35:10.683822Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T03:36:22.676155Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T03:37:13.182236Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d9288798-2460-4c7d-972e-bbda59c08d5d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:37:13.191483Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:33:58.993211Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:33:58.993211Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:33:58.993235Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:33:58.993235Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high-severity alert reflects a classic initial access technique where a malicious Excel macro bypasses normal user interaction by spawning a hidden PowerShell process with an encoded payload. The use of the `IEX` cmdlet indicates an attempt to download and execute remote code directly in memory, evading traditional file-based detection. Combined with the spearphishing attachment context and lack of known domain associations, this activity points to active exploitation rather than legitimate administrative work. Immediate containment and forensic analysis are required to prevent lateral movement or data exfiltration."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Terminate the suspicious process on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Notify the asset owner of the affected host or agent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate host jtan-lt01.victimcorp.com from the network to prevent lateral movement and data exfiltration.",
+    "Terminate the PowerShell process and capture a memory dump for forensic analysis of the encoded payload and potential C2 communication channels.",
+    "Extract and analyze the macro code within Invoice_2984773.xlsm to identify the full attack chain, additional IOCs, and persistence mechanisms.",
+    "Reset credentials for user jane.tan and audit recent email activity to determine if other spearphishing attachments were delivered.",
+    "Search the environment for similar encoded PowerShell executions or new Excel files with macros to assess the scope of compromise."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert exhibits a canonical malicious execution chain characterized by stealth flags, obfuscation, and a decoded download cradle originating from a suspicious document attachment, leaving no plausible benign explanation.",
+  "uncertainty_notes": "unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  }
+}

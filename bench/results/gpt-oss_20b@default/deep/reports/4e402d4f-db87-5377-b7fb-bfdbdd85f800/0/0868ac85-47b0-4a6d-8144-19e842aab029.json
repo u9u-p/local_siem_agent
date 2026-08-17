@@ -1,0 +1,140 @@
+{
+  "report_id": "0868ac85-47b0-4a6d-8144-19e842aab029",
+  "alert_id": "4e402d4f-db87-5377-b7fb-bfdbdd85f800",
+  "generated_at": "2026-08-16T10:47:54.116284Z",
+  "alert_summary": "An alert was generated for an email from ap@stellar‑logistics.com to victimcorp.com's finance mailbox; the sender domain lacks a known reputable provider.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4e402d4f-db87-5377-b7fb-bfdbdd85f800 ingested; model available: True",
+      "timestamp": "2026-08-16T10:46:51.353911Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:47:00.318824Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T10:47:00.318909Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T10:47:00.732650Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=31; open-value search for 'SL-40218' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:47:11.874810Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=critical, confidence=medium",
+      "timestamp": "2026-08-16T10:47:17.353791Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T10:47:35.518251Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-16T10:47:54.116185Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0868ac85-47b0-4a6d-8144-19e842aab029 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:47:54.125164Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.117",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:47:00.318866Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:47:00.318866Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "stellar-logistics.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:47:00.318895Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:47:00.318895Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:47:00.318903Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:47:00.318903Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "critical",
+    "confidence": "medium",
+    "rationale": "The alert is marked critical due to 31 distinct evidence points indicating malicious intent, with source IP and domains unverified and lacking reputable providers; confidence is medium because contextual data is limited."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate verification of the remittance advice by contacting the purported sender through a known, trusted channel (e.g., a verified phone number or separate email address) to confirm the legitimacy of invoice SL‑40218 and any associated payment instructions.",
+    "Cross‑reference the invoice number against the finance team’s procurement records; if no matching purchase order exists, treat the message as a high‑risk BEC attempt and block any attached documents until further review.",
+    "Deploy network monitoring to capture outbound traffic from the finance mailbox during the period of receipt, looking for anomalous data exfiltration or credential usage that might indicate compromised credentials.",
+    "Enforce stricter email gateway rules for bulk messages originating from unknown external domains—such as mandatory attachment scanning and sender authentication checks—to reduce future exposure to similar threats.",
+    "Document all findings in a shared incident log and schedule a post‑incident review with the finance, IT security, and legal teams to assess potential financial impact and update BEC response playbooks accordingly."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a bulk email flagged by Mimecast, an unknown external IP and domain, a subject line that mimics a typical remittance advice, and 31 supporting evidence points strongly indicates a classic Business Email Compromise scenario.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

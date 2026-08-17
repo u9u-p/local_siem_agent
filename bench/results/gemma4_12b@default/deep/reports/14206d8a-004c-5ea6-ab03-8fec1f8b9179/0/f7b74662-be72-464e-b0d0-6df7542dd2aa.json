@@ -1,0 +1,160 @@
+{
+  "report_id": "f7b74662-be72-464e-b0d0-6df7542dd2aa",
+  "alert_id": "14206d8a-004c-5ea6-ab03-8fec1f8b9179",
+  "generated_at": "2026-08-15T14:49:09.314050Z",
+  "alert_summary": "An encoded PowerShell command was executed by a Node.js process; however, decoding reveals it is a routine cleanup operation performed by the 'claude-code' development tool.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 14206d8a-004c-5ea6-ab03-8fec1f8b9179 ingested; model available: True",
+      "timestamp": "2026-08-15T14:43:15.753968Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 12 candidates, 3 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T14:43:34.531344Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T14:43:34.531426Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T14:43:34.970052Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=84; follow-up same_rule_id_host added 41; open-value search for 'base64' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T14:44:51.127043Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T14:45:07.029861Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T14:46:11.611514Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T14:49:09.313926Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f7b74662-be72-464e-b0d0-6df7542dd2aa persisted, alert marked investigated",
+      "timestamp": "2026-08-15T14:49:09.322766Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-twong02.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:43:34.531382Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:43:34.531382Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:43:34.531406Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:43:34.531406Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cli.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:43:34.531414Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:43:34.531414Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:43:34.531419Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:43:34.531419Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded PowerShell commands are often used to mask malicious activity, the decoded payload (Remove-Item -Recurse -Force .\u001dist) confirms this is a standard automated build task. The parent process is identified as part of a known developer utility, resulting in a low risk assessment with high confidence that no malicious intent is present."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider implementing a whitelist for known development tools (e.g., @anthropic-ai\nclaude-code) to reduce noise from legitimate build scripts.",
+    "If this alert triggers frequently across the engineering department, consider tuning the rule to ignore encoded commands when the parent process is 'node.exe' and the decoded command contains standard cleanup strings like 'Remove-Item'.",
+    "Verify if other developers are utilizing the 'claude-code' tool to determine if a broader policy exception for this specific path is required."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert correctly identified an encoded PowerShell command, but the decoded content and parent process confirm it is a benign automated cleanup task performed by a known development tool.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand UgBlAG0AbwB2AGUALQBJAHQAZQBtACAALQBSAGUAYwB1AHIAcwBlACAALQBGAG8AcgBjAGUAIAAuAFwAZABpAHMAdAA=",
+    "parent_command_line": "\"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\tommy.wong\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "UgBlAG0AbwB2AGUALQBJAHQAZQBtACAALQBSAGUAYwB1AHIAcwBlACAALQBGAG8AcgBjAGUAIAAuAFwAZABpAHMAdAA=",
+        "decoded": "Remove-Item -Recurse -Force .\\dist"
+      }
+    ]
+  }
+}

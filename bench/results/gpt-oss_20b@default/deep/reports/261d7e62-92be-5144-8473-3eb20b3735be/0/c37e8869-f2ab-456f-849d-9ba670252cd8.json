@@ -1,0 +1,119 @@
+{
+  "report_id": "c37e8869-f2ab-456f-849d-9ba670252cd8",
+  "alert_id": "261d7e62-92be-5144-8473-3eb20b3735be",
+  "generated_at": "2026-08-16T10:31:11.362981Z",
+  "alert_summary": "A successful SSH login was recorded from IP 203.0.113.63, which appears to be a reserved test address with no signs of malicious activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 261d7e62-92be-5144-8473-3eb20b3735be ingested; model available: True",
+      "timestamp": "2026-08-16T10:29:58.528980Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T10:30:01.190357Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T10:30:01.190408Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T10:30:01.606150Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=14; open-value search for 'ssh login' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:30:20.651568Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=low",
+      "timestamp": "2026-08-16T10:30:25.984324Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:30:50.460459Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-16T10:31:11.362902Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c37e8869-f2ab-456f-849d-9ba670252cd8 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:31:11.371016Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:30:01.190392Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:30:01.190392Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "low",
+    "rationale": "The correlation engine found no anomalous patterns and the 14 related log entries all reflect normal authentication behavior. The source IP is unregistered but likely belongs to a local network or testing environment, so there is little evidence of compromise. Because the login was legitimate and no suspicious activity was detected, the confidence in a threat is low; however, any SSH access carries inherent risk, hence the medium severity rating."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify that user **nprakash** actually performed this login by cross‑checking the session ID and command history in the SSH audit logs.",
+    "Confirm with the user or their manager whether they were expected to log in from an external or test environment at the recorded time.",
+    "Map the IP address *203.0.113.63* against internal network diagrams and device inventories; if it does not belong to a known host, flag it for further investigation.",
+    "Inspect any subsequent activity originating from that IP during the same session—look for unusual commands, file transfers, or privilege escalations.",
+    "Enable temporary logging of all outbound traffic from *203.0.113.63* to detect potential data exfiltration or lateral movement.",
+    "If the IP is determined to be a legitimate test machine, document its purpose and update the asset registry; if not, quarantine the host and run a full malware scan."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The login appears legitimate with no anomalous patterns, yet the source IP is unregistered and unknown, so we cannot conclusively determine whether it is benign or malicious.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'No immediate action needed — monitor for recurrence'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

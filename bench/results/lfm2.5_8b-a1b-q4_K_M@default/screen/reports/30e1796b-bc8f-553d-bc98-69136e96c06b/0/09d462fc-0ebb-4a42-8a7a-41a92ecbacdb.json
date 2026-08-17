@@ -1,0 +1,123 @@
+{
+  "report_id": "09d462fc-0ebb-4a42-8a7a-41a92ecbacdb",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-14T18:06:30.774696Z",
+  "alert_summary": "A high-severity brute-force SSH login attempt from an unknown IP was detected, but limited enrichment data and a low evidence count reduce confidence in the assessment.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-14T18:05:42.856101Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:05:46.194079Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T18:05:46.194143Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T18:05:46.613408Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=33; follow-up same_src_ip_24h added 1",
+      "timestamp": "2026-08-14T18:05:53.874725Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:05:58.589161Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:06:13.300974Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:06:30.774647Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 09d462fc-0ebb-4a42-8a7a-41a92ecbacdb persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:06:30.782780Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:05:46.194128Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:05:46.194128Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The unauthorized SSH attempts indicate active credential harvesting, which poses a significant risk of unauthorized access. However, the lack of additional context and only 33 evidence points limit confidence in this finding."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enhance enrichment by correlating the IP address with threat intelligence platforms to identify known malicious infrastructure or prior attack patterns.",
+    "Investigate whether the user account 'jsmith' exists in internal directories and review its permissions for potential privilege escalation risks.",
+    "Deploy temporary multi-factor authentication (MFA) prompts for all privileged accounts, especially those associated with syslog and sshd services.",
+    "Analyze network logs for additional SSH connection attempts from the same IP or related ranges to determine if this is an isolated incident or part of a broader campaign.",
+    "Assess whether the brute-force pattern aligns with automated tools (e.g., Metasploit, Hydra) by checking for signature matches in your security stack.",
+    "Coordinate with the identity and access management (IAM) team to audit recent password changes or credential leaks that may have been harvested from this IP."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The presence of a confirmed successful SSH login from an external IP, combined with the pattern_type classification and high severity rating, indicates a genuine threat despite limited enrichment data.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

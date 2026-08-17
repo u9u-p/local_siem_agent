@@ -1,0 +1,120 @@
+{
+  "report_id": "d49d80b5-2a60-43da-b4e0-616b407d0194",
+  "alert_id": "8ee14fd9-34cf-50aa-b697-e6c06257cd03",
+  "generated_at": "2026-08-15T13:51:37.116946Z",
+  "alert_summary": "An unknown IP address (203.0.113.10) was involved in 32 brute-force attempts.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8ee14fd9-34cf-50aa-b697-e6c06257cd03 ingested; model available: True",
+      "timestamp": "2026-08-15T13:49:01.921825Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:49:08.451819Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:49:08.451866Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:49:08.867135Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=32",
+      "timestamp": "2026-08-15T13:49:49.641605Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T13:49:55.285390Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:50:25.855249Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T13:51:37.116878Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d49d80b5-2a60-43da-b4e0-616b407d0194 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:51:37.123616Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:49:08.451851Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:49:08.451851Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high severity is driven by a sustained brute-force pattern (32 attempts) from an unrecognized source (IP 203.0.113.10)."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'jsmith' account to prevent further unauthorized access.",
+    "Terminate all active SSH sessions originating from IP 203.0.113.10 and any other suspicious sessions currently tied to user 'jsmith'.",
+    "Perform a deep-dive audit of all commands executed and files accessed by 'jsmith' during the session following the successful login to determine the scope of data exfiltration or lateral movement.",
+    "Implement an immediate block on IP 203.0.113.10 at the perimeter firewall/IPS.",
+    "Force a mandatory password reset for 'jsmith' and verify if Multi-Factor Authentication (MFA) is enabled and was bypassed or not configured."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high correlation between the brute-force pattern (32 failed attempts) and a subsequent successful login from an unknown external IP strongly indicates a successful credential compromise.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

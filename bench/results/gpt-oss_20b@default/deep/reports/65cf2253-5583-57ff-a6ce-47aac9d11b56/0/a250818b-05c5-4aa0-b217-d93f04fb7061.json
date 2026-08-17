@@ -1,0 +1,115 @@
+{
+  "report_id": "a250818b-05c5-4aa0-b217-d93f04fb7061",
+  "alert_id": "65cf2253-5583-57ff-a6ce-47aac9d11b56",
+  "generated_at": "2026-08-16T11:09:16.290176Z",
+  "alert_summary": "A login event from the unrecognized external IP 203.0.113.10 was linked to 61 lateral‑movement indicators, strongly suggesting a possible compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 65cf2253-5583-57ff-a6ce-47aac9d11b56 ingested; model available: True",
+      "timestamp": "2026-08-16T11:08:18.308520Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:08:21.348448Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T11:08:21.348500Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T11:08:21.762393Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=61; follow-up same_rule_id_host added 29",
+      "timestamp": "2026-08-16T11:08:30.672190Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T11:08:36.014541Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T11:08:57.295290Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T11:09:16.290083Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a250818b-05c5-4aa0-b217-d93f04fb7061 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:09:16.299564Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:08:21.348485Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:08:21.348485Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful logon with a valid account from an unknown external source raises immediate concern, especially when combined with dozens of correlated lateral‑movement events that imply internal movement. The absence of IP reputation data and unclear user context limits certainty, but the pattern is characteristic of credential abuse or compromised accounts. Given the high severity rating, prompt containment and investigation are warranted to prevent further spread."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected workstation from the internal network to prevent further lateral movement while preserving volatile memory and disk state for forensic analysis. Conduct a thorough review of the SSH session logs, including command history and file transfer activity, to identify any evidence of privilege escalation or persistence mechanisms such as cron jobs, scheduled tasks, or malicious binaries placed in startup directories. Cross‑reference the user jsmith’s recent legitimate activity against corporate access patterns; if this login deviates from normal behavior (e.g., time of day, typical source IPs, or command usage), treat it as a high‑priority indicator of compromise. Expand the lateral‑movement investigation by mapping all 61 correlated events to their originating and destination hosts, then perform host integrity checks on those endpoints for unauthorized binaries, altered configuration files, or anomalous scheduled tasks. Finally, coordinate with threat intelligence feeds to enrich the unknown IP (203.0.113.10) with any emerging indicators of compromise that may surface after this incident, and update internal security controls—such as tightening SSH key management and enforcing multi‑factor authentication for privileged accounts—to mitigate similar future incidents."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful SSH logon from an unrecognized external IP and 61 correlated lateral‑movement events strongly suggests that the account was compromised and used to move laterally within the network, making this alert highly likely to be a genuine incident.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

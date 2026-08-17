@@ -1,0 +1,139 @@
+{
+  "report_id": "80eefc30-6036-44ae-b9a1-05184747a667",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-15T00:30:46.502831Z",
+  "alert_summary": "There are 22 evidence items with pattern_type=none involving IP 100.72.44.19 and domain dc01.corp.local. Enrichment for IP 100.72.44.19, domain dc01.corp.local and domain corp.local is unknown (provider none), so it is not possible to confirm whether this activity is expected.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-15T00:20:30.142153Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-15T00:21:33.662919Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T00:21:33.662990Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T00:21:34.089293Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T00:24:56.644778Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=low",
+      "timestamp": "2026-08-15T00:25:47.141024Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T00:27:42.394376Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-15T00:30:46.502728Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 80eefc30-6036-44ae-b9a1-05184747a667 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T00:30:46.511110Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:21:33.662955Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:21:33.662955Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:21:33.662977Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:21:33.662977Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:21:33.662984Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:21:33.662984Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "low",
+    "rationale": "The alert has no enrichment for source IP 100.72.44.19, domain dc01.corp.local or corp.local, correlation shows pattern_type=none with evidence_count=22, and risk assessment is severity=medium, confidence=low."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enrich IP 100.72.44.19 with external threat intelligence, geolocation, and asset inventory to determine if it is internal, VPN, or external.",
+    "Correlate the 22 successful logons for mrahman against baseline user behavior, time-of-day, and source host to identify anomalies.",
+    "Review authentication logs on dc01.corp.local for the same timeframe to check for failed attempts, logon type, and process execution.",
+    "Validate user mrahman account status, recent changes, and whether the account is expected to authenticate from that IP or domain."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "Successful authentication alone is not indicative of abuse and enrichment is missing for IP, domain and user context, so malicious intent cannot be confirmed or ruled out.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'No immediate action needed — monitor for recurrence'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

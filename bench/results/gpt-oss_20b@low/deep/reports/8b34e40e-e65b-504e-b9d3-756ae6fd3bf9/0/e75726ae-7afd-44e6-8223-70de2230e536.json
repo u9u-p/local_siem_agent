@@ -1,0 +1,119 @@
+{
+  "report_id": "e75726ae-7afd-44e6-8223-70de2230e536",
+  "alert_id": "8b34e40e-e65b-504e-b9d3-756ae6fd3bf9",
+  "generated_at": "2026-08-15T10:12:50.811607Z",
+  "alert_summary": "A login event from external IP 203.0.113.20 with no known provider is associated with 31 lateral‑movement events, indicating a medium‑risk compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8b34e40e-e65b-504e-b9d3-756ae6fd3bf9 ingested; model available: True",
+      "timestamp": "2026-08-15T10:12:28.229200Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:12:29.284270Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:12:29.284318Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:12:29.714359Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=31",
+      "timestamp": "2026-08-15T10:12:33.249014Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:12:35.195819Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:12:44.177074Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 11 flagged",
+      "timestamp": "2026-08-15T10:12:50.811558Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e75726ae-7afd-44e6-8223-70de2230e536 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:12:50.819519Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:29.284303Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:29.284303Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The unknown external IP 203.0.113.20 is linked to 31 lateral‑movement events, suggesting probing or lateral movement; the lack of an identified legitimate remote‑admin context warrants containment and investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate forensic review of the target host’s audit logs to confirm whether the SSH session was authorized by a legitimate administrator or if it originated from a compromised workstation.",
+    "Cross‑reference the source IP (203.0.113.20) against internal VPN and remote‑access whitelists; if absent, block outbound traffic from that address until further investigation.",
+    "Deploy host‑based intrusion detection sensors on the affected machine to capture subsequent lateral‑movement attempts, focusing on SMB/SMB2 shares, Windows Management Instrumentation (WMI), and PowerShell remoting activity.",
+    "Perform a rapid credential audit: reset passwords for all accounts with elevated privileges, enforce multi‑factor authentication, and review any recent changes to sudoers or group memberships.",
+    "If the environment supports it, enable session recording (e.g., SSH session capture) on the affected host to reconstruct the attacker’s actions and identify potential exfiltration paths.",
+    "Engage threat intelligence feeds to check for known malicious activity associated with the IP range of 203.0.113.20; if a match is found, treat the incident as a confirmed compromise."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful SSH login from an external address coupled with numerous lateral‑movement events suggests malicious activity, but without definitive evidence of credential theft or policy violation, it remains unclear whether this is a legitimate remote administration session or a compromised account.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

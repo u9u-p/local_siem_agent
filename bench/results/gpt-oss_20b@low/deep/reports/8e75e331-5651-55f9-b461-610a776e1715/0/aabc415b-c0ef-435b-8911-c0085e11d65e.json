@@ -1,0 +1,142 @@
+{
+  "report_id": "aabc415b-c0ef-435b-8911-c0085e11d65e",
+  "alert_id": "8e75e331-5651-55f9-b461-610a776e1715",
+  "generated_at": "2026-08-15T10:13:16.216682Z",
+  "alert_summary": "The correlation engine flagged a lateral‑movement pattern involving the domain user tommy.wong and internal IP 10.20.4.94, supported by 15 events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8e75e331-5651-55f9-b461-610a776e1715 ingested; model available: True",
+      "timestamp": "2026-08-15T10:12:51.305191Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:12:53.255308Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:12:53.255380Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:12:53.667983Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:12:55.964836Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:12:58.197015Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:13:08.013376Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T10:13:16.216628Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aabc415b-c0ef-435b-8911-c0085e11d65e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:13:16.223718Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:53.255345Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:53.255345Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:53.255367Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:53.255367Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:53.255375Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:53.255375Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The correlation engine identified a lateral‑movement pattern with 15 supporting events for tommy.wong from 10.20.4.94, resulting in a medium severity rating and high confidence assessment."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an account‑activity audit: pull the last 24 hours of logon events for tommy.wong from all domain controllers and cross‑reference with scheduled tasks, group policy changes, and privileged‑access logs to detect anomalous patterns.",
+    "Deploy a real‑time watch on the workstation or server that accepted the 10.20.4.94 session; enable verbose auditing (e.g., Process Creation, Credential Validation) for the next 48 hours to capture any subsequent lateral‑movement attempts or privilege escalations.",
+    "Perform a host integrity check on the machine at 10.20.4.94: run an endpoint detection agent to verify that no unauthorized binaries, scheduled tasks, or registry modifications have been introduced since the logon event.",
+    "Cross‑check the IP address against internal asset inventory and network segmentation maps; confirm whether 10.20.4.94 belongs to a trusted subnet or is an orphaned device that could be compromised.",
+    "If feasible, isolate the source host from the rest of the domain temporarily while investigation continues, to prevent potential spread if the account has been hijacked.",
+    "Engage threat‑intel feeds to see whether tommy.wong or the IP 10.20.4.94 have appeared in recent phishing or credential‑dumping campaigns; this can help gauge whether the activity is part of a broader campaign.",
+    "Schedule a forensic imaging of the host at 10.20.4.94 for deep analysis (memory dump, disk image) to look for signs of persistence mechanisms such as WMI event subscriptions or scheduled tasks that could be used for lateral movement."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The volume of correlated events suggests potential misuse, but without evidence of privilege escalation or malicious payloads the activity could still be legitimate administrative work; further investigation is required to confirm.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

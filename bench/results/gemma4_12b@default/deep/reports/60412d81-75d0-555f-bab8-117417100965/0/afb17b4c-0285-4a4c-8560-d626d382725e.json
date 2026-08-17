@@ -1,0 +1,150 @@
+{
+  "report_id": "afb17b4c-0285-4a4c-8560-d626d382725e",
+  "alert_id": "60412d81-75d0-555f-bab8-117417100965",
+  "generated_at": "2026-08-15T18:10:55.004562Z",
+  "alert_summary": "An alert was generated with medium severity and confidence based on 26 pieces of evidence; however, no specific patterns were identified.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 60412d81-75d0-555f-bab8-117417100965 ingested; model available: True",
+      "timestamp": "2026-08-15T18:03:28.682320Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T18:03:52.508911Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T18:03:52.508982Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T18:03:52.931735Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'bulletin@apac-tradebody.org' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T18:04:41.184795Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T18:05:00.438078Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T18:06:11.723773Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T18:10:55.004537Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report afb17b4c-0285-4a4c-8560-d626d382725e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T18:10:55.011775Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:03:52.508945Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:03:52.508945Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "apac-tradebody.org",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:03:52.508966Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:03:52.508966Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:03:52.508973Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:03:52.508973Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:03:52.508977Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:03:52.508977Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert has a medium risk assessment and requires investigation because enrichment results for the IP and domains are unknown."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'apac-tradebody.org' to determine the domain's age; newly registered domains are often used in phishing campaigns.\n\nConduct a deep dive into the email body for any embedded URLs, specifically checking for URL shorteners or look-alike domains that might redirect to credential harvesting pages.\n\nCross-reference internal mail logs to see if other employees within 'victimcorp.com' received emails from 'apac-tradebody.org', which would indicate a targeted campaign rather than an isolated incident.\n\nVerify the legitimacy of the 'APAC Trade Body' with the internal communications or legal department to confirm if they are a known partner or legitimate entity.",
+    "triage_classification\": \"uncertain\", \"triage_rationale\": \"The alert exhibits characteristics common to phishing (regulatory lure and bulk delivery), but without specific malicious indicators in the enrichment data, manual inspection of the content is required to distinguish it from a legitimate newsletter.\"}"
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert exhibits characteristics common to phishing (regulatory lure and bulk delivery), but without specific malicious indicators in the enrichment data, manual inspection of the content is required to distinguish it from a legitimate newsletter.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,148 @@
+{
+  "report_id": "f6799d51-7f54-4dec-9d88-2496b5188d26",
+  "alert_id": "395f0f48-0863-59aa-a9e2-44edd77f4652",
+  "generated_at": "2026-08-15T16:27:21.217943Z",
+  "alert_summary": "An encoded PowerShell command was executed by the Cursor IDE, but the decoded payload is a standard Git operation used for viewing repository changes.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 395f0f48-0863-59aa-a9e2-44edd77f4652 ingested; model available: True",
+      "timestamp": "2026-08-15T16:24:40.409401Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T16:24:58.506323Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:24:58.506397Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T16:24:58.928785Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=17; follow-up same_rule_id_host added 8; open-value search for 'encoded' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:26:02.549553Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T16:26:17.882207Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T16:27:05.732621Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:27:21.217892Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f6799d51-7f54-4dec-9d88-2496b5188d26 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:27:21.225230Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:24:58.506359Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:24:58.506359Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:24:58.506384Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:24:58.506384Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:24:58.506392Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:24:58.506392Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded PowerShell commands are often indicative of malicious obfuscation, the specific command in this instance decodes to 'git diff --stat HEAD'. Given that the parent process is an Integrated Development Environment (IDE) and the command relates to routine version control, this activity is consistent with standard developer workflows."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider whitelisting the specific path 'C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe' when spawning powershell.exe with -EncodedCommand if subsequent analysis confirms it only executes standard git operations.",
+    "Perform a one-time audit of other commands executed by Cursor.exe to ensure no other non-standard scripts are being invoked via PowerShell.",
+    "Update the detection logic for Rule 100075 to include an exclusion for known IDE paths (e.g., VS Code, Cursor) when the decoded string matches common version control patterns like 'git' or 'git diff'."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "While the use of an encoded command is a technique often used by adversaries, in this specific context, it is a known behavior of the Cursor IDE to execute standard Git commands for version control integration.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABkAGkAZgBmACAALQAtAHMAdABhAHQAIABIAEUAQQBEAA==",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABkAGkAZgBmACAALQAtAHMAdABhAHQAIABIAEUAQQBEAA==",
+        "decoded": "git diff --stat HEAD"
+      }
+    ]
+  }
+}

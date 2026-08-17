@@ -1,0 +1,142 @@
+{
+  "report_id": "fea961be-72ab-4f50-b8b1-b524330ea76d",
+  "alert_id": "4d0e73bb-d43a-5f67-bf96-2776ded4b8b1",
+  "generated_at": "2026-08-15T10:00:56.451392Z",
+  "alert_summary": "A successful logon was recorded for user a.chong from internal IP 10.20.4.107, but eight scanning‑related events were also detected during the same session.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4d0e73bb-d43a-5f67-bf96-2776ded4b8b1 ingested; model available: True",
+      "timestamp": "2026-08-15T10:00:34.218238Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:00:35.874604Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:00:35.874715Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:00:36.290595Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=8",
+      "timestamp": "2026-08-15T10:00:38.416696Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:00:40.781037Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:00:49.059957Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:00:56.451332Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fea961be-72ab-4f50-b8b1-b524330ea76d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:00:56.459342Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.107",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:00:35.874670Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:00:35.874670Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:00:35.874703Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:00:35.874703Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:00:35.874710Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:00:35.874710Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The login itself appears legitimate, yet the concurrent scanning activity suggests that the account may be used for reconnaissance or lateral movement within the network. Because the source IP and user are not identified as a trusted service or automation account, there is uncertainty about whether this behavior is authorized. The lack of external context and unknown provider details keep the overall risk at medium rather than high, but the potential for credential misuse warrants further investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host 10.20.4.107 from the internal network to prevent potential lateral movement while investigation continues.",
+    "Collect a full memory dump and disk image of the affected machine for forensic analysis, ensuring that any malicious artifacts or persistence mechanisms can be identified.",
+    "Cross‑reference the user account *a.chong* against your privileged access management logs to confirm whether this login aligns with scheduled administrative tasks or unexpected activity.",
+    "Run an endpoint detection and response (EDR) query on the host for indicators of compromise such as unusual process creation, registry modifications, or outbound connections to unfamiliar IP ranges.",
+    "Verify that the scanning evidence (the eight related events) originates from the same session; if so, consider it a sign of reconnaissance rather than benign activity.",
+    "If possible, trigger an automated password reset and enforce multi‑factor authentication for *a.chong* pending the outcome of the investigation.",
+    "Document all findings in a dedicated case file and update your threat intelligence feeds with any new indicators discovered during analysis."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful logon appears legitimate, but the concurrent scanning activity raises suspicion; without further context on the user’s role or intent, it is unclear whether this represents benign administrative work or malicious reconnaissance.",
+  "uncertainty_notes": "unsupported claim: 'A successful logon was recorded for user a.chong from internal IP\\u202f10.20.4.107, but eight scanning‑related events were also detected during the same session.'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

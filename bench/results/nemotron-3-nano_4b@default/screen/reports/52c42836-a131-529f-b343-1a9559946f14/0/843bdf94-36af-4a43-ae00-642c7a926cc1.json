@@ -1,0 +1,163 @@
+{
+  "report_id": "843bdf94-36af-4a43-ae00-642c7a926cc1",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-14T17:59:14.760272Z",
+  "alert_summary": "The enrichment shows unknown domains cfo.support, jane.tan, victimcorp.com but does not confirm the phishing message; thus claim is unsupported.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-14T17:58:17.750028Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T17:58:22.956909Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T17:58:22.956986Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T17:58:23.369737Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=11; open-value search for 'Invoice Payment Confirmation Required' found 3 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T17:58:30.988789Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T17:58:33.909799Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T17:58:50.813754Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 7 flagged",
+      "timestamp": "2026-08-14T17:59:14.760160Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 843bdf94-36af-4a43-ae00-642c7a926cc1 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T17:59:14.768750Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:58:22.956943Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:58:22.956943Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:58:22.956965Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:58:22.956965Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:58:22.956973Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:58:22.956973Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:58:22.956977Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:58:22.956977Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:58:22.956981Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:58:22.956981Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert flags a Mimecast impersonation attempt with an urgent invoice request, consistent with MITRE ATT&CK T1566 (Phishing). Although domain reputation and pattern correlation are unknown, the level 5 severity indicates a potentially malicious message that should be treated as high risk. The lack of known indicators does not diminish the need for immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Contact the CFO directly using a known, verified phone number or internal chat channel to confirm whether they actually sent that invoice request.",
+    "Inspect the full email headers for signs of spoofing such as mismatched sender IP addresses or forged DKIM/DMARC signatures.",
+    "Temporarily block outbound traffic from the suspicious domain (secure‑invoice‑updates. com) and monitor for any follow‑up communications that might indicate a compromised system.",
+    "Run an internal DNS lookup on cfo.​support.​ and secure‑invoice‑updates.​ to see if they resolve to known corporate infrastructure or external services.",
+    "Escalate the alert to the security operations team for manual triage, including a sandbox analysis of any attached files or links."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert lacks definitive evidence of spoofing (no pattern correlation) and domain reputation is unknown, making it uncertain whether the message is truly malicious.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

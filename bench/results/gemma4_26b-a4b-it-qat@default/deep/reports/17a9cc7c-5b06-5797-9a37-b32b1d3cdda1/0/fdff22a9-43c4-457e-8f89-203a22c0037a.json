@@ -1,0 +1,151 @@
+{
+  "report_id": "fdff22a9-43c4-457e-8f89-203a22c0037a",
+  "alert_id": "17a9cc7c-5b06-5797-9a37-b32b1d3cdda1",
+  "generated_at": "2026-08-15T11:32:36.474993Z",
+  "alert_summary": "Multiple successful logons by user jane.tan from source IP 10.20.4.61 have been identified as part of a suspected lateral movement pattern involving eight distinct events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 17a9cc7c-5b06-5797-9a37-b32b1d3cdda1 ingested; model available: True",
+      "timestamp": "2026-08-15T11:30:46.774056Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T11:30:58.211843Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T11:30:58.211948Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T11:30:58.638658Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T11:31:10.042408Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T11:31:17.268614Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T11:31:46.576952Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:32:36.474882Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fdff22a9-43c4-457e-8f89-203a22c0037a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:32:36.483081Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:30:58.211904Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:30:58.211904Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:30:58.211936Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:30:58.211936Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:30:58.211943Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:30:58.211943Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "While a single logon is typically benign, the detection of eight correlated events matching a lateral movement pattern strongly suggests an attacker is actively traversing the network using compromised credentials. The lack of enrichment data for the source IP and user account increases the likelihood that this activity is unauthorized. This high-confidence finding indicates a significant risk of further internal escalation or data access."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate host 10.20.4.61 from the network to prevent further lateral movement or data exfiltration.",
+    "Force a password reset and terminate all active sessions for user jane.tan across the domain.",
+    "Perform a deep forensic analysis on host 10.20.4.61 to identify the process (e.g., PowerShell, WMI, or RDP) initiating these connections.",
+    "Review authentication logs for other users originating from 10.20.4.61 to determine if multiple accounts have been compromised.",
+    "Audit recent file access and command-line activity associated with jane.tan's account on dc01.corp.local."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high evidence count (8) specifically correlating to a lateral movement pattern indicates this is not an isolated event but a sequence of suspicious activities characteristic of credential abuse.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

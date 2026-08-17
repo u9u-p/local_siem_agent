@@ -1,0 +1,154 @@
+{
+  "report_id": "59e6d62b-412f-4562-8c9b-56102dced6f5",
+  "alert_id": "2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26",
+  "generated_at": "2026-08-15T09:37:58.672517Z",
+  "alert_summary": "A phishing message was sent from UnitedTelco to VictimCorp, warning about a July bill of $2,184.30; automated systems flagged it as low risk due to generic content.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26 ingested; model available: True",
+      "timestamp": "2026-08-15T09:37:49.457888Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:37:50.481526Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:37:50.481599Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:37:50.878928Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=38; follow-up same_src_ip_24h added 1",
+      "timestamp": "2026-08-15T09:37:51.405535Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:37:52.045429Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:37:55.085060Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:37:58.672488Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 59e6d62b-412f-4562-8c9b-56102dced6f5 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:37:58.677380Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.133",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:50.481561Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:50.481561Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "united-telco.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:50.481582Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:50.481582Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:50.481590Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:50.481590Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://statements@united-telco.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:50.481595Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:50.481595Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The structured findings (pattern_type=scanning, evidence_count=38) indicate a low-severity scanning event. The message is phishing but lacks sophistication; thus, risk remains low."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate user awareness review to reinforce phishing recognition training.",
+    "Perform targeted email filtering and monitoring on the involved domains for any anomalous activity over the next week.",
+    "Initiate a low-level threat hunting exercise focused on similar message patterns across other corporate accounts.",
+    "Document this incident in internal knowledge bases with clear indicators to help frontline staff spot future phishing attempts."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The evidence strongly points to a deliberate phishing attempt, even though the content is generic and low sophistication.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

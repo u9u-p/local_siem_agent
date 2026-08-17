@@ -1,0 +1,141 @@
+{
+  "report_id": "a5094864-29c6-4b54-9d50-2b33aa5db723",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-15T10:50:55.007943Z",
+  "alert_summary": "A scanning activity was observed involving IP 52.14.201.101 and the domains officesupply-direct.com and victimcorp.com; no specific evidence of Mimecast quarantine or a particular email subject is present in the findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-15T10:50:19.428188Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:50:22.433046Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:50:22.433132Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:50:22.849722Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=45; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T10:50:26.610129Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:50:29.217551Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:50:43.239834Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-15T10:50:55.007887Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a5094864-29c6-4b54-9d50-2b33aa5db723 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:50:55.016732Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:50:22.433093Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:50:22.433093Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:50:22.433118Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:50:22.433118Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:50:22.433126Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:50:22.433126Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings indicate a scanning pattern (evidence_count=45) with medium severity and high confidence; the IP and domains have unknown reputation. No specific classification as T1566 or credential‑compromise risk is provided."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a quick verification with the purported sender (orders@officesupply-direct.com) via an out‑of‑band channel (e.g., phone call to the known business contact) to confirm whether they actually dispatched order #OSD-99412.",
+    "Add the sending domain (officesupply-direct.com) and originating IP (52.14.201.101) to a temporary watchlist in your email security platform; monitor for any subsequent messages that exhibit similar characteristics or that contain attachments/macros.",
+    "Perform a sandbox analysis of any attached files or embedded URLs (if present) from the original message, even though none were reported, to rule out hidden malicious payloads.",
+    "Run a user‑level phishing simulation on the admin account to gauge susceptibility and reinforce security awareness; consider mandatory MFA enforcement if not already in place.",
+    "Log the bulk‑phishing indicator (subject line pattern “Your order #… has shipped”) into your threat intel feed so that future detections can be correlated more rapidly.",
+    "If the admin user clicks any link or opens an attachment, trigger an immediate endpoint detection and response (EDR) investigation to capture potential credential theft or lateral movement attempts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "Mimecast’s bulk‑phishing flag suggests malicious intent, yet the lack of known bad IPs/domains and no concrete payload evidence keep confidence in a true compromise low, warranting further verification before definitive classification.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'No immediate action needed — monitor for recurrence'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

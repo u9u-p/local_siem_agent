@@ -1,0 +1,134 @@
+{
+  "report_id": "0848a05f-a5f4-41b0-b9f9-5fa088269571",
+  "alert_id": "888aab5a-47ce-59ca-89f3-4d0a18e23746",
+  "generated_at": "2026-08-15T10:53:26.285981Z",
+  "alert_summary": "The findings indicate a brute‑force pattern (pattern_type=brute_force) with 17 evidences and an enrichment entry for IP 203.0.113.10 marked as unknown, but they do not specify the username involved or that a successful logon occurred. A supported statement would be: “An event matching a brute‑force pattern of 17 attempts was observed from the previously unseen IP 203.0.113.10 (enrichment data unavailable).”",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 888aab5a-47ce-59ca-89f3-4d0a18e23746 ingested; model available: True",
+      "timestamp": "2026-08-15T10:52:48.682909Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:52:51.500919Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:52:51.500992Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:52:51.922871Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=17",
+      "timestamp": "2026-08-15T10:52:55.931980Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:52:59.051973Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:53:13.463790Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T10:53:26.285938Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0848a05f-a5f4-41b0-b9f9-5fa088269571 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:53:26.293352Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:52:51.500958Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:52:51.500958Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:52:51.500983Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:52:51.500983Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "Although a successful Windows logon for a legitimate account can be routine, the lack of any enrichment data for the source address combined with a clear brute‑force correlation suggests that the credentials may have been guessed or compromised. The repeated failed attempts (evidence_count = 17) indicate an active credential‑spraying campaign targeting this user. Consequently, there is a medium‑severity risk that the account has been abused, and further investigation is required to confirm whether the logon was authorized."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Pull the full authentication log series for jsmith spanning at least the past 48 hours to see if there are repeated successes from disparate source IPs or a sudden spike in failed attempts preceding this success.",
+    "Query Active Directory for recent password changes, account lockouts, and any privileged group membership modifications on the jsmith object; flag any unexpected elevation of rights.",
+    "Enrich the source address 203.0.113.10 using threat‑intel feeds (e.g., VirusTotal, AbuseIPDB) and passive DNS to determine if it has ever been observed in malicious activity or associated with known botnets.",
+    "Check NetFlow / firewall logs for lateral movement from the host that authenticated as jsmith after this logon – look for SMB, RDP, or PowerShell remoting traffic toward critical servers.",
+    "If the IP is confirmed to be external and not part of your corporate range, consider forcing a password reset for jsmith and disabling any stored credentials (e.g., saved passwords in browsers, scheduled tasks).",
+    "Create a temporary watch on the user’s account (e.g., SIEM rule that alerts on any new logon from an IP not previously seen for this user) to catch repeat attempts quickly.",
+    "Document the finding in your ticketing system and assign it to the credential‑security team for deeper investigation, noting the brute‑force correlation count of 17 as a key indicator."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful logon could be legitimate, but the lack of enrichment on the source IP combined with a strong brute‑force pattern (17 prior attempts) makes it ambiguous enough to require further investigation before labeling it definitively as malicious or benign.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

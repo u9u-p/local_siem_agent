@@ -1,0 +1,140 @@
+{
+  "report_id": "2cae54db-030d-43ee-8c69-8ac9316c1e12",
+  "alert_id": "7786a6a1-fd5c-5169-a435-a4b4009571fa",
+  "generated_at": "2026-08-15T13:32:31.415291Z",
+  "alert_summary": "An activity involving the domain hardwarehub-wholesale.com was detected with 36 pieces of evidence, suggesting a coordinated event.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7786a6a1-fd5c-5169-a435-a4b4009571fa ingested; model available: True",
+      "timestamp": "2026-08-15T13:29:52.082233Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T13:30:03.428942Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T13:30:03.429013Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T13:30:03.847797Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=36; open-value search for 'hardwarehub-wholesale.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:30:46.155596Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T13:30:54.818761Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:31:30.605031Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:32:31.415249Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2cae54db-030d-43ee-8c69-8ac9316c1e12 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:32:31.421756Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:30:03.428976Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:30:03.428976Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "hardwarehub-wholesale.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:30:03.428999Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:30:03.428999Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:30:03.429007Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:30:03.429007Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The presence of 36 correlated evidence points suggests a highly coordinated event rather than an isolated one."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct a retrospective search across the entire mail environment for any messages originating from 'hardwarehub-wholesale.com' or containing the subject line 'Clearance: refurbished docking stations' to ensure no instances bypassed Mimecast filters.",
+    "Perform deep reputation analysis on IP 198.2.180.34 and the domain hardwarehub-wholesale.com via external threat intelligence feeds to identify potential links to known malicious infrastructure.",
+    "Audit recent authentication logs for 'admin@victimcorp.com' to ensure no unauthorized access occurred around the time of this intercepted attempt, given the high value of administrative accounts.",
+    "Review Mimecast logs for other 'Bulk' or 'Spam' flagged messages sent to different internal recipients from unknown domains to determine if this is part of a wider, coordinated campaign."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a high-urgency social engineering lure targeting an administrative account and the high evidence count strongly indicates a legitimate phishing attempt that was successfully mitigated by Mimecast.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

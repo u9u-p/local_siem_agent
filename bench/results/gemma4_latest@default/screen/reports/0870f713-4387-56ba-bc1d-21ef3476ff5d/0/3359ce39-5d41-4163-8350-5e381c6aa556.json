@@ -1,0 +1,139 @@
+{
+  "report_id": "3359ce39-5d41-4163-8350-5e381c6aa556",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-14T18:19:20.536332Z",
+  "alert_summary": "A user account successfully logged in from an unknown IP address (100.72.44.19), and this event is correlated with significant evidence of lateral movement across the network. This pattern strongly suggests active compromise or unauthorized exploration by an attacker.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-14T18:17:55.850195Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:18:03.449593Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T18:18:03.449695Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T18:18:03.876860Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=24; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-14T18:18:15.595069Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T18:18:24.017484Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:18:51.416969Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:19:20.536248Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 3359ce39-5d41-4163-8350-5e381c6aa556 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:19:20.545242Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:18:03.449658Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:18:03.449658Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:18:03.449687Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:18:03.449687Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "Although a successful user logon is a routine event, the correlation finding of 'lateral_movement' with 24 associated pieces of evidence points to highly suspicious behavior. This volume and type of activity indicate that an adversary has successfully gained initial foothold and is actively attempting to map the internal network or escalate privileges. Immediate investigation is required to determine if this movement is malicious and what resources have been accessed."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate or restrict network access for the source IP address (100.72.44.19) and, if possible, the target machine associated with this logon event to prevent further lateral movement.",
+    "Initiate a deep dive into the user account 'mrahman' by reviewing their recent activity logs across all systems. Specifically, look for access to sensitive data repositories or administrative functions that fall outside of their normal operational baseline (User and Entity Behavior Analytics - UEBA).",
+    "Review authentication records for any preceding failed logon attempts or credential stuffing patterns originating from 100.72.44.19, as this could indicate brute-forcing prior to the successful login.",
+    "Engage network forensics to analyze traffic flows associated with the source IP (100.72.44.19) during the time window of the logon event. This is crucial for understanding *how* the lateral movement occurred and what protocols were utilized.",
+    "Temporarily enforce stricter Multi-Factor Authentication (MFA) requirements for 'mrahman's' account, even if it was previously configured to allow less stringent access."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon and the high-evidence correlation finding of lateral movement strongly suggests an active compromise requiring immediate containment and investigation.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,145 @@
+{
+  "report_id": "632e15c1-f117-4b40-84d8-7844840460ea",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-15T09:47:10.998030Z",
+  "alert_summary": "A successful logon was recorded for user tommy.wong from internal IP 10.20.4.94, and the event is associated with lateral‑movement activity; further analysis is required to determine whether it represents benign administrative activity or a potential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-15T09:46:47.768332Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:46:49.474862Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:46:49.474931Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:46:49.904556Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T09:46:54.026278Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:46:56.023597Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T09:47:03.337995Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:47:10.997975Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 632e15c1-f117-4b40-84d8-7844840460ea persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:47:11.005381Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:49.474897Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:49.474897Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:49.474919Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:49.474919Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:49.474926Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:49.474926Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The event originates from internal IP 10.20.4.94 involving user tommy.wong and is correlated with lateral‑movement activity. No clear indicators of compromise were observed in the available logs, so the risk remains low with high confidence pending further review."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the session context: confirm whether the logon was interactive or via a remote service (e.g., RDP, SMB) to rule out automated credential reuse.",
+    "Cross‑check the user’s recent activity logs for any file access or process execution that deviates from their typical administrative patterns.",
+    "Inspect the target machine (10.20.4.94) for signs of lateral‑movement tools such as PsExec, WMI scripts, or scheduled tasks that might have been triggered by this logon.",
+    "Review group membership changes in Active Directory around the time of the event to ensure no unauthorized privilege escalation occurred.",
+    "If possible, capture a memory dump from the session to look for injected code or hidden processes that could indicate credential dumping.",
+    "Consider enabling audit logging for privileged actions on the target host to provide finer granularity for future investigations."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The logon originates from an internal IP, involves a known user with no anomalous indicators, and the lateral‑movement correlation likely reflects routine administrative activity rather than malicious exploitation.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

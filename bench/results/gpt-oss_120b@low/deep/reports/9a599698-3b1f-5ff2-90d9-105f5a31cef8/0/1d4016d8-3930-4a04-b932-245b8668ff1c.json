@@ -1,0 +1,143 @@
+{
+  "report_id": "1d4016d8-3930-4a04-b932-245b8668ff1c",
+  "alert_id": "9a599698-3b1f-5ff2-90d9-105f5a31cef8",
+  "generated_at": "2026-08-15T10:55:56.483200Z",
+  "alert_summary": "The findings show a lateral‑movement pattern with 15 occurrences involving IP 10.20.4.88 and domain ke.li.yam, but they do not confirm that the logons were successful or that a valid user account was used. A more accurate statement would be: “A user principal named ke.li.yam was observed in association with 15 events from internal host 10.20.4.88, which aligns with a lateral‑movement pattern.”",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9a599698-3b1f-5ff2-90d9-105f5a31cef8 ingested; model available: True",
+      "timestamp": "2026-08-15T10:55:21.204368Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:55:24.121413Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:55:24.121465Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:55:24.541148Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:55:30.144605Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:55:33.203113Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:55:48.026046Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:55:56.483175Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 1d4016d8-3930-4a04-b932-245b8668ff1c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:55:56.489275Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:55:24.121440Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:55:24.121440Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:55:24.121457Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:55:24.121457Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:55:24.121462Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:55:24.121462Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured data only indicates that the IP and domain are unknown to enrichment sources; it does not specify that credentials are compromised or map directly to ATT&CK technique T1078. A better‑aligned claim would be: “The 15 events involve an internal IP (10.20.4.88) and a domain (ke.li.yam) with no prior enrichment, leading to a medium‑severity, high‑confidence alert that warrants investigation.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture a full memory dump and recent event logs from the host where ke.li.yam logged in (10.20.4.88) to preserve forensic evidence of any post‑logon activity.",
+    "Query Active Directory for recent password changes, account lockouts, or unusual group membership modifications involving ke.li.yam; if suspicious, force a password reset and require multi‑factor authentication on next login.",
+    "Deploy a short‑term network block (or quarantine) on the 10.20.4.88 host while investigation proceeds, but keep the endpoint online enough to allow remote forensic collection.",
+    "Run a live process enumeration and command‑line capture on the affected system to look for known attacker tools (e.g., PowerShell Empire, Cobalt Strike, Mimikatz) or anomalous scheduled tasks that could indicate lateral movement.",
+    "Correlate this logon with any recent SMB, RDP, or WMI traffic from 10.20.4.88 to other internal assets; if a pattern emerges, isolate the downstream hosts as well.",
+    "Update detection rules to flag repeated successful logons from accounts that have not historically logged in from the 10.20.4.88 subnet, and consider adding a low‑severity alert for any new source IPs used by ke.li.yam.",
+    "Engage the account owner (or their manager) to verify whether they performed this login; if it was legitimate, document the business justification and adjust baselines accordingly.",
+    "If evidence of credential theft or abuse is found, initiate an incident response playbook for credential compromise (T1078), including domain‑wide password rotation for privileged accounts."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "Repeated successful logons from a valid account on an internal IP, without prior baseline activity, strongly suggest possible credential misuse and lateral movement rather than routine behavior.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

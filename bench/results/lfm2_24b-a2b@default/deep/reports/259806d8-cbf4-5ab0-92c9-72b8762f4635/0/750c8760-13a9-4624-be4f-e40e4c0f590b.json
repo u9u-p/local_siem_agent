@@ -1,0 +1,157 @@
+{
+  "report_id": "750c8760-13a9-4624-be4f-e40e4c0f590b",
+  "alert_id": "259806d8-cbf4-5ab0-92c9-72b8762f4635",
+  "generated_at": "2026-08-15T09:37:27.427621Z",
+  "alert_summary": "A phishing message from a known suspicious sender was sent to an internal user, using urgent language and multiple indicators of malicious intent; immediate action is recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 259806d8-cbf4-5ab0-92c9-72b8762f4635 ingested; model available: True",
+      "timestamp": "2026-08-15T09:37:16.583589Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 12 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:37:19.527872Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:37:19.527944Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:37:19.939450Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=28; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-15T09:37:20.488411Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:37:21.127875Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:37:24.405938Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:37:27.427595Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 750c8760-13a9-4624-be4f-e40e4c0f590b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:37:27.434574Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:19.527907Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:19.527907Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "zoomcall-invites.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:19.527927Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:19.527927Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:19.527935Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:19.527935Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:19.527939Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:19.527939Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The sender's history, use of bulk messaging, and deceptive subject line indicate high risk. The lack of confirmed compromise details introduces some uncertainty but does not outweigh the strong evidence of phishing and potential credential exposure."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate network traffic analysis to identify any connections made by the IP address involved.",
+    "Perform targeted phishing simulations on employees to assess susceptibility and improve awareness training.",
+    "Engage with external threat intelligence sources to cross-reference indicators of compromise (IOCs) against broader campaigns.",
+    "Initiate a formal incident response workflow, including containment steps if any suspicious activity is detected within the organization."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of known malicious sender behavior, phishing tactics, and multiple corroborating IOCs strongly supports a true positive classification despite incomplete compromise confirmation.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

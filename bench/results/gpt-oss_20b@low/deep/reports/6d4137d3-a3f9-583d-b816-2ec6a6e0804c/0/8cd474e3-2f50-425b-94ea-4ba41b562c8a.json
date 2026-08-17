@@ -1,0 +1,157 @@
+{
+  "report_id": "8cd474e3-2f50-425b-94ea-4ba41b562c8a",
+  "alert_id": "6d4137d3-a3f9-583d-b816-2ec6a6e0804c",
+  "generated_at": "2026-08-15T10:09:36.565678Z",
+  "alert_summary": "A previously unseen user (a.chong) successfully logged on from internal IP 10.20.4.107 and the system detected 15 signs of lateral movement—suggesting possible credential abuse or a compromised account.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6d4137d3-a3f9-583d-b816-2ec6a6e0804c ingested; model available: True",
+      "timestamp": "2026-08-15T10:09:10.911211Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:09:12.732318Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:09:12.732391Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:09:13.141523Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:09:17.210535Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:09:19.289133Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:09:27.796949Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T10:09:36.565620Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 8cd474e3-2f50-425b-94ea-4ba41b562c8a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:09:36.572501Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.107",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:09:12.732353Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:09:12.732353Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:09:12.732374Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:09:12.732374Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:09:12.732382Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:09:12.732382Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:09:12.732386Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:09:12.732386Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The logon is internal, so there’s no immediate exfiltration risk, but the volume of lateral‑movement indicators points to an active compromise or misuse of credentials within the network. Because the user and IP are unknown, we can’t rule out a legitimate service account, yet the evidence warrants prompt containment and investigation before further spread occurs."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate account‑review process for the user *a.chong*, including password reset and multi‑factor authentication enforcement.",
+    "Deploy a host‑based intrusion detection agent on the machine at 10.20.4.107 to capture detailed audit logs (process creation, network connections, file access) for the next 48 hours.",
+    "Cross‑reference the 15 lateral‑movement indicators against internal asset inventories and known privileged‑access tools; flag any anomalous service or process names.",
+    "Perform a forensic memory dump of the host to look for signs of credential dumping utilities (e.g., Mimikatz, PowerSploit) or persistence mechanisms.",
+    "Run a network flow analysis on traffic originating from 10.20.4.107 during the logon window to identify any unusual SMB shares, RDP sessions, or lateral‑movement protocols.",
+    "If possible, isolate the host in a quarantine VLAN to prevent further spread while investigation continues.",
+    "Schedule a security awareness reminder for all users about phishing and credential reuse risks, emphasizing that even internal accounts can be compromised."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The logon is from an internal IP with no external connections, but the presence of multiple lateral‑movement indicators suggests potential compromise; however, without clear evidence of malicious activity or exfiltration, it remains ambiguous whether this is a benign administrative action or a true attack.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

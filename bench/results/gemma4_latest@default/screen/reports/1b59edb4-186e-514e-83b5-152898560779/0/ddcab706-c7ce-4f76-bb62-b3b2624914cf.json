@@ -1,0 +1,144 @@
+{
+  "report_id": "ddcab706-c7ce-4f76-bb62-b3b2624914cf",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-14T18:22:31.760474Z",
+  "alert_summary": "PowerShell initiated an outbound network connection to an unknown external IP address on port 443, which is highly suspicious of potential Command and Control (C2) or data exfiltration activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-14T18:20:49.730582Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:21:00.966957Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:21:00.967024Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-14T18:21:01.385394Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=2; follow-up same_rule_id_host added 1; open-value search for 'IEX' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:21:21.075332Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:21:31.047318Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:21:57.393641Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 8 flagged",
+      "timestamp": "2026-08-14T18:22:31.760407Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ddcab706-c7ce-4f76-bb62-b3b2624914cf persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:22:31.768552Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:21:00.966990Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:21:00.966990Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:21:00.967011Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:21:00.967011Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:21:00.967019Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:21:00.967019Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "This pattern—a scripting engine like PowerShell making an outbound connection to an unverified external endpoint—is a common technique used by adversaries to establish C2 channels or siphon data while masquerading as legitimate HTTPS traffic. While the high severity indicates significant risk, the medium confidence level reflects the lack of external context (such as IP reputation checks or user behavioral baselines) which would be necessary for definitive attribution."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately perform deep packet inspection or NetFlow analysis on the host and network segment surrounding the time of the alert. We need to determine if this initial connection was followed by any unusual data volume transfers, large file uploads, or communication patterns indicative of beaconing behavior.",
+    "Trace the full process lineage for the PowerShell execution. Specifically, identify the parent process that launched PowerShell (e.g., was it a scheduled task, an interactive user session, or another suspicious service?). This is critical to understanding the initial vector.",
+    "Cross-reference the destination IP address (185.220.101.47) against multiple commercial and open-source threat intelligence platforms simultaneously. We must determine if this IP has been recently associated with known C2 infrastructure, malware distribution, or suspicious cloud services.",
+    "Review user activity logs for the account associated with the endpoint. Was the user logged in? Were they performing tasks that would legitimately require external network connectivity via PowerShell (e.g., API calls, configuration management)? This helps establish a baseline of expected behavior."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The combination of PowerShell initiating an outbound connection to an unknown IP address is highly suspicious and requires immediate investigation into the process lineage and destination reputation before any definitive classification can be made.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Terminate the suspicious process on the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

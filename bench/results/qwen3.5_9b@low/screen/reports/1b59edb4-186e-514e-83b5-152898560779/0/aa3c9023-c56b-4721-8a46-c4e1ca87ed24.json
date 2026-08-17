@@ -1,0 +1,146 @@
+{
+  "report_id": "aa3c9023-c56b-4721-8a46-c4e1ca87ed24",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-14T20:36:06.033030Z",
+  "alert_summary": "An event was correlated involving an affected host connecting to an external IP address (185.220.101.47) and associated domains with unknown reputation and ownership. This activity requires further investigation to determine if it represents legitimate traffic or a confirmed compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-14T20:25:12.558296Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T20:26:00.294556Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T20:26:00.294592Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-14T20:26:00.709957Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=1; open-value search for '-EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T20:30:47.872305Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-14T20:32:02.395892Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T20:34:02.502106Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T20:36:06.032918Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aa3c9023-c56b-4721-8a46-c4e1ca87ed24 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T20:36:06.043064Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:26:00.294576Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:26:00.294576Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:26:00.294587Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:26:00.294587Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:26:00.294590Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:26:00.294590Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The risk is rated medium because while the destination lacks known malicious indicators and reputation data (unknown), external connections to unknown domains require verification against expected services or potential adversary backdoors. Immediate containment is advised while the wider environment is checked for similar indicators of compromise across other hosts in the network."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Block the source IP at the network perimeter",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the parent process tree to determine if PowerShell was invoked by a legitimate administrative tool (e.g., SCCM, WSUS) or an unknown binary.",
+    "Cross-reference the user account associated with this event against known internal service accounts versus interactive users like 'jane.tan'."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The connection exhibits characteristics of command-and-control traffic but lacks confirmed malicious indicators or reputation data to definitively rule out legitimate administrative activity without further forensic context.",
+  "uncertainty_notes": "unsupported claim: 'Review the parent-child process execution tree for the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.5:9b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

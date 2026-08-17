@@ -1,0 +1,187 @@
+{
+  "report_id": "e73f0ba7-99b8-4d24-a52e-26e59e449252",
+  "alert_id": "4e402d4f-db87-5377-b7fb-bfdbdd85f800",
+  "generated_at": "2026-08-15T09:40:38.871075Z",
+  "alert_summary": "The structured findings (pattern_type=scanning, evidence_count=61) directly support that the message exhibits phishing indicators—sender domain not matching recipient’s business context, request for sensitive data. Recommend treating as high-severity and urgent.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4e402d4f-db87-5377-b7fb-bfdbdd85f800 ingested; model available: True",
+      "timestamp": "2026-08-15T09:40:25.707051Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 8 candidates, 5 validated",
+      "timestamp": "2026-08-15T09:40:27.620802Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 6 indicator(s)",
+      "timestamp": "2026-08-15T09:40:27.620849Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:40:28.038095Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=61; follow-up same_rule_id_host added 30",
+      "timestamp": "2026-08-15T09:40:28.605390Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:40:29.237884Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 15 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:40:33.339636Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 17 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:40:38.871023Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e73f0ba7-99b8-4d24-a52e-26e59e449252 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:40:38.876719Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.117",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620824Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620824Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "stellar-logistics.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620837Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620837Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620840Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620840Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://stellar-logistics.com/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620842Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620842Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://finance@victimcorp.com/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620844Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620844Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://remittanceadvice@stellar-logistics.com/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:27.620845Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:27.620845Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The email's content is typical of phishing attempts designed to trick recipients into revealing confidential information. The source domain appears legitimate but was used in an unsolicited message targeting the company, indicating possible reconnaissance or targeted attack. No sensitive data has been compromised yet, but the risk of further exploitation remains high."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct targeted user awareness training focused on phishing identification and safe email practices.",
+    "Initiate an internal review of email security policies, including sender authentication checks (SPF/DKIM/DMARC).",
+    "Deploy automated sandboxing for suspicious inbound messages to detect malicious payloads before delivery.",
+    "Engage with the victim corporation’s IT team to verify message authenticity and reinforce incident response protocols.",
+    "Monitor related domains and email addresses for any anomalous activity or further phishing attempts."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The evidence strongly indicates a deliberate phishing campaign targeting financial information, warranting classification as a true positive despite no confirmed data breach at this stage.",
+  "uncertainty_notes": "6 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

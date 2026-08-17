@@ -1,0 +1,152 @@
+{
+  "report_id": "fa583065-b2ef-41a6-8116-a582b0c18cf1",
+  "alert_id": "2a42c319-3f45-581d-a6ec-1f1a3e49f2b0",
+  "generated_at": "2026-08-15T09:55:25.766930Z",
+  "alert_summary": "An encoded PowerShell command was launched by Cursor.exe on a user’s workstation; while the decoded payload appears benign, the activity is accompanied by numerous lateral‑movement indicators and unknown domains, warranting further investigation.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2a42c319-3f45-581d-a6ec-1f1a3e49f2b0 ingested; model available: True",
+      "timestamp": "2026-08-15T09:55:01.909178Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:55:04.433082Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:55:04.433159Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:55:04.845988Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=85; follow-up same_rule_id_host added 41",
+      "timestamp": "2026-08-15T09:55:06.322122Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T09:55:08.810567Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:55:18.471836Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T09:55:25.766887Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fa583065-b2ef-41a6-8116-a582b0c18cf1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:55:25.772081Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:55:04.433119Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:55:04.433119Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:55:04.433145Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:55:04.433145Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:55:04.433153Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:55:04.433153Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert shows an encoded PowerShell invocation that ultimately runs `pytest -q`, which is harmless in isolation. However, the presence of 85 lateral‑movement pattern matches and references to unfamiliar domains suggests the attacker may be using this execution as a foothold or reconnaissance step. Because the host is potentially compromised and could serve as a launchpad for further activity, we rate the risk as medium rather than critical but still require immediate containment and forensic follow‑up."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the integrity of Cursor.exe – obtain a hash from the vendor’s official distribution point and compare it against the file present on the endpoint.",
+    "Inspect the parent process’s command line for any anomalous switches or arguments that could indicate privilege escalation or tampering; consider sandboxing the executable to observe its network behavior in isolation.",
+    "Deploy a short‑lived PowerShell script that logs every subsequent invocation of powershell.exe, capturing both encoded and plain‑text commands, to confirm whether this is an isolated event or part of a broader lateral‑movement campaign.",
+    "Cross‑reference the unknown domains (dev-klyam01.victimcorp.com, ke.li.yam) against internal DNS logs and threat intelligence feeds; if they resolve to external IPs, block outbound traffic to those addresses until further analysis.",
+    "Enable Sysmon’s Process Creation event filtering for `powershell.exe` with a custom rule that flags any encoded command strings longer than 200 characters or containing suspicious keywords (e.g., “Invoke‑Expression”, “IEX”).",
+    "Conduct a host‑based forensic sweep of the user profile `C:\\\\Users\\\\ke.li.yam` to look for additional scheduled tasks, registry run keys, or hidden files that could be part of a persistence mechanism.",
+    "If the organization has an endpoint detection and response (EDR) platform, push a query to retrieve all recent lateral‑movement indicators (e.g., SMB shares accessed, remote desktop sessions initiated) from this host and correlate them with the event timestamp."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The encoded PowerShell command appears benign after decoding, yet the presence of numerous lateral‑movement indicators and unknown domains raises suspicion; without further context it is unclear whether this is a false alarm or an early foothold.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "report_id": "287aca6d-4639-49f6-9742-1c5f990b75e7",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-15T03:04:40.323173Z",
+  "alert_summary": "An event involving IP 203.0.113.63 was recorded with 24 correlated evidence items. The IP lacks threat intelligence context, requiring verification to determine whether it represents authorized access or potential misuse.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-15T03:01:09.368642Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T03:01:22.765399Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T03:01:22.765449Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T03:01:23.199609Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=24; open-value search for 'nprakash' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T03:02:18.793391Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T03:02:39.057540Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T03:03:33.725154Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T03:04:40.323113Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 287aca6d-4639-49f6-9742-1c5f990b75e7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:04:40.329307Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:01:22.765433Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:01:22.765433Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The source IP lacks threat intelligence context and no anomalous behavioral patterns were detected in the correlation data, reducing immediate certainty of malicious intent. Consequently, the risk is assessed as medium severity with medium confidence, pending further verification."
+  },
+  "recommended_actions": [
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross-reference user nprakash's account status, role permissions, and recent helpdesk or HR tickets to confirm authorized access.",
+    "Extract and review the full SSH session telemetry (command history, duration, file transfers, and privilege changes) for behavioral anomalies.",
+    "Enrich IP 203.0.113.63 using passive DNS, reverse WHOIS, internal DHCP/VPN logs, and network topology maps to identify its true origin or infrastructure role.",
+    "Correlate the authentication timestamp with approved maintenance windows, remote work policies, or known vendor access schedules.",
+    "If legitimacy cannot be verified within a defined SLA, temporarily restrict the account to MFA-only login and monitor for follow-on lateral movement or data exfiltration indicators."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert represents a standard successful authentication from an unenriched IP with no corroborating threat indicators or behavioral anomalies, making it impossible to confirm malicious intent without additional session and identity context.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

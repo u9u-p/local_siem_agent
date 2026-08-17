@@ -1,0 +1,125 @@
+{
+  "report_id": "306cc7e9-d7f4-4427-9c52-d428f88bea43",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-14T18:17:55.363134Z",
+  "alert_summary": "An extensive brute-force attack was observed against a user account originating from an unknown IP address (203.0.113.63). The successful logon event must be confirmed and included in the findings to support the claim of credential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-14T18:16:42.329183Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:16:49.735231Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T18:16:49.735281Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T18:16:50.162258Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24",
+      "timestamp": "2026-08-14T18:17:01.065358Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T18:17:10.040777Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:17:33.460973Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T18:17:55.363045Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 306cc7e9-d7f4-4427-9c52-d428f88bea43 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:17:55.370883Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:16:49.735266Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:16:49.735266Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The sequence of 24 failed connection attempts followed by a successful logon is highly indicative of an active credential compromise attempt (brute-forcing or stuffing). Since the source IP is unknown and the attack pattern was observed, we must assume the account credentials are no longer secure. Immediate action is required to contain the threat, reset access, and investigate what actions were taken during the attacker's session."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Rotate any credentials or secrets that may have been exposed"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately force a password reset for user nprakash and mandate the use of Multi-Factor Authentication (MFA) if it is not already enforced.",
+    "Initiate an investigation into the source IP address (203.0.113.63). If possible, perform geo-location analysis or WHOIS lookups to determine its origin and associated network block.",
+    "Review all system logs for activity immediately preceding and following the successful logon event. Specifically search for unusual commands executed by nprakash's account (e.g., privilege escalation attempts, data exfiltration commands, creation of new user accounts).",
+    "Temporarily restrict or monitor SSH access for this specific user account until forensic analysis confirms that no malicious activity occurred during the session.",
+    "If the source IP is determined to be from a known hostile region or network segment, implement temporary firewall rules to block all future connections originating from that range."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a high volume of failed login attempts (brute-force pattern) immediately preceding a successful logon is a strong indicator of unauthorized access or account compromise, requiring immediate incident response action.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

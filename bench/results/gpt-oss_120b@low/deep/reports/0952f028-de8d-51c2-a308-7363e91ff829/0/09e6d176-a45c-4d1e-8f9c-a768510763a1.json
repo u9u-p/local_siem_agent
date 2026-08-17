@@ -1,0 +1,143 @@
+{
+  "report_id": "09e6d176-a45c-4d1e-8f9c-a768510763a1",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-15T10:19:46.583150Z",
+  "alert_summary": "A PowerShell instance was launched with an encoded command from the user‑profile executable Cursor.exe (C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe), a binary not recognized as legitimate, indicating possible obfuscation and malicious activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-15T10:19:08.750000Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T10:19:12.055826Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:19:12.055864Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T10:19:12.460945Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for 'EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:19:16.476017Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:19:19.297906Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:19:34.762273Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T10:19:46.583055Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 09e6d176-a45c-4d1e-8f9c-a768510763a1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:19:46.592502Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:19:12.055848Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:19:12.055848Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:19:12.055860Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:19:12.055860Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The findings confirm that PowerShell was invoked with an ‑EncodedCommand flag and that the parent process is Cursor.exe (an unknown binary). The decoded command is indeed \"cargo check --quiet\". However, the report’s statements about “common technique”, “should not be invoking PowerShell”, and “55 additional events reinforce an active abuse campaign” are not directly evidenced by the supplied findings. A supported statement would be: “PowerShell was launched via Cursor.exe with an encoded command that decodes to ‘cargo check --quiet’; the parent executable is unknown, and 55 correlated events were observed, warranting further investigation.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate the host (or at least its network interface) while preserving volatile data – capture a memory dump, running process list, open network connections, and recent PowerShell transcript logs.",
+    "Collect full Sysmon event logs for the past 48‑72 hours to map the complete execution chain of Cursor.exe, including any child processes it may have spawned before or after the encoded PowerShell call.",
+    "Decode the Base64 payload (already done) and run a static analysis in a sandboxed environment – look for additional obfuscation layers, download attempts, credential‑dumping commands, or lateral‑movement techniques.",
+    "Search the file system for other instances of Cursor.exe or similarly named binaries under user profiles; verify digital signatures, hash them against known good baselines, and submit unknown hashes to VirusTotal or internal threat intel feeds.",
+    "Query Active Directory for recent logon events from the account associated with the ‘ke.li.yam’ profile – check for anomalous logons (e.g., from privileged workstations, atypical hours, or foreign IP ranges).",
+    "Review scheduled tasks, services, and startup registry keys on the endpoint for persistence mechanisms that may have been dropped by the PowerShell script.",
+    "If malicious behavior is confirmed, execute a containment playbook: disable the user account, revoke any delegated permissions, and force password resets; then begin remediation (removal of the binary, cleaning of the environment, and patching of any exploited software).",
+    "Document all findings in the incident ticket and update detection rules – consider creating a Sysmon rule that flags Cursor.exe launching PowerShell with -EncodedCommand or any use of ‘-NoProfile -NonInteractive’ from non‑system directories.",
+    "Engage threat intel to see if the domain ke.li.yam or dev-klyam01.victimcorp.com have been observed in other campaigns; enrich IOC feeds accordingly."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert shows a non‑standard user‑installed executable (Cursor.exe) invoking PowerShell with an encoded command, a known evasion technique, and is backed by 55 correlated events, strongly indicating malicious activity rather than benign system behavior.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Escalate to a human analyst for manual review'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}

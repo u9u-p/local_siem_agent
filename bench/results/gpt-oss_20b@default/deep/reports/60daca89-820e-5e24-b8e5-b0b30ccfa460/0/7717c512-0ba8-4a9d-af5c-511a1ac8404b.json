@@ -1,0 +1,151 @@
+{
+  "report_id": "7717c512-0ba8-4a9d-af5c-511a1ac8404b",
+  "alert_id": "60daca89-820e-5e24-b8e5-b0b30ccfa460",
+  "generated_at": "2026-08-16T11:03:39.705549Z",
+  "alert_summary": "An encoded PowerShell command was launched by node.exe, but the decoded payload simply ran a benign git log; no clear malicious activity was detected.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 60daca89-820e-5e24-b8e5-b0b30ccfa460 ingested; model available: True",
+      "timestamp": "2026-08-16T11:02:11.984860Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 12 candidates, 3 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:02:42.295789Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T11:02:42.295824Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T11:02:42.713281Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=17; follow-up same_rule_id_host added 8; open-value search for 'EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:02:53.699582Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T11:03:03.048899Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T11:03:18.632668Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 6 flagged",
+      "timestamp": "2026-08-16T11:03:39.705481Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7717c512-0ba8-4a9d-af5c-511a1ac8404b persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:03:39.712784Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-twong02.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:02:42.295807Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:02:42.295807Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:02:42.295819Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:02:42.295819Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cli.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:02:42.295822Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:02:42.295822Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert is triggered by an obfuscated PowerShell invocation from a node process—a pattern that can hide malware. However, decoding shows only a harmless `git log --oneline -20` command, and there are no other indicators of compromise such as file tampering or suspicious network activity. The presence of 17 correlated events and unknown domains introduces some uncertainty, but without additional malicious signatures the risk is assessed as medium rather than critical."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deeper forensic review of the @anthropic‑ai/claude-code package that was launched by node.exe, including hashing its binaries and comparing them against known good baselines or threat intelligence feeds.",
+    "Examine the surrounding Sysmon events for any lateral movement indicators—such as additional PowerShell invocations, unusual registry modifications, or outbound connections to the unknown domains listed in the enrichment data.",
+    "Deploy a short‑term network monitoring rule that flags any traffic from the host to dev‑twong02.victimcorp.com, tommy.wong, or cli.js, and capture packet payloads for later analysis.",
+    "Cross‑reference the 17 correlated events with internal change‑management logs to determine whether this activity aligns with a scheduled deployment or an unexpected process launch.",
+    "If possible, isolate the user’s npm environment in a sandboxed container and re‑run the node command to observe any side effects without risking production systems."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The encoded PowerShell call originates from a legitimate node process and decodes to a benign git command, yet the volume of correlated events and presence of unknown domains introduce enough ambiguity that we cannot confidently label it as either malicious or harmless.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\tommy.wong\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

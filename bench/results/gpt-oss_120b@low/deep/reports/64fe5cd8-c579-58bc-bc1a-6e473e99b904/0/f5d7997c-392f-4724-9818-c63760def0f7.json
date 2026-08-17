@@ -1,0 +1,154 @@
+{
+  "report_id": "f5d7997c-392f-4724-9818-c63760def0f7",
+  "alert_id": "64fe5cd8-c579-58bc-bc1a-6e473e99b904",
+  "generated_at": "2026-08-15T10:46:14.664238Z",
+  "alert_summary": "Mimecast quarantined a bulk‑phishing email from concierge@grandmerchant-hotel.com to tommy.wong@victimcorp.com, flagging it as a potential credential‑harvesting attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 64fe5cd8-c579-58bc-bc1a-6e473e99b904 ingested; model available: True",
+      "timestamp": "2026-08-15T10:45:39.330743Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:45:42.282198Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:45:42.282271Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:45:42.697615Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=41",
+      "timestamp": "2026-08-15T10:45:46.329420Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:45:49.155304Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:46:04.970622Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 9 flagged",
+      "timestamp": "2026-08-15T10:46:14.664093Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f5d7997c-392f-4724-9818-c63760def0f7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:46:14.672359Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:45:42.282230Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:45:42.282230Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "grandmerchant-hotel.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:45:42.282254Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:45:42.282254Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:45:42.282261Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:45:42.282261Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:45:42.282266Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:45:42.282266Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "A scanning pattern was observed with 41 related events and no known reputation data for the involved IP (40.107.92.115) or domains (grandmerchant‑hotel.com, tommy.wong, victimcorp.com). The risk assessment assigned a medium severity with medium confidence, indicating that further investigation is warranted."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a rapid user‑awareness check with Tommy Wong (and any other recipients of similar bulk messages) to confirm whether they attempted to interact with the email or entered credentials on any linked site.",
+    "Capture and preserve the full MIME source of the held message, including all headers, attachments, and embedded URLs, for forensic analysis and potential sharing with threat‑intel partners.",
+    "Run a sandbox execution of any attached files (if present) and perform URL reputation checks on links using multiple external services (e.g., VirusTotal, URLhaus, Hybrid Analysis).",
+    "Create a temporary block list in the email gateway for the sending address ‘concierge@grandmerchant-hotel.com’ and for the originating IP 40.107.92.115 while further investigation proceeds.",
+    "Query internal logs (mail flow, proxy, DNS) for any prior or subsequent communications involving the same sender domain, recipient addresses, or the suspect IP to identify possible lateral activity.",
+    "If the email contains credential‑phishing content, enforce a forced password reset for the targeted user and monitor authentication logs for anomalous logins post‑reset.",
+    "Update internal threat‑intel feeds with the observed pattern (bulk phishing, 41 similar scans) so that future detections can be automatically correlated and prioritized.",
+    "Consider filing an incident ticket with the SOC to track remediation steps, evidence collection, and stakeholder communication, ensuring proper escalation if additional compromised assets are discovered."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email was held as bulk phishing but lacks concrete malicious indicators (reputation data, payload analysis), so while it could be a credential‑harvesting attempt, the limited enrichment prevents confident classification as a true positive.",
+  "uncertainty_notes": "unsupported claim: 'Mimecast quarantined a bulk‑phishing email from concierge@grandmerchant-hotel.com to tommy.wong@victimcorp.com, flagging it as a potential credential‑harvesting attempt.'; unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

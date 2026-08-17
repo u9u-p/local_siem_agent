@@ -1,0 +1,142 @@
+{
+  "report_id": "5912ab1a-81ac-4d1f-a77d-dafab745f735",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-16T11:16:14.128306Z",
+  "alert_summary": "A bulk email from an unfamiliar sender (orders@officesupply-direct.com) was detected with 23 correlation findings indicating potential phishing activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-16T11:14:56.615078Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T11:15:04.347225Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T11:15:04.347261Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T11:15:04.757906Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=23; open-value search for 'OSD-99412' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:15:17.120725Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T11:15:22.467768Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T11:15:53.009974Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-16T11:16:14.128236Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5912ab1a-81ac-4d1f-a77d-dafab745f735 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:16:14.138023Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:15:04.347243Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:15:04.347243Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:15:04.347256Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:15:04.347256Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:15:04.347259Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:15:04.347259Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The message matches classic phishing tactics (T1566), with an unknown sender domain and IP that has no established malicious reputation. The 23 correlation findings indicate multiple suspicious indicators, but the lack of known bad reputations keeps confidence from reaching critical. The high severity reflects the risk to a privileged account if the lure succeeds."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately verify the legitimacy of the order by contacting the vendor through an independently verified channel (e.g., phone number from the official website) and confirm whether any shipment was actually placed.",
+    "Inspect the email’s headers for anomalies such as mismatched return‑path addresses, forged DKIM/SPF signatures, or unusual routing hops that could indicate spoofing.",
+    "Correlate the sender IP (52.14.201.101) against internal threat intelligence feeds and external reputation services; if it remains unknown, consider blocking outbound traffic to that address until further analysis.",
+    "Examine any attachments or embedded links for malicious payloads using sandboxed execution or static analysis tools, and check whether the link redirects to a known phishing site or attempts credential harvesting.",
+    "Notify the affected user (admin@victimcorp.com) of the potential threat and advise them not to interact with the email until it has been fully vetted; provide guidance on safe handling of similar messages in the future.",
+    "Update the organization’s incident response playbook to include a step for reviewing bulk‑flagged emails that reference orders or shipments, ensuring that such alerts trigger a mandatory manual review before delivery.",
+    "If the investigation confirms malicious intent, coordinate with Mimecast and any relevant external partners (e.g., law enforcement, industry sharing groups) to report the phishing campaign and share indicators of compromise."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The email exhibits classic phishing characteristics (T1566), is flagged as bulk by Mimecast, and presents 23 suspicious correlation findings, strongly indicating malicious intent even though the IP/domain currently lack known reputational data.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

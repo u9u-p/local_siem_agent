@@ -9,5 +9,13 @@ data/
 .pytest_cache/
 *.egg-info/
 
-# Benchmark run outputs (reports, per-run jsonl, scoreboards)
-bench/results/
+# Benchmark evidence IS committed — the reports, per-run records, gate results and
+# sweep logs are what the findings in PROGRESS.md rest on, and they cannot be
+# regenerated without ~20 hours of model time.
+#
+# Two exclusions, both regenerable working state rather than evidence:
+#   - each block copies the corpus snapshot and mutates it as it runs (alert status,
+#     persisted reports); the reports are exported as JSON alongside, so the copy
+#     carries nothing the committed files do not. 23 copies, 20MB of the 26MB total.
+#   - *.db above already excludes them; this is the explicit note about why.
+bench/results/**/alerts.db

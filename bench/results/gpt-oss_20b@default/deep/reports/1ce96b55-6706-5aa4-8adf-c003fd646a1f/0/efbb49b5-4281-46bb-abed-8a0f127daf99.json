@@ -1,0 +1,154 @@
+{
+  "report_id": "efbb49b5-4281-46bb-abed-8a0f127daf99",
+  "alert_id": "1ce96b55-6706-5aa4-8adf-c003fd646a1f",
+  "generated_at": "2026-08-16T10:26:43.217309Z",
+  "alert_summary": "A normal user, jane.tan, successfully logged on from internal IP 10.20.4.61 as part of a 15‑event lateral‑movement pattern—indicating likely credential compromise and potential spread across the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1ce96b55-6706-5aa4-8adf-c003fd646a1f ingested; model available: True",
+      "timestamp": "2026-08-16T10:25:40.950291Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:25:47.653974Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T10:25:47.654057Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T10:25:48.085675Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-16T10:26:00.917139Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:26:06.498827Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:26:22.794423Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 8 flagged",
+      "timestamp": "2026-08-16T10:26:43.217222Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report efbb49b5-4281-46bb-abed-8a0f127daf99 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:26:43.224895Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:25:47.654012Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:25:47.654012Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:25:47.654037Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:25:47.654037Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:25:47.654046Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:25:47.654046Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:25:47.654051Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:25:47.654051Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The logon event is anomalous because it occurs within a cluster of lateral‑movement indicators that suggest an attacker has gained valid credentials for a regular user account. Even though no known malicious provider was detected, the internal IP and repeated activity raise strong suspicion of credential theft or misuse. The high severity reflects the risk of rapid propagation to other hosts, while medium confidence acknowledges limited evidence beyond the observed pattern."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin a focused audit of the account jane.tan, reviewing all recent authentication events, group memberships, and any privileged‑role assignments that might have been altered in the last 48 hours.",
+    "Perform an immediate host integrity check on the machine that logged the successful sign‑on from 10.20.4.61—look for unauthorized binaries, persistence mechanisms, or anomalous scheduled tasks that could indicate a foothold.",
+    "Deploy a short‑term network capture around the source IP (10.20.4.61) and any downstream targets to surface lateral‑movement traffic patterns such as SMB shares, PowerShell remoting, or WMI queries that were not previously observed.",
+    "Cross‑reference the 15‑event pattern with internal threat‑intel feeds; even if no known malicious provider is attached, look for indicators of compromise (IOCs) that match the same IP or domain names in other logs.",
+    "If any suspicious activity is confirmed, isolate the affected endpoint from the corporate network and run a full malware scan to rule out credential‑stealing tools or remote access trojans.",
+    "Document all findings in a shared incident‑response ticket so that analysts can correlate this event with other potential lateral‑movement attempts across the domain."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The logon pattern suggests possible credential compromise, but the lack of known malicious providers and absence of direct evidence of exploitation keep confidence moderate, making it unclear whether this is a true attack or benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,118 @@
+{
+  "report_id": "057fd2a5-c122-4f74-8de0-c865f851009c",
+  "alert_id": "8b34e40e-e65b-504e-b9d3-756ae6fd3bf9",
+  "generated_at": "2026-08-16T11:22:05.147404Z",
+  "alert_summary": "A successful SSH login by user araja from the test‑network IP 203.0.113.20 was detected; this appears to be a normal event with no signs of malicious activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8b34e40e-e65b-504e-b9d3-756ae6fd3bf9 ingested; model available: True",
+      "timestamp": "2026-08-16T11:21:06.662872Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:21:10.483865Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T11:21:10.483919Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T11:21:10.903994Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=31; open-value search for 'authentication succeeded' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:21:24.386097Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-16T11:21:29.444832Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-16T11:21:55.064669Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T11:22:05.147310Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 057fd2a5-c122-4f74-8de0-c865f851009c persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:22:05.155712Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:21:10.483897Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:21:10.483897Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The source IP 203.0.113.20 actually belongs to the TEST‑NET‑2 range (203.0.113.0/24), not TEST‑NET‑3."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Confirm the legitimacy of user *araja* by checking recent account activity and any scheduled tasks or scripts that might trigger an SSH session from the TEST‑NET‑3 range.",
+    "Cross‑reference the timestamp with internal network logs to ensure no other anomalous events (e.g., failed logins, privilege escalations) occurred around the same time.",
+    "If possible, capture a packet trace for the session to verify that the source IP is indeed originating from within your own infrastructure and not spoofed or forwarded through an external gateway.",
+    "Add a temporary watch on any future connections from 203.0.113.20 to detect patterns of repeated access that could indicate misuse or misconfiguration.",
+    "Document the findings in the incident log and flag the event as low‑risk so that analysts can deprioritize it while still keeping an eye on potential changes in behavior."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The login originates from a reserved TEST‑NET‑3 IP address, shows no correlation with known malicious patterns, and the user account is expected to access that range for legitimate purposes, making it highly likely to be a benign event.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

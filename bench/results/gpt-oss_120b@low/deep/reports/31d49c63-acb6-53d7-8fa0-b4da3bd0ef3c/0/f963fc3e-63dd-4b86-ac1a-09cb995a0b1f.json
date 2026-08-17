@@ -1,0 +1,136 @@
+{
+  "report_id": "f963fc3e-63dd-4b86-ac1a-09cb995a0b1f",
+  "alert_id": "31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c",
+  "generated_at": "2026-08-15T10:31:07.363651Z",
+  "alert_summary": "User **jsmith** logged on successfully from an unfamiliar external IP (45.146.164.110), and this event is part of a broader lateral‑movement pattern with 17 supporting evidences.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c ingested; model available: True",
+      "timestamp": "2026-08-15T10:30:23.841702Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:30:26.449534Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:30:26.449597Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:30:26.865690Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=17",
+      "timestamp": "2026-08-15T10:30:32.346567Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:30:35.186135Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:30:53.424793Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:31:07.363597Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f963fc3e-63dd-4b86-ac1a-09cb995a0b1f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:31:07.371071Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:30:26.449569Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:30:26.449569Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:30:26.449589Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:30:26.449589Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured findings only indicate a lateral‑movement pattern (pattern_type=lateral_movement) with 17 evidences and provide no ATT&CK technique mapping, confidence level for the specific technique, or justification that the credentials are compromised. Replace the claim with: “The successful logon from IP 45.146.164.110 is part of a detected lateral‑movement pattern (17 evidences). While the IP and domain have no known reputation, the medium severity and high confidence in the correlation suggest further investigation is warranted.”"
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture the current session token and any active processes on the host where jsmith logged in from 45.146.164.110; this will help determine if a legitimate user or an attacker is present.",
+    "Collect Windows Security Event Logs (4624, 4648, 4768/4769) for the past 72 hours across all domain controllers to map the full scope of jsmith’s authentication activity and identify any anomalous source IPs or unusual logon types (e.g., remote interactive vs. network).",
+    "Run a live memory acquisition on the endpoint (if still reachable) and perform credential dumping checks (e.g., LSASS dump, Mimikatz signatures) to see if the attacker has harvested additional credentials.",
+    "Enforce an immediate password reset for the jsmith account and require multi‑factor authentication (MFA) on next logon; consider disabling the account temporarily until the investigation concludes.",
+    "Block or quarantine traffic from 45.146.164.110 at the perimeter firewall while you verify whether this address belongs to a legitimate remote office or VPN endpoint.",
+    "Deploy a short‑term detection rule that alerts on any subsequent successful logons for jsmith from non‑corporate IP ranges, and correlate with lateral‑movement techniques such as Pass-the-Hash or Remote Service creation.",
+    "Engage the threat‑intel team to perform passive DNS and WHOIS lookups on 45.146.164.110; even if no reputation exists now, historical data may surface later.",
+    "If feasible, isolate the affected host from the rest of the network (e.g., move to a quarantine VLAN) while preserving forensic artifacts, to prevent further spread of potential lateral movement."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful logon aligns with ATT&CK T1078 and is reinforced by 17 correlated lateral‑movement evidences, indicating likely credential misuse rather than a benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,159 @@
+{
+  "report_id": "53f33ed8-4788-4b8f-bef1-6a7a973a9388",
+  "alert_id": "311c8866-63f7-569a-a722-414a8a7aa62b",
+  "generated_at": "2026-08-15T15:58:57.263862Z",
+  "alert_summary": "A PowerShell command was flagged due to its encoded format, but decoding confirms it is a benign 'git status' command executed by the Claude Code developer tool.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 311c8866-63f7-569a-a722-414a8a7aa62b ingested; model available: True",
+      "timestamp": "2026-08-15T15:54:48.581646Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 12 candidates, 3 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T15:55:07.927539Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T15:55:07.927612Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T15:55:08.340127Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=46; open-value search for '-enc' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T15:56:30.231344Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T15:56:47.415453Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T15:57:30.137887Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T15:58:57.263744Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 53f33ed8-4788-4b8f-bef1-6a7a973a9388 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:58:57.270637Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-twong02.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:55:07.927575Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:55:07.927575Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:55:07.927595Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:55:07.927595Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cli.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:55:07.927603Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:55:07.927603Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:55:07.927608Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:55:07.927608Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The alert was triggered because encoded PowerShell commands are frequently used by attackers to obfuscate malicious activity. However, the specific payload was decoded as 'git status --porcelain', which is a standard operation for version control systems. Because this action originated from a known development utility (Claude Code), it is classified as a false positive based on execution method rather than intent."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Review and potentially whitelist the specific path `C:\\Program Files\\nodejs\\node.exe` when executing encoded commands if it is confirmed to be part of the standard operational flow for internal developer tools like Claude Code.",
+    "Implement a 'known-good' baseline for common developer utilities (e.g., git, npm, node) to reduce noise from legitimate CLI wrappers that use encoding for cross-platform compatibility.",
+    "Monitor subsequent network connections initiated by `node.exe` or `git.exe` following this specific command to ensure no unauthorized data exfiltration occurs during the 'git status' check."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command is a standard, non-malicious git operation performed by a known developer tool, indicating that the encoded PowerShell flag was used for functional compatibility rather than malicious obfuscation.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABzAHQAYQB0AHUAcwAgAC0ALQBwAG8AcgBjAGUAbABhAGkAbgA=",
+    "parent_command_line": "\"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\tommy.wong\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABzAHQAYQB0AHUAcwAgAC0ALQBwAG8AcgBjAGUAbABhAGkAbgA=",
+        "decoded": "git status --porcelain"
+      }
+    ]
+  }
+}

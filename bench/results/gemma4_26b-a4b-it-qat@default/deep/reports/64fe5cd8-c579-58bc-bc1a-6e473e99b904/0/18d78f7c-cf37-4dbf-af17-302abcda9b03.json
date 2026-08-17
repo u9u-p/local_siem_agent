@@ -1,0 +1,152 @@
+{
+  "report_id": "18d78f7c-cf37-4dbf-af17-302abcda9b03",
+  "alert_id": "64fe5cd8-c579-58bc-bc1a-6e473e99b904",
+  "generated_at": "2026-08-15T13:12:33.376101Z",
+  "alert_summary": "An alert involving domain grandmerchant-hotel.com targeting tommy.wong@victimcorp.com has been identified with high severity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 64fe5cd8-c579-58bc-bc1a-6e473e99b904 ingested; model available: True",
+      "timestamp": "2026-08-15T13:10:11.270102Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T13:10:23.098200Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T13:10:23.098274Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T13:10:23.516698Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=41; open-value search for 'grandmerchant-hotel.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:10:48.759301Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T13:10:58.788248Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:11:34.824350Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T13:12:33.376001Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 18d78f7c-cf37-4dbf-af17-302abcda9b03 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:12:33.383743Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:10:23.098234Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:10:23.098234Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "grandmerchant-hotel.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:10:23.098257Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:10:23.098257Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:10:23.098264Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:10:23.098264Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:10:23.098269Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:10:23.098269Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "This alert is classified as high severity with an evidence count of 41. Because the sender and IP are unknown, there is a medium confidence assessment regarding its malicious nature."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a retroactive search across all organizational mailboxes for any messages with the subject 'Booking confirmation for 20-22 August' to ensure no instances bypassed Mimecast.",
+    "Investigate the registration age and WHOIS data for 'grandmerchant-hotel.com'; a recently registered domain would strongly confirm malicious intent.",
+    "Extract and sandbox any URLs or attachments contained within the held message to identify potential credential harvesting sites or malware payloads.",
+    "Check if other users received similar emails from different sender addresses but with identical subject lines or patterns to identify broader campaign scope.",
+    "Block the sender domain 'grandmerchant-hotel.com' at the email gateway level and monitor for any attempted connections to associated IPs."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high evidence count of 41 hits combined with a classic social engineering subject line and an unknown domain strongly indicates a coordinated mass-phishing attempt rather than legitimate bulk mail.",
+  "uncertainty_notes": "unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,162 @@
+{
+  "report_id": "49d82b9e-63cf-41e3-bf35-16bf35279df9",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-15T00:02:44.952893Z",
+  "alert_summary": "Correlation findings show evidence_count=25 with pattern_type=other. Enrichment for ip 209.85.220.41 and domains jane.tan, meridian-audit.com, raj.kumar, victimcorp.com is unknown.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-14T23:53:44.389151Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T23:54:53.032349Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T23:54:53.032414Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T23:54:53.460216Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=25; open-value search for 'jane.tan@meridian-audit.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T23:57:53.834738Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T23:58:44.892358Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T00:01:05.146153Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T00:02:44.952786Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 49d82b9e-63cf-41e3-bf35-16bf35279df9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T00:02:44.960172Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:54:53.032381Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:54:53.032381Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:54:53.032398Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:54:53.032398Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:54:53.032404Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:54:53.032404Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:54:53.032407Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:54:53.032407Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:54:53.032410Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:54:53.032410Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "Risk assessment: severity=high, confidence=medium. Enrichment for source IP 209.85.220.41 and domains jane.tan, meridian-audit.com, raj.kumar, victimcorp.com is unknown. Correlation findings show evidence_count=25 with pattern_type=other."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the sender identity out-of-band via known contact details for Jane Tan at Meridian Audit and confirm whether a Q2 access review request was legitimately initiated, do not reply to the held message.",
+    "Inspect the full email headers and Mimecast quarantine metadata for display name mismatches, SPF/DKIM/DMARC results, and any URL or attachment indicators, and compare against known legitimate meridian-audit.com sending infrastructure.",
+    "Perform external domain and IP reputation checks using multiple threat intelligence sources to resolve the unknown enrichment for 209.85.220.41 and meridian-audit.com, including WHOIS history and certificate transparency logs.",
+    "Correlate the 25 related evidences to identify common sender patterns, recipient targeting, subject line variants, and timing to assess campaign scope and potential compromise of internal accounts.",
+    "Brief Raj Kumar and relevant audit stakeholders about the impersonation attempt, reinforce BEC reporting procedures, and consider temporary enhanced monitoring or block rules for meridian-audit.com related lookalike domains."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "Mimecast flagged impersonation with 25 correlated evidences suggesting a targeted BEC campaign, but all enrichment for IP and domains is unknown so the legitimacy of meridian-audit.com cannot be confirmed.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

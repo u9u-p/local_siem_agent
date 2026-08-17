@@ -1,0 +1,127 @@
+{
+  "report_id": "1d495d56-1183-4418-bc90-d4a60a315e26",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-14T18:34:16.457741Z",
+  "alert_summary": "Successful SSH logon detected for user nprakash from an unknown IP (203.0.113.63) with brute force correlation findings, indicating potential credential stuffing or unauthorized access attempts.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-14T18:33:33.246903Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:33:35.384250Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T18:33:35.384319Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T18:33:35.804722Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24",
+      "timestamp": "2026-08-14T18:33:37.812213Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:33:40.756234Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:33:59.482493Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T18:34:16.457702Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 1d495d56-1183-4418-bc90-d4a60a315e26 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:34:16.462996Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:33:35.384297Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:33:35.384297Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert shows a successful SSH login following 24 brute force attempts, suggesting possible credential compromise. The unknown IP adds uncertainty, but the high evidence count and MITRE ATT&CK mappings justify a high severity assessment. Immediate action is recommended to prevent potential lateral movement or data exfiltration."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately investigate the user account 'nprakash' for any unusual activity or unauthorized access.",
+    "Review SSH logs for additional failed login attempts from the same IP (203.0.113.63) to identify patterns of brute force attacks.",
+    "Consider temporarily disabling the user account 'nprakash' if suspicious activity is confirmed, pending further investigation.",
+    "Check if multi-factor authentication (MFA) is enabled for the user account and enforce it if not already in place.",
+    "Analyze the system or service accessed by 'nprakash' to determine if any sensitive data was compromised during this session.",
+    "Update firewall rules to block the IP address 203.0.113.63 as a precautionary measure against further attacks.",
+    "Conduct a thorough review of all user accounts with similar access levels to ensure no other credentials have been compromised."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of successful SSH logon, brute force correlation findings, and high-risk assessment strongly suggests this is a true positive alert indicating potential unauthorized access.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

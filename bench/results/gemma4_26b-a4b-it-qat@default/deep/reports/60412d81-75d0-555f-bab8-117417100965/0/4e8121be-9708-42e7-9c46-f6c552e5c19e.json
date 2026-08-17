@@ -1,0 +1,150 @@
+{
+  "report_id": "4e8121be-9708-42e7-9c46-f6c552e5c19e",
+  "alert_id": "60412d81-75d0-555f-bab8-117417100965",
+  "generated_at": "2026-08-15T13:05:33.124759Z",
+  "alert_summary": "The findings identify unknown entities 'raj.kumar' and 'victimcorp.com' with an evidence count of 26, but do not specify an email subject or whether Mimecast intercepted the message.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 60412d81-75d0-555f-bab8-117417100965 ingested; model available: True",
+      "timestamp": "2026-08-15T13:01:31.996772Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T13:01:43.888961Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T13:01:43.889033Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T13:01:44.313743Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'apac-tradebody.org' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:02:24.423082Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T13:02:33.449607Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:03:09.085511Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T13:05:33.124707Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4e8121be-9708-42e7-9c46-f6c552e5c19e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:05:33.132603Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:01:43.888995Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:01:43.888995Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "apac-tradebody.org",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:01:43.889016Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:01:43.889016Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:01:43.889024Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:01:43.889024Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:01:43.889028Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:01:43.889028Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "A high number of related indicators (26) and medium severity suggest this may be part of a broader campaign with moderate risk, though specific social engineering tactics or prevention actions are not documented in the findings."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct a retrospective search across the entire mail environment to identify if any other users received emails from 'apac-tradebody.org' or with similar subject lines that might have bypassed the bulk filter.",
+    "Perform a WHOIS lookup on 'apac-tradebody.org' to determine its registration age; newly registered domains used in regulatory-themed emails are high-confidence indicators of phishing.",
+    "Check the reputation and historical activity of IP 198.2.180.34 across threat intelligence feeds to see if it is associated with known malicious infrastructure.",
+    "Verify whether 'apac-tradebody.org' is a legitimate partner or vendor for VictimCorp; if no such relationship exists, blacklist the domain at the gateway level."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high evidence count combined with a classic social engineering subject line suggests this was an intentional phishing attempt that was successfully intercepted by Mimecast's bulk filtering rules.",
+  "uncertainty_notes": "unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

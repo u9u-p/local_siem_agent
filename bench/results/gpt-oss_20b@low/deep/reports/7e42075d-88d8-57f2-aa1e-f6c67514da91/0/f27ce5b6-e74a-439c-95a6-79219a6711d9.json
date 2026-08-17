@@ -1,0 +1,118 @@
+{
+  "report_id": "f27ce5b6-e74a-439c-95a6-79219a6711d9",
+  "alert_id": "7e42075d-88d8-57f2-aa1e-f6c67514da91",
+  "generated_at": "2026-08-15T10:11:15.896516Z",
+  "alert_summary": "An external IP address 203.0.113.10 was observed with 51 correlated lateral‑movement indicators.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7e42075d-88d8-57f2-aa1e-f6c67514da91 ingested; model available: True",
+      "timestamp": "2026-08-15T10:10:50.285506Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:10:51.270402Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:10:51.270452Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:10:51.683466Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=51; follow-up same_rule_id_host added 25",
+      "timestamp": "2026-08-15T10:10:55.994951Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:10:58.222401Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:11:06.871512Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 11 flagged",
+      "timestamp": "2026-08-15T10:11:15.896466Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f27ce5b6-e74a-439c-95a6-79219a6711d9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:11:15.905617Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:10:51.270436Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:10:51.270436Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The presence of 51 correlated lateral‑movement indicators originating from an unrecognized external IP (203.0.113.10) suggests a potential compromise; however, no definitive malicious payload or destructive activity was detected, warranting a high‑risk classification."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate credential‑validation workflow: force jsmith to change password on all systems and verify multi‑factor authentication is enforced.",
+    "Deploy a host‑based intrusion detection agent on the target machine to capture post‑login activity, focusing on unusual process creation or network connections that could indicate lateral movement.",
+    "Cross‑reference the 51 correlated events against internal asset inventories; flag any hosts that were accessed from the same IP within the last 24 hours for a deeper forensic review.",
+    "Run an automated host integrity check (e.g., Tripwire, OSSEC) to detect unauthorized file modifications or new binaries that might have been dropped during the session.",
+    "If possible, isolate the affected machine from the network segment temporarily while maintaining remote access for investigators, to prevent further spread if the account is indeed compromised."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful SSH logon from an unknown external IP combined with a high volume of lateral‑movement indicators suggests potential compromise, but the absence of overt malicious payloads or clear exfiltration activity leaves room for both legitimate administrative access and stealthy intrusion.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

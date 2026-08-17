@@ -1,0 +1,127 @@
+{
+  "report_id": "e8f36bab-e05d-451d-91eb-d7218a1c6658",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-14T18:02:10.599238Z",
+  "alert_summary": "A high-severity brute-force SSH login attempt from an unknown IP was detected, indicating active credential guessing and requiring immediate investigation. However, limited enrichment data reduces confidence in this assessment.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-14T18:01:22.538492Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:01:26.152832Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T18:01:26.152883Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T18:01:26.570411Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=28; follow-up same_src_ip_24h added 4",
+      "timestamp": "2026-08-14T18:01:33.467637Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:01:38.680120Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:01:54.740183Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 18 claim(s), 6 flagged",
+      "timestamp": "2026-08-14T18:02:10.598968Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e8f36bab-e05d-451d-91eb-d7218a1c6658 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:02:10.605434Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:01:26.152867Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:01:26.152867Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful SSH login from an unknown source with a brute-force pattern suggests active credential guessing, which is a strong indicator of attack; however, the lack of additional IP enrichment limits confidence in the assessment. This combination warrants escalation to the incident response team for further analysis and coordinated mitigation."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enhance enrichment by cross-referencing the IP address against threat intelligence platforms to identify known malicious activity or reputation scores.",
+    "Investigate whether the user 'nprakash' has any associated accounts or credentials that could have been compromised, and check for related suspicious activities in the syslog group.",
+    "Review authentication logs from the sshd service around the time of the login to capture additional context, such as failed attempts prior to the successful brute-force login.",
+    "Assess whether the IP's geolocation aligns with expected user locations or if it falls within a known high-risk region, which could influence risk scoring.",
+    "Consider implementing rate-limiting or temporary account lockout mechanisms for SSH access to mitigate future brute-force attempts from this IP."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The presence of a confirmed successful SSH login with a clear brute-force pattern and high severity rating directly indicates malicious activity, outweighing the limited enrichment data.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Patch or update the vulnerable software identified for this host'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,132 @@
+{
+  "report_id": "27c39245-f0dd-4124-8ced-4590264d755f",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T18:38:43.512663Z",
+  "alert_summary": "Successful logon by user 'mrahman' from IP 100.72.44.19 detected, with correlation findings indicating potential lateral movement activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T18:38:04.380536Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:38:07.286763Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T18:38:07.286845Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T18:38:07.710401Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=22",
+      "timestamp": "2026-08-14T18:38:09.700638Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-14T18:38:13.221987Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:38:29.994279Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:38:43.512575Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 27c39245-f0dd-4124-8ced-4590264d755f persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:38:43.522594Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:38:07.286809Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:38:07.286809Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:38:07.286837Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:38:07.286837Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The alert shows a valid credential-based logon associated with lateral movement (T1078), supported by a high evidence count of 22. While the lack of IP/domain enrichment keeps severity at medium, the high confidence suggests further investigation is warranted to confirm or rule out malicious intent. The user's typical behavior and the source IP should be examined for anomalies."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the user's mrahman recent activity to determine if this logon aligns with their typical behavior patterns.",
+    "Check if there have been any recent credential changes or password resets for the user account.",
+    "Review network traffic logs from 100.72.44.19 to identify any unusual connections or data exfiltration attempts.",
+    "Examine endpoint detection and response (EDR) logs on the system where mrahman logged in to detect any post-exploitation activities.",
+    "Verify if multi-factor authentication (MFA) was required for this logon, as its absence could indicate a security gap.",
+    "Cross-reference with other alerts or anomalies around the same time to identify potential patterns of lateral movement."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the alert shows characteristics of lateral movement (T1078) and has high confidence, the lack of IP/domain enrichment and contextual user behavior makes it impossible to definitively classify as a true or false positive.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; 2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

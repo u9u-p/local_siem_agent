@@ -1,0 +1,127 @@
+{
+  "report_id": "11ff33ac-9ffc-471b-8043-6436e3dda37d",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-15T03:09:13.204700Z",
+  "alert_summary": "An event involving IP address 100.72.44.19 targeting dc01.corp.local was correlated across 22 data points. No malicious pattern was detected, aligning with standard system access behavior.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-15T03:04:40.843076Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T03:06:30.478877Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T03:06:30.478960Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T03:06:30.910026Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T03:07:09.463591Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T03:07:30.713747Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T03:08:31.913376Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T03:09:13.204642Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 11ff33ac-9ffc-471b-8043-6436e3dda37d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:09:13.212361Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:06:30.478924Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:06:30.478924Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:06:30.478953Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:06:30.478953Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The correlation analysis identified no malicious patterns across 22 evidence points involving IP 100.72.44.19 and dc01.corp.local. With both entities returning unknown enrichment data and a medium confidence rating reflecting limited contextual visibility, the absence of threat indicators supports a low severity classification."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Validate source IP 100.72.44.19 against internal infrastructure records; this address falls within the RFC 6598 CGNAT range, so confirm it corresponds to a known carrier-grade NAT pool or remote access segment used by the organization.",
+    "Review user mrahman's account activity in the surrounding timeframe for any immediate privilege escalation, sensitive resource access, or unusual group memberships that might indicate post-authentication compromise despite the low severity of this logon event.",
+    "Correlate with HR or helpdesk records to verify that the user's expected location and device posture align with a CGNAT source, ensuring the logon matches normal remote work patterns."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert represents a standard successful authentication from a private/CGNAT address space with no threat intelligence matches or anomalous indicators, consistent with benign user activity rather than a security incident.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

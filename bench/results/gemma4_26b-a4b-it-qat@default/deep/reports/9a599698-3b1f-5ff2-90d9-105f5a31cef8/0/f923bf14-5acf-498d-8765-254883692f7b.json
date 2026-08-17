@@ -1,0 +1,148 @@
+{
+  "report_id": "f923bf14-5acf-498d-8765-254883692f7b",
+  "alert_id": "9a599698-3b1f-5ff2-90d9-105f5a31cef8",
+  "generated_at": "2026-08-15T13:56:14.442447Z",
+  "alert_summary": "The user account 'ke.li.yam' has performed 15 successful logons from IP 10.20.4.88, a pattern highly indicative of lateral movement within the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9a599698-3b1f-5ff2-90d9-105f5a31cef8 ingested; model available: True",
+      "timestamp": "2026-08-15T13:51:37.602051Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T13:52:13.639913Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T13:52:13.639947Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T13:52:14.064787Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T13:52:38.990637Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T13:52:46.915596Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:53:29.986235Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T13:56:14.442378Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f923bf14-5acf-498d-8765-254883692f7b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:56:14.453333Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:52:13.639931Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:52:13.639931Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:52:13.639942Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:52:13.639942Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:52:13.639945Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:52:13.639945Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high frequency of authentication events suggests that an attacker may be utilizing compromised credentials to move through the environment. Because both the source IP and the user account are unknown to the system, there is a significant risk that this activity represents unauthorized access rather than legitimate administrative work. Immediate containment and investigation are required to prevent further movement across the domain."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate host 10.20.4.88 from the network to prevent further lateral spread.",
+    "Disable the 'ke.li.yam' user account and initiate a mandatory password reset across the domain.",
+    "Perform a forensic analysis on host 10.20.4.88 to identify any unauthorized remote execution tools (e.g., PsExec, WMI, or Cobalt Strike) or suspicious PowerShell activity.",
+    "Review Windows Security Event Logs on all destination hosts targeted by this user to determine if any successful command executions occurred following the logons.",
+    "Verify if 10.20.4.88 is a known administrative jump box or deployment server; if not, treat it as a compromised endpoint."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high frequency of successful logons (15 events) specifically correlated to a lateral movement pattern is a strong indicator of an attacker using valid credentials to programmatically traverse the network.",
+  "uncertainty_notes": "self-check could not run: validation_failed; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

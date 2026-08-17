@@ -1,0 +1,150 @@
+{
+  "report_id": "1399c08b-dcce-43c7-9eda-12afdfcabadc",
+  "alert_id": "4f1cb34a-b22d-5820-ba1a-a2454f1f84d3",
+  "generated_at": "2026-08-15T12:33:29.932624Z",
+  "alert_summary": "Multiple successful logons by user raj.kumar from host 10.20.4.73 have been identified as potential lateral movement activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f1cb34a-b22d-5820-ba1a-a2454f1f84d3 ingested; model available: True",
+      "timestamp": "2026-08-15T12:31:20.923687Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T12:31:43.609410Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T12:31:43.609476Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T12:31:44.045618Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T12:32:02.075506Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T12:32:08.943550Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T12:32:47.660138Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T12:33:29.932527Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 1399c08b-dcce-43c7-9eda-12afdfcabadc persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:33:29.941571Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:31:43.609444Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:31:43.609444Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:31:43.609464Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:31:43.609464Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:31:43.609471Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:31:43.609471Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection of eight distinct instances matching lateral movement patterns indicates a high probability that the credentials for raj.kumar have been compromised. This behavior suggests an active attempt to traverse the network from host 10.20.4.73, posing a significant risk to internal security. Immediate investigation is required to contain the potential breach and identify the scope of movement."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate host 10.20.4.73 to prevent further lateral movement while preserving volatile memory for forensic analysis.",
+    "Perform a deep dive into the process execution logs on both the source (10.20.4.73) and any destination hosts targeted by raj.kumar, specifically looking for suspicious parent-child process relationships (e.g., cmd.exe or powershell.exe spawned from unexpected services).",
+    "Review all recent activity for user 'raj.kumar' across the domain to determine if this behavior deviates from their established baseline and check for any concurrent logins from different geographic locations or unusual timeframes.",
+    "Audit SMB/RPC traffic originating from 10.20.4.73 to identify if the lateral movement is utilizing tools like PsExec, WMI, or WinRM.",
+    "Verify the ownership and function of host 10.20.4.73; if it is a standard workstation rather than an administrative jump box, treat this as a high-priority compromise."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The detection of eight distinct lateral movement patterns associated with a single user session strongly indicates active credential abuse for network traversal rather than legitimate administrative activity.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

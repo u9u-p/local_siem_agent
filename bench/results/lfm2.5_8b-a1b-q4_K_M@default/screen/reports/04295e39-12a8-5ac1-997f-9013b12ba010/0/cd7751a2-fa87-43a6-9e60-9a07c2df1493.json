@@ -1,0 +1,159 @@
+{
+  "report_id": "cd7751a2-fa87-43a6-9e60-9a07c2df1493",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-14T18:01:22.057570Z",
+  "alert_summary": "Successful logon from unknown IP using brute force pattern detected for user tommy.wong, indicating potential credential stuffing attack with high severity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-14T18:00:40.680782Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:00:43.038382Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:00:43.038451Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T18:00:43.465559Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=8; follow-up same_src_ip_24h added 0",
+      "timestamp": "2026-08-14T18:00:49.729024Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:00:53.691801Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:01:10.160817Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 19 audit(s) for 18 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T18:01:22.057517Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cd7751a2-fa87-43a6-9e60-9a07c2df1493 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:01:22.063327Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:00:43.038418Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:00:43.038418Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:00:43.038438Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:00:43.038438Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:00:43.038446Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:00:43.038446Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful logon from an unknown source combined with a brute force pattern and eight correlated events suggests malicious activity, though lack of enrichment data limits certainty. This aligns with MITRE ATT&CK T1078 (Valid Accounts) and increases confidence in the threat assessment."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Patch or update the vulnerable software identified for this host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enrich the unknown IP address through threat intelligence platforms to identify known malicious infrastructure",
+    "Cross-reference the domain tommy.wong against internal user directories and password databases",
+    "Investigate whether other accounts in the same group (windows_security) have experienced similar authentication attempts",
+    "Analyze temporal patterns of successful logons across multiple domains for correlation",
+    "Check if the IP address has been associated with previous attack campaigns or known threat actors",
+    "Review network traffic logs from the source IP to identify any lateral movement or data exfiltration attempts",
+    "Validate whether the user account tommy.wong exists in Active Directory and its current password hash status",
+    "Assess if this activity aligns with any scheduled maintenance windows or automated processes",
+    "Consider implementing temporary MFA enforcement for all accounts in the windows group until further analysis"
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of successful authentication from an unknown source using brute force methodology, coupled with multiple correlated events and MITRE ATT&CK mapping to a known malicious technique, provides sufficient evidence despite incomplete enrichment data.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

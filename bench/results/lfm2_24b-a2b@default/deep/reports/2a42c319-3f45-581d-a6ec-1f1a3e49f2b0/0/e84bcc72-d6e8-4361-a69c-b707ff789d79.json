@@ -1,0 +1,157 @@
+{
+  "report_id": "e84bcc72-d6e8-4361-a69c-b707ff789d79",
+  "alert_id": "2a42c319-3f45-581d-a6ec-1f1a3e49f2b0",
+  "generated_at": "2026-08-15T09:37:48.956395Z",
+  "alert_summary": "A highly suspicious PowerShell command was run from a user’s local directory using an encoded script, matching known MITRE ATT&CK techniques and indicating possible malware activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2a42c319-3f45-581d-a6ec-1f1a3e49f2b0 ingested; model available: True",
+      "timestamp": "2026-08-15T09:37:37.641157Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 5 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:37:39.223562Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:37:39.223633Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:37:39.636310Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=85; follow-up same_rule_id_host added 41",
+      "timestamp": "2026-08-15T09:37:40.127528Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:37:40.986289Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:37:44.869296Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:37:48.956342Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e84bcc72-d6e8-4361-a69c-b707ff789d79 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:37:48.964201Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:39.223597Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:39.223597Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:39.223620Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:39.223620Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://powershell.exe",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:37:39.223628Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:37:39.223628Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The execution of an encoded PowerShell command from a personal folder, combined with the use of common system tools like Sysmon and Cursor, aligns with typical attacker behavior for obfuscation and persistence. The high correlation score and volume of related events further confirm malicious intent, warranting immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper behavioral analysis of the PowerShell process to map out its parent-child relationships and any lateral movement attempts.",
+    "Correlate this event with endpoint detection logs, network traffic captures, and user authentication records for a broader timeline context.",
+    "Investigate whether the encoded command matches known malicious payloads or obfuscation patterns in threat intelligence feeds.",
+    "Review file system artifacts (e.g., registry keys, scheduled tasks) to identify persistence mechanisms linked to this execution path.",
+    "Engage with incident response teams for immediate containment and forensic preservation of affected systems."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an encoded PowerShell command, execution from a user’s local directory, and strong alignment to MITRE ATT&CK techniques indicates high confidence in malicious activity rather than benign automation or scripting.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "report_id": "d9f1a584-5cc3-4cdf-b7ab-89d79adfc093",
+  "alert_id": "8b34e40e-e65b-504e-b9d3-756ae6fd3bf9",
+  "generated_at": "2026-08-15T19:31:11.331893Z",
+  "alert_summary": "A brute-force attack involving 31 attempts from an unknown IP address (203.0.113.20) was detected with high severity and confidence, indicating a likely compromise of the targeted account.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8b34e40e-e65b-504e-b9d3-756ae6fd3bf9 ingested; model available: True",
+      "timestamp": "2026-08-15T19:25:57.194955Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T19:26:10.158657Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T19:26:10.158708Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T19:26:10.579829Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=31",
+      "timestamp": "2026-08-15T19:27:47.381116Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T19:27:57.155223Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T19:28:47.394414Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T19:31:11.331831Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d9f1a584-5cc3-4cdf-b7ab-89d79adfc093 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:31:11.339795Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:26:10.158691Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:26:10.158691Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection of a brute-force attack involving 31 attempts from an unknown IP address (203.0.113.20) with high severity and confidence indicates a likely unauthorized intrusion attempt."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'araja' account to prevent further unauthorized access.",
+    "Terminate all active SSH sessions associated with user 'araja'.",
+    "Initiate a mandatory password reset and enforce multi-factor authentication (MFA) for the affected account.",
+    "Block the source IP address (203.0.113.20) at the perimeter firewall or via an automated null route.",
+    "Perform a forensic review of the system logs to identify any commands executed, files modified, or lateral movement attempted by the user following the successful login.",
+    "Scan the host for any unauthorized persistence mechanisms (e.g., new SSH keys, cron jobs, or web shells) installed during the session."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high-confidence correlation between a 31-count brute-force pattern and an immediate successful login from the same source indicates a confirmed credential compromise.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

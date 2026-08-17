@@ -1,0 +1,131 @@
+{
+  "report_id": "b23dca53-4b40-4d4a-9e72-f8b7c9aff48d",
+  "alert_id": "6f5c6415-dc68-5ade-97e7-4697181d4d16",
+  "generated_at": "2026-08-15T10:49:48.374850Z",
+  "alert_summary": "A brute‑force pattern (type=brute_force) comprising 24 related events was observed originating from the external IP address 203.0.113.30, which is currently unknown in our enrichment data. No specific user or successful logon information is present in the structured findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6f5c6415-dc68-5ade-97e7-4697181d4d16 ingested; model available: True",
+      "timestamp": "2026-08-15T10:49:03.909209Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:49:06.595957Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:49:06.595988Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:49:07.023865Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-15T10:49:10.050122Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:49:13.341157Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:49:30.723349Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:49:48.374786Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b23dca53-4b40-4d4a-9e72-f8b7c9aff48d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:49:48.381869Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:49:06.595976Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:49:06.595976Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:49:06.595986Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:49:06.595986Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured findings only indicate a brute‑force pattern from an unknown IP with 24 events and assign a medium severity, high confidence rating. They do not identify the account as privileged (T1078), confirm that the logon was successful, or provide details about failed attempts or the legitimacy of the credentials."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host associated with the source IP (203.0.113.30) or block traffic from that address at the perimeter firewall while further investigation proceeds.",
+    "Collect and review the full authentication logon session details for user *mrahman* – including timestamps, logon type, workstation name, and any privileged token assignments – to verify whether this was a legitimate remote access event (e.g., VPN) or an anomalous external connection.",
+    "Correlate the 24 related events flagged as part of a brute‑force pattern with other authentication sources (RDP, SMB, web applications) to determine if they represent repeated failed attempts that preceded the successful logon. Look for lockout thresholds being bypassed or credential‑spraying techniques such as username enumeration.",
+    "Query Active Directory for recent password changes, account lockouts, and any delegation or group membership modifications involving *mrahman*; confirm whether the account has elevated privileges that could be abused post‑login.",
+    "If the IP is confirmed to be external and not part of an approved remote‑access solution (e.g., corporate VPN gateway), enforce multi‑factor authentication for this user and consider resetting the password after confirming no legitimate business need for the connection.",
+    "Deploy a short‑term network sensor or endpoint detection rule that alerts on any subsequent logons from 203.0.113.30 or other unknown external ranges to privileged accounts, to catch potential follow‑on activity.",
+    "Document the incident in the ticketing system with all collected artifacts (event IDs, timestamps, source/destination hosts) and assign a severity of *Medium* for tracking; schedule a review with the identity‑access team to assess whether broader credential‑stuffing mitigation controls (e.g., account lockout policy tuning, password spray detection) need to be hardened."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful logon from an unknown external IP combined with a documented brute‑force pattern strongly suggests credential stuffing rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,121 @@
+{
+  "report_id": "4a783ec6-0c8c-4025-a0f7-da2a988a0f3c",
+  "alert_id": "8b34e40e-e65b-504e-b9d3-756ae6fd3bf9",
+  "generated_at": "2026-08-15T13:46:18.304167Z",
+  "alert_summary": "There are 31 instances of activity from an unknown IP address (203.0.113.20). This frequency of activity from an unrecognized source suggests a potential automated attack or unauthorized access attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8b34e40e-e65b-504e-b9d3-756ae6fd3bf9 ingested; model available: True",
+      "timestamp": "2026-08-15T13:43:50.871563Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:43:57.170620Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:43:57.170669Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:43:57.595817Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=31; open-value search for 'araja' found 6 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:44:32.874760Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T13:44:40.221662Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:45:15.356901Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T13:46:18.304115Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4a783ec6-0c8c-4025-a0f7-da2a988a0f3c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:46:18.311267Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:43:57.170655Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:43:57.170655Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high confidence rating is driven by the significant volume of 31 events originating from a single, unidentified external IP address (203.0.113.20). This pattern is characteristic of automated activity or unauthorized access attempts. Because the source IP lacks known attribution, this activity represents a critical risk."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'araja' user account to prevent further unauthorized access.",
+    "Terminate all active SSH sessions originating from IP 203.0.113.20 and any current sessions belonging to user 'araja'.",
+    "Implement a temporary firewall block on IP 203.0.113.20 at the network perimeter.",
+    "Perform a deep dive into host-level audit logs (e.g., shell history, sudo usage, or file integrity monitoring) to determine if any sensitive data was exfiltrated or system configurations were altered during these sessions.",
+    "Conduct an out-of-band verification with user 'araja' to confirm whether this activity was part of a scheduled administrative task or authorized automation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high volume of successful logins (31) from an unverified external IP is highly anomalous for human behavior and strongly indicates automated activity using compromised credentials.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

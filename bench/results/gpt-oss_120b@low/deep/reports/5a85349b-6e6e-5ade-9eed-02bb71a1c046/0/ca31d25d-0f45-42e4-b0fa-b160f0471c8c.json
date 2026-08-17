@@ -1,0 +1,151 @@
+{
+  "report_id": "ca31d25d-0f45-42e4-b0fa-b160f0471c8c",
+  "alert_id": "5a85349b-6e6e-5ade-9eed-02bb71a1c046",
+  "generated_at": "2026-08-15T10:42:44.209546Z",
+  "alert_summary": "A bulk email originating from the domain datavault-crm.com was observed; scanning of associated artifacts yielded 48 low‑severity matches and no malicious indicators were identified.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5a85349b-6e6e-5ade-9eed-02bb71a1c046 ingested; model available: True",
+      "timestamp": "2026-08-15T10:42:14.799178Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 4 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:42:18.716649Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:42:18.716729Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:42:19.134805Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=48; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T10:42:21.873491Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:42:24.199377Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:42:34.269623Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T10:42:44.209448Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ca31d25d-0f45-42e4-b0fa-b160f0471c8c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:42:44.218054Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:42:18.716691Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:42:18.716691Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "datavault-crm.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:42:18.716713Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:42:18.716713Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:42:18.716721Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:42:18.716721Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:42:18.716725Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:42:18.716725Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The sender IP (198.2.180.34) and associated domains have no known reputation or threat history. Scanning produced 48 low‑severity matches, leading to a low‑severity risk rating with high confidence. (The specific involvement of Mimecast's bulk‑mail filtering is not reflected in the structured findings.)"
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Maintain the current Mimecast bulk‑mail policy but periodically review the rule thresholds to ensure legitimate high‑volume communications (e.g., newsletters or partner updates) are not unintentionally suppressed.",
+    "Add a lightweight allowlist entry for the sending domain (datavault-crm.com) if business users regularly need to receive these marketing briefs, after confirming with the stakeholder that the content is benign.",
+    "Log the event in the SIEM with a low‑severity tag and set an automated reminder to re‑evaluate the sender’s reputation in 30 days; this helps catch any future shift toward malicious use of the same domain or IP range.",
+    "Run a one‑time passive DNS lookup on datavault-crm.com and its associated MX records to capture any future changes that could indicate compromise or repurposing.",
+    "Educate end users (including Jane Tan) about how bulk marketing emails are handled by Mimecast, reinforcing that legitimate messages will still be delivered to the quarantine folder for review if needed."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The email was blocked solely as bulk marketing with no malicious indicators, and Mimecast’s default policy correctly identified it as low‑risk noise rather than an active threat.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,142 @@
+{
+  "report_id": "38df0c4f-dd74-436f-9e19-3669f1df8ad9",
+  "alert_id": "2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26",
+  "generated_at": "2026-08-16T10:33:41.151523Z",
+  "alert_summary": "An alert indicates suspicious bulk email from an unknown source (IP 52.14.201.133, domain united‑telco.com) to victimcorp.com with evidence of phishing characteristics.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26 ingested; model available: True",
+      "timestamp": "2026-08-16T10:32:32.507909Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:32:39.814921Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T10:32:39.814967Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T10:32:40.238214Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=37; open-value search for 'SGD\\xa02,184.30' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:32:55.142861Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=critical, confidence=high",
+      "timestamp": "2026-08-16T10:33:00.199901Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T10:33:19.966102Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 9 flagged",
+      "timestamp": "2026-08-16T10:33:41.151466Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 38df0c4f-dd74-436f-9e19-3669f1df8ad9 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:33:41.158462Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.133",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:32:39.814946Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:32:39.814946Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "united-telco.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:32:39.814960Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:32:39.814960Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:32:39.814964Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:32:39.814964Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "critical",
+    "confidence": "high",
+    "rationale": "The alert shows suspicious bulk email from an unknown source (IP 52.14.201.133, domain united‑telco.com) to victimcorp.com with 37 correlated evidence points indicating widespread activity; the source is unknown/unsanctioned, suggesting potential malicious intent."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a rapid forensic review of the Mimecast quarantine logs for any additional messages from the same IP or domain, noting timestamps, attachment hashes, and any embedded URLs.",
+    "Cross‑reference the sender’s IP (52.14.201.133) against global threat intelligence feeds to confirm if it has been previously associated with malicious activity or is listed on any blocklists.",
+    "Perform a reverse DNS lookup and WHOIS query for united-telco.com to determine ownership, registration details, and whether the domain matches known legitimate billing partners of VictimCorp.",
+    "Deploy an internal phishing simulation test that mimics the subject line and sender address to gauge employee awareness and response rates; use the results to refine training materials.",
+    "Configure Mimecast (or any other email gateway) to automatically quarantine or block future messages originating from this IP or domain, while setting up a monitoring rule for any legitimate traffic that may be inadvertently affected.",
+    "If the finance team has already interacted with the message, conduct an immediate credential reset for all accounts that accessed the attachment or clicked on embedded links, and run a malware scan on any systems that processed the file.",
+    "Document the entire incident chain—including correlation evidence count, risk assessment details, and mitigation steps—in the organization’s security incident response repository to support future investigations and compliance audits."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The email exhibits a textbook phishing‑invoice pattern (T1566), is flagged by Mimecast as bulk and suspicious, has 37 correlated evidence points from other alerts, and originates from an unknown IP/domain—strong indicators of malicious intent.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

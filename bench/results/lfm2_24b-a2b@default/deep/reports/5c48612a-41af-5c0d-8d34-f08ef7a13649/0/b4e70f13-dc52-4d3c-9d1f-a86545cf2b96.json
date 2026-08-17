@@ -1,0 +1,173 @@
+{
+  "report_id": "b4e70f13-dc52-4d3c-9d1f-a86545cf2b96",
+  "alert_id": "5c48612a-41af-5c0d-8d34-f08ef7a13649",
+  "generated_at": "2026-08-15T09:42:24.860643Z",
+  "alert_summary": "A highly suspicious PowerShell command was executed from an unusual location, showing scanning behavior and connecting to multiple unknown domains — this strongly indicates a potential attack or reconnaissance effort.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5c48612a-41af-5c0d-8d34-f08ef7a13649 ingested; model available: True",
+      "timestamp": "2026-08-15T09:42:13.443090Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:42:15.200113Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:42:15.200154Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:42:15.619598Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=10; follow-up same_command_line_env_wide added 1",
+      "timestamp": "2026-08-15T09:42:16.149965Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:42:16.758065Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:42:20.801682Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:42:24.860614Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b4e70f13-dc52-4d3c-9d1f-a86545cf2b96 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:42:24.865697Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-rkumar04.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:15.200136Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:15.200136Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:15.200146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:15.200146Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://WindowsTerminal.exe",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:15.200149Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:15.200149Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://pytest..org/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:15.200151Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:15.200151Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The combination of an encoded PowerShell execution, scanning patterns, and communication with unknown domains points to malicious intent aimed at gathering information about the target system. The high severity assessment reflects both the likelihood of compromise and the potential impact on security. Immediate investigation is warranted to prevent further damage or data loss."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper behavioral analysis on the PowerShell execution context to identify any additional payloads or lateral movement attempts.",
+    "Perform network traffic inspection around the time of detection, focusing on outbound connections from the affected endpoint and any communication with suspicious domains.",
+    "Review system logs for recent user activity anomalies and check for persistence mechanisms that may have been established alongside this scanning behavior.",
+    "Engage threat intelligence teams to cross-reference observed indicators (such as domain names or file hashes) against known malicious campaigns or infrastructure.",
+    "Isolate the compromised host from critical network segments while preserving forensic evidence, then perform a full malware scan using updated detection signatures."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an encoded PowerShell command executed from a suspicious location, scanning activity, and multiple unknown domains strongly aligns with known malicious reconnaissance patterns.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"WindowsTerminal.exe\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

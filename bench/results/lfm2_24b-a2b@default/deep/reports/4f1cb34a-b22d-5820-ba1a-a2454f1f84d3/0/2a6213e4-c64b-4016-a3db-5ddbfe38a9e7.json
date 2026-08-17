@@ -1,0 +1,142 @@
+{
+  "report_id": "2a6213e4-c64b-4016-a3db-5ddbfe38a9e7",
+  "alert_id": "4f1cb34a-b22d-5820-ba1a-a2454f1f84d3",
+  "generated_at": "2026-08-15T09:40:48.655534Z",
+  "alert_summary": "A successful logon by user raj.kumar from IP 10.20.4.73 was detected, but brute force correlation findings suggest possible reconnaissance activity; however, no further malicious indicators were found.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f1cb34a-b22d-5820-ba1a-a2454f1f84d3 ingested; model available: True",
+      "timestamp": "2026-08-15T09:40:39.446400Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 6 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:40:40.871854Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:40:40.871948Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:40:41.289666Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=16; follow-up same_rule_id_host added 8",
+      "timestamp": "2026-08-15T09:40:41.789821Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:40:42.456629Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:40:45.761265Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:40:48.655499Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2a6213e4-c64b-4016-a3db-5ddbfe38a9e7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:40:48.661756Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:40.871907Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:40.871907Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:40.871931Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:40.871931Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:40:40.871939Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:40:40.871939Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The logon itself appears legitimate and successful, but the presence of brute force patterns indicates someone may have been probing for credentials or attempting to gain access using repeated guesses. While there is no direct evidence of compromise at this stage, the risk level remains low because nothing malicious was observed beyond the attempted login. However, given the reconnaissance indicators, it's prudent to take preventive steps."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider correlating the source IP address and domain names with threat intelligence feeds to identify any known malicious associations.",
+    "Review recent authentication logs around this event timeframe for similar patterns or anomalies that could indicate broader activity.",
+    "If available, enable additional monitoring on related accounts or resources to detect potential lateral movement attempts.",
+    "Document the findings in internal incident records and share with relevant stakeholders for awareness."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful logon event aligns with legitimate activity, but the presence of brute force correlation patterns warrants classification as a true positive due to confirmed authentication success despite reconnaissance indicators.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

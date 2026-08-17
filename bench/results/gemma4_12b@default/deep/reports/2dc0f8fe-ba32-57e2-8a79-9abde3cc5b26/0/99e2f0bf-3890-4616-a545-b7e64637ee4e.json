@@ -1,0 +1,140 @@
+{
+  "report_id": "99e2f0bf-3890-4616-a545-b7e64637ee4e",
+  "alert_id": "2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26",
+  "generated_at": "2026-08-15T15:50:05.227687Z",
+  "alert_summary": "An email involving 'united-telco.com' was identified as part of a campaign with 37 occurrences.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26 ingested; model available: True",
+      "timestamp": "2026-08-15T15:46:53.518099Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T15:47:20.843640Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T15:47:20.843711Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T15:47:21.268000Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=37; open-value search for 'united-telco.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T15:48:02.203104Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T15:48:19.044960Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T15:49:28.085735Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T15:50:05.227636Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 99e2f0bf-3890-4616-a545-b7e64637ee4e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:50:05.235196Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.133",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:47:20.843675Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:47:20.843675Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "united-telco.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:47:20.843698Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:47:20.843698Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:47:20.843705Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:47:20.843705Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert is classified as high risk with high confidence due to a high evidence count (37), indicating that this is part of a coordinated campaign rather than an isolated incident."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'united-telco.com' to determine registration age; newly registered domains are high indicators of phishing infrastructure.\n\nConduct a sandbox analysis of any embedded URLs or attachments within the original email to identify malicious payloads or credential harvesting sites.\n\nImplement a proactive block on the source IP (52.14.201.133) and the 'united-telco.com' domain across the corporate firewall and mail gateway.\n\nIssue a targeted security awareness notification to the finance department regarding this specific invoice-themed phishing lure.",
+    "triage_call\": \"true_positive\", \"triage_rationale\": \"The combination of an unknown sender domain, a high evidence count, and a subject line mimicking a standard invoice targeting a financial department strongly indicates a deliberate Business Email Compromise (BEC) attempt.\"}"
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an unknown sender domain, a high evidence count, and a subject line mimicking a standard invoice targeting a financial department strongly indicates a deliberate Business Email Compromise (BEC) attempt.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

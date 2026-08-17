@@ -1,0 +1,140 @@
+{
+  "report_id": "efe389b3-5229-4fe6-a926-95efaab71462",
+  "alert_id": "17a9cc7c-5b06-5797-9a37-b32b1d3cdda1",
+  "generated_at": "2026-08-15T09:52:33.740989Z",
+  "alert_summary": "Multiple failed login attempts (8) for user *jane.tan* from internal IP 10.20.4.61 were observed; no successful logon was recorded.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 17a9cc7c-5b06-5797-9a37-b32b1d3cdda1 ingested; model available: True",
+      "timestamp": "2026-08-15T09:52:08.990410Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:52:10.892536Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:52:10.892617Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:52:11.321896Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=8",
+      "timestamp": "2026-08-15T09:52:15.319813Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:52:17.680984Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T09:52:25.417858Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T09:52:33.740859Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report efe389b3-5229-4fe6-a926-95efaab71462 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:52:33.747919Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:52:10.892575Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:52:10.892575Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:52:10.892601Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:52:10.892601Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:52:10.892611Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:52:10.892611Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The event originates entirely within the corporate network and involves a known internal account. No lateral movement, privilege escalation, or anomalous processes were logged, and the brute‑force pattern count is low (8 attempts) without any evidence of compromise. Because there are no external IPs, malicious domains, or other red flags, the incident is considered routine access with a low risk level."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user’s recent activity logs to confirm that the successful logon aligns with expected business operations (e.g., scheduled backup jobs or routine application access).",
+    "Cross‑check the source IP 10.20.4.61 against the organization’s DHCP lease database and network device inventory to ensure it is a legitimate workstation or server rather than an orphaned or rogue host.",
+    "If possible, correlate this event with other authentication events for the same user within the past 24 hours; a sudden spike in successful logons from a single IP could indicate credential compromise even if the pattern count is low.",
+    "Consider enabling or reviewing multi‑factor authentication (MFA) enforcement for the jane.tan account to reduce the risk of future brute‑force attempts succeeding.",
+    "Document this event in the incident response system and schedule a follow‑up review after 48 hours to confirm that no additional anomalous activity emerges."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The single successful logon from an internal IP with no lateral movement or privilege escalation, combined with a low severity assessment and high confidence in the benign context, indicates this is most likely a legitimate routine access rather than malicious activity.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

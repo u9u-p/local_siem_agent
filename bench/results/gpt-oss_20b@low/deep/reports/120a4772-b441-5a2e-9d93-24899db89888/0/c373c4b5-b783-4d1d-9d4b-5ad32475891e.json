@@ -1,0 +1,142 @@
+{
+  "report_id": "c373c4b5-b783-4d1d-9d4b-5ad32475891e",
+  "alert_id": "120a4772-b441-5a2e-9d93-24899db89888",
+  "generated_at": "2026-08-15T09:50:17.586349Z",
+  "alert_summary": "A bulk email from support@printhub‑sg.com to admin@victimcorp.com was detected; Mimecast flagged it for review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 120a4772-b441-5a2e-9d93-24899db89888 ingested; model available: True",
+      "timestamp": "2026-08-15T09:49:51.066652Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:49:53.543334Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:49:53.543408Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:49:53.961017Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=23",
+      "timestamp": "2026-08-15T09:49:56.890551Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:49:59.094431Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:50:09.042739Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T09:50:17.586298Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c373c4b5-b783-4d1d-9d4b-5ad32475891e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:50:17.592844Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:53.543372Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:53.543372Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "printhub-sg.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:53.543394Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:53.543394Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:53.543402Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:53.543402Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The email matches the T1566 phishing pattern and carries a generic support-style subject line, but no known malicious IPs or domains are attached. The presence of 23 scanning-related events suggests automated reconnaissance activity."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a full content scan of the message body and any attachments using an isolated sandbox environment to detect hidden payloads or obfuscated scripts.",
+    "Cross‑reference the sender’s IP (52.14.201.94) against internal whitelists and external threat intelligence feeds; if it appears on any blocklists, add it to the organization’s firewall rules immediately.",
+    "Verify the authenticity of the support@printhub-sg.com address by checking DKIM/SPF/DKIM signatures and comparing them with known legitimate records for that domain.",
+    "Notify the victimcorp internal security team about the bulk nature of the email and advise users not to click any links or download attachments until a definitive analysis is completed.",
+    "If the message contains URLs, resolve each one through a URL reputation service (e.g., Cisco Talos, VirusTotal) and block any that return malicious or suspicious scores.",
+    "Log the incident in the SIEM with a dedicated tag for bulk phishing attempts so future correlation can be improved; include the Mimecast review flag as a high‑priority indicator.",
+    "Schedule a follow‑up investigation to determine whether this email was part of a larger campaign targeting multiple organizations, using the pattern_type=scanning evidence_count=23 as a trigger for broader threat hunting."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The message exhibits classic bulk phishing characteristics and has been flagged by Mimecast, yet no definitive malicious payload or known bad IP/domain is present; further analysis is required to confirm whether it poses an actual threat.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

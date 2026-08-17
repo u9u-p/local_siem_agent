@@ -1,0 +1,140 @@
+{
+  "report_id": "93785a1d-407a-4d26-8188-c2184d43526d",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-16T10:14:08.647351Z",
+  "alert_summary": "An event involving an unknown source IP address (100.72.44.19) triggered 42 lateral‑movement events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-16T10:13:04.496490Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-16T10:13:10.816113Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-16T10:13:10.816176Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T10:13:11.262171Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=42; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-16T10:13:23.714753Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:13:28.826432Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T10:13:50.704038Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T10:14:08.647234Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 93785a1d-407a-4d26-8188-c2184d43526d persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:14:08.657144Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:13:10.816146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:13:10.816146Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:13:10.816169Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:13:10.816169Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The login originates from an IP address (100.72.44.19) that is not associated with any known service or device, and the large number of correlated lateral‑movement indicators strongly suggest malicious activity."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the workstation or server where user mrahman logged in to prevent further lateral movement while investigation is underway.",
+    "Force a password reset for mrahman and any other accounts that may have been used from the same IP, then enforce multi‑factor authentication if not already in place.",
+    "Run an exhaustive malware scan on the affected host and any peers that were contacted during the 42 correlated events to look for persistence mechanisms or credential‑dumping tools.",
+    "Collect and preserve all relevant logs (Security Event Log, Sysmon, VPN/Remote Desktop logs) from the time of the login and subsequent lateral‑movement activity for forensic analysis.",
+    "Cross‑reference the external IP 100.72.44.19 against threat intelligence feeds to see if it has been previously associated with malicious actors or compromised infrastructure.",
+    "If possible, perform a live memory capture of the host to search for injected code or hidden processes that could explain the lateral‑movement pattern.",
+    "Notify the incident response team and schedule an immediate review of network segmentation policies to ensure that the compromised account cannot reach critical assets without additional controls."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon by an internal user from an unrecognized external IP, coupled with 42 correlated lateral‑movement events, strongly indicates credential compromise and unauthorized network access.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

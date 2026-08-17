@@ -1,0 +1,150 @@
+{
+  "report_id": "35815914-538c-4708-99b9-ab49d35c7b31",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-14T19:56:04.902594Z",
+  "alert_summary": "A successful Windows logon for user tommy.wong was detected from an unverified IP address associated with multiple signs of lateral movement across eight evidence points. Due to the lack of known entity data and confirmation of credential abuse, this event is rated as high severity requiring immediate attention.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-14T19:45:41.153486Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-14T19:46:44.774680Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T19:46:44.774756Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T19:46:45.195176Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-14T19:50:03.640312Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T19:50:35.868538Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T19:52:11.735429Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 2 audit(s) for 14 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T19:56:04.902494Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 35815914-538c-4708-99b9-ab49d35c7b31 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T19:56:04.911309Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:46:44.774720Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:46:44.774720Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:46:44.774741Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:46:44.774741Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:46:44.774749Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:46:44.774749Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The risk assessment assigns a high severity level because eight distinct evidence points confirm active lateral movement and potential credential abuse within the internal network. However, confidence in this finding remains medium since critical enrichment data regarding the source IP address and user identity has not been resolved by automated providers. Consequently, while the threat of unauthorized access spread is significant, full attribution requires manual verification to rule out false positives or legitimate but untracked activity before finalizing remediation steps."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify if 'tommy.wong' exists in Active Directory and cross-reference with HR records to confirm account legitimacy.",
+    "Perform a reverse IP lookup on 10.20.4.94 using threat intelligence feeds to determine if it belongs to an internal asset or external infrastructure.",
+    "Review authentication logs for DC01.corp.local during the alert window to identify other accounts accessed from this source IP.",
+    "Check endpoint security posture of any host associated with 10.20.4.94 (if identifiable) for signs of malware, persistence mechanisms, or unauthorized agent installation."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the correlation indicates credential abuse and lateral movement patterns, the lack of identity context prevents definitive confirmation that this is not authorized administrative activity masquerading as an attack until further investigation clarifies user ownership.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.5:9b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

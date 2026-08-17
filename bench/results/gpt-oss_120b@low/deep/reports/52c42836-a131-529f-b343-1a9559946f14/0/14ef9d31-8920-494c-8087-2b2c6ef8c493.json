@@ -1,0 +1,164 @@
+{
+  "report_id": "14ef9d31-8920-494c-8087-2b2c6ef8c493",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-15T10:40:27.062022Z",
+  "alert_summary": "The structured findings only indicate a scanning pattern (pattern_type=scanning) with 19 evidences and enrichment data showing the IP 185.220.101.47 and domains cfo.support, secure-invoice-updates.com, jane.tan, victimcorp.com as unknown. No information about Mimecast quarantine, email content, or CFO impersonation is present.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-15T10:39:50.342974Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:39:53.277474Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T10:39:53.277548Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:39:53.696086Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=19; follow-up same_rule_id_host added 8",
+      "timestamp": "2026-08-15T10:39:56.578171Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:39:59.609143Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:40:14.910548Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:40:27.061920Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 14ef9d31-8920-494c-8087-2b2c6ef8c493 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:40:27.071182Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:39:53.277507Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:39:53.277507Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:39:53.277527Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:39:53.277527Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:39:53.277535Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:39:53.277535Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:39:53.277539Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:39:53.277539Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:39:53.277543Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:39:53.277543Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The findings provide no details about message content, target user, or social‑engineering technique. They only report a scanning pattern and that the associated IP and domains have unknown reputation, with a high severity assessment and medium confidence. A more accurate claim would be: “A scanning activity was observed involving IP 185.220.101.47 and several unknown domains (cfo.support, secure-invoice-updates.com, jane.tan, victimcorp.com). The risk assessment rates this as high severity with medium confidence due to limited enrichment data.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately quarantine the original MIME‑cast message and any copies that may have been delivered to other mailboxes; retain the full headers for forensic analysis.",
+    "Run a deep‑packet inspection on traffic from the source IP (185.220.101.47) to confirm whether it is part of a broader scanning or phishing campaign, and block the address at the perimeter firewall if malicious activity is observed.",
+    "Create a temporary rule in Mimecast (or your email security gateway) that flags any future messages originating from *@secure‑invoice‑updates.com or containing the phrase “Urgent: Invoice Payment Confirmation Required” for manual review.",
+    "Launch an internal phishing simulation targeting finance staff to gauge susceptibility and reinforce training on CFO‑impersonation tactics; follow up with a mandatory refresher on verification procedures for payment requests (e.g., out‑of‑band confirmation, dual‑approval workflows).",
+    "Check the compromised mailbox’s audit logs for any subsequent outbound messages that might have been sent using the same forged sender address or containing malicious attachments/links.",
+    "If the source domain resolves to a hosting provider, request a takedown or abuse report; otherwise, consider filing an incident report with relevant ISPs and law‑enforcement agencies (e.g., FBI IC3) for attribution assistance.",
+    "Update your threat intelligence platform with the observed indicators (IP 185.220.101.47, domains cfo.support, secure‑invoice‑updates.com) even though they are currently unknown, so future sightings can be correlated automatically."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The email is a classic CFO impersonation aimed at a finance employee with high potential impact, and Mimecast’s own detection flagged it for review, indicating genuine malicious intent despite limited external reputation data.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

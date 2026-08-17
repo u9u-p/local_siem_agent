@@ -1,0 +1,151 @@
+{
+  "report_id": "efa6e744-317e-4478-944d-685bc17a73e8",
+  "alert_id": "395f0f48-0863-59aa-a9e2-44edd77f4652",
+  "generated_at": "2026-08-15T09:58:29.825517Z",
+  "alert_summary": "A PowerShell instance was launched with an encoded command by a suspicious application (Cursor.exe) on the user’s workstation, and the decoded payload appears to be a benign Git diff operation; however, the execution context raises concern due to multiple lateral‑movement indicators.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 395f0f48-0863-59aa-a9e2-44edd77f4652 ingested; model available: True",
+      "timestamp": "2026-08-15T09:58:08.452201Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:58:11.794306Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:58:11.794375Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:58:12.216164Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=17; follow-up same_rule_id_host added 8",
+      "timestamp": "2026-08-15T09:58:13.742596Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T09:58:15.962496Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:58:25.175422Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 11 flagged",
+      "timestamp": "2026-08-15T09:58:29.825487Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report efa6e744-317e-4478-944d-685bc17a73e8 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:58:29.831032Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:11.794339Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:11.794339Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:11.794362Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:11.794362Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:11.794370Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:11.794370Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert shows that Cursor.exe executed an encoded PowerShell command, which is often used to hide malicious activity. Although the decoded command itself is harmless (a simple git diff), the fact that it was run by a suspicious application and correlates with 17 other lateral‑movement events suggests that the host may have been compromised or is being used as part of a broader attack chain. Therefore, while there is no immediate destructive payload, the activity warrants investigation to confirm whether the encoded command was a decoy or if additional malicious actions are occurring on the system."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the integrity of Cursor.exe by checking its hash against known good binaries from the vendor or internal repository; if it does not match, quarantine and investigate further.",
+    "Examine the user profile (ke.li.yam) for signs of compromise – look for anomalous logon times, unfamiliar processes, or unexpected network connections originating from that account.",
+    "Deploy a packet capture on the host to confirm whether any outbound traffic is being sent to dev‑klyam01.victimcorp.com or other external domains during the execution window; correlate with DNS logs to detect possible command‑and‑control activity.",
+    "Run a full memory dump of the process and perform a forensic analysis for hidden modules, injected code, or persistence mechanisms that might not be visible in the initial Sysmon event.",
+    "Implement an alert rule that flags any PowerShell execution from non‑system applications (e.g., Cursor.exe) with encoded commands, regardless of the decoded payload, to surface similar activity in the future.",
+    "If the Git diff operation is legitimate for your environment, consider whitelisting this specific command pattern for Cursor.exe; otherwise, block or sandbox the application until a definitive determination can be made."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The encoded PowerShell payload appears benign (a Git diff), yet its execution by an obscure third‑party application and correlation with lateral‑movement indicators raise enough suspicion to warrant further investigation before labeling it a false positive.",
+  "uncertainty_notes": "unsupported claim: 'A PowerShell instance was launched with an encoded command by a suspicious application (Cursor.exe) on the user’s workstation, and the decoded payload appears to be a benign Git diff operation; however, the execution context raises concern due to multiple lateral‑movement indicators.'; unsupported claim: 'The alert shows that Cursor.exe executed an encoded PowerShell command, which is often used to hide malicious activity. Although the decoded command itself is harmless (a simple git diff), the fact that it was run by a suspicious application and correlates with 17 other lateral‑movement events suggests that the host may have been compromised or is being used as part of a broader attack chain. Therefore, while there is no immediate destructive payload, the activity warrants investigation to confirm whether the encoded command was a decoy or if additional malicious actions are occurring on the system.'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABkAGkAZgBmACAALQAtAHMAdABhAHQAIABIAEUAQQBEAA==",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABkAGkAZgBmACAALQAtAHMAdABhAHQAIABIAEUAQQBEAA==",
+        "decoded": "git diff --stat HEAD"
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "report_id": "80d42617-be2d-4c58-80e4-cadd73455fe1",
+  "alert_id": "3197db96-265f-53bb-8b97-bbde79d563a2",
+  "generated_at": "2026-08-15T10:30:23.346153Z",
+  "alert_summary": "PowerShell was launched from a non‑standard Cursor.exe located in the user’s AppData folder with an encoded command that decodes to `npx tsc --noEmit`, indicating possible malicious use of Node.js tooling.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3197db96-265f-53bb-8b97-bbde79d563a2 ingested; model available: True",
+      "timestamp": "2026-08-15T10:29:39.171223Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T10:29:45.050218Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:29:45.050289Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T10:29:45.470125Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=56; follow-up same_rule_id_host added 27; open-value search for 'Cursor.exe' found 10 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:29:49.603373Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:29:52.865618Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:30:11.088133Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 10 flagged",
+      "timestamp": "2026-08-15T10:30:23.346029Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 80d42617-be2d-4c58-80e4-cadd73455fe1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:30:23.354867Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:29:45.050259Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:29:45.050259Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:29:45.050281Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:29:45.050281Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The structured findings provide a high severity rating and note 56 correlated events, but they do not explicitly state that executing PowerShell from an unexpected binary is a known evasion technique nor that the decoded payload can fetch additional code. A more accurate claim would be: \"The alert has a high‑severity rating with medium confidence; 56 correlated events were observed, and the encoded PowerShell command decodes to `npx tsc --noEmit`. This warrants further investigation and containment actions.\""
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate the host immediately (network quarantine) while preserving volatile memory for forensic capture; this prevents any potential lateral movement or data exfiltration that could be triggered by the decoded PowerShell payload.",
+    "Collect a full disk image and acquire a memory dump from the affected endpoint. Prioritize extraction of the PowerShell process tree, loaded modules, and any child processes spawned after the encoded command execution.",
+    "Run the Base64‑encoded PowerShell string through a secure sandbox or an offline decoding tool to obtain the clear‑text script. Verify whether additional commands (e.g., download URLs, credential dumping, or persistence mechanisms) are embedded beyond the observed `npx tsc --noEmit` call.",
+    "Search the endpoint for other instances of `Cursor.exe`, especially in user profile directories and any other locations where Electron‑based binaries might reside. Check the binary’s digital signature (if any), hash it, and compare against known malicious samples on threat intel platforms.",
+    "Query your SIEM for all events that reference the same executable path (`C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe`) or the same encoded PowerShell command across the environment. Correlate with any lateral movement indicators (e.g., SMB connections, remote service creation).",
+    "Inspect scheduled tasks, startup registry keys, and the user’s `AppData` folder for persistence artifacts that may have been dropped by the Node.js tool (`npx tsc`). Look for suspicious npm packages or scripts that could be used to fetch additional payloads.",
+    "If the decoded script reveals external network calls (e.g., `Invoke-WebRequest`, `wget`, or similar), block the associated domains/IPs at the firewall level and submit them to your threat‑intel team for enrichment. The two observed domains (`dev-klyam01.victimcorp.com` and `ke.li.yam`) should be added to a watchlist pending further investigation.",
+    "Reset credentials for the user account \"ke.li.yam\" and any service accounts that may have been used on this host, especially if credential‑stealing techniques are detected in the decoded payload.",
+    "Update endpoint detection and response (EDR) rules to flag future executions of PowerShell with the `-EncodedCommand` switch originating from non‑system directories (e.g., any path under `%USERPROFILE%\\AppData`).",
+    "Document all findings, timestamps, and IOC hashes in your incident ticket. Share a concise summary with the broader security operations team so they can look for similar patterns across other workstations."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an encoded PowerShell launch from a user‑level Electron binary (Cursor.exe) and a substantial volume of correlated events strongly indicates malicious activity rather than benign system behavior.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Escalate to a human analyst for manual review'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+        "decoded": "npx tsc --noEmit"
+      }
+    ]
+  }
+}

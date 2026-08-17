@@ -1,0 +1,131 @@
+{
+  "report_id": "a9d563f9-9b7e-4e8c-8064-92155fee0135",
+  "alert_id": "6c5b2078-1db1-5f89-a034-f7c6dd803dfe",
+  "generated_at": "2026-08-16T11:11:25.511682Z",
+  "alert_summary": "There were 50 brute‑force SSH login attempts originating from IP 100.72.44.19.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6c5b2078-1db1-5f89-a034-f7c6dd803dfe ingested; model available: True",
+      "timestamp": "2026-08-16T11:10:29.319049Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:10:32.106801Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T11:10:32.106832Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T11:10:32.524347Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=50; follow-up same_rule_id_host added 24",
+      "timestamp": "2026-08-16T11:10:39.581112Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-16T11:10:45.042043Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T11:11:06.425501Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T11:11:25.511593Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a9d563f9-9b7e-4e8c-8064-92155fee0135 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:11:25.520581Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:10:32.106823Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:10:32.106823Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert shows an unusually high number of failed SSH login attempts from unknown external source IP 100.72.44.19, matching MITRE ATT&CK technique T1021 (Remote Services). This pattern suggests credential guessing activity."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Notify the asset owner of the affected host or agent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately investigate the session that was established for user *mrahman* – review the command history, file modifications and any outbound connections originating from the host to confirm whether the account is being used for malicious activity.",
+    "Cross‑reference the successful login timestamp with other security events (e.g., privilege escalation attempts, unusual data exfiltration) to determine if this access was part of a broader intrusion campaign.",
+    "Enforce multi‑factor authentication for all privileged accounts and consider disabling password‑only logins for *mrahman* until the compromise can be fully assessed.",
+    "Force an immediate password reset for *mrahman*, ensuring that the new credentials are strong, unique, and not reused elsewhere in the organization.",
+    "Apply a temporary network segmentation or firewall rule to isolate the affected host from critical assets while the investigation continues, thereby limiting potential lateral movement.",
+    "Run a full integrity check on the compromised system (e.g., file hash comparison, rootkit scan) to detect any backdoors or persistence mechanisms that may have been installed during the unauthorized session.",
+    "Document all findings in a detailed incident report and share them with relevant stakeholders so that the organization can update its threat model and detection rules accordingly."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert shows a successful SSH login after 50 brute‑force attempts from an unknown external IP, which strongly indicates credential compromise consistent with MITRE T1078/T1021 tactics.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

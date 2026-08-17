@@ -1,0 +1,126 @@
+{
+  "report_id": "ae37e29d-16ea-4cd9-b962-fe98de07773d",
+  "alert_id": "9e4783f7-0be5-5f34-8cac-670bc3f73992",
+  "generated_at": "2026-08-15T09:46:03.142864Z",
+  "alert_summary": "Suspicious logon detected from an unknown IP using a valid account, with scanning behavior and mapping to local resources.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e4783f7-0be5-5f34-8cac-670bc3f73992 ingested; model available: True",
+      "timestamp": "2026-08-15T09:45:54.106419Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:45:54.947758Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:45:54.947810Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:45:55.359145Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=26; follow-up same_rule_id_host added 12",
+      "timestamp": "2026-08-15T09:45:55.860938Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:45:56.423577Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:45:59.906326Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:46:03.142810Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ae37e29d-16ea-4cd9-b962-fe98de07773d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:46:03.149929Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:54.947793Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:54.947793Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The combination of successful authentication from an unrecognized source, scanning activity, and credential mapping strongly suggests targeted reconnaissance by an attacker. This pattern is highly indicative of malicious intent and warrants high severity classification due to the risk of further compromise or data exfiltration."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate real-time network traffic monitoring focused on the source IP and target service to detect any immediate follow-up activity.",
+    "Perform a deeper forensic review of authentication logs, including timestamps and session details, for further context around the logon event.",
+    "Engage in proactive threat intelligence gathering regarding the user account and associated credentials to determine if they have been previously compromised elsewhere.",
+    "Consider temporarily disabling or restricting access to sensitive systems until the investigation is complete, unless business continuity requires otherwise.",
+    "Document all findings thoroughly for potential escalation to incident response teams or law enforcement if malicious intent becomes evident."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of successful logon from an unknown IP, scanning behavior, and valid account mapping strongly aligns with known indicators of a reconnaissance phase in cyber attacks.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

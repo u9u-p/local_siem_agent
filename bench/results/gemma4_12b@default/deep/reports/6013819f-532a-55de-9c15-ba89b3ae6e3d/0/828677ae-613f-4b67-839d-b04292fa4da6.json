@@ -1,0 +1,143 @@
+{
+  "report_id": "828677ae-613f-4b67-839d-b04292fa4da6",
+  "alert_id": "6013819f-532a-55de-9c15-ba89b3ae6e3d",
+  "generated_at": "2026-08-15T18:03:28.195797Z",
+  "alert_summary": "A successful login for user jane.tan from IP 10.20.4.61 was flagged as a high-risk lateral movement attempt involving multiple pieces of evidence. Because the involved entities are currently unknown in enrichment data, manual investigation is required to determine if this activity is authorized.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6013819f-532a-55de-9c15-ba89b3ae6e3d ingested; model available: True",
+      "timestamp": "2026-08-15T17:57:31.123126Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T17:57:52.177059Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T17:57:52.177128Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T17:57:52.617223Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T17:59:16.448935Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T17:59:31.749787Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T18:01:39.709660Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T18:03:28.195712Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 828677ae-613f-4b67-839d-b04292fa4da6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T18:03:28.203172Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T17:57:52.177093Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T17:57:52.177093Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T17:57:52.177114Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T17:57:52.177114Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T17:57:52.177122Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T17:57:52.177122Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert is classified as high risk because it matches a known lateral movement pattern supported by eight distinct indicators. However, confidence is limited to medium because the source IP, domain, and user account are not recognized in current records. This lack of context necessitates further investigation to distinguish between a malicious intrusion and an unknown but legitimate internal process."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a manual lookup of IP 10.20.4.61 to determine its physical location or assigned asset tag within the corporate network.",
+    "Cross-reference the 'lateral_movement' pattern evidence (8 counts) to map the specific path taken by user jane.tan across different systems.",
+    "Verify if jane.tan is a valid employee and, if so, check if her role typically requires access to the systems involved in this alert.",
+    "Check for any concurrent failed login attempts from 10.20.4.61 or involving the account jane.tan prior to the successful logon.",
+    "Review network traffic logs for unusual protocols or non-standard ports used during the connection between 10.20.4.61 and dc01.corp.local."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high evidence count for lateral movement suggests a significant security event, the lack of enriched data on all involved entities makes it impossible to confirm malicious intent without further manual investigation.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

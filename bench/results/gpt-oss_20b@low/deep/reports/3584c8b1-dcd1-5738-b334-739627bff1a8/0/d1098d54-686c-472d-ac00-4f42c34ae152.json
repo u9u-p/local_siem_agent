@@ -1,0 +1,120 @@
+{
+  "report_id": "d1098d54-686c-472d-ac00-4f42c34ae152",
+  "alert_id": "3584c8b1-dcd1-5738-b334-739627bff1a8",
+  "generated_at": "2026-08-15T09:57:48.380902Z",
+  "alert_summary": "An account (identity unknown) had 15 brute‑force attempts from IP 203.0.113.41; a successful SSH login was observed, but the user identity is not confirmed as legitimate.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3584c8b1-dcd1-5738-b334-739627bff1a8 ingested; model available: True",
+      "timestamp": "2026-08-15T09:57:25.077715Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:57:26.118572Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:57:26.118619Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:57:26.530823Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=15",
+      "timestamp": "2026-08-15T09:57:28.366909Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:57:30.708476Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:57:38.969405Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T09:57:48.380849Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d1098d54-686c-472d-ac00-4f42c34ae152 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:57:48.387436Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:57:26.118604Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:57:26.118604Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The pattern of multiple failed attempts followed by a successful login from an unknown external IP suggests potential compromise, but without confirmation that the account is legitimate or authorized, the severity remains high with medium confidence."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately reset the password for user *dwilson* and enforce a multi‑factor authentication (MFA) policy if not already in place.",
+    "Review the session logs from the successful login to confirm whether any privileged commands were executed or sensitive data accessed; flag any anomalous activity for deeper forensic analysis.",
+    "Deploy an IP reputation check against commercial threat intelligence feeds to see if 203.0.113.41 has been previously associated with malicious activity, and consider blocking it at the firewall level pending further investigation.",
+    "Enable SSH key‑based authentication exclusively for *dwilson* moving forward, disabling password logins entirely to mitigate brute‑force risk.",
+    "Conduct a host integrity check on the target machine (e.g., file hash comparison, rootkit scan) to ensure no backdoors or persistence mechanisms were installed during the session.",
+    "If possible, isolate the affected system from the network for a short period while you perform a full forensic imaging and analysis of the disk and memory.",
+    "Notify relevant stakeholders (IT security team, compliance officer, and potentially legal counsel) about the incident so that any regulatory reporting obligations can be met in a timely manner."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful SSH login from an unknown IP with prior brute‑force attempts suggests compromise, but without evidence of malicious activity during the session or confirmation that *dwilson* is not a legitimate administrator, confidence remains moderate.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

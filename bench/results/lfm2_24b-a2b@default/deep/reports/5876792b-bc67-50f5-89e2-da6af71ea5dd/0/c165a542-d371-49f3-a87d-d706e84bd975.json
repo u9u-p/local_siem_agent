@@ -1,0 +1,126 @@
+{
+  "report_id": "c165a542-d371-49f3-a87d-d706e84bd975",
+  "alert_id": "5876792b-bc67-50f5-89e2-da6af71ea5dd",
+  "generated_at": "2026-08-15T09:41:52.186620Z",
+  "alert_summary": "Suspicious login detected from an unknown IP address using brute force methods; immediate investigation required.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5876792b-bc67-50f5-89e2-da6af71ea5dd ingested; model available: True",
+      "timestamp": "2026-08-15T09:41:44.351871Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:41:45.008314Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:41:45.008342Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:41:45.449887Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=18; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-15T09:41:45.790543Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:41:46.303629Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:41:49.329102Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:41:52.186565Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c165a542-d371-49f3-a87d-d706e84bd975 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:41:52.193902Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:41:45.008334Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:41:45.008334Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The successful logon attempt originated from an unrecognized and untrusted source, combined with multiple failed prior attempts indicating a targeted attack. This pattern strongly suggests malicious credential access efforts against the user account."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate review of all recent authentication logs from the affected host to identify any additional successful logons beyond this single event.",
+    "Correlate activity timestamps with internal user access records and privileged session histories to determine if any elevated permissions were granted during or after the suspicious login window.",
+    "Engage threat intelligence platforms to cross-reference the source IP address against known malicious infrastructure, phishing campaigns, or compromised credential dumps.",
+    "Temporarily suspend or require multi-factor authentication for all accounts belonging to users in high-risk departments until further verification is completed."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon from an unknown IP and clear evidence of brute force attempts strongly aligns with malicious credential access behavior, indicating this alert represents genuine threat activity.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

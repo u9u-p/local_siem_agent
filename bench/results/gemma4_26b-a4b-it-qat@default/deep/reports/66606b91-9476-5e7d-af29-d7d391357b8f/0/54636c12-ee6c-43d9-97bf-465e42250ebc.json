@@ -1,0 +1,124 @@
+{
+  "report_id": "54636c12-ee6c-43d9-97bf-465e42250ebc",
+  "alert_id": "66606b91-9476-5e7d-af29-d7d391357b8f",
+  "generated_at": "2026-08-15T13:20:20.160591Z",
+  "alert_summary": "A high volume of events (24) was detected originating from an unknown IP address (203.0.113.52). This activity is highly indicative of potential unauthorized access attempts.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 66606b91-9476-5e7d-af29-d7d391357b8f ingested; model available: True",
+      "timestamp": "2026-08-15T13:17:21.992168Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:17:27.870753Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:17:27.870798Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:17:28.302353Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=24; open-value search for 'kchen' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:18:33.192680Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T13:18:40.264122Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:19:20.006599Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:20:20.160484Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 54636c12-ee6c-43d9-97bf-465e42250ebc persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:20:20.168612Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:17:27.870785Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:17:27.870785Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection of 24 events from an unverified source (IP: 203.0.113.52) suggests potential unauthorized activity. Such high-frequency activity from an unknown IP address is characteristic of automated exploitation or lateral movement attempts by an unauthorized actor. This combination of factors warrants immediate investigation to prevent further unauthorized access to the environment."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable the 'kchen' user account and terminate all active SSH sessions associated with this identity to prevent further lateral movement.",
+    "Perform a deep-dive audit of the command history (e.g., .bash_history, auditd logs) for the 'kchen' user during the timeframe of these 24 events to determine if data exfiltration or system configuration changes occurred.",
+    "Implement an immediate block on IP 203.0.113.52 at the perimeter firewall/WAF.",
+    "Review authentication logs for failed login attempts from this same IP prior to the successful ones to confirm a brute-force or credential-stuffing pattern.",
+    "Verify if 'kchen' is a service account; if so, investigate why an automated process is originating from an unknown external IP rather than an internal jump box."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high frequency of successful logins from an unverified external IP strongly indicates that valid credentials have been compromised and are being used for automated unauthorized access.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

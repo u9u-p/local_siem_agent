@@ -1,0 +1,162 @@
+{
+  "report_id": "c07c395f-981a-47ca-95ac-b67d4c57b7ae",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-14T18:28:20.655253Z",
+  "alert_summary": "Suspicious indicators were found related to executive impersonation and financial transactions (e.g., domains like cfo.support and secure-invoice-updates.com). Given the critical risk assessment, this strongly suggests an active Business Email Compromise (BEC) attempt targeting financial assets.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-14T18:26:52.585546Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T18:27:05.121935Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T18:27:05.122010Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T18:27:05.541961Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=19; follow-up same_rule_id_host added 8; open-value search for 'invoice' found 5 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:27:28.810322Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=critical, confidence=high",
+      "timestamp": "2026-08-14T18:27:37.394409Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:28:00.800310Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:28:20.655202Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c07c395f-981a-47ca-95ac-b67d4c57b7ae persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:28:20.663737Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:27:05.121970Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:27:05.121970Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:27:05.121989Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:27:05.121989Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:27:05.121997Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:27:05.121997Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:27:05.122001Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:27:05.122001Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:27:05.122005Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:27:05.122005Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "critical",
+    "confidence": "high",
+    "rationale": "The combination of high-level executive impersonation and the use of financial urgency ('Urgent: Invoice Payment') is the hallmark of a sophisticated BEC attack. These attacks are designed to bypass standard security controls by leveraging trust and panic, making manual review critical. Immediate escalation is required to determine if the recipient was exposed or if similar attempts were made against other employees."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Given the critical nature of this BEC attempt, immediate technical actions must include blocking all future emails originating from or mimicking the `cfo.support` domain at the gateway level. Furthermore, we should initiate a targeted internal communication campaign to alert employees about current impersonation tactics and mandate that any urgent financial requests (especially those involving wire transfers) require mandatory verbal confirmation via an established secondary channel (e.g., phone call).",
+    "On a systemic level, it is recommended that the organization review and enforce stricter DMARC policies across all internal domains to prevent unauthorized use of executive names or departmental aliases for external communications.",
+    "Finally, since this alert was caught by Mimecast's impersonation detection, we should investigate if similar patterns have been observed in other departments or high-value targets within the organization over the last 30 days to determine if this is part of a broader campaign."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of executive impersonation, an external domain structure designed to mimic internal support functions, and the explicit request for urgent financial action represents a textbook Business Email Compromise (BEC) attempt.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

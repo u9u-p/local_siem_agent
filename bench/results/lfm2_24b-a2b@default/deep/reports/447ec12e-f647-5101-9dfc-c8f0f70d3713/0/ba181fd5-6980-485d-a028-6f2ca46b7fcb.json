@@ -1,0 +1,152 @@
+{
+  "report_id": "ba181fd5-6980-485d-a028-6f2ca46b7fcb",
+  "alert_id": "447ec12e-f647-5101-9dfc-c8f0f70d3713",
+  "generated_at": "2026-08-15T09:39:51.042371Z",
+  "alert_summary": "A bulk message about planned maintenance was sent, which is not inherently malicious but matches common phishing patterns; no immediate threat detected.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 447ec12e-f647-5101-9dfc-c8f0f70d3713 ingested; model available: True",
+      "timestamp": "2026-08-15T09:39:42.816191Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:39:43.822434Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:39:43.822510Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:39:44.229673Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=40; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-15T09:39:44.767751Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:39:45.517585Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:39:48.598456Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:39:51.042279Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ba181fd5-6980-485d-a028-6f2ca46b7fcb persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:39:51.049793Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.66",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:43.822470Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:43.822470Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "nimbus-hosting.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:43.822493Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:43.822493Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:43.822500Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:43.822500Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://ops@victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:43.822505Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:43.822505Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The message appears to be a routine notification about scheduled maintenance, but its mass distribution and generic wording are typical of phishing attempts. The lack of identifiable sender details raises suspicion, though the content itself isn't clearly harmful. This combination warrants monitoring for further suspicious activity before taking stronger action."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an internal review of recent communications to confirm whether the message aligns with legitimate operational updates.",
+    "Engage threat intelligence teams to cross-reference the sender and recipient domains against known malicious or compromised infrastructure.",
+    "Initiate a targeted phishing simulation for staff within both victimcorp.com and nimbus-hosting.com to assess organizational awareness.",
+    "Schedule a follow-up scan of the same IP range after maintenance, but with stricter filtering rules to reduce noise from benign traffic."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message exhibits classic bulk communication and scheduled maintenance patterns consistent with phishing attempts, warranting classification as a true positive despite missing provider details.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

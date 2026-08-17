@@ -1,0 +1,144 @@
+{
+  "report_id": "ca70b56a-c875-46a7-95b2-7b0152a1b5d9",
+  "alert_id": "6d4137d3-a3f9-583d-b816-2ec6a6e0804c",
+  "generated_at": "2026-08-15T10:49:03.416756Z",
+  "alert_summary": "A successful logon was observed for user **a.chong** from internal IP 10.20.4.107, matching a known lateral‑movement pattern with 15 supporting events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6d4137d3-a3f9-583d-b816-2ec6a6e0804c ingested; model available: True",
+      "timestamp": "2026-08-15T10:48:22.902042Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:48:26.205093Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:48:26.205164Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:48:26.618820Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:48:31.689280Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:48:34.645024Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:48:51.482855Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:49:03.416678Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ca70b56a-c875-46a7-95b2-7b0152a1b5d9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:49:03.424942Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.107",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:48:26.205130Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:48:26.205130Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:48:26.205151Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:48:26.205151Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:48:26.205159Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:48:26.205159Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured findings only indicate a lateral‑movement pattern (pattern_type=lateral_movement) with 15 events and a medium‑severity, high‑confidence risk assessment. They do not specify technique T1078, credential‑reuse, or any details about the attacker’s intent, noise level, or asset criticality. A more accurate statement would be: “The alert is classified as lateral movement (pattern_type=lateral_movement) with 15 supporting events and a medium severity, high confidence assessment. Further analysis is needed to determine technique specifics and impact.”"
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Pull the recent logon history for user **a.chong** from the domain controller and compare it against baseline activity (time‑of‑day, source IP ranges, workstation names) to see if this 10.20.4.107 login is anomalous.",
+    "Query the endpoint at 10.20.4.107 for running processes, loaded modules, and recent scheduled tasks; look for known adversary tools (e.g., PowerShell Empire, Cobalt Strike) or unsigned binaries that were launched shortly after the logon event.",
+    "Check for any privileged group memberships of a.chong (Domain Admins, Enterprise Admins, etc.) and verify whether those privileges are required for the observed activity; if not, consider temporarily disabling the account pending investigation.",
+    "Correlate the 15 lateral‑movement evidence events with other authentication logs (Kerberos TGT requests, NTLM traffic) to map a possible movement path across the network and identify any high‑value assets that may have been accessed.",
+    "If the source IP belongs to a known corporate subnet, confirm that the workstation at 10.20.4.107 is an authorized device for that user; if it’s a rogue or newly provisioned host, isolate it from the network immediately.",
+    "Enable or increase audit logging on the affected systems (e.g., enable PowerShell script block logging, Sysmon Event ID 1/3/5) to capture more granular evidence for future investigations.",
+    "Consider forcing a password reset for a.chong and any other accounts that share the same credential hash in Active Directory; enforce multi‑factor authentication if not already required.",
+    "Engage the user (a.chong) directly—verify whether they performed a legitimate remote login from 10.20.4.107, what tasks they were executing, and whether they noticed any unusual behavior on their workstation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert matches a known credential‑reuse technique (T1078) with multiple supporting lateral‑movement events, indicating likely unauthorized use of a legitimate account rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

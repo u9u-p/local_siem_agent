@@ -1,0 +1,141 @@
+{
+  "report_id": "9efdb445-468b-4c27-ace1-f4c2d2e1fff8",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-15T03:17:41.372812Z",
+  "alert_summary": "An outbound connection to IP 185.220.101.47 was observed alongside domains jtan-lt01.victimcorp.com and jane.tan. Threat intelligence enrichment returned no matches for any of these indicators. Severity is medium with low confidence, requiring manual investigation to determine legitimacy.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-15T03:12:27.179334Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T03:14:15.757228Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T03:14:15.757302Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-15T03:14:16.196151Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for '-EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T03:15:13.016995Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=low",
+      "timestamp": "2026-08-15T03:15:41.548113Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T03:16:43.499708Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T03:17:41.372702Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 9efdb445-468b-4c27-ace1-f4c2d2e1fff8 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:17:41.382144Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:14:15.757268Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:14:15.757268Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:14:15.757290Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:14:15.757290Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:14:15.757297Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:14:15.757297Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "low",
+    "rationale": "This medium-severity alert involves an unknown IP (185.220.101.47) and associated domains with no threat intelligence matches, resulting in low confidence. Manual review of available connection logs and internal allowlists is required to determine if the activity aligns with known infrastructure or indicates unauthorized access."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Validate the identity and activity of user 'jane.tan' and host 'jtan-lt01.victimcorp.com'; confirm if Jane Tan is an active employee and whether the connection aligns with her role, recent tasks, or known software usage.",
+    "Retrieve the full PowerShell command-line arguments and parent process details to assess execution context; look for obfuscation (e.g., Base64 encoding), non-standard parents (e.g., winword.exe, outlook.exe), or evidence of living-off-the-land binaries being abused.",
+    "Perform secondary enrichment on IP 185.220.101.47 using alternative threat intelligence sources (e.g., VirusTotal, AbuseIPDB, Shodan) to identify hosting provider, geolocation, ASN, or historical malicious reports that may not be present in the primary provider.",
+    "Inspect the process tree for anomalies such as privilege escalation, lateral movement indicators, or persistence mechanisms established by the PowerShell session.",
+    "Check network logs for additional connections from this host to related infrastructure or data exfiltration patterns (e.g., large outbound transfers, DNS tunneling) that may accompany the initial connection."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert indicates PowerShell communicating with an unenriched external IP on port 443, a behavior consistent with both legitimate cloud operations and encrypted command-and-control traffic, but the absence of threat intelligence matches, command-line context, and process tree details prevents a definitive determination of malicious intent at this stage.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

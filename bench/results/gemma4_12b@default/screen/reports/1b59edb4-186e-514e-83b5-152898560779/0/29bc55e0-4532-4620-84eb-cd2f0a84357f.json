@@ -1,0 +1,161 @@
+{
+  "report_id": "29bc55e0-4532-4620-84eb-cd2f0a84357f",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-14T15:01:58.743361Z",
+  "alert_summary": "PowerShell initiated an outbound network connection to an unknown external IP address (185.220.101.47) over port 443.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-14T14:56:17.259008Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T14:56:30.629250Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-14T14:56:30.629320Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-14T14:56:31.050968Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for 'Invoke-WebRequest' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T14:57:25.214935Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T14:57:46.986854Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T15:00:24.675685Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T15:01:58.743304Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 29bc55e0-4532-4620-84eb-cd2f0a84357f persisted, alert marked investigated",
+      "timestamp": "2026-08-14T15:01:58.750953Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T14:56:30.629283Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T14:56:30.629283Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T14:56:30.629303Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T14:56:30.629303Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T14:56:30.629311Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T14:56:30.629311Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T14:56:30.629315Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T14:56:30.629315Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The use of PowerShell to establish a connection to an external IP on port 443 is a common indicator of Command and Control (C2) or data exfiltration activities (T1071.001). Because the destination IP and associated domains have no known reputation, this activity is highly suspicious and likely represents unauthorized communication with an external actor rather than a standard business process."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Run an antivirus/EDR scan on the affected host",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review authentication logs for this account over a wider time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Retrieve and analyze the full PowerShell command line and script block logging to determine the specific functionality of the script.",
+    "Perform a cross-host correlation search to identify if any other internal assets have established connections with 185.220.101.47 or associated domains.",
+    "Investigate the parent process of the PowerShell instance (e.g., was it spawned by a web browser, a service, or an interactive shell?) to establish the execution context.",
+    "Inspect local system artifacts for evidence of persistence, such as newly created scheduled tasks, registry modifications, or dropped files in common staging directories.",
+    "Analyze the TLS certificate presented during the connection to 185.220.101.47 to identify any suspicious naming conventions or self-signed certificates."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert exhibits high-risk characteristics typical of C2 activity, but the lack of specific script context and the 'unknown' status of the destination IP necessitate further investigation to rule out a non-malicious but poorly configured administrative tool.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

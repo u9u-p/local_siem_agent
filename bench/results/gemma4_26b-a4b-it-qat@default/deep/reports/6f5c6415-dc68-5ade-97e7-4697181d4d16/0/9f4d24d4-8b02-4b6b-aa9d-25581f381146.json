@@ -1,0 +1,143 @@
+{
+  "report_id": "9f4d24d4-8b02-4b6b-aa9d-25581f381146",
+  "alert_id": "6f5c6415-dc68-5ade-97e7-4697181d4d16",
+  "generated_at": "2026-08-15T13:29:51.598338Z",
+  "alert_summary": "An unknown IP address (203.0.113.30) was associated with 22 authentication events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6f5c6415-dc68-5ade-97e7-4697181d4d16 ingested; model available: True",
+      "timestamp": "2026-08-15T13:27:15.344799Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T13:27:30.049263Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T13:27:30.049331Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T13:27:30.479157Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:28:00.797681Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T13:28:08.832203Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T13:28:41.635582Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:29:51.598247Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 9f4d24d4-8b02-4b6b-aa9d-25581f381146 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:29:51.607194Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:27:30.049296Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:27:30.049296Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:27:30.049317Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:27:30.049317Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:27:30.049325Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:27:30.049325Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The successful login from an unrecognized external IP suggests that valid credentials may have been compromised and are being used by an unauthorized party. The high evidence count indicates repeated activity, which could signify automated credential misuse or an attempt to maintain persistence. This pattern is consistent with the use of valid accounts (T1078) for unauthorized access."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately contact user 'mrahman' via an out-of-band channel (e.g., phone or Slack) to verify if they are currently working from the IP 203.0.113.30.",
+    "Perform a deep dive into the activity logs for user 'mrahman' immediately following these 22 successful logons to check for lateral movement, unauthorized file access, or suspicious process execution (e.g., PowerShell/CMD usage).",
+    "Cross-reference the source IP (203.0.113.30) against threat intelligence feeds to determine if it is a known VPN, Tor exit node, or associated with previous malicious activity.",
+    "Audit MFA (Multi-Factor Authentication) logs for this specific timeframe to see if any 'MFA Fatigue' attacks occurred or if the login bypassed secondary authentication entirely.",
+    "Check if other users have had successful logons from this same external IP within a similar timeframe, which would indicate a broader credential stuffing campaign."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high frequency of logins from an unknown external IP is highly suspicious and indicative of potential credential misuse, it cannot be confirmed as malicious without verifying the user's legitimate location or observing post-authentication behavior.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

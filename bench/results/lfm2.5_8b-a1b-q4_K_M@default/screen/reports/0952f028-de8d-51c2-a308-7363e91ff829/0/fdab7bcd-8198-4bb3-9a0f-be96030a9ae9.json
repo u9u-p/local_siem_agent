@@ -1,0 +1,174 @@
+{
+  "report_id": "fdab7bcd-8198-4bb3-9a0f-be96030a9ae9",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-14T18:03:51.207988Z",
+  "alert_summary": "High severity alert due to encoded PowerShell command execution from a compromised user account.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-14T18:02:57.200044Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-14T18:03:04.543610Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-14T18:03:04.543674Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-14T18:03:04.953450Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for 'Cursor.exe' found 10 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:03:17.319335Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:03:21.436308Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:03:37.060440Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 18 claim(s), 5 flagged",
+      "timestamp": "2026-08-14T18:03:51.207894Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fdab7bcd-8198-4bb3-9a0f-be96030a9ae9 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:03:51.215971Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:04.543640Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:04.543640Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:04.543659Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:04.543659Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.1",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:04.543666Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:04.543666Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:04.543670Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:04.543670Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The execution of an encoded PowerShell command via C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe indicates malicious activity, as the decoded payload 'powershell_encoded cargo check --quiet' suggests unauthorized software interaction and potential lateral movement. Enrichment data shows unknown domains and IP addresses, increasing the risk of network compromise and requiring immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Validate the integrity of the C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe binary against known good hashes to rule out tampering",
+    "Cross-reference the decoded command 'powershell_encoded cargo check --quiet' with internal asset inventories and known legitimate PowerShell usage patterns",
+    "Investigate the origin of the domain ke.li.yam and ip 185.220.101.1 through threat intelligence platforms to identify reputation or known malicious activity",
+    "Analyze the surrounding system context for concurrent processes, user account activity, or lateral movement indicators during the execution window",
+    "Assess whether the 'NoProfile' and 'NonInteractive' flags in the PowerShell command suggest attempts to bypass standard security controls or user interaction safeguards",
+    "Review historical endpoint telemetry for similar encoded command patterns or repeated use of C:\\Users\\ke.li.yam\\Cursor.exe as a launch point",
+    "Check if the '--ms-enable-electron-run-as-node' flag correlates with known PowerShell-to-Electron process hollowing techniques used in fileless malware campaigns",
+    "Perform memory dumping of the affected host to extract any additional artifacts, such as injected modules or hidden processes linked to the decoded command"
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The encoded PowerShell execution with a high severity classification and medium confidence aligns with known adversarial techniques for stealthy command-and-control communication, supported by the presence of an unknown domain and IP address.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Patch or update the vulnerable software identified for this host'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Terminate the suspicious process on the affected host'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}

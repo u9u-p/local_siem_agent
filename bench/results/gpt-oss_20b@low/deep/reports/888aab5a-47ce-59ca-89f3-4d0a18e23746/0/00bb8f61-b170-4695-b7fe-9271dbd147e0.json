@@ -1,0 +1,149 @@
+{
+  "report_id": "00bb8f61-b170-4695-b7fe-9271dbd147e0",
+  "alert_id": "888aab5a-47ce-59ca-89f3-4d0a18e23746",
+  "generated_at": "2026-08-15T10:12:27.731422Z",
+  "alert_summary": "An unknown user logged in from an unfamiliar external IP (203.0.113.10), and 17 correlated events suggest possible lateral movement within the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 888aab5a-47ce-59ca-89f3-4d0a18e23746 ingested; model available: True",
+      "timestamp": "2026-08-15T10:12:05.706180Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:12:07.432743Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:12:07.432779Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:12:07.854535Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=17; follow-up same_src_ip_24h added 0",
+      "timestamp": "2026-08-15T10:12:10.677431Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:12:12.783501Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:12:21.062886Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T10:12:27.731345Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 00bb8f61-b170-4695-b7fe-9271dbd147e0 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:12:27.741066Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:07.432763Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:07.432763Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:07.432773Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:07.432773Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:12:07.432776Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:12:07.432776Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The login originates from a non‑trusted, unrecognized address outside the corporate perimeter, which is unusual for a legitimate account. Coupled with a strong lateral‑movement signal—17 correlated events—the scenario raises concern that an attacker may have compromised the user’s credentials or is using them to move laterally. However, because we lack additional context such as known device trust levels or confirmed malicious activity on the host, confidence remains moderate; further investigation is required before concluding a full compromise."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate forensic collection of the workstation where jsmith logged in, capturing volatile memory and disk images for deeper analysis.",
+    "Cross‑reference the 203.0.113.10 IP against internal threat intelligence feeds to check for prior malicious activity or known compromise indicators.",
+    "Verify whether the user’s account has recently been granted elevated privileges or new group memberships that could facilitate lateral movement.",
+    "Deploy a host‑based intrusion detection agent on the target machine to monitor for anomalous process creation, especially any execution of PowerShell scripts or remote desktop sessions originating from the same IP.",
+    "Review the event logs for any failed authentication attempts preceding the successful logon to assess whether brute‑force or credential stuffing was attempted.",
+    "If possible, isolate the affected device from the network while maintaining a copy of its current state for analysis, to prevent further spread if the account is compromised."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The presence of a valid‑account login from an unrecognized external IP combined with numerous lateral‑movement indicators suggests potential compromise, yet the lack of corroborating evidence such as known malicious artifacts or confirmed credential theft leaves the alert in a gray area.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

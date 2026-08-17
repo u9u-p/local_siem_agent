@@ -1,0 +1,146 @@
+{
+  "report_id": "18b9d9c0-fc3d-4c7f-adc9-e4590e1a4f8b",
+  "alert_id": "38885a85-8630-5622-85c0-2ea10b626d77",
+  "generated_at": "2026-08-15T09:39:04.043567Z",
+  "alert_summary": "A highly suspicious PowerShell command was executed from an unexpected location, using known MITRE ATT&CK techniques to evade detection and potentially compromise systems.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 38885a85-8630-5622-85c0-2ea10b626d77 ingested; model available: True",
+      "timestamp": "2026-08-15T09:38:53.537247Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 9 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:38:54.756473Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T09:38:54.756551Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:38:55.166911Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=55; follow-up same_rule_id_host added 27",
+      "timestamp": "2026-08-15T09:38:55.668263Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:38:56.426149Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:39:00.064764Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:39:04.043477Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 18b9d9c0-fc3d-4c7f-adc9-e4590e1a4f8b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:39:04.049636Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-rkumar04.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:38:54.756515Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:38:54.756515Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:38:54.756542Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:38:54.756542Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The use of an encoded PowerShell script running from a non-standard directory, combined with the execution of multiple system tools like 'pip', indicates deliberate obfuscation. The scanning pattern and high confidence correlation suggest this is not routine activity but rather targeted malicious behavior. This raises serious concerns about compromise or attempted intrusion."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper behavioral analysis on the PowerShell process to identify any post-execution activity or lateral movement.",
+    "Correlate endpoint logs and network traffic with threat intelligence feeds to detect possible command-and-control communications.",
+    "Review system permissions and user accounts involved in this execution for signs of privilege escalation or persistence mechanisms.",
+    "Isolate the affected host(s) from the network immediately while preserving forensic evidence for further investigation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an encoded PowerShell command, suspicious execution context, and known MITRE ATT&CK techniques strongly supports malicious intent over benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cABpAHAAIABpAG4AcwB0AGEAbABsACAALQByACAAcgBlAHEAdQBpAHIAZQBtAGUAbgB0AHMALgB0AHgAdAA=",
+    "parent_command_line": "\"WindowsTerminal.exe\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cABpAHAAIABpAG4AcwB0AGEAbABsACAALQByACAAcgBlAHEAdQBpAHIAZQBtAGUAbgB0AHMALgB0AHgAdAA=",
+        "decoded": "pip install -r requirements.txt"
+      }
+    ]
+  }
+}

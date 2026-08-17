@@ -1,0 +1,140 @@
+{
+  "report_id": "c0b26425-ddcc-471d-8a4a-bb8c21b80451",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-15T10:10:49.797464Z",
+  "alert_summary": "A bulk‑phishing email from orders@officesupply-direct.com was detected and held by Mimecast for review; analysis indicates no malware attachments, suspicious URLs, or known malicious IP addresses.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-15T10:10:28.170980Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T10:10:30.260011Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:10:30.260091Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:10:30.692070Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=23",
+      "timestamp": "2026-08-15T10:10:33.160568Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T10:10:34.946955Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:10:42.903678Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T10:10:49.797429Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c0b26425-ddcc-471d-8a4a-bb8c21b80451 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:10:49.802974Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:10:30.260047Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:10:30.260047Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:10:30.260077Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:10:30.260077Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:10:30.260085Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:10:30.260085Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The message contains no malware attachments, suspicious URLs, or known malicious IP addresses. The sender domain and source IP are unverified but the email’s subject and body match typical e‑commerce notifications, indicating low risk. Because there is no evidence of compromise, the alert does not pose an immediate threat to the organization, though it should be monitored for recurrence."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Set up a rule in Mimecast to flag any future messages from orders@officesupply-direct.com or with the subject pattern 'Your order #OSD-\\d+ has shipped' for manual review, ensuring that legitimate business communications are not inadvertently blocked.",
+    "Add the IP address 52.14.201.101 and the domain officesupply-direct.com to a temporary quarantine list in Mimecast’s policy engine; monitor any outbound traffic from these sources over the next 48 hours to confirm whether they are truly benign or part of a broader scanning campaign.",
+    "Cross‑reference the sender’s IP against internal whitelists and external threat intelligence feeds (e.g., AbuseIPDB, VirusTotal) to detect any emerging malicious activity that may not yet be reflected in the current enrichment data.",
+    "Notify the IT security team to keep an eye on any anomalous outbound connections originating from victimcorp.com that might indicate lateral movement or exfiltration attempts, even if this particular message appears low‑risk.",
+    "Document the incident and the subsequent monitoring steps in the organization’s incident response playbook so that future similar alerts can be triaged more efficiently."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the message lacks overt malicious payloads, the presence of an unverified IP and domain, coupled with a pattern_type=scanning classification, suggests it could be part of a broader reconnaissance effort; further observation is needed to confirm its benign nature.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

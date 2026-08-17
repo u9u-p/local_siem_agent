@@ -1,0 +1,149 @@
+{
+  "report_id": "f8ff1667-b526-4e95-a450-1d3843d112da",
+  "alert_id": "11d485aa-e566-52b7-bf3e-f6bfe86d2ea0",
+  "generated_at": "2026-08-15T11:19:09.599742Z",
+  "alert_summary": "An encoded PowerShell command was executed via Visual Studio Code, but the decoded payload is a benign 'Get-Location' instruction. This activity appears to be standard behavior for an integrated development environment terminal.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 11d485aa-e566-52b7-bf3e-f6bfe86d2ea0 ingested; model available: True",
+      "timestamp": "2026-08-15T11:15:57.449288Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T11:16:59.412983Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T11:16:59.413055Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T11:16:59.843811Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=45; follow-up same_command_line_env_wide added 2; open-value search for 'AppData\\\\Local\\\\Programs' found 27 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T11:18:29.626179Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T11:18:35.993587Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T11:18:57.513570Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:19:09.599646Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f8ff1667-b526-4e95-a450-1d3843d112da persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:19:09.607336Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:16:59.413016Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:16:59.413016Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:16:59.413042Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:16:59.413042Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:16:59.413050Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:16:59.413050Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The severity of this alert is low because the decoded command, 'Get-Location', is a non-malicious cmdlet used to identify the current working directory. Furthermore, the execution was initiated by Visual Studio Code, which is expected behavior when a developer uses the integrated terminal. No indicators of malicious intent or obfuscation were identified in the payload."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify that Sarah Lim's job role involves software development or scripting to confirm the legitimacy of VS Code usage.",
+    "Perform a baseline comparison of PowerShell execution patterns for this specific user to ensure this is consistent with their normal workflow.",
+    "Monitor for subsequent PowerShell activity from the same parent process that involves network connections (e.g., `Invoke-WebRequest`) or file system modifications in sensitive directories.",
+    "Audit VS Code extensions installed on the host to ensure no malicious plugins are triggering automated shell commands."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The encoded command decodes to a benign 'Get-Location' cmdlet, which is standard behavior for an IDE initializing an integrated terminal session.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand RwBlAHQALQBMAG8AYwBhAHQAaQBvAG4A",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "RwBlAHQALQBMAG8AYwBhAHQAaQBvAG4A",
+        "decoded": "Get-Location"
+      }
+    ]
+  }
+}

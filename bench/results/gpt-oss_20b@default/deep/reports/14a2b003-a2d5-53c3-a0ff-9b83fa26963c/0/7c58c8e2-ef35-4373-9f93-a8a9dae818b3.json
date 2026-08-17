@@ -1,0 +1,157 @@
+{
+  "report_id": "7c58c8e2-ef35-4373-9f93-a8a9dae818b3",
+  "alert_id": "14a2b003-a2d5-53c3-a0ff-9b83fa26963c",
+  "generated_at": "2026-08-16T10:21:14.367164Z",
+  "alert_summary": "An encoded PowerShell command was launched by Cursor.exe under the user derek.tan; when decoded it only performs a harmless Test‑Path check typical of an Electron/Node application.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 14a2b003-a2d5-53c3-a0ff-9b83fa26963c ingested; model available: True",
+      "timestamp": "2026-08-16T10:20:10.509608Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-16T10:20:17.643121Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T10:20:17.643166Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T10:20:18.067831Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for 'cursor.exe' found 10 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:20:26.574022Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T10:20:34.208667Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:21:02.935464Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T10:21:14.367089Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7c58c8e2-ef35-4373-9f93-a8a9dae818b3 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:21:14.374324Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-dtan06.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:20:17.643143Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:20:17.643143Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "derek.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:20:17.643157Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:20:17.643157Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:20:17.643162Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:20:17.643162Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The use of an obfuscated (encoded) PowerShell payload is a common malware technique, but the decoded command simply verifies the presence of a node_modules folder – a routine operation for many legitimate applications.  No evidence of persistence mechanisms, lateral movement, data exfiltration, or other malicious activity was observed in this event.  Consequently the alert is classified as medium‑severity with medium confidence: it warrants analyst review but does not trigger an immediate high‑priority response."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent",
+    "Run an antivirus/EDR scan on the affected host",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Expand the scope of monitoring to capture any other instances where Cursor.exe or related processes invoke PowerShell with an encoded command, even if the decoded payload appears benign; a single trivial check can be a foothold for more complex scripts that are obfuscated in subsequent stages.",
+    "Perform a forensic integrity check on the Cursor.exe binary itself—compare its hash against known good releases and scan it for embedded malicious code or hidden modules that could be activated by the `--ms-enable-electron-run-as-node` flag.",
+    "Inspect the contents of the node_modules directory referenced by the decoded command; look for recently added or modified packages, especially those with suspicious names or unusually large sizes, which might indicate a compromised dependency injection.",
+    "Correlate this event with other system telemetry such as scheduled tasks, registry Run keys, or service creation that may have been triggered by Cursor.exe around the same timestamp to uncover potential persistence mechanisms.",
+    "If possible, isolate the user account (derek.tan) and conduct a host-based behavioral analysis—monitor outbound network connections, file system changes, and process tree expansions—to determine whether this encoded PowerShell invocation is part of a broader malicious workflow.",
+    "Leverage threat intelligence feeds to see if the domain dev-dtan06.victimcorp.com or any other related domains have been observed in known campaigns; even an unknown domain can be a sign of a custom command‑and‑control infrastructure.",
+    "Document and retain all logs surrounding this event for future reference, as encoded PowerShell usage is a common evasion technique that may surface again under different guise."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The encoded PowerShell command performs only a trivial file‑system check, yet it is executed by an application (Cursor.exe) with a suspicious launch flag and from a user account that has not been previously validated; without additional malicious indicators the event cannot be confidently classified as benign or malicious.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+    "parent_command_line": "\"C:\\Users\\derek.tan\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+        "decoded": "Test-Path .\\node_modules"
+      }
+    ]
+  }
+}

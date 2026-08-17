@@ -1,0 +1,147 @@
+{
+  "report_id": "6e3e82f3-217c-4c21-923d-d3ba31ec91f0",
+  "alert_id": "6d4137d3-a3f9-583d-b816-2ec6a6e0804c",
+  "generated_at": "2026-08-15T18:46:37.660094Z",
+  "alert_summary": "User a.chong successfully logged in from 10.20.4.107, which has been flagged by the correlation engine as part of a lateral movement pattern involving multiple systems.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6d4137d3-a3f9-583d-b816-2ec6a6e0804c ingested; model available: True",
+      "timestamp": "2026-08-15T18:42:54.440798Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T18:43:17.994515Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T18:43:17.994582Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T18:43:18.428867Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T18:44:01.778490Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T18:44:15.601271Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T18:45:41.480518Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T18:46:37.660045Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 6e3e82f3-217c-4c21-923d-d3ba31ec91f0 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T18:46:37.667340Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.107",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:43:17.994547Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:43:17.994547Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:43:17.994569Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:43:17.994569Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:43:17.994577Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:43:17.994577Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "While a single successful login is typically low-risk, the detection of 15 related events indicates a systematic attempt to move laterally across the network. This high volume of activity suggests that the account may be compromised and is being used for internal reconnaissance or unauthorized access."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate the source workstation (10.20.4.107) from the internal network to prevent further lateral movement.\n\nPerform a forced password reset and session revocation for user 'a.chong'.\n\nConduct a retrospective log analysis on all systems touched by 'a.chong' within the last 24 hours to identify potential persistence mechanisms or data staging.\n\nIdentify the physical location/department of the source IP to determine if this is an authorized administrative action or an unauthorized actor.",
+    "uncertain",
+    "The high evidence count for lateral movement strongly suggests a malicious pattern, but the lack of enrichment data makes it impossible to confirm if this is a rogue actor or a misconfigured automated administrative script."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The high volume of lateral movement indicators suggests an active threat, but the absence of identity context for the user and host prevents a definitive confirmation of malicious intent versus authorized automation.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

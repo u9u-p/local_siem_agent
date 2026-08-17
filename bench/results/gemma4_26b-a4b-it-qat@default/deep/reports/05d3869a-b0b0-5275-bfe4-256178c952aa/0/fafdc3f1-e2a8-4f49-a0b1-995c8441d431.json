@@ -1,0 +1,151 @@
+{
+  "report_id": "fafdc3f1-e2a8-4f49-a0b1-995c8441d431",
+  "alert_id": "05d3869a-b0b0-5275-bfe4-256178c952aa",
+  "generated_at": "2026-08-15T11:03:40.830255Z",
+  "alert_summary": "Mimecast intercepted a high-volume phishing campaign using parcel delivery lures targeting `a.chong@victimcorp.com`. The large number of related messages indicates an active attempt to target multiple users across the organization.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 05d3869a-b0b0-5275-bfe4-256178c952aa ingested; model available: True",
+      "timestamp": "2026-08-15T11:01:48.832553Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T11:02:01.850439Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T11:02:01.850520Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T11:02:02.275504Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=73; follow-up same_rule_id_host added 36; open-value search for 'parcelroute-track.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T11:02:33.550509Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T11:02:41.308739Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T11:03:13.768412Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T11:03:40.830208Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fafdc3f1-e2a8-4f49-a0b1-995c8441d431 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:03:40.838709Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.148",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:02:01.850478Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:02:01.850478Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "parcelroute-track.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:02:01.850501Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:02:01.850501Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:02:01.850508Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:02:01.850508Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:02:01.850513Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:02:01.850513Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "This alert is classified as high severity because it utilizes a classic social engineering lure involving fake parcel deliveries to induce user interaction. The high evidence count of 73 indicates this is part of an active, widespread campaign targeting the organization. High confidence is assigned due to the clear pattern of bulk delivery and the use of suspicious, unverified domains."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately block the sender domain 'parcelroute-track.com' and the source IP '52.14.201.148' across the email gateway and perimeter firewalls.",
+    "Perform a retroactive search (sweep) across all organizational mailboxes for any other messages originating from this domain or containing similar tracking number patterns to purge them before user interaction.",
+    "Review web proxy/DNS logs for any successful outbound connections to 'parcelroute-track.com' to identify if any users successfully navigated to the potential landing page.",
+    "If any user is found to have interacted with the email, initiate an immediate password reset and audit their account for unauthorized MFA changes or session hijacking."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The use of a high-volume delivery lure combined with an unverified domain and a significant evidence count strongly indicates a coordinated phishing campaign targeting the organization.",
+  "uncertainty_notes": "unsupported claim: 'Manually review the decoded command payload for malicious intent'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

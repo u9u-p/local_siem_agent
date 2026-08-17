@@ -1,0 +1,120 @@
+{
+  "report_id": "fb7319aa-ee0d-42ae-a037-c1890f0901ba",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-15T00:20:29.658971Z",
+  "alert_summary": "Brute-force pattern detected with 24 evidence events. Source IP 203.0.113.63 is unknown with no enrichment data to confirm legitimacy.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-15T00:12:13.350716Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T00:12:53.209522Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T00:12:53.209552Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T00:12:53.649039Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24",
+      "timestamp": "2026-08-15T00:14:47.182640Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T00:15:20.648250Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T00:17:42.335770Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 11 flagged",
+      "timestamp": "2026-08-15T00:20:29.658942Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fb7319aa-ee0d-42ae-a037-c1890f0901ba persisted, alert marked investigated",
+      "timestamp": "2026-08-15T00:20:29.663649Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:12:53.209543Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:12:53.209543Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "Brute-force pattern detected with 24 evidence events. Severity is high, confidence is medium because source IP 203.0.113.63 is unknown with no provider enrichment to confirm reputation, attribution, or whether the connection is expected."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Correlate the successful logon timestamp with nprakash's normal working hours, source networks, and typical session behavior to see if the login is anomalous.",
+    "Review the full SSH authentication sequence for 203.0.113.63 to confirm the 24 evidence events are failed attempts immediately preceding the success and check for credential stuffing patterns.",
+    "Inspect post-authentication activity from that session for lateral movement, command execution, file transfers, or privilege escalation indicative of misuse.",
+    "Temporarily restrict or monitor outbound connectivity from the affected host and force a password reset for nprakash with MFA enforcement on SSH access.",
+    "Block or rate-limit 203.0.113.63 at the perimeter and SIEM, and improve IP enrichment coverage to reduce unknown attribution for future events."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The brute-force pattern and successful logon are concerning, but the source IP 203.0.113.63 falls in RFC 5737 TEST-NET-3 documentation space with no enrichment, making it unclear if this is real adversary activity or synthetic/test traffic.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

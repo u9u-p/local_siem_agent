@@ -1,0 +1,145 @@
+{
+  "report_id": "aa2b70b1-d4e5-433c-aeff-936422e51ded",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-15T02:45:49.030220Z",
+  "alert_summary": "A brute‑force login attempt targeting user **tommy.wong** from internal IP **10.20.4.94** was observed, with eight related failed attempts. No successful logon was recorded in the available data.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-15T02:45:16.502326Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T02:45:19.042070Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T02:45:19.042140Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T02:45:19.444202Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=8",
+      "timestamp": "2026-08-15T02:45:23.097117Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T02:45:25.826902Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T02:45:39.882416Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T02:45:49.030188Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aa2b70b1-d4e5-433c-aeff-936422e51ded persisted, alert marked investigated",
+      "timestamp": "2026-08-15T02:45:49.035086Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:45:19.042104Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:45:19.042104Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:45:19.042125Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:45:19.042125Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:45:19.042134Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:45:19.042134Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The correlation shows a medium‑severity, high‑confidence brute‑force pattern involving user **tommy.wong** from IP **10.20.4.94**, which warrants further investigation to determine whether the activity is benign or malicious. (Remove the specific reference to MITRE technique T1078, as it is not directly indicated by the findings.)"
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Escalate to a human analyst for manual review",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Pull the full authentication audit trail for tommy.wong across all domain controllers for the past 48 hours and look for any anomalous source IPs or repeated failures that might indicate a password‑spraying campaign.",
+    "Cross‑reference this logon with recent privileged activity (e.g., admin tool usage, credential delegation, remote service starts) to see if the account is being leveraged for lateral movement.",
+    "Check the host at 10.20.4.94 for signs of compromise: collect its endpoint telemetry (process creation, PowerShell command line logs, scheduled tasks), verify that it is a known corporate workstation and that its OS patches are up‑to‑date.",
+    "If possible, query the domain controller’s security event log for Event 4625 entries that precede this successful logon; eight related failures suggest a brute‑force attempt that may have succeeded on the last try.",
+    "Consider forcing a password reset for tommy.wong and enabling multi‑factor authentication (if not already required) to mitigate credential reuse risk.",
+    "Update detection rules to flag any successful logon from an internal IP after more than five failed attempts within a short window, reducing future noise while preserving visibility on potential credential stuffing."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The logon is legitimate‑looking but coincides with a brute‑force pattern of eight related events, so it could be either normal user activity after failed attempts or an early stage of credential abuse.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

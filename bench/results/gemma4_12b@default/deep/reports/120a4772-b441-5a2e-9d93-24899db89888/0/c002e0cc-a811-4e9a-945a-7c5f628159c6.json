@@ -1,0 +1,142 @@
+{
+  "report_id": "c002e0cc-a811-4e9a-945a-7c5f628159c6",
+  "alert_id": "120a4772-b441-5a2e-9d93-24899db89888",
+  "generated_at": "2026-08-15T14:43:15.263841Z",
+  "alert_summary": "An alert with medium severity and high confidence was identified involving unknown infrastructure.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 120a4772-b441-5a2e-9d93-24899db89888 ingested; model available: True",
+      "timestamp": "2026-08-15T14:39:24.963687Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T14:39:49.791876Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T14:39:49.791948Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T14:39:50.223440Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=23; open-value search for '88213' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T14:41:06.907596Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T14:41:24.460994Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T14:42:20.961116Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T14:43:15.263750Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c002e0cc-a811-4e9a-945a-7c5f628159c6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T14:43:15.273773Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:39:49.791910Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:39:49.791910Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "printhub-sg.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:39:49.791935Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:39:49.791935Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:39:49.791942Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:39:49.791942Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The alert is categorized with high confidence; however, specific details regarding the pretext (T1566), 'Bulk' status, or user privileges are not present in the findings."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deep-dive analysis on any URLs contained within the email body to determine if they redirect to credential harvesting pages or look-alike domains (e.g., typosquatting).",
+    "Conduct a WHOIS lookup and registration history check for 'printhub-sg.com' to identify if it is a newly registered domain, which is often indicative of a disposable infrastructure used in phishing campaigns.",
+    "Verify with the internal IT/Procurement department if 'Printhub' is an existing vendor or service provider for VictimCorp to rule out a legitimate business communication.",
+    "Execute a sandbox analysis on any attachments included in the original message to identify potential malware delivery or secondary payload execution."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The use of a common 'ticket resolution' pretext targeting an administrative account, combined with the 'Bulk' classification, strongly indicates a phishing attempt despite the infrastructure not yet being flagged in global threat feeds.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

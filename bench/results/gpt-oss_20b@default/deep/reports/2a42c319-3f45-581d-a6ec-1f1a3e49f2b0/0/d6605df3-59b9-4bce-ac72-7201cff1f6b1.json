@@ -1,0 +1,142 @@
+{
+  "report_id": "d6605df3-59b9-4bce-ac72-7201cff1f6b1",
+  "alert_id": "2a42c319-3f45-581d-a6ec-1f1a3e49f2b0",
+  "generated_at": "2026-08-16T10:32:31.981421Z",
+  "alert_summary": "An encoded PowerShell command was launched by a suspicious Cursor.exe process, accompanied by 47 lateral‑movement events and references to unknown domains—indicating a likely coordinated attack.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2a42c319-3f45-581d-a6ec-1f1a3e49f2b0 ingested; model available: True",
+      "timestamp": "2026-08-16T10:31:11.852423Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-16T10:31:20.399831Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-16T10:31:20.399893Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T10:31:20.830771Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=47; follow-up same_command_line_env_wide added 3",
+      "timestamp": "2026-08-16T10:31:25.924271Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:31:32.335560Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T10:31:51.821667Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T10:32:31.981301Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d6605df3-59b9-4bce-ac72-7201cff1f6b1 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:32:31.990365Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:31:20.399866Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:31:20.399866Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:31:20.399886Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:31:20.399886Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The use of an obfuscated PowerShell payload executed from a non‑standard application (Cursor.exe) is a classic technique for hiding malicious code (T1027/T1059.001). Coupled with a high volume of lateral‑movement events and traffic to previously unseen domains, the evidence strongly suggests that the host has been compromised and is being used to spread within the network. While we lack definitive proof of a payload’s intent, the convergence of these indicators warrants a high‑severity assessment; confidence remains medium pending deeper forensic analysis."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin by isolating the host that executed Cursor.exe to prevent further lateral movement while you investigate the binary’s provenance, integrity, and any associated registry or file artifacts.",
+    "Perform a forensic memory dump of the affected system and run it through an advanced malware analysis framework (e.g., Volatility, Rekall) to look for hidden processes, injected code, or anomalous network connections that may have been established by the encoded PowerShell payload.",
+    "Cross‑reference the decoded command (`pytest -q`) against known legitimate usage patterns within your environment; if it is not a recognized test harness, treat it as a potential obfuscation technique and search for additional encoded commands in other Sysmon logs or Windows Event Log sources.",
+    "Investigate the two unknown domains (dev-klyam01.victimcorp.com and ke.li.yam) by querying threat intelligence feeds, performing WHOIS lookups, and checking whether they appear on any blacklists; also examine DNS query logs for unusual activity involving these names.",
+    "Examine network traffic captured around the time of the event for outbound connections to those domains or other suspicious IPs, and consider blocking them temporarily while you confirm their legitimacy.",
+    "If the Cursor.exe binary is identified as a legitimate application (e.g., an internal tool), verify its digital signature and compare it against known good hashes; if it appears tampered, treat it as a compromised launcher for malicious payloads.",
+    "Document all findings in a timeline that correlates the Sysmon event with other lateral‑movement indicators to build a coherent narrative of the attacker’s actions."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The encoded PowerShell invocation launched by an otherwise suspicious Cursor.exe process, coupled with 47 correlated lateral‑movement events and references to unknown domains, strongly indicates malicious activity rather than benign testing.",
+  "uncertainty_notes": "unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

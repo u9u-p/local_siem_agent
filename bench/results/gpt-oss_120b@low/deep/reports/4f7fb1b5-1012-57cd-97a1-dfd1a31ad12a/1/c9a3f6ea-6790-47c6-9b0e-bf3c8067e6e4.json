@@ -1,0 +1,137 @@
+{
+  "report_id": "c9a3f6ea-6790-47c6-9b0e-bf3c8067e6e4",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-15T10:38:43.353576Z",
+  "alert_summary": "A successful Windows logon for user **mrahman** was observed from the unknown external address **100.72.44.19**, matching a lateral‑movement pattern with 42 supporting events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-15T10:38:11.232292Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:38:12.597526Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:38:12.597590Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:38:13.013255Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=42; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-15T10:38:16.550344Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:38:19.274136Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:38:33.067802Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T10:38:43.353536Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c9a3f6ea-6790-47c6-9b0e-bf3c8067e6e4 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:38:43.357735Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:38:12.597560Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:38:12.597560Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:38:12.597582Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:38:12.597582Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured findings indicate a medium‑severity, high‑confidence lateral‑movement correlation (42 events) from an unknown IP and domain. While this suggests suspicious activity, the findings do not explicitly identify credential reuse (T1078) or state that the account is necessarily compromised. A more accurate statement would be: “The event matches a high‑confidence lateral‑movement pattern (42 supporting events) originating from an unknown external IP (100.72.44.19) and domain (dc01.corp.local). Given the lack of enrichment, the activity is suspicious and warrants analyst review; a medium severity rating has been assigned.”"
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the endpoint associated with user **mrahman** and capture a forensic memory dump to look for suspicious processes or credential‑stealing tools.",
+    "Query Active Directory for recent changes to the mrahman account (password resets, group membership modifications, privileged role assignments) and compare them against baseline activity.",
+    "Pull Windows Security Event logs (4624, 4648, 4768/4769) from the source host and any hosts that show subsequent logons from the same IP to map the full lateral‑movement chain.",
+    "Run a reverse DNS lookup and WHOIS on **100.72.44.19**; if it resolves to an internal subnet, verify whether it belongs to a legitimate service or VPN endpoint. If it is truly external, block traffic at the firewall pending further investigation.",
+    "Check for any recent credential‑dumping detections (e.g., LSASS dumping, Mimikatz usage) on the source host and neighboring systems; if found, consider resetting the password for mrahman and any other accounts that may have been compromised.",
+    "Deploy a short‑term detection rule to alert on any new successful logons for mrahman from IPs outside of known corporate ranges, and enable multi‑factor authentication (MFA) enforcement for this account if not already active.",
+    "Coordinate with the network team to capture NetFlow/SIEM data around the time window of the logon to identify anomalous lateral traffic patterns (e.g., SMB, RPC, WMI) that could indicate propagation attempts.",
+    "Document findings in the incident ticket and, if evidence points to credential misuse, initiate a formal breach response process per the organization’s IR playbook."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event shows a valid credential logon from an unknown IP with strong lateral‑movement correlation, but without enrichment on the source it could be a legitimate remote access scenario; further investigation is required to determine intent.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,140 @@
+{
+  "report_id": "b2b5f4b4-52ec-4fcb-bb13-d8ff69230b87",
+  "alert_id": "4e402d4f-db87-5377-b7fb-bfdbdd85f800",
+  "generated_at": "2026-08-15T10:36:59.675587Z",
+  "alert_summary": "The structured findings only indicate a scanning pattern (pattern_type=scanning) with 31 evidences, and provide enrichment that the source IP and domains have unknown reputation. They do not contain any information about Mimecast quarantining a specific email from ap@stellar‑logistics.com to finance@victimcorp.com or the message subject.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4e402d4f-db87-5377-b7fb-bfdbdd85f800 ingested; model available: True",
+      "timestamp": "2026-08-15T10:36:28.736036Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:36:31.392112Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:36:31.392179Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:36:31.820965Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=31",
+      "timestamp": "2026-08-15T10:36:35.148250Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:36:37.570036Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:36:49.549782Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T10:36:59.675546Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b2b5f4b4-52ec-4fcb-bb13-d8ff69230b87 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:36:59.681964Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.117",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:36:31.392146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:36:31.392146Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "stellar-logistics.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:36:31.392166Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:36:31.392166Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:36:31.392174Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:36:31.392174Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The findings confirm a low severity rating and high confidence, and that neither the IP nor the domains have known threat reputation. However, they do not map the activity to the generic phishing technique T1566, nor do they state that the message was blocked specifically as bulk mail. The claim should be limited to the risk assessment details that are present."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Because the message was caught by Mimecast’s bulk‑mail detection and no malicious infrastructure (IP or domain) has been identified, a pragmatic next step is to confirm that the sender address (ap@stellar-logistics.com) is a legitimate business contact for VictimCorp’s finance team.  A quick verification can be done by checking internal vendor records or contacting the supplier through an out‑of‑band channel (e.g., phone call to a known number).",
+    "If the sender is verified as a genuine partner, consider adding the sending domain (stellar‑logistics.com) to a safe‑sender list in Mimecast to reduce future false‑positive bulk filtering for legitimate remittance advice.",
+    "Update the internal phishing awareness material with this example, highlighting that not every bulk‑mail flag indicates malicious intent, but that users should still verify unexpected invoice or payment requests via secondary channels.",
+    "Log the event in your ticketing system as ‘reviewed – benign’ and close it after documentation, but retain the raw email headers for future reference in case new threat intel emerges linking this sender to suspicious activity.",
+    "Periodically re‑scan the sending IP (52.14.201.117) and domain (stellar‑logistics.com) against threat intelligence feeds; if any reputation changes occur, reassess the prior decision."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The email was blocked solely as bulk mail, contains no malicious payloads or known bad indicators, and aligns with a routine business communication, indicating it is not an actual phishing attempt.",
+  "uncertainty_notes": "unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,140 @@
+{
+  "report_id": "c2de9a1a-4a09-47d8-bdc7-3cb93d011698",
+  "alert_id": "4f1cb34a-b22d-5820-ba1a-a2454f1f84d3",
+  "generated_at": "2026-08-15T10:01:43.149650Z",
+  "alert_summary": "A legitimate Windows logon by user raj.kumar from internal IP 10.20.4.73 was detected; no signs of compromise were found.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f1cb34a-b22d-5820-ba1a-a2454f1f84d3 ingested; model available: True",
+      "timestamp": "2026-08-15T10:01:20.655457Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:01:22.398693Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:01:22.398775Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:01:22.834395Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=8",
+      "timestamp": "2026-08-15T10:01:25.792211Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T10:01:28.076139Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:01:34.876286Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T10:01:43.149565Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c2de9a1a-4a09-47d8-bdc7-3cb93d011698 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:01:43.158642Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:01:22.398738Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:01:22.398738Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:01:22.398762Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:01:22.398762Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:01:22.398770Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:01:22.398770Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The event represents a normal, expected authentication for an internal account and occurred from a known corporate subnet. Enrichment data shows no malicious host or domain association, and the scanning pattern is likely a benign false positive. Consequently, the risk to the organization is minimal and no immediate containment actions are required."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user’s recent activity logs to confirm that the session aligns with normal work patterns (e.g., time of day, typical applications accessed).",
+    "Cross‑check the source IP 10.20.4.73 against the organization’s DHCP lease database and network topology to ensure it belongs to an authorized workstation or server.",
+    "If possible, correlate this logon event with other security telemetry such as endpoint detection logs or SIEM alerts for that user; a lack of anomalous behavior elsewhere would reinforce the low‑risk assessment.",
+    "Document the event in the incident response system and tag it as a routine activity so future analysts can quickly filter similar entries.",
+    "Consider setting up a lightweight rule to flag any subsequent logons from this IP or user that occur outside normal business hours, just to be proactive without over‑alerting."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The event matches expected internal behavior for a legitimate account and lacks any indicators of compromise; the scanning pattern is likely benign routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,169 @@
+{
+  "report_id": "02a9b9f2-545b-4e82-9e0f-d9bb22e09f4e",
+  "alert_id": "7786a6a1-fd5c-5169-a435-a4b4009571fa",
+  "generated_at": "2026-08-15T09:44:23.611975Z",
+  "alert_summary": "Suspicious bulk message with irrelevant clearance subject line detected, high risk of phishing and malware activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7786a6a1-fd5c-5169-a435-a4b4009571fa ingested; model available: True",
+      "timestamp": "2026-08-15T09:44:13.074701Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 11 candidates, 6 validated",
+      "timestamp": "2026-08-15T09:44:15.489851Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T09:44:15.489932Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:44:15.905085Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=66; follow-up same_rule_id_host added 30",
+      "timestamp": "2026-08-15T09:44:16.429954Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:44:17.085112Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:44:20.676328Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:44:23.611879Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 02a9b9f2-545b-4e82-9e0f-d9bb22e09f4e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:23.619316Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:15.489891Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:15.489891Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "hardwarehub-wholesale.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:15.489911Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:15.489911Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:15.489918Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:15.489918Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://hardwarehub-wholesale.com/refurbished-docking-stations",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:15.489923Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:15.489923Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.1",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:15.489927Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:15.489927Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The message originated from a suspicious bulk source using an irrelevant clearance subject, indicating possible targeted phishing. High scanning frequency suggests automated reconnaissance or attack attempts. All infrastructure components are unknown, increasing uncertainty about intent but raising suspicion due to the mass-sourced nature. Combined, these factors point to significant malicious risk requiring immediate investigation and containment."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate forensic review of the entire email thread and associated endpoints to capture any payloads or malicious scripts.",
+    "Deploy automated sandboxing on all attachments and links referenced in similar future campaigns for rapid behavioral analysis.",
+    "Conduct a targeted threat-hunting exercise across related domains and IP ranges to identify lateral movement attempts.",
+    "Engage with the hosting provider of victimcorp.com to request logs, DNS records, and any evidence they may have retained about suspicious activity.",
+    "Update email security filters and phishing detection rules based on observed patterns such as bulk-sourced messages and unusual clearance subject lines."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a high-risk message from a known suspicious source, clear malicious intent in the content, and corroborating scanning activity strongly indicates this is an actual threat rather than noise or benign error.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}
