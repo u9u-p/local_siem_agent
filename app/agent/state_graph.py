@@ -956,7 +956,7 @@ class AgenticAnalyst:
                 # would misattribute a stub-shaped report to it.
                 model_name=self._llm_client.model_name() if model_available else "none",
                 model_version="none",
-                prompt_version="4d-v1",
+                prompt_version="4e-v1",
             ),
             command_analysis=command_analysis,
         )

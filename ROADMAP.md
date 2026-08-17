@@ -151,9 +151,16 @@ Seeded stack went from 51 alerts over 4 sources to **71 over 7**. Suite is **314
 | 7 | P1 | Script demo alerts, confirm real output | Run both cases several times and record what the agent actually concludes; local model output varies | 🚧 Partial — one run each |
 | 8 | P2 | Settle Windows `source_ip` | Inspect a real alert document; normalise in the decoder or fall back in the mapper | ✅ Done |
 | 9 | P2 | Step 4's discarded context | `get_agent_context()`/`get_rule_metadata()` are called, logged, bound to `_agent_context`/`_rule_metadata`, then never read. Either feed them into the Risk/Draft prompts or stop calling them. Saying "we gather host context" on stage while it goes nowhere invites a question | ⬜ Open |
-| 10 | P2 | Triage fields dropped on persist | `Report.triage_verdict_experimental`/`triage_rationale_experimental` have no `ReportRecord` columns and neither mapper touches them — they survive in the exported JSON and vanish through SQLite, so `show-report --json` reads them as null. Existing tests assert only on the in-memory report | ⬜ Open (2 columns, both mappers, round-trip test) |
+| 10 | P2 | Triage fields dropped on persist | `Report.triage_verdict_experimental`/`triage_rationale_experimental` have no `ReportRecord` columns and neither mapper touches them — they survive in the exported JSON and vanish through SQLite, so `show-report --json` reads them as null. Existing tests assert only on the in-memory report | ✅ Done — see "Report observability and export" below |
 | 11 | P3 | Committed key material | `wazuh_deployment/single-node/config/wazuh_indexer_ssl_certs/` tracks `root-ca.key`, `admin-key.pem` and the indexer/manager/dashboard private keys; `internal_users.yml` carries six bcrypt hashes. Generated demo certs with demo-default passwords, but if the repo is public treat them as burned. The documentation half is done — the sub-README no longer claims the directory is gitignored and now carries regeneration instructions; the keys themselves are still committed | 🚧 Partial — docs fixed, keys still tracked |
 | 12 | P3 | Stale `CLAUDE.md` Project status | Claimed the repo contained no code, tests or build tooling — the first thing a post-talk cloner reads | ✅ Done |
+
+### Report observability and export — ✅ Complete 17 Aug 2026
+
+- The database row and the exported JSON now hold the same nine timeline steps — finalize's own entry is appended before persistence, not after, so the two artefacts stop disagreeing by one step.
+- Every timeline step carries the typed `input`/`output` it consumed and produced, plus one `LLMCallRecord` per `generate_structured` call (verbatim prompt, raw response on a parse failure, verbatim reasoning trace, parsed output, attempts, tokens, latency, error kind), rolled up into `Report.llm_usage` totals for the whole investigation.
+- The experimental Draft-B triage output (item 10 above) now round-trips through SQLite via two new `ReportRecord` columns, and `show-report` surfaces it behind an explicit "experimental, unvetted" disclaimer rather than dropping it silently.
+- `write_report_file` now writes a Markdown export beside the JSON, sharing one section list with the terminal renderer (`app/report_render.py`) so the two stay in sync by construction.
 
 ### Known-wrong behaviour being presented as-is
 

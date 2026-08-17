@@ -1388,10 +1388,18 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     ]
     assert report.triage_verdict_experimental == "true_positive"
     assert report.model_metadata.model_name == "fake-model:test"
-    assert report.model_metadata.prompt_version == "4d-v1"
+    assert report.model_metadata.prompt_version == "4e-v1"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
+
+
+def test_report_records_the_current_prompt_version():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    assert report.model_metadata.prompt_version == "4e-v1"
 
 
 def test_investigate_degrades_gracefully_when_model_unavailable(tmp_path):
@@ -1658,7 +1666,7 @@ def test_assemble_report_status_complete_when_nothing_degraded(tmp_path):
     assert report.alert_summary == draft.alert_summary
     assert report.risk_assessment.rationale == draft.rationale
     assert report.recommended_actions == [a.value for a in draft.recommended_actions]
-    assert report.model_metadata.prompt_version == "4d-v1"
+    assert report.model_metadata.prompt_version == "4e-v1"
 
 
 def test_assemble_report_status_needs_human_review_when_degraded():

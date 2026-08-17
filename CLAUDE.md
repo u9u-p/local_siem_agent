@@ -9,7 +9,7 @@ Phases 1–5 are implemented; Phase 6 items are deferred. See `ROADMAP.md` for w
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest -q          # 314 passing, 0 skipped with the Wazuh stack up and gemma4:12b pulled
+pytest -q          # 448 passing, 0 skipped with the Wazuh stack up and gemma4:12b pulled
 ```
 
 The CLI entry point is `agent` (`app/cli.py`): `pull-alerts`, `list-alerts`, `investigate-one`, `investigate-all`, `show-report`. Live tests skip unless `WAZUH_*` is configured in `.env` and `LLM_MODEL` is pulled and reachable. The demo Wazuh stack lives in `wazuh_deployment/single-node/` (`docker compose up -d`). There is no linter configured.
@@ -146,12 +146,15 @@ Pydantic models (also SQLModel table definitions for persisted ones).
 | `report_id`, `alert_id` | UUID | |
 | `generated_at` | datetime | |
 | `alert_summary` | str | LLM-generated, plain language |
-| `investigation_timeline` | list[InvestigationStep] | `{step_name, action, tool_used, input, output_summary, timestamp}` — one entry per state-graph transition, for auditability. Persisted as a single JSON column under SQLModel (not a child table) — it's small, append-only, and always read back whole with its parent `Report` |
+| `investigation_timeline` | list[InvestigationStep] | `{step_name, action, tool_used, input, output_summary, timestamp}` — one entry per state-graph transition, for auditability. Persisted as a single JSON column under SQLModel (not a child table) — it's small, append-only, and always read back whole with its parent `Report`. As of the report-observability-and-export work (17 Aug 2026), the finalize step's own entry is appended before persistence, not after, so the database row and the exported JSON hold the same nine steps |
+| `investigation_timeline[].input` / `.output` | dict \| None | the typed values each step consumed and produced |
+| `investigation_timeline[].llm_calls` | list[LLMCallRecord] | one record per `generate_structured` call: verbatim prompt, raw response on a parse failure, verbatim reasoning trace, parsed output, attempts, tokens, latency, error kind |
 | `enrichment_findings` | list[EnrichmentResult] | |
 | `risk_assessment` | `{severity, confidence, rationale}` | |
 | `recommended_actions` | list[str] | **canonical.** Human-actionable only, never executable — no "do it" tool is ever exposed to the agent. Populated by closed-vocabulary multi-select from a curated per-rule-group action catalog (§4.1 step 7), not free text |
 | `recommended_actions_freeform_experimental` | list[str] \| None | **experimental, not vetted.** Free-text actions from a parallel, unconstrained generation call (§4.1 step 7) kept only to evaluate whether the local model can be trusted with open-ended action drafting — never surfaced as canonical guidance and not covered by the Self-Check pass |
 | `uncertainty_notes` | str | explicit "what I could not verify / low-confidence areas" — derived by the Self-Check pass from concrete structural gaps (errored/`UNKNOWN` enrichments, unused correlation menu, missing MITRE mapping), not the model's self-assessed confidence (§4.2 rule 3) |
+| `llm_usage` | `LLMUsageTotals` | calls, failed calls, attempts, token totals, reasoning characters, model latency and wall clock for the whole investigation. Token totals are `null` rather than partial when any call reported no usage. `completion_tokens` counts structured output only — the reasoning trace is uncounted, hence `reasoning_chars` alongside it |
 | `status` | enum | `DRAFT \| COMPLETE \| NEEDS_HUMAN_REVIEW` |
 | `model_metadata` | `{model_name, model_version, prompt_version}` | for reproducibility/audit |
 
