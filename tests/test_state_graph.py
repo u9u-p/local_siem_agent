@@ -1565,6 +1565,65 @@ def test_investigate_handles_multiple_simultaneous_degradations(tmp_path):
     assert finalize_step.action == "completed"
 
 
+def test_saved_report_includes_the_finalize_step():
+    store = _FakeAlertStore()
+    analyst = _make_analyst(alert_store=store, llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    saved = store.reports[0]
+    assert [s.step_name for s in saved.investigation_timeline][-1] == "finalize_and_persist"
+    assert len(saved.investigation_timeline) == len(report.investigation_timeline)
+
+
+def test_finalize_step_is_marked_degraded_when_persistence_fails():
+    class _FailingStore(_FakeAlertStore):
+        def save_report(self, report):
+            raise RuntimeError("disk full")
+
+    analyst = _make_analyst(alert_store=_FailingStore(), llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    last = report.investigation_timeline[-1]
+    assert last.action == "degraded"
+    assert last.output == {"persisted": False}
+    assert "disk full" in last.output_summary
+    # Exactly one finalize step — the optimistic entry is replaced, not appended to.
+    assert sum(1 for s in report.investigation_timeline if s.step_name == "finalize_and_persist") == 1
+
+
+def test_saved_report_in_database_includes_finalize_step(tmp_path):
+    """Regression test: the finalize step must be in the database, not just the returned report.
+
+    Uses SQLiteAlertStore which genuinely serialises/deserialises at save time, so this
+    test catches the bug where save_report() was called before the step was appended.
+    """
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    alert_store.save_raw_alert(alert)
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=False),
+    )
+
+    report = analyst.investigate(alert)
+
+    # Read back from the database (not the in-memory object)
+    saved = alert_store.get_report(str(report.report_id))
+    assert [s.step_name for s in saved.investigation_timeline][-1] == "finalize_and_persist"
+    assert len(saved.investigation_timeline) == len(report.investigation_timeline)
+    assert len(saved.investigation_timeline) == 9
+
+
 def test_step_gather_context_degrades_marks_investigation_degraded():
     siem = _FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused"))
     analyst = _make_analyst(siem=siem)

@@ -961,36 +961,46 @@ class AgenticAnalyst:
             command_analysis=command_analysis,
         )
 
-    def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
+    def _step_finalize_and_persist(self, alert: Alert, report: Report) -> None:
+        """Append the finalize step, then persist the report that contains it.
+
+        The step is built optimistically and appended before the save so the stored
+        payload and the exported JSON describe the same nine steps. On failure the
+        entry is replaced in place: the database then holds nothing (correct — the
+        save failed) while the JSON file, written after investigate() returns, still
+        records what went wrong.
+        """
         logger.debug(
             "_step_finalize_and_persist input: report_id=%s, alert_id=%s", report.report_id, alert.alert_id
+        )
+        step_input = {"report_id": str(report.report_id), "alert_id": str(alert.alert_id)}
+        report.investigation_timeline.append(
+            InvestigationStep(
+                step_name=Step.FINALIZE_AND_PERSIST.value,
+                action="completed",
+                tool_used="alert_store",
+                input=step_input,
+                output={"persisted": True},
+                output_summary=f"report {report.report_id} persisted, alert marked investigated",
+                timestamp=datetime.now(timezone.utc),
+            )
         )
         try:
             self._alert_store.save_report(report)
             self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
         except Exception as exc:
-            step = InvestigationStep(
+            report.investigation_timeline[-1] = InvestigationStep(
                 step_name=Step.FINALIZE_AND_PERSIST.value,
                 action="degraded",
                 tool_used="alert_store",
-                input={"report_id": str(report.report_id), "alert_id": str(alert.alert_id)},
+                input=step_input,
                 output={"persisted": False},
                 output_summary=f"could not persist report or update alert status: {exc}",
                 timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_finalize_and_persist output: failed: %s", exc)
-            return step
-        step = InvestigationStep(
-            step_name=Step.FINALIZE_AND_PERSIST.value,
-            action="completed",
-            tool_used="alert_store",
-            input={"report_id": str(report.report_id), "alert_id": str(alert.alert_id)},
-            output={"persisted": True},
-            output_summary=f"report {report.report_id} persisted, alert marked investigated",
-            timestamp=datetime.now(timezone.utc),
-        )
+            return
         logger.debug("_step_finalize_and_persist output: persisted")
-        return step
 
     def investigate(self, alert: Alert) -> Report:
         started = time.monotonic()
@@ -1037,6 +1047,5 @@ class AgenticAnalyst:
             alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes,
             model_available, wall_clock_ms, command_analysis=command_decode_result,
         )
-        finalize_step = self._step_finalize_and_persist(alert, report)
-        report.investigation_timeline.append(finalize_step)
+        self._step_finalize_and_persist(alert, report)
         return report
