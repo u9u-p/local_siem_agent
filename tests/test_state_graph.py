@@ -16,10 +16,11 @@ from app.agent.schemas import (
     SelfCheckResult,
     TriageVerdict,
 )
-from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context
+from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context, _roll_up_usage
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
+from app.llm.client import LLMCallRecord, LLMResponse
 from app.llm.errors import LLMClientError
 from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep, ProcessExecutionFields
 from app.schemas import EnrichmentVerdict, IndicatorType
@@ -78,7 +79,12 @@ class _FakeAlertStore:
         self.status_updates.append((alert_id, status))
 
     def save_report(self, report):
-        self.reports.append(report)
+        # A deep copy, not the live object: appending the object itself makes
+        # `store.reports[0] is report`, so any assertion comparing the two can never
+        # fail — it would pass even if the caller mutated `report` after saving it,
+        # or if the store silently dropped data on the way in. Copying is what makes
+        # this fake honest about what a real store's round-trip would show.
+        self.reports.append(report.model_copy(deep=True))
         return str(report.report_id)
 
     def get_report(self, report_id):
@@ -91,6 +97,13 @@ class _FakeAlertStore:
         return []
 
 
+def _fake_call(prompt: str, prompt_ref: str = "fake_ref") -> LLMCallRecord:
+    return LLMCallRecord(
+        prompt_ref=prompt_ref, prompt=prompt, attempts=1, latency_ms=7,
+        prompt_tokens=11, completion_tokens=5,
+    )
+
+
 class _FakeLLMClient:
     def __init__(self, model_available=True, responses=None, error=None,
                  model_name="fake-model:test"):
@@ -100,12 +113,14 @@ class _FakeLLMClient:
         self._error = error
         self.calls: list[tuple[str, type]] = []
 
-    def generate_structured(self, prompt, schema):
+    def generate_structured(self, prompt, schema, prompt_ref):
         self.calls.append((prompt, schema))
         if self._error is not None:
             raise self._error
         if schema in self._responses:
-            return self._responses[schema]
+            return LLMResponse(
+                value=self._responses[schema], call=_fake_call(prompt, prompt_ref)
+            )
         raise NotImplementedError(f"no canned response configured for {schema}")
 
     def health_check(self):
@@ -123,8 +138,8 @@ def test_fake_llm_client_records_prompt_and_schema_per_call():
         severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"
     )})
 
-    client.generate_structured("first prompt", RiskAssessment)
-    client.generate_structured("second prompt", RiskAssessment)
+    client.generate_structured("first prompt", RiskAssessment, "fake_ref")
+    client.generate_structured("second prompt", RiskAssessment, "fake_ref")
 
     assert client.calls == [("first prompt", RiskAssessment), ("second prompt", RiskAssessment)]
 
@@ -151,13 +166,127 @@ def _make_alert(**overrides):
 
 def _make_analyst(**overrides):
     defaults = dict(
-        siem=_FakeSIEMConnector(),
+        # A real SIEMConnector's get_agent_context()/get_rule_metadata() always return a
+        # value or raise — never a silent None — so the default fake matches that here,
+        # letting a full investigate() run through gather_context's success branch (which
+        # now reads real fields off these objects) without every test having to set them.
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
         alert_store=_FakeAlertStore(),
         enrichment_registry=EnrichmentRegistry(),
         llm_client=_FakeLLMClient(),
     )
     defaults.update(overrides)
     return AgenticAnalyst(**defaults)
+
+
+def _all_canned_responses():
+    return {
+        ExtractedIndicators: ExtractedIndicators(candidates=[
+            IndicatorCandidate(type=IndicatorType.IP, value="203.0.113.5")
+        ]),
+        CorrelationDecision: CorrelationDecision(
+            pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.NONE_NEEDED
+        ),
+        OpenValueSearchProposal: OpenValueSearchProposal(search_value="admin"),
+        RiskAssessment: RiskAssessment(
+            severity=Severity.MEDIUM, confidence=Confidence.MEDIUM, rationale="r"
+        ),
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="s", rationale="r",
+            recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=["f"],
+            triage_verdict=TriageVerdict.TRUE_POSITIVE, triage_rationale="tr",
+        ),
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim="s", supported=True),
+            ClaimAudit(claim="r", supported=True),
+            ClaimAudit(claim="Escalate to the incident response / Tier 2 team", supported=True),
+        ]),
+    }
+
+
+def test_risk_assessment_step_records_its_llm_call():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(
+            severity=Severity.HIGH, confidence=Confidence.MEDIUM, rationale="because"
+        )
+    }))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert len(step.llm_calls) == 1
+    assert step.llm_calls[0].prompt_ref == "build_risk_assessment_prompt"
+    assert step.llm_calls[0].prompt_tokens == 11
+
+
+def test_risk_assessment_step_records_the_call_that_failed():
+    error = LLMClientError("timeout", "too slow", call=LLMCallRecord(
+        prompt_ref="build_risk_assessment_prompt", prompt="p", attempts=1,
+        latency_ms=360000, error_kind="timeout",
+    ))
+    analyst = _make_analyst(llm_client=_FakeLLMClient(error=error))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert len(step.llm_calls) == 1
+    assert step.llm_calls[0].error_kind == "timeout"
+    assert step.llm_calls[0].latency_ms == 360000
+    # The existing degrade behaviour is untouched.
+    assert "risk assessment failed" in _assessment.rationale
+
+
+def test_llm_client_error_without_a_record_does_not_break_the_step():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(error=LLMClientError("timeout", "too slow")))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert step.llm_calls == []
+
+
+def test_draft_report_step_records_both_canonical_and_experimental_calls():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="s", rationale="r",
+            recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=["do a thing"],
+            triage_verdict=TriageVerdict.TRUE_POSITIVE, triage_rationale="tr",
+        ),
+    }))
+    alert = _make_alert()
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    _draft, _experimental, step = analyst._step_draft_report(
+        alert, PatternType.NONE, 0, [], risk, model_available=True
+    )
+
+    assert [c.prompt_ref for c in step.llm_calls] == [
+        "build_draft_canonical_prompt", "build_draft_experimental_prompt"
+    ]
+
+
+def test_steps_without_a_model_call_record_no_llm_calls():
+    analyst = _make_analyst()
+    alert = _make_alert()
+
+    step = analyst._step_ingest_and_parse(alert, model_available=True)
+
+    assert step.llm_calls == []
 
 
 def test_step_ingest_and_parse_records_model_available_true():
@@ -254,6 +383,9 @@ def test_step_extract_indicators_merges_llm_candidates_with_regex_results():
     values = {i.value for i in indicators}
     assert values == {"203.0.113.5", "evil.test"}
     assert "LLM: 1 candidates, 1 validated" in step.output_summary
+    # Mutation-tested: deleting `llm_calls=llm_calls` in _step_extract_indicators
+    # drops this to 0 without any other test noticing.
+    assert len(step.llm_calls) == 1
 
 
 def test_step_extract_indicators_discards_invalid_llm_candidates():
@@ -500,6 +632,35 @@ def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
     assert "same_src_ip_24h" in step.output_summary
 
 
+def test_step_correlate_records_follow_up_in_typed_output():
+    """Spec §2's correlate output table requires `follow_up: {...} | null` — the
+    template, value and hit count must be typed, not only inside the frozen
+    output_summary prose."""
+    siem = _FakeSIEMConnector(
+        search_results={
+            "data.srcip": SearchResult(alerts=[], total_count=14),
+            "rule.id": SearchResult(alerts=[], total_count=14),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.SAME_SRC_IP_24H
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
+
+    assert step.output["follow_up"] == {
+        "template": "same_src_ip_24h", "value": "203.0.113.5", "hit_count": 14,
+    }
+    assert step.output["open_value"] is None
+
+
 def test_step_correlate_skips_follow_up_when_none_needed():
     siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     llm_client = _FakeLLMClient(
@@ -520,6 +681,8 @@ def test_step_correlate_skips_follow_up_when_none_needed():
     assert pattern_type == PatternType.BRUTE_FORCE
     assert evidence_count == 1
     assert len(siem.search_calls) == 1  # only the one canonical search — no follow-up executed
+    assert step.output["follow_up"] is None
+    assert step.output["open_value"] is None
 
 
 def test_step_correlate_falls_back_to_other_when_classification_call_fails():
@@ -561,6 +724,12 @@ def test_step_correlate_runs_open_value_search_when_pattern_is_none():
     full_log_calls = [c for c in siem.search_calls if c.clauses[0].field == "full_log"]
     assert len(full_log_calls) == 1
     assert full_log_calls[0].clauses[0].operator == "contains"
+    assert step.output["open_value"] == {"search_value": "admin@evil.test", "hit_count": 3}
+    # Two LLM calls: the classification call plus the open-value proposal call.
+    # Mutation-tested: deleting `calls += open_value_calls` in _step_correlate drops
+    # this to 1 without any other test noticing.
+    assert len(step.llm_calls) == 2
+    assert step.output["follow_up"] is None
 
 
 def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
@@ -587,10 +756,13 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
         def __init__(self):
             self.calls = 0
 
-        def generate_structured(self, prompt, schema):
+        def generate_structured(self, prompt, schema, prompt_ref):
             self.calls += 1
             if schema is CorrelationDecision:
-                return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+                return LLMResponse(
+                    value=CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED),
+                    call=_fake_call(prompt, prompt_ref),
+                )
             raise LLMClientError("timeout", "took too long")
 
         def health_check(self):
@@ -640,8 +812,9 @@ def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
     canonical_results = {}
 
     with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
-        result = analyst._run_open_value_search(alert, canonical_results)
+        result, output, _calls = analyst._run_open_value_search(alert, canonical_results)
 
+    assert output == {"search_value": "admin@evil.test", "hit_count": 5}
     assert "_run_open_value_search prompt" in caplog.text
     assert "_run_open_value_search result" in caplog.text
     assert "_run_open_value_search: SIEM search for" in caplog.text
@@ -758,15 +931,21 @@ def test_step_draft_report_returns_canonical_and_experimental_drafts():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert()
     risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    enrichment_results = [_make_enrichment_result()]
 
     draft, experimental, step = analyst._step_draft_report(
-        alert, PatternType.BRUTE_FORCE, 14, [], risk_assessment, model_available=True
+        alert, PatternType.BRUTE_FORCE, 14, enrichment_results, risk_assessment, model_available=True
     )
 
     assert draft == draft_canonical
     assert experimental == draft_experimental
     assert step.step_name == Step.DRAFT_REPORT.value
     assert step.action == "completed"
+    # Spec §2: draft_report's input is "same shape as risk_assessment, plus
+    # {severity, confidence}" — both drafts consume enrichment results and the
+    # gated raw log, so the record must show what the step actually consumed.
+    assert step.input["enrichment_verdicts"] == [enrichment_results[0].verdict.value]
+    assert step.input["has_raw_log"] is True  # _make_alert() has no typed fields
 
 
 def test_step_draft_report_falls_back_when_canonical_call_fails():
@@ -798,6 +977,8 @@ def test_step_draft_report_skips_when_model_unavailable():
     assert draft.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
     assert experimental is None
     assert step.action == "skipped"
+    assert step.input["enrichment_verdicts"] == []
+    assert step.input["has_raw_log"] is True  # _make_alert() has no typed fields
 
 
 def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
@@ -894,6 +1075,9 @@ def test_step_self_check_keeps_all_claims_when_all_supported():
         "no MITRE ATT&CK mapping available for this alert"
     )
     assert step.action == "completed"
+    # Mutation-tested: deleting `llm_calls=calls` in _step_self_check's completed
+    # branch drops this to 0 without any other test noticing.
+    assert len(step.llm_calls) == 1
 
 
 def test_step_self_check_applies_correction_to_unsupported_free_text_claim():
@@ -1063,6 +1247,42 @@ def test_step_self_check_notes_unused_correlation_menu():
     )
 
     assert "correlation follow-up/open-value search menu was not used" in notes
+
+
+def test_step_self_check_reads_typed_follow_up_output_not_output_summary_prose():
+    """_compute_uncertainty_notes must read the typed follow_up/open_value keys, not
+    substring-sniff output_summary — this is the point of correlate's typed-output
+    fix (finding #3): the frozen prose and the typed facts must be decoupled."""
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    correlate_step = InvestigationStep(
+        step_name=Step.CORRELATE.value, action="completed", tool_used="siem_connector+llm", input=None,
+        # Deliberately no "follow-up"/"open-value search" text in the summary, so a
+        # substring-based check would (wrongly) call the menu unused.
+        output_summary="pattern_type=brute_force, evidence_count=14",
+        output={
+            "follow_up": {"template": "same_src_ip_24h", "value": "203.0.113.5", "hit_count": 14},
+            "open_value": None,
+        },
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        correlate_step, model_available=True,
+    )
+
+    assert "correlation follow-up/open-value search menu was not used" not in notes
 
 
 def test_step_self_check_notes_missing_mitre_mapping():
@@ -1261,10 +1481,30 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     ]
     assert report.triage_verdict_experimental == "true_positive"
     assert report.model_metadata.model_name == "fake-model:test"
-    assert report.model_metadata.prompt_version == "4d-v1"
+    assert report.model_metadata.prompt_version == "4e-v1"
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
+    # Absolute list, not just a count: the rollup-only check (report.llm_usage.calls
+    # == len(recorded)) is self-referential and stays green even if a step silently
+    # stops attaching its llm_calls, because both sides fall to zero together.
+    recorded = [c.prompt_ref for s in report.investigation_timeline for c in s.llm_calls]
+    assert recorded == [
+        "build_extract_indicators_prompt",
+        "build_correlation_decision_prompt",
+        "build_risk_assessment_prompt",
+        "build_draft_canonical_prompt",
+        "build_draft_experimental_prompt",
+        "build_self_check_prompt",
+    ]
+
+
+def test_report_records_the_current_prompt_version():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    assert report.model_metadata.prompt_version == "4e-v1"
 
 
 def test_investigate_degrades_gracefully_when_model_unavailable(tmp_path):
@@ -1438,6 +1678,65 @@ def test_investigate_handles_multiple_simultaneous_degradations(tmp_path):
     assert finalize_step.action == "completed"
 
 
+def test_saved_report_includes_the_finalize_step():
+    store = _FakeAlertStore()
+    analyst = _make_analyst(alert_store=store, llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    saved = store.reports[0]
+    assert [s.step_name for s in saved.investigation_timeline][-1] == "finalize_and_persist"
+    assert len(saved.investigation_timeline) == len(report.investigation_timeline)
+
+
+def test_finalize_step_is_marked_degraded_when_persistence_fails():
+    class _FailingStore(_FakeAlertStore):
+        def save_report(self, report):
+            raise RuntimeError("disk full")
+
+    analyst = _make_analyst(alert_store=_FailingStore(), llm_client=_FakeLLMClient(model_available=False))
+
+    report = analyst.investigate(_make_alert())
+
+    last = report.investigation_timeline[-1]
+    assert last.action == "degraded"
+    assert last.output == {"persisted": False}
+    assert "disk full" in last.output_summary
+    # Exactly one finalize step — the optimistic entry is replaced, not appended to.
+    assert sum(1 for s in report.investigation_timeline if s.step_name == "finalize_and_persist") == 1
+
+
+def test_saved_report_in_database_includes_finalize_step(tmp_path):
+    """Regression test: the finalize step must be in the database, not just the returned report.
+
+    Uses SQLiteAlertStore which genuinely serialises/deserialises at save time, so this
+    test catches the bug where save_report() was called before the step was appended.
+    """
+    engine = get_engine(str(tmp_path / "test.db"))
+    init_db(engine)
+    alert_store = SQLiteAlertStore(engine)
+    alert = _make_alert(full_log="nothing interesting here")
+    alert_store.save_raw_alert(alert)
+
+    analyst = AgenticAnalyst(
+        siem=_FakeSIEMConnector(
+            agent_context=AgentContext(id="001", name="web-01", ip="10.0.0.5", status="active"),
+            rule_metadata=RuleMetadata(rule_id="5710", description="x", level=5),
+        ),
+        alert_store=alert_store,
+        enrichment_registry=EnrichmentRegistry(),
+        llm_client=_FakeLLMClient(model_available=False),
+    )
+
+    report = analyst.investigate(alert)
+
+    # Read back from the database (not the in-memory object)
+    saved = alert_store.get_report(str(report.report_id))
+    assert [s.step_name for s in saved.investigation_timeline][-1] == "finalize_and_persist"
+    assert len(saved.investigation_timeline) == len(report.investigation_timeline)
+    assert len(saved.investigation_timeline) == 9
+
+
 def test_step_gather_context_degrades_marks_investigation_degraded():
     siem = _FakeSIEMConnector(context_error=SIEMConnectorError("unreachable", "connection refused"))
     analyst = _make_analyst(siem=siem)
@@ -1465,14 +1764,14 @@ def test_assemble_report_status_complete_when_nothing_degraded(tmp_path):
     risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
 
     report = analyst._assemble_report(
-        alert, [], [], risk_assessment, draft, None, "", model_available=True,
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
     )
 
     assert report.status == ReportStatus.COMPLETE
     assert report.alert_summary == draft.alert_summary
     assert report.risk_assessment.rationale == draft.rationale
     assert report.recommended_actions == [a.value for a in draft.recommended_actions]
-    assert report.model_metadata.prompt_version == "4d-v1"
+    assert report.model_metadata.prompt_version == "4e-v1"
 
 
 def test_assemble_report_status_needs_human_review_when_degraded():
@@ -1482,7 +1781,9 @@ def test_assemble_report_status_needs_human_review_when_degraded():
     draft = _draft_with_two_actions()
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.status == ReportStatus.NEEDS_HUMAN_REVIEW
 
@@ -1496,7 +1797,9 @@ def test_assemble_report_includes_experimental_fields_when_present():
     )
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, experimental, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, experimental, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.recommended_actions_freeform_experimental == ["do X"]
     assert report.triage_verdict_experimental == "false_positive"
@@ -1516,7 +1819,8 @@ def test_assemble_report_includes_command_analysis_when_present():
     )
 
     report = analyst._assemble_report(
-        alert, [], [], risk_assessment, draft, None, "", model_available=True, command_analysis=command_analysis,
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+        command_analysis=command_analysis,
     )
 
     assert report.command_analysis.decoded_segments[0].decoded == "whoami"
@@ -1528,7 +1832,9 @@ def test_assemble_report_command_analysis_defaults_to_none():
     draft = _draft_with_two_actions()
     risk_assessment = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
 
-    report = analyst._assemble_report(alert, [], [], risk_assessment, draft, None, "", model_available=True)
+    report = analyst._assemble_report(
+        alert, [], [], risk_assessment, draft, None, "", model_available=True, wall_clock_ms=0,
+    )
 
     assert report.command_analysis is None
 
@@ -1874,3 +2180,188 @@ def test_step_correlate_classifies_once_even_when_a_follow_up_runs():
 
     assert pattern_type == PatternType.BRUTE_FORCE
     assert [schema for _, schema in llm_client.calls] == [CorrelationDecision]
+
+
+def test_every_step_records_its_input(_tmp_path=None):
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+    alert = _make_alert()
+
+    report = analyst.investigate(alert)
+
+    for step in report.investigation_timeline:
+        assert step.input is not None, f"{step.step_name} recorded no input"
+
+
+def test_gather_context_records_the_context_it_fetched():
+    siem = _FakeSIEMConnector(
+        agent_context=AgentContext(
+            id="001", name="web-01", ip="10.0.0.5", os_platform="ubuntu", status="active"
+        ),
+        rule_metadata=RuleMetadata(
+            rule_id="5710", description="sshd failure", level=5,
+            groups=["syslog", "sshd"], mitre_technique_ids=["T1110"],
+        ),
+    )
+    analyst = _make_analyst(siem=siem)
+    alert = _make_alert()
+
+    _agent_context, _rule_metadata, step = analyst._step_gather_context(alert)
+
+    assert step.output["agent_context"]["os_platform"] == "ubuntu"
+    assert step.output["rule_metadata"]["mitre_technique_ids"] == ["T1110"]
+
+
+def test_gather_context_records_null_output_when_the_siem_is_unavailable():
+    siem = _FakeSIEMConnector(context_error=SIEMConnectorError("timeout", "gone"))
+    analyst = _make_analyst(siem=siem)
+
+    _agent_context, _rule_metadata, step = analyst._step_gather_context(_make_alert())
+
+    assert step.output == {"agent_context": None, "rule_metadata": None}
+    assert step.action == "degraded"
+
+
+def test_extract_indicators_records_the_indicators_it_validated():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(model_available=False))
+    alert = _make_alert(full_log="Invalid user admin from 203.0.113.5")
+
+    _indicators, _decode, step = analyst._step_extract_indicators(alert, model_available=False)
+
+    assert {"type": "ip", "value": "203.0.113.5"} in step.output["indicators"]
+    assert step.output["regex"]["validated"] >= 1
+
+
+def test_risk_assessment_records_its_typed_output():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(
+            severity=Severity.HIGH, confidence=Confidence.MEDIUM, rationale="because"
+        )
+    }))
+
+    _assessment, step = analyst._step_risk_assessment(
+        _make_alert(), PatternType.BRUTE_FORCE, 12, [], model_available=True
+    )
+
+    assert step.input["pattern_type"] == "brute_force"
+    assert step.input["evidence_count"] == 12
+    assert step.output == {
+        "severity": "high", "confidence": "medium", "rationale": "because"
+    }
+
+
+def test_output_summary_wording_is_unchanged_for_the_self_check_step():
+    """bench/score.py and bench/analyze.py regex this string; it must not drift."""
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim="a", supported=True),
+            ClaimAudit(claim="b", supported=True),
+            ClaimAudit(claim="c", supported=False, correction=None),
+        ])
+    }))
+    draft = DraftReportCanonical(
+        alert_summary="a", rationale="b",
+        recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+    )
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+    correlate_step = InvestigationStep(
+        step_name="correlate", action="completed", output_summary="pattern_type=none",
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    _draft, _notes, step = analyst._step_self_check(
+        _make_alert(), draft, PatternType.NONE, 0, [], risk, correlate_step,
+        model_available=True,
+    )
+
+    assert step.output_summary == "audited 3 claim(s), 1 flagged"
+
+
+def test_report_rolls_up_llm_usage_across_the_timeline():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses=_all_canned_responses()))
+    alert = _make_alert()
+
+    report = analyst.investigate(alert)
+
+    recorded = [c for s in report.investigation_timeline for c in s.llm_calls]
+    assert report.llm_usage.calls == len(recorded)
+    assert report.llm_usage.prompt_tokens == sum(c.prompt_tokens for c in recorded)
+    assert report.llm_usage.llm_latency_ms == sum(c.latency_ms for c in recorded)
+    # wall_clock_ms >= llm_latency_ms is a real invariant, but a fake client reports
+    # latency it never spent, so it cannot exercise that here — verified against a
+    # live investigate-one run instead (plan Task 9).
+
+
+def test_llm_usage_sums_reasoning_characters():
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning="four"),
+            LLMCallRecord(prompt_ref="b", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2, reasoning=None),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.reasoning_chars == 4
+    # The gap this field exists to expose: 4 completion tokens reported against a
+    # reasoning trace that usage never counted.
+    assert totals.completion_tokens == 4
+
+
+def test_llm_usage_tokens_are_none_when_any_call_lacks_them():
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=2),
+            LLMCallRecord(prompt_ref="b", prompt="p", attempts=1, latency_ms=5),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.calls == 2
+    assert totals.prompt_tokens is None
+    assert totals.llm_latency_ms == 10
+
+
+def test_llm_usage_counts_failed_calls_separately():
+    step = InvestigationStep(
+        step_name="self_check", action="degraded", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=2, latency_ms=360000,
+                          error_kind="timeout", prompt_tokens=0, completion_tokens=0),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=400000)
+
+    assert totals.calls == 1
+    assert totals.failed_calls == 1
+    assert totals.attempts == 2
+
+
+def test_roll_up_usage_does_not_crash_when_one_token_field_is_partially_measured():
+    """LLMClient is a swappable Protocol and LLMCallRecord lets prompt_tokens and
+    completion_tokens vary independently, even though _CallTally keeps OllamaClient's
+    own records in lockstep. A record with prompt_tokens set and completion_tokens
+    None (or vice versa) must roll up to None for that field, not crash the whole
+    report assembly with `int + NoneType`."""
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=None),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.prompt_tokens == 10
+    assert totals.completion_tokens is None

@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
@@ -6,7 +7,7 @@ from uuid import uuid4
 from pydantic import ValidationError
 
 from app.agent.command_decode import decode_command_segments
-from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries
+from app.agent.correlation_queries import CANONICAL_SEARCH_WINDOW, build_canonical_queries, distinct_value_counts
 from app.agent.indicator_extraction import extract_and_validate
 from app.agent.prompts import (
     build_correlation_decision_prompt,
@@ -33,7 +34,7 @@ from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchClause, SearchQuery, SearchResult
 from app.integration.siem_connector import SIEMConnector
-from app.llm.client import LLMClient
+from app.llm.client import LLMCallRecord, LLMClient
 from app.llm.errors import LLMClientError
 from app.schemas import (
     Alert,
@@ -44,6 +45,7 @@ from app.schemas import (
     EnrichmentVerdict,
     IndicatorType,
     InvestigationStep,
+    LLMUsageTotals,
     ModelMetadata,
     Report,
     ReportStatus,
@@ -71,6 +73,15 @@ def _merge_indicators(regex_validated: list[Indicator], llm_validated: list[Indi
             seen.add(key)
             merged.append(indicator)
     return merged
+
+
+def _records(exc: LLMClientError) -> list[LLMCallRecord]:
+    """The failed call's record, or nothing if the client did not supply one.
+
+    A client that raises without a record is valid (the Protocol does not require it),
+    so this must degrade to an empty list rather than a None in the list.
+    """
+    return [exc.call] if exc.call is not None else []
 
 
 def _lacks_typed_context(alert: Alert) -> bool:
@@ -133,13 +144,35 @@ def _compute_uncertainty_notes(
     if errored_or_unknown:
         gaps.append(f"{len(errored_or_unknown)} enrichment lookup(s) errored or returned unknown verdicts")
 
-    if "follow-up" not in correlate_step.output_summary and "open-value search" not in correlate_step.output_summary:
+    correlate_output = correlate_step.output or {}
+    if correlate_output.get("follow_up") is None and correlate_output.get("open_value") is None:
         gaps.append("correlation follow-up/open-value search menu was not used")
 
     if not alert.mitre:
         gaps.append("no MITRE ATT&CK mapping available for this alert")
 
     return "; ".join(gaps)
+
+
+def _roll_up_usage(timeline: list[InvestigationStep], wall_clock_ms: int) -> LLMUsageTotals:
+    calls = [c for step in timeline for c in step.llm_calls]
+    # Each field is guarded independently: _CallTally keeps prompt_tokens and
+    # completion_tokens in lockstep for OllamaClient, but LLMClient is a swappable
+    # Protocol and LLMCallRecord lets the two vary independently, so a record with
+    # one set and the other None must not crash the rollup with `int + NoneType`.
+    # (`all([])` is True, so an empty timeline correctly yields 0, not None.)
+    prompt_known = all(c.prompt_tokens is not None for c in calls)
+    completion_known = all(c.completion_tokens is not None for c in calls)
+    return LLMUsageTotals(
+        calls=len(calls),
+        failed_calls=sum(1 for c in calls if c.error_kind is not None),
+        attempts=sum(c.attempts for c in calls),
+        prompt_tokens=sum(c.prompt_tokens for c in calls) if prompt_known else None,
+        completion_tokens=sum(c.completion_tokens for c in calls) if completion_known else None,
+        reasoning_chars=sum(len(c.reasoning or "") for c in calls),
+        llm_latency_ms=sum(c.latency_ms for c in calls),
+        wall_clock_ms=wall_clock_ms,
+    )
 
 
 def _claims_for(draft: DraftReportCanonical) -> list[str]:
@@ -219,7 +252,13 @@ class AgenticAnalyst:
             step_name=Step.INGEST_AND_PARSE.value,
             action="completed",
             tool_used=None,
-            input=None,
+            input={
+                "alert_id": str(alert.alert_id),
+                "rule_id": alert.rule_id,
+                "rule_level": alert.rule_level,
+                "model_available": model_available,
+            },
+            output={},
             output_summary=f"alert {alert.alert_id} ingested; model available: {model_available}",
             timestamp=datetime.now(timezone.utc),
         )
@@ -248,7 +287,22 @@ class AgenticAnalyst:
                 step_name=Step.EXTRACT_INDICATORS.value,
                 action="completed",
                 tool_used="regex_extraction",
-                input=None,
+                input={
+                    "full_log_chars": len(alert.full_log),
+                    "data_keys": sorted(alert.data),
+                    "extra_texts_count": len(extra_texts),
+                },
+                output={
+                    "regex": {"candidates": candidate_count, "validated": validated_count},
+                    "llm": {"candidates": 0, "validated": 0},
+                    "decode": {
+                        "segments": len(command_decode_result.decoded_segments) if command_decode_result else 0,
+                        "discarded": decode_discarded,
+                    },
+                    "indicators": [
+                        {"type": i.indicator_type.value, "value": i.value} for i in validated
+                    ],
+                },
                 output_summary=(
                     f"regex: {candidate_count} candidates, {validated_count} validated{decode_note} "
                     "(LLM-assisted extraction skipped: model unavailable)"
@@ -261,7 +315,7 @@ class AgenticAnalyst:
             )
             return validated, command_decode_result, step
 
-        llm_validated, llm_candidate_count, llm_validated_count, llm_error = self._extract_indicators_via_llm(
+        llm_validated, llm_candidate_count, llm_validated_count, llm_error, llm_calls = self._extract_indicators_via_llm(
             alert, extra_texts
         )
         merged = _merge_indicators(validated, llm_validated)
@@ -282,8 +336,24 @@ class AgenticAnalyst:
             step_name=Step.EXTRACT_INDICATORS.value,
             action="completed",
             tool_used="regex_extraction+llm_extraction",
-            input=None,
+            input={
+                "full_log_chars": len(alert.full_log),
+                "data_keys": sorted(alert.data),
+                "extra_texts_count": len(extra_texts),
+            },
+            output={
+                "regex": {"candidates": candidate_count, "validated": validated_count},
+                "llm": {"candidates": llm_candidate_count, "validated": llm_validated_count},
+                "decode": {
+                    "segments": len(command_decode_result.decoded_segments) if command_decode_result else 0,
+                    "discarded": decode_discarded,
+                },
+                "indicators": [
+                    {"type": i.indicator_type.value, "value": i.value} for i in merged
+                ],
+            },
             output_summary=summary,
+            llm_calls=llm_calls,
             timestamp=datetime.now(timezone.utc),
         )
         logger.debug(
@@ -294,14 +364,17 @@ class AgenticAnalyst:
 
     def _extract_indicators_via_llm(
         self, alert: Alert, extra_texts: list[str] | None = None
-    ) -> tuple[list[Indicator], int, int, str | None]:
+    ) -> tuple[list[Indicator], int, int, str | None, list[LLMCallRecord]]:
         prompt = build_extract_indicators_prompt(alert, extra_texts)
         logger.debug("_extract_indicators_via_llm prompt: %s", prompt)
         try:
-            result = self._llm_client.generate_structured(prompt, ExtractedIndicators)
+            response = self._llm_client.generate_structured(
+                prompt, ExtractedIndicators, "build_extract_indicators_prompt"
+            )
         except LLMClientError as exc:
             logger.debug("_extract_indicators_via_llm failed: %s", exc.kind)
-            return [], 0, 0, exc.kind
+            return [], 0, 0, exc.kind, _records(exc)
+        result = response.value
         logger.debug("_extract_indicators_via_llm result: %s", result.model_dump_json())
 
         validated: list[Indicator] = []
@@ -313,7 +386,7 @@ class AgenticAnalyst:
                 validated.append(validator_cls(value=candidate.value))
             except ValidationError:
                 continue
-        return validated, len(result.candidates), len(validated), None
+        return validated, len(result.candidates), len(validated), None, [response.call]
 
     def _step_enrich(self, indicators: list[Indicator]) -> tuple[list[EnrichmentResult], InvestigationStep]:
         logger.debug(
@@ -325,7 +398,8 @@ class AgenticAnalyst:
                 step_name=Step.ENRICH.value,
                 action="skipped",
                 tool_used=None,
-                input=None,
+                input={"indicators": []},
+                output={"results": []},
                 output_summary="skipped: no validated indicators to enrich",
                 timestamp=datetime.now(timezone.utc),
             )
@@ -354,7 +428,17 @@ class AgenticAnalyst:
             step_name=Step.ENRICH.value,
             action="completed",
             tool_used="enrichment_registry",
-            input=None,
+            input={"indicators": [
+                {"type": i.indicator_type.value, "value": i.value} for i in indicators
+            ]},
+            output={"results": [
+                {
+                    "type": r.indicator_type.value, "value": r.indicator_value,
+                    "provider_id": r.provider_id, "verdict": r.verdict.value,
+                    "score": r.score, "error": r.error,
+                }
+                for r in results
+            ]},
             output_summary=f"enriched {len(results)} indicator(s)",
             timestamp=datetime.now(timezone.utc),
         )
@@ -374,7 +458,8 @@ class AgenticAnalyst:
                 step_name=Step.GATHER_CONTEXT.value,
                 action="degraded",
                 tool_used="siem_connector",
-                input=None,
+                input={"agent_id": alert.agent.id, "rule_id": alert.rule_id},
+                output={"agent_context": None, "rule_metadata": None},
                 output_summary=f"could not gather host/rule context: {exc.kind}",
                 timestamp=datetime.now(timezone.utc),
             )
@@ -385,7 +470,11 @@ class AgenticAnalyst:
             step_name=Step.GATHER_CONTEXT.value,
             action="completed",
             tool_used="siem_connector",
-            input=None,
+            input={"agent_id": alert.agent.id, "rule_id": alert.rule_id},
+            output={
+                "agent_context": agent_context.model_dump(mode="json"),
+                "rule_metadata": rule_metadata.model_dump(mode="json"),
+            },
             output_summary=f"gathered context for agent {alert.agent.id}, rule {alert.rule_id}",
             timestamp=datetime.now(timezone.utc),
         )
@@ -428,7 +517,27 @@ class AgenticAnalyst:
                 step_name=Step.CORRELATE.value,
                 action="completed",
                 tool_used="siem_connector",
-                input=None,
+                input={
+                    "templates_built": sorted(t.value for t, q in queries.items() if q is not None),
+                    "enrichment_verdicts": [
+                        {"value": e.indicator_value, "verdict": e.verdict.value}
+                        for e in enrichment_results
+                    ],
+                },
+                output={
+                    "canonical": {
+                        t.value: {
+                            "total_count": r.total_count,
+                            "distinct_counts": distinct_value_counts(r.alerts),
+                        }
+                        for t, r in results.items()
+                    },
+                    "pattern_type": PatternType.OTHER.value,
+                    "follow_up": None,
+                    "open_value": None,
+                    "evidence_count": evidence_count,
+                    "failed_searches": failed_count,
+                },
                 output_summary=(
                     f"ran {len(results)} canonical search(es), {evidence_count} total evidence"
                     f"{failed_note} (classification skipped: model unavailable)"
@@ -441,34 +550,70 @@ class AgenticAnalyst:
             )
             return PatternType.OTHER, evidence_count, step
 
-        decision = self._classify_correlation(alert, results, evidence_count, enrichment_results)
+        decision, calls = self._classify_correlation(alert, results, evidence_count, enrichment_results)
         pattern_type = decision.pattern_type
 
         follow_up_note = ""
+        follow_up_output: dict[str, object] | None = None
         if decision.follow_up_query != SearchTemplate.NONE_NEEDED:
             follow_up_query = queries.get(decision.follow_up_query)
             if follow_up_query is not None:
+                # SearchQuery.clauses has min_length=1, so [0] always exists.
+                follow_up_value = follow_up_query.clauses[0].value
                 try:
                     follow_up_result = self._siem.search(follow_up_query)
                     evidence_count += follow_up_result.total_count
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
+                    follow_up_output = {
+                        "template": decision.follow_up_query.value,
+                        "value": follow_up_value,
+                        "hit_count": follow_up_result.total_count,
+                    }
                 except SIEMConnectorError:
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} failed"
                     self._degraded_reasons.append(f"correlation follow-up {decision.follow_up_query.value} failed")
+                    follow_up_output = {
+                        "template": decision.follow_up_query.value,
+                        "value": follow_up_value,
+                        "hit_count": None,
+                    }
 
         open_value_note = ""
+        open_value_output: dict[str, object] | None = None
         if pattern_type in (PatternType.NONE, PatternType.OTHER):
-            open_value_note = self._run_open_value_search(alert, results)
+            open_value_note, open_value_output, open_value_calls = self._run_open_value_search(alert, results)
+            calls += open_value_calls
 
         step = InvestigationStep(
             step_name=Step.CORRELATE.value,
             action="completed",
             tool_used="siem_connector+llm",
-            input=None,
+            input={
+                "templates_built": sorted(t.value for t, q in queries.items() if q is not None),
+                "enrichment_verdicts": [
+                    {"value": e.indicator_value, "verdict": e.verdict.value}
+                    for e in enrichment_results
+                ],
+            },
+            output={
+                "canonical": {
+                    t.value: {
+                        "total_count": r.total_count,
+                        "distinct_counts": distinct_value_counts(r.alerts),
+                    }
+                    for t, r in results.items()
+                },
+                "pattern_type": pattern_type.value,
+                "follow_up": follow_up_output,
+                "open_value": open_value_output,
+                "evidence_count": evidence_count,
+                "failed_searches": failed_count,
+            },
             output_summary=(
                 f"pattern_type={pattern_type.value}, evidence_count={evidence_count}"
                 f"{failed_note}{follow_up_note}{open_value_note}"
             ),
+            llm_calls=calls,
             timestamp=datetime.now(timezone.utc),
         )
         logger.debug(
@@ -480,28 +625,33 @@ class AgenticAnalyst:
     def _classify_correlation(
         self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult], evidence_count: int,
         enrichment_results: list[EnrichmentResult],
-    ) -> CorrelationDecision:
+    ) -> tuple[CorrelationDecision, list[LLMCallRecord]]:
         prompt = build_correlation_decision_prompt(alert, canonical_results, evidence_count, enrichment_results)
         logger.debug("_classify_correlation prompt: %s", prompt)
         try:
-            decision = self._llm_client.generate_structured(prompt, CorrelationDecision)
+            response = self._llm_client.generate_structured(
+                prompt, CorrelationDecision, "build_correlation_decision_prompt"
+            )
         except LLMClientError as exc:
             self._degraded_reasons.append(f"correlation classification failed: {exc.kind}")
             logger.debug("_classify_correlation failed: %s, falling back to OTHER/NONE_NEEDED", exc.kind)
-            return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
-        logger.debug("_classify_correlation result: %s", decision.model_dump_json())
-        return decision
+            return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED), _records(exc)
+        logger.debug("_classify_correlation result: %s", response.value.model_dump_json())
+        return response.value, [response.call]
 
     def _run_open_value_search(
         self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult]
-    ) -> str:
+    ) -> tuple[str, dict[str, object] | None, list[LLMCallRecord]]:
         prompt = build_open_value_search_prompt(alert, canonical_results)
         logger.debug("_run_open_value_search prompt: %s", prompt)
         try:
-            proposal = self._llm_client.generate_structured(prompt, OpenValueSearchProposal)
-        except LLMClientError:
+            response = self._llm_client.generate_structured(
+                prompt, OpenValueSearchProposal, "build_open_value_search_prompt"
+            )
+        except LLMClientError as exc:
             logger.debug("_run_open_value_search: proposal call failed, skipping")
-            return ""
+            return "", None, _records(exc)
+        proposal = response.value
         logger.debug("_run_open_value_search result: %s", proposal.model_dump_json())
 
         query = SearchQuery(
@@ -512,14 +662,20 @@ class AgenticAnalyst:
             result = self._siem.search(query)
         except SIEMConnectorError:
             logger.debug("_run_open_value_search: SIEM search failed for value %r", proposal.search_value)
-            return f"; open-value search for {proposal.search_value!r} failed"
+            return (
+                f"; open-value search for {proposal.search_value!r} failed",
+                {"search_value": proposal.search_value, "hit_count": None},
+                [response.call],
+            )
         logger.debug(
             "_run_open_value_search: SIEM search for %r found %s result(s)",
             proposal.search_value, result.total_count,
         )
         return (
             f"; open-value search for {proposal.search_value!r} found {result.total_count} "
-            "(noisier, unstructured match)"
+            "(noisier, unstructured match)",
+            {"search_value": proposal.search_value, "hit_count": result.total_count},
+            [response.call],
         )
 
     def _step_risk_assessment(
@@ -537,16 +693,33 @@ class AgenticAnalyst:
                 rationale="risk assessment skipped: model unavailable",
             )
             step = InvestigationStep(
-                step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.RISK_ASSESSMENT.value, action="skipped", tool_used=None,
+                input={
+                    "pattern_type": pattern_type.value,
+                    "evidence_count": evidence_count,
+                    "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                    "has_command_context": command_context is not None,
+                    "has_raw_log": _context_raw_log(alert) is not None,
+                },
+                output=assessment.model_dump(mode="json"),
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_risk_assessment output: skipped: %s", assessment.model_dump_json())
             return assessment, step
 
-        assessment = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results, command_context)
+        assessment, calls = self._assess_risk(alert, pattern_type, evidence_count, enrichment_results, command_context)
         step = InvestigationStep(
-            step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm", input=None,
+            step_name=Step.RISK_ASSESSMENT.value, action="completed", tool_used="llm",
+            input={
+                "pattern_type": pattern_type.value,
+                "evidence_count": evidence_count,
+                "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                "has_command_context": command_context is not None,
+                "has_raw_log": _context_raw_log(alert) is not None,
+            },
+            output=assessment.model_dump(mode="json"),
             output_summary=f"severity={assessment.severity.value}, confidence={assessment.confidence.value}",
+            llm_calls=calls,
             timestamp=datetime.now(timezone.utc),
         )
         logger.debug("_step_risk_assessment output: %s", assessment.model_dump_json())
@@ -555,22 +728,22 @@ class AgenticAnalyst:
     def _assess_risk(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], command_context: CommandDecodeResult | None = None,
-    ) -> RiskAssessment:
+    ) -> tuple[RiskAssessment, list[LLMCallRecord]]:
         prompt = build_risk_assessment_prompt(
             alert, pattern_type, evidence_count, enrichment_results, command_context, _context_raw_log(alert)
         )
         logger.debug("_assess_risk prompt: %s", prompt)
         try:
-            assessment = self._llm_client.generate_structured(prompt, RiskAssessment)
+            response = self._llm_client.generate_structured(prompt, RiskAssessment, "build_risk_assessment_prompt")
         except LLMClientError as exc:
             self._degraded_reasons.append(f"risk assessment failed: {exc.kind}")
             logger.debug("_assess_risk failed: %s", exc.kind)
             return RiskAssessment(
                 severity=Severity.LOW, confidence=Confidence.LOW,
                 rationale=f"risk assessment failed: {exc.kind}",
-            )
-        logger.debug("_assess_risk result: %s", assessment.model_dump_json())
-        return assessment
+            ), _records(exc)
+        logger.debug("_assess_risk result: %s", response.value.model_dump_json())
+        return response.value, [response.call]
 
     def _step_draft_report(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
@@ -592,17 +765,30 @@ class AgenticAnalyst:
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
             )
             step = InvestigationStep(
-                step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.DRAFT_REPORT.value, action="skipped", tool_used=None,
+                input={
+                    "pattern_type": pattern_type.value,
+                    "evidence_count": evidence_count,
+                    "severity": risk_assessment.severity.value,
+                    "confidence": risk_assessment.confidence.value,
+                    "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                    "has_command_context": command_context is not None,
+                    "has_raw_log": _context_raw_log(alert) is not None,
+                },
+                output={
+                    "canonical": draft.model_dump(mode="json"),
+                    "experimental": None,
+                },
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_draft_report output: skipped: %s", draft.model_dump_json())
             return draft, None, step
 
-        draft = self._draft_canonical(
+        draft, canonical_calls = self._draft_canonical(
             alert, pattern_type, evidence_count, enrichment_results, risk_assessment, fallback_summary,
             command_context,
         )
-        experimental = self._draft_experimental(
+        experimental, experimental_calls = self._draft_experimental(
             alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context
         )
         summary = f"draft-A: {len(draft.recommended_actions)} action(s) selected"
@@ -611,8 +797,22 @@ class AgenticAnalyst:
             else f"; draft-B: experimental triage={experimental.triage_verdict.value}"
         )
         step = InvestigationStep(
-            step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm", input=None,
-            output_summary=summary, timestamp=datetime.now(timezone.utc),
+            step_name=Step.DRAFT_REPORT.value, action="completed", tool_used="llm",
+            input={
+                "pattern_type": pattern_type.value,
+                "evidence_count": evidence_count,
+                "severity": risk_assessment.severity.value,
+                "confidence": risk_assessment.confidence.value,
+                "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
+                "has_command_context": command_context is not None,
+                "has_raw_log": _context_raw_log(alert) is not None,
+            },
+            output={
+                "canonical": draft.model_dump(mode="json"),
+                "experimental": experimental.model_dump(mode="json") if experimental else None,
+            },
+            output_summary=summary, llm_calls=canonical_calls + experimental_calls,
+            timestamp=datetime.now(timezone.utc),
         )
         logger.debug(
             "_step_draft_report output: draft=%s, experimental=%s",
@@ -624,13 +824,13 @@ class AgenticAnalyst:
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment, fallback_summary: str,
         command_context: CommandDecodeResult | None = None,
-    ) -> DraftReportCanonical:
+    ) -> tuple[DraftReportCanonical, list[LLMCallRecord]]:
         prompt = build_draft_canonical_prompt(
             alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context, _context_raw_log(alert)
         )
         logger.debug("_draft_canonical prompt: %s", prompt)
         try:
-            draft = self._llm_client.generate_structured(prompt, DraftReportCanonical)
+            response = self._llm_client.generate_structured(prompt, DraftReportCanonical, "build_draft_canonical_prompt")
         except LLMClientError as exc:
             self._degraded_reasons.append(f"draft report failed: {exc.kind}")
             logger.debug("_draft_canonical failed: %s", exc.kind)
@@ -638,26 +838,28 @@ class AgenticAnalyst:
                 alert_summary=fallback_summary,
                 rationale=risk_assessment.rationale,
                 recommended_actions=[RecommendedAction.ESCALATE_TO_HUMAN_ANALYST],
-            )
-        logger.debug("_draft_canonical result: %s", draft.model_dump_json())
-        return draft
+            ), _records(exc)
+        logger.debug("_draft_canonical result: %s", response.value.model_dump_json())
+        return response.value, [response.call]
 
     def _draft_experimental(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
         command_context: CommandDecodeResult | None = None,
-    ) -> DraftReportExperimental | None:
+    ) -> tuple[DraftReportExperimental | None, list[LLMCallRecord]]:
         prompt = build_draft_experimental_prompt(
             alert, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context, _context_raw_log(alert)
         )
         logger.debug("_draft_experimental prompt: %s", prompt)
         try:
-            experimental = self._llm_client.generate_structured(prompt, DraftReportExperimental)
-        except LLMClientError:
+            response = self._llm_client.generate_structured(
+                prompt, DraftReportExperimental, "build_draft_experimental_prompt"
+            )
+        except LLMClientError as exc:
             logger.debug("_draft_experimental failed")
-            return None
-        logger.debug("_draft_experimental result: %s", experimental.model_dump_json())
-        return experimental
+            return None, _records(exc)
+        logger.debug("_draft_experimental result: %s", response.value.model_dump_json())
+        return response.value, [response.call]
 
     def _step_self_check(
         self, alert: Alert, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
@@ -670,21 +872,26 @@ class AgenticAnalyst:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = "self-check skipped: model unavailable" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None, input=None,
+                step_name=Step.SELF_CHECK.value, action="skipped", tool_used=None,
+                input={"claims": _claims_for(draft)},
+                output={"audits": [], "flagged_claims": [], "corrections_applied": False},
                 output_summary="skipped: model unavailable", timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_self_check output: skipped, draft unchanged, notes=%r", notes)
             return draft, notes, step
 
-        result, failure_kind = self._run_self_check(
+        result, failure_kind, calls = self._run_self_check(
             draft, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context, _context_raw_log(alert)
         )
         if result is None:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = f"self-check could not run: {failure_kind}" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
-                output_summary="self-check call failed; corrections not applied", timestamp=datetime.now(timezone.utc),
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm",
+                input={"claims": _claims_for(draft)},
+                output={"audits": [], "flagged_claims": [], "corrections_applied": False},
+                output_summary="self-check call failed; corrections not applied", llm_calls=calls,
+                timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_self_check output: call failed, draft unchanged, notes=%r", notes)
             return draft, notes, step
@@ -695,8 +902,15 @@ class AgenticAnalyst:
             notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, [])
             notes = "self-check audit count did not match claim count; corrections not applied" + (f"; {notes}" if notes else "")
             step = InvestigationStep(
-                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm", input=None,
+                step_name=Step.SELF_CHECK.value, action="degraded", tool_used="llm",
+                input={"claims": _claims_for(draft)},
+                output={
+                    "audits": [a.model_dump(mode="json") for a in result.audits],
+                    "flagged_claims": [],
+                    "corrections_applied": False,
+                },
                 output_summary=f"self-check returned {len(result.audits)} audit(s) for {len(_claims_for(draft))} claim(s); corrections not applied",
+                llm_calls=calls,
                 timestamp=datetime.now(timezone.utc),
             )
             logger.debug(
@@ -710,8 +924,15 @@ class AgenticAnalyst:
             self._degraded_reasons.append(f"self-check flagged {len(flagged_claims)} unsupported claim(s)")
         notes = _compute_uncertainty_notes(alert, enrichment_results, correlate_step, flagged_claims)
         step = InvestigationStep(
-            step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm", input=None,
+            step_name=Step.SELF_CHECK.value, action="completed", tool_used="llm",
+            input={"claims": _claims_for(draft)},
+            output={
+                "audits": [a.model_dump(mode="json") for a in result.audits],
+                "flagged_claims": flagged_claims,
+                "corrections_applied": True,
+            },
             output_summary=f"audited {len(result.audits)} claim(s), {len(flagged_claims)} flagged",
+            llm_calls=calls,
             timestamp=datetime.now(timezone.utc),
         )
         logger.debug(
@@ -724,24 +945,25 @@ class AgenticAnalyst:
         self, draft: DraftReportCanonical, pattern_type: PatternType, evidence_count: int,
         enrichment_results: list[EnrichmentResult], risk_assessment: RiskAssessment,
         command_context: CommandDecodeResult | None = None, raw_log: str | None = None,
-    ) -> tuple[SelfCheckResult | None, str | None]:
+    ) -> tuple[SelfCheckResult | None, str | None, list[LLMCallRecord]]:
         prompt = build_self_check_prompt(
             draft, pattern_type, evidence_count, enrichment_results, risk_assessment, command_context, raw_log
         )
         logger.debug("_run_self_check prompt: %s", prompt)
         try:
-            result = self._llm_client.generate_structured(prompt, SelfCheckResult)
+            response = self._llm_client.generate_structured(prompt, SelfCheckResult, "build_self_check_prompt")
         except LLMClientError as exc:
             self._degraded_reasons.append(f"self-check failed: {exc.kind}")
             logger.debug("_run_self_check failed: %s", exc.kind)
-            return None, exc.kind
-        logger.debug("_run_self_check result: %s", result.model_dump_json())
-        return result, None
+            return None, exc.kind, _records(exc)
+        logger.debug("_run_self_check result: %s", response.value.model_dump_json())
+        return response.value, None, [response.call]
 
     def _assemble_report(
         self, alert: Alert, timeline: list[InvestigationStep], enrichment_results: list[EnrichmentResult],
         risk_assessment: RiskAssessment, draft: DraftReportCanonical, experimental: DraftReportExperimental | None,
-        uncertainty_notes: str, model_available: bool, command_analysis: CommandDecodeResult | None = None,
+        uncertainty_notes: str, model_available: bool, wall_clock_ms: int,
+        command_analysis: CommandDecodeResult | None = None,
     ) -> Report:
         status = ReportStatus.NEEDS_HUMAN_REVIEW if self._degraded_reasons else ReportStatus.COMPLETE
         return Report(
@@ -762,46 +984,60 @@ class AgenticAnalyst:
             triage_rationale_experimental=experimental.triage_rationale if experimental is not None else None,
             uncertainty_notes=uncertainty_notes,
             status=status,
+            llm_usage=_roll_up_usage(timeline, wall_clock_ms),
             model_metadata=ModelMetadata(
                 # "none" when the model never ran: naming a model that produced nothing
                 # would misattribute a stub-shaped report to it.
                 model_name=self._llm_client.model_name() if model_available else "none",
                 model_version="none",
-                prompt_version="4d-v1",
+                prompt_version="4e-v1",
             ),
             command_analysis=command_analysis,
         )
 
-    def _step_finalize_and_persist(self, alert: Alert, report: Report) -> InvestigationStep:
+    def _step_finalize_and_persist(self, alert: Alert, report: Report) -> None:
+        """Append the finalize step, then persist the report that contains it.
+
+        The step is built optimistically and appended before the save so the stored
+        payload and the exported JSON describe the same nine steps. On failure the
+        entry is replaced in place: the database then holds nothing (correct — the
+        save failed) while the JSON file, written after investigate() returns, still
+        records what went wrong.
+        """
         logger.debug(
             "_step_finalize_and_persist input: report_id=%s, alert_id=%s", report.report_id, alert.alert_id
+        )
+        step_input = {"report_id": str(report.report_id), "alert_id": str(alert.alert_id)}
+        report.investigation_timeline.append(
+            InvestigationStep(
+                step_name=Step.FINALIZE_AND_PERSIST.value,
+                action="completed",
+                tool_used="alert_store",
+                input=step_input,
+                output={"persisted": True},
+                output_summary=f"report {report.report_id} persisted, alert marked investigated",
+                timestamp=datetime.now(timezone.utc),
+            )
         )
         try:
             self._alert_store.save_report(report)
             self._alert_store.update_alert_status(str(alert.alert_id), AlertStatus.INVESTIGATED)
         except Exception as exc:
-            step = InvestigationStep(
+            report.investigation_timeline[-1] = InvestigationStep(
                 step_name=Step.FINALIZE_AND_PERSIST.value,
                 action="degraded",
                 tool_used="alert_store",
-                input=None,
+                input=step_input,
+                output={"persisted": False},
                 output_summary=f"could not persist report or update alert status: {exc}",
                 timestamp=datetime.now(timezone.utc),
             )
             logger.debug("_step_finalize_and_persist output: failed: %s", exc)
-            return step
-        step = InvestigationStep(
-            step_name=Step.FINALIZE_AND_PERSIST.value,
-            action="completed",
-            tool_used="alert_store",
-            input=None,
-            output_summary=f"report {report.report_id} persisted, alert marked investigated",
-            timestamp=datetime.now(timezone.utc),
-        )
+            return
         logger.debug("_step_finalize_and_persist output: persisted")
-        return step
 
     def investigate(self, alert: Alert) -> Report:
+        started = time.monotonic()
         self._degraded_reasons = []
         model_available = self._llm_client.model_available()
         if not model_available:
@@ -840,10 +1076,10 @@ class AgenticAnalyst:
         )
         timeline.append(self_check_step)
 
+        wall_clock_ms = int((time.monotonic() - started) * 1000)
         report = self._assemble_report(
             alert, timeline, enrichment_results, risk_assessment, draft, experimental, uncertainty_notes,
-            model_available, command_analysis=command_decode_result,
+            model_available, wall_clock_ms, command_analysis=command_decode_result,
         )
-        finalize_step = self._step_finalize_and_persist(alert, report)
-        report.investigation_timeline.append(finalize_step)
+        self._step_finalize_and_persist(alert, report)
         return report

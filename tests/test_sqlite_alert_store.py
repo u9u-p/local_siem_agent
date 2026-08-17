@@ -330,3 +330,65 @@ def test_get_engine_creates_missing_parent_directory(tmp_path):
 
     assert store.get_alert(str(alert.alert_id)).rule_id == "5710"
     assert db_path.exists()
+
+
+def test_report_round_trips_the_experimental_triage_fields(store):
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(
+        alert.alert_id,
+        triage_verdict_experimental="true_positive",
+        triage_rationale_experimental="sandbox flagged a macro-enabled attachment",
+    )
+
+    store.save_report(report)
+    loaded = store.get_report(str(report.report_id))
+
+    assert loaded.triage_verdict_experimental == "true_positive"
+    assert loaded.triage_rationale_experimental == "sandbox flagged a macro-enabled attachment"
+
+
+def test_report_round_trips_llm_usage(store):
+    from app.schemas import LLMUsageTotals
+
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(alert.alert_id, llm_usage=LLMUsageTotals(
+        calls=7, failed_calls=1, attempts=8, prompt_tokens=4200,
+        completion_tokens=900, llm_latency_ms=151000, wall_clock_ms=163000,
+    ))
+
+    store.save_report(report)
+    loaded = store.get_report(str(report.report_id))
+
+    assert loaded.llm_usage.calls == 7
+    assert loaded.llm_usage.failed_calls == 1
+    assert loaded.llm_usage.wall_clock_ms == 163000
+
+
+def test_report_round_trips_step_inputs_outputs_and_llm_calls(store):
+    from app.llm.client import LLMCallRecord
+
+    alert = _make_alert()
+    store.save_raw_alert(alert)
+    report = _make_report(alert.alert_id, investigation_timeline=[
+        InvestigationStep(
+            step_name="risk_assessment", action="completed",
+            input={"pattern_type": "brute_force"}, output={"severity": "high"},
+            output_summary="severity=high, confidence=medium",
+            llm_calls=[LLMCallRecord(
+                prompt_ref="build_risk_assessment_prompt", prompt="assess this",
+                attempts=1, latency_ms=31840, prompt_tokens=214, completion_tokens=96,
+            )],
+            timestamp=datetime.now(timezone.utc),
+        )
+    ])
+
+    store.save_report(report)
+    loaded = store.get_report(str(report.report_id))
+
+    step = loaded.investigation_timeline[0]
+    assert step.input == {"pattern_type": "brute_force"}
+    assert step.output == {"severity": "high"}
+    assert step.llm_calls[0].prompt == "assess this"
+    assert step.llm_calls[0].latency_ms == 31840

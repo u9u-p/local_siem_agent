@@ -1,8 +1,12 @@
+import time
+from dataclasses import dataclass
+
 import openai
 import pydantic
 from openai import OpenAI
+from openai.types.completion_usage import CompletionUsage
 
-from app.llm.client import T
+from app.llm.client import LLMCallRecord, LLMResponse, T
 from app.llm.errors import LLMClientError
 
 _RETRY_NOTE = (
@@ -10,6 +14,58 @@ _RETRY_NOTE = (
     "Previous response: {previous!r}\n\n"
     "Please respond again with valid JSON matching the required schema."
 )
+
+
+@dataclass
+class _CallTally:
+    """What accumulated across the attempts of one logical call."""
+
+    attempts: int = 0
+    prompt_tokens: int | None = 0
+    completion_tokens: int | None = 0
+    # Last attempt wins: on a retry the earlier trace led to output that failed
+    # validation, and that output is already kept in raw_response.
+    reasoning: str | None = None
+    # The most recent attempt's non-conforming raw output, if any. Lives on the
+    # tally rather than the client: one OllamaClient instance is reused across a
+    # whole investigation's seven calls, and instance-level state here previously
+    # let one call's discarded output get stamped onto a later, unrelated call's
+    # failure record as if it were that call's own.
+    raw_content: str | None = None
+
+    def add_usage(self, usage) -> None:
+        # One attempt without usage poisons the total: a sum missing an unknown term is
+        # not a smaller sum, it is an unknown sum.
+        if usage is None:
+            self.prompt_tokens = None
+            self.completion_tokens = None
+            return
+        if self.prompt_tokens is not None:
+            self.prompt_tokens += usage.prompt_tokens
+            self.completion_tokens += usage.completion_tokens
+
+
+def _as_llm_client_error(exc: openai.OpenAIError) -> LLMClientError:
+    """Map an openai SDK exception to the LLMClientError kind it represents.
+
+    Shared by both exception sites in `_attempt` — the HTTP round-trip and the
+    content parse — so the subclass-before-parent ordering lives in exactly one
+    place and cannot drift between the two call sites: APITimeoutError <
+    APIConnectionError, NotFoundError < APIStatusError, and OpenAIError last as the
+    catch-all for the rest of the SDK hierarchy. That catch-all is also what covers
+    ContentFilterFinishReasonError and APIResponseValidationError — both raised from
+    the content-parse step, both subclasses of OpenAIError, neither warranting a
+    dedicated LLMClientError kind of its own.
+    """
+    if isinstance(exc, openai.APITimeoutError):
+        return LLMClientError("timeout", str(exc))
+    if isinstance(exc, openai.APIConnectionError):
+        return LLMClientError("unreachable", str(exc))
+    if isinstance(exc, openai.NotFoundError):
+        return LLMClientError("model_not_found", str(exc))
+    if isinstance(exc, openai.APIStatusError):
+        return LLMClientError("generation_failed", f"HTTP {exc.status_code}: {exc}")
+    return LLMClientError("generation_failed", str(exc))
 
 
 class OllamaClient:
@@ -36,59 +92,129 @@ class OllamaClient:
         # equivalent (both `think` and `reasoning_effort` are rejected as unknown
         # parameters), so it has to be sent per request.
         self._reasoning_effort = reasoning_effort
-        self._last_raw_content: str | None = None
 
-    def generate_structured(self, prompt: str, schema: type[T]) -> T:
-        result = self._attempt(prompt, schema)
-        if result is not None:
-            return result
-
-        retry_prompt = prompt + _RETRY_NOTE.format(previous=self._last_raw_content)
-        result = self._attempt(retry_prompt, schema)
-        if result is not None:
-            return result
-
-        raise LLMClientError("validation_failed", "schema validation failed after one retry")
-
-    def _attempt(self, prompt: str, schema: type[T]) -> T | None:
+    def generate_structured(self, prompt: str, schema: type[T], prompt_ref: str) -> LLMResponse[T]:
+        started = time.monotonic()
+        tally = _CallTally()
         try:
-            completion = self._client.beta.chat.completions.parse(
+            result = self._attempt(prompt, schema, tally)
+            if result is not None:
+                return LLMResponse(
+                    value=result,
+                    call=self._record(prompt_ref, prompt, tally, started, parsed=result),
+                )
+
+            first_bad = tally.raw_content
+            retry_prompt = prompt + _RETRY_NOTE.format(previous=first_bad)
+            result = self._attempt(retry_prompt, schema, tally)
+            if result is not None:
+                return LLMResponse(
+                    value=result,
+                    call=self._record(
+                        prompt_ref, prompt, tally, started, parsed=result, raw_response=first_bad
+                    ),
+                )
+            raise LLMClientError("validation_failed", "schema validation failed after one retry")
+        except LLMClientError as exc:
+            # Every raise site funnels through here, so no failure path can escape
+            # unmeasured — including the validation_failed raised just above. Reading
+            # tally.raw_content (not client state) means a failure here can only ever
+            # carry this call's own attempts, never a previous call's leftovers.
+            if exc.call is None:
+                exc.call = self._record(
+                    prompt_ref, prompt, tally, started,
+                    raw_response=tally.raw_content, error_kind=exc.kind,
+                )
+            raise
+
+    def _record(
+        self, prompt_ref: str, prompt: str, tally: _CallTally, started: float,
+        parsed=None, raw_response: str | None = None, error_kind: str | None = None,
+    ) -> LLMCallRecord:
+        return LLMCallRecord(
+            prompt_ref=prompt_ref,
+            prompt=prompt,
+            retried=tally.attempts > 1,
+            raw_response=raw_response,
+            reasoning=tally.reasoning,
+            parsed_output=parsed.model_dump(mode="json") if parsed is not None else None,
+            attempts=tally.attempts,
+            prompt_tokens=tally.prompt_tokens,
+            completion_tokens=tally.completion_tokens,
+            latency_ms=int((time.monotonic() - started) * 1000),
+            error_kind=error_kind,
+        )
+
+    def _attempt(self, prompt: str, schema: type[T], tally: _CallTally) -> T | None:
+        tally.attempts += 1
+        try:
+            # with_raw_response defers schema validation: it hands back the raw HTTP
+            # response before attempting to parse `content` against `schema`. That
+            # matters because .parse() validates content and raises pydantic.ValidationError
+            # from deep inside the SDK for a non-conforming response, discarding the
+            # completion object (usage included) before we ever see it — which would make
+            # every attempt that fails schema validation invisible to token accounting,
+            # even though it consumed the model's output and cost real tokens.
+            raw = self._client.beta.chat.completions.with_raw_response.parse(
                 model=self._model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format=schema,
                 temperature=0,
                 **({"reasoning_effort": self._reasoning_effort} if self._reasoning_effort else {}),
             )
+        except openai.OpenAIError as exc:
+            raise _as_llm_client_error(exc) from exc
+
+        # Read usage and the reasoning trace from the raw body before attempting to
+        # parse structured content below. Both reads must degrade gracefully:
+        # instrumentation must not be able to fail the call it only exists to measure.
+        try:
+            body = raw.http_response.json()
+        except ValueError:
+            body = {}
+
+        try:
+            usage_data = body.get("usage")
+            tally.add_usage(CompletionUsage.model_validate(usage_data) if usage_data else None)
+        except (ValueError, pydantic.ValidationError):
+            # Unmeasured is a fine outcome; unparseable usage must not fail the call.
+            tally.add_usage(None)
+
+        # Ollama returns the reasoning trace as a non-standard sibling of `content`.
+        # Reading it here — off the raw body, not the parsed completion — means it
+        # survives even when raw.parse() below raises on every attempt, which is
+        # exactly the double-failure call this trace matters most for. Last attempt
+        # wins: each call to _attempt overwrites unconditionally.
+        try:
+            tally.reasoning = body["choices"][0]["message"].get("reasoning")
+        except (KeyError, IndexError, TypeError):
+            tally.reasoning = None
+
+        try:
+            completion = raw.parse()
         except openai.LengthFinishReasonError:
-            self._last_raw_content = "(truncated — response exceeded the token limit)"
+            tally.raw_content = "(truncated — response exceeded the token limit)"
             return None
         except pydantic.ValidationError as exc:
             # This installed openai SDK version raises ValidationError directly from
             # .parse() for any content that fails schema validation (invalid JSON
             # syntax, or valid JSON missing required fields) rather than swallowing
             # it into message.parsed=None — treat it as a non-conforming attempt.
-            self._last_raw_content = f"(response did not match the required schema: {exc})"
+            tally.raw_content = f"(response did not match the required schema: {exc})"
             return None
-        # Order matters below: each subclass must be caught before its parent —
-        # APITimeoutError < APIConnectionError, NotFoundError < APIStatusError,
-        # and OpenAIError last as the catch-all for the rest of the SDK hierarchy.
-        except openai.APITimeoutError as exc:
-            raise LLMClientError("timeout", str(exc)) from exc
-        except openai.APIConnectionError as exc:
-            raise LLMClientError("unreachable", str(exc)) from exc
-        except openai.NotFoundError as exc:
-            raise LLMClientError("model_not_found", str(exc)) from exc
-        except openai.APIStatusError as exc:
-            raise LLMClientError("generation_failed", f"HTTP {exc.status_code}: {exc}") from exc
         except openai.OpenAIError as exc:
-            raise LLMClientError("generation_failed", str(exc)) from exc
+            # Covers ContentFilterFinishReasonError and APIResponseValidationError
+            # among others — unlike the two soft failures above, these are not
+            # "retry with a hint" cases, so this raises (hard failure) rather than
+            # returning None.
+            raise _as_llm_client_error(exc) from exc
 
         message = completion.choices[0].message
         if message.refusal is not None:
             raise LLMClientError("generation_failed", f"model refused: {message.refusal}")
         if message.parsed is not None:
             return message.parsed
-        self._last_raw_content = message.content
+        tally.raw_content = message.content
         return None
 
     def health_check(self) -> bool:

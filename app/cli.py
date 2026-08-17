@@ -11,6 +11,7 @@ from app.config import get_settings
 from app.integration.siem_connector import SIEMConnector
 from app.integration.wazuh_connector import wazuh_source_to_alert
 from app.report_export import write_report_file
+from app.report_render import render_text, report_sections
 from app.schemas import Alert, AlertStatus, Report, Severity
 from app.storage.alert_store import AlertStore
 from app.storage.sqlite_alert_store import AlertNotFoundError, DuplicateAlertError, ReportNotFoundError
@@ -252,35 +253,7 @@ def list_reports_cmd(
 
 
 def _format_report_detail(report: Report) -> str:
-    lines = [
-        f"Report {report.report_id} (alert {report.alert_id})",
-        f"Status: {report.status.value}",
-        f"Generated: {report.generated_at.isoformat()}",
-        "",
-        "Summary:",
-        report.alert_summary,
-        "",
-        f"Risk: severity={report.risk_assessment.severity.value}, confidence={report.risk_assessment.confidence.value}",
-        report.risk_assessment.rationale,
-        "",
-        "Recommended actions:",
-        *[f"  - {a}" for a in report.recommended_actions],
-    ]
-    if report.command_analysis is not None:
-        lines += [
-            "",
-            "Command analysis:",
-            f"  Command line: {report.command_analysis.command_line or '(none)'}",
-            *[f"  - [{s.encoding}] {s.decoded}" for s in report.command_analysis.decoded_segments],
-        ]
-    lines += [
-        "",
-        f"Uncertainty notes: {report.uncertainty_notes or '(none)'}",
-        "",
-        "Timeline:",
-        *[f"  - {s.step_name}: {s.action}" for s in report.investigation_timeline],
-    ]
-    return "\n".join(lines)
+    return render_text(report_sections(report))
 
 
 @app.command(name="show-report")

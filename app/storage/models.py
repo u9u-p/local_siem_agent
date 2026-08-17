@@ -44,6 +44,9 @@ class ReportRecord(SQLModel, table=True):
     risk_assessment: dict[str, Any] = Field(sa_column=Column(JSON))
     recommended_actions: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     recommended_actions_freeform_experimental: list[str] | None = Field(default=None, sa_column=Column(JSON))
+    triage_verdict_experimental: str | None = None
+    triage_rationale_experimental: str | None = None
+    llm_usage: dict[str, Any] = Field(default_factory=dict, sa_column=Column(JSON))
     command_analysis: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     uncertainty_notes: str = ""
     status: str = Field(default="draft")

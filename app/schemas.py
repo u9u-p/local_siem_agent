@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.llm.client import LLMCallRecord
+
 
 class AlertStatus(str, Enum):
     NEW = "new"
@@ -113,7 +115,9 @@ class InvestigationStep(BaseModel):
     action: str
     tool_used: str | None = None
     input: dict[str, Any] | None = None
+    output: dict[str, Any] | None = None
     output_summary: str
+    llm_calls: list[LLMCallRecord] = Field(default_factory=list)
     timestamp: datetime
 
 
@@ -141,6 +145,23 @@ class CommandDecodeResult(BaseModel):
     decoded_segments: list[DecodedSegment] = Field(default_factory=list)
 
 
+class LLMUsageTotals(BaseModel):
+    calls: int = 0
+    failed_calls: int = 0
+    attempts: int = 0
+    prompt_tokens: int | None = 0
+    # Structured output only — the reasoning trace is not counted here. Compare against
+    # reasoning_chars before reading this as "what the model produced".
+    completion_tokens: int | None = 0
+    # Characters, deliberately not tokens: usage never tokenises the reasoning trace,
+    # and a characters-to-tokens estimate would look authoritative while being made up.
+    reasoning_chars: int = 0
+    llm_latency_ms: int = 0
+    # Total time inside investigate(). The difference against llm_latency_ms is what
+    # was spent on SIEM searches and enrichment HTTP, which is worth seeing separately.
+    wall_clock_ms: int = 0
+
+
 class Report(BaseModel):
     report_id: UUID
     alert_id: UUID
@@ -157,3 +178,4 @@ class Report(BaseModel):
     status: ReportStatus = ReportStatus.DRAFT
     model_metadata: ModelMetadata
     command_analysis: CommandDecodeResult | None = None
+    llm_usage: LLMUsageTotals = Field(default_factory=LLMUsageTotals)

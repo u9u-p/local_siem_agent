@@ -196,6 +196,12 @@ def test_report_command_analysis_defaults_to_none():
     assert report.command_analysis is None
 
 
+def test_report_llm_usage_defaults_to_zero():
+    report = _make_report()
+    assert report.llm_usage.calls == 0
+    assert report.llm_usage.prompt_tokens == 0
+
+
 def test_report_accepts_command_analysis():
     analysis = CommandDecodeResult(
         command_line="powershell.exe -enc AAA",
