@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from app.integration.process_field_extractors import extract_process_fields
-from app.schemas import Alert, AlertStatus, Report, ReportStatus, Severity
+from app.schemas import Alert, AlertStatus, LLMUsageTotals, Report, ReportStatus, Severity
 from app.storage.models import AlertRecord, ReportRecord
 
 
@@ -71,6 +71,9 @@ def _report_to_record(report: Report) -> ReportRecord:
         risk_assessment=report.risk_assessment.model_dump(),
         recommended_actions=report.recommended_actions,
         recommended_actions_freeform_experimental=report.recommended_actions_freeform_experimental,
+        triage_verdict_experimental=report.triage_verdict_experimental,
+        triage_rationale_experimental=report.triage_rationale_experimental,
+        llm_usage=report.llm_usage.model_dump(mode="json"),
         command_analysis=report.command_analysis.model_dump(mode="json") if report.command_analysis else None,
         uncertainty_notes=report.uncertainty_notes,
         status=report.status.value,
@@ -89,6 +92,11 @@ def _record_to_report(record: ReportRecord) -> Report:
         risk_assessment=record.risk_assessment,
         recommended_actions=record.recommended_actions,
         recommended_actions_freeform_experimental=record.recommended_actions_freeform_experimental,
+        triage_verdict_experimental=record.triage_verdict_experimental,
+        triage_rationale_experimental=record.triage_rationale_experimental,
+        # A pre-existing row written before this column had a default dict; let the
+        # model's own default supply the zeros rather than failing validation.
+        llm_usage=record.llm_usage or LLMUsageTotals(),
         command_analysis=record.command_analysis,
         uncertainty_notes=record.uncertainty_notes,
         status=ReportStatus(record.status),
