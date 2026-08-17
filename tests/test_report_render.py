@@ -204,12 +204,21 @@ def test_experimental_section_renders_with_only_freeform_actions():
 
 
 def test_experimental_section_is_a_blockquote_in_markdown():
-    report = _make_report(triage_verdict_experimental="uncertain")
+    report = _make_report(
+        triage_verdict_experimental="uncertain",
+        recommended_actions_freeform_experimental=["Block the sender domain at the gateway"],
+    )
 
     output = render_markdown(report, report_sections(report))
+    lines = output.splitlines()
 
     assert "## Experimental (unvetted)" in output
     assert "> EXPERIMENTAL — unvetted model output" in output
+    # The freeform action bullet must sit inside the quote, not escape it as a bare
+    # bullet indistinguishable from the vetted "Recommended actions" bullets above —
+    # a substring check would pass for either form, so assert on the exact line.
+    assert "> - Block the sender domain at the gateway" in lines
+    assert "- Block the sender domain at the gateway" not in lines
 
 
 def test_render_markdown_heading_order_for_a_fully_populated_report():

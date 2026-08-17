@@ -119,13 +119,19 @@ def render_markdown(report: Report, sections: list[Section]) -> str:
             lines.append(f"## {section.title}")
             lines.append("")
         body = section.body
+        bullets = [f"- {bullet}" for bullet in section.bullets]
         if section.title == "Experimental (unvetted)":
+            # Every line of this section must sit inside the blockquote — a bullet
+            # left outside it would look identical to the vetted "Recommended
+            # actions" bullets above, which is exactly what the disclaimer exists
+            # to prevent.
             body = [f"> {line}".rstrip() for line in body]
+            bullets = [f"> {line}".rstrip() for line in bullets]
         lines.extend(body)
         if body:
             lines.append("")
-        lines.extend(f"- {bullet}" for bullet in section.bullets)
-        if section.bullets:
+        lines.extend(bullets)
+        if bullets:
             lines.append("")
     lines.append("---")
     lines.append("")
