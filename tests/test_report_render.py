@@ -1,8 +1,55 @@
 from datetime import datetime, timezone
+from uuid import UUID
 
 from tests.test_schemas import _make_report
 from app.report_render import render_markdown, render_text, report_sections
-from app.schemas import CommandDecodeResult, DecodedSegment, InvestigationStep
+from app.schemas import (
+    CommandDecodeResult,
+    Confidence,
+    DecodedSegment,
+    InvestigationStep,
+    RiskAssessment,
+    Severity,
+)
+
+
+def _fully_populated_report():
+    """A report with every optional section populated, and every field pinned to a
+    literal value, so its rendering can be compared against an explicit golden string
+    rather than reconstructed from the renderer itself."""
+    generated_at = datetime(2026, 8, 17, 12, 0, 0, tzinfo=timezone.utc)
+    return _make_report(
+        report_id=UUID("11111111-1111-1111-1111-111111111111"),
+        alert_id=UUID("22222222-2222-2222-2222-222222222222"),
+        generated_at=generated_at,
+        alert_summary="Repeated SSH login failures from an external IP against a single host.",
+        risk_assessment=RiskAssessment(
+            severity=Severity.HIGH,
+            confidence=Confidence.MEDIUM,
+            rationale="Multiple failed logins followed by a successful one from a new country.",
+        ),
+        recommended_actions=[
+            "Block the source IP at the network perimeter",
+            "Force a password reset for the affected account",
+        ],
+        command_analysis=CommandDecodeResult(
+            command_line="powershell.exe -EncodedCommand AAA",
+            decoded_segments=[
+                DecodedSegment(encoding="powershell_encoded", original="AAA", decoded="whoami"),
+            ],
+        ),
+        uncertainty_notes="no MITRE ATT&CK mapping available for this alert",
+        investigation_timeline=[
+            InvestigationStep(
+                step_name="enrich", action="completed",
+                output_summary="1 indicator enriched", timestamp=generated_at,
+            ),
+            InvestigationStep(
+                step_name="correlate", action="skipped",
+                output_summary="skipped: no follow-up needed", timestamp=generated_at,
+            ),
+        ],
+    )
 
 
 def test_text_rendering_matches_the_established_show_report_layout():
@@ -78,3 +125,55 @@ def test_markdown_renders_headings_bullets_and_footer():
 def test_markdown_omits_sections_the_text_renderer_omits():
     output = render_markdown(_make_report(), report_sections(_make_report()))
     assert "## Command analysis" not in output
+
+
+def test_render_text_golden_output_for_a_fully_populated_report():
+    """Pins the entire layout — section order and blank-line placement — against an
+    explicit literal, not just substrings. Substring checks alone would not catch a
+    swapped section order or a dropped/duplicated blank line between sections."""
+    output = render_text(report_sections(_fully_populated_report()))
+
+    expected = (
+        "Report 11111111-1111-1111-1111-111111111111 (alert 22222222-2222-2222-2222-222222222222)\n"
+        "Status: draft\n"
+        "Generated: 2026-08-17T12:00:00+00:00\n"
+        "\n"
+        "Summary:\n"
+        "Repeated SSH login failures from an external IP against a single host.\n"
+        "\n"
+        "Risk: severity=high, confidence=medium\n"
+        "Multiple failed logins followed by a successful one from a new country.\n"
+        "\n"
+        "Recommended actions:\n"
+        "  - Block the source IP at the network perimeter\n"
+        "  - Force a password reset for the affected account\n"
+        "\n"
+        "Command analysis:\n"
+        "Command line: powershell.exe -EncodedCommand AAA\n"
+        "  - [powershell_encoded] whoami\n"
+        "\n"
+        "Uncertainty notes: no MITRE ATT&CK mapping available for this alert\n"
+        "\n"
+        "Timeline:\n"
+        "  - enrich: completed\n"
+        "  - correlate: skipped"
+    )
+
+    assert output == expected
+
+
+def test_render_markdown_heading_order_for_a_fully_populated_report():
+    """Pins section order independently of render_text's golden test, since Markdown
+    builds its own line list from the same Section objects."""
+    output = render_markdown(_fully_populated_report(), report_sections(_fully_populated_report()))
+
+    headings = [line for line in output.splitlines() if line.startswith("## ")]
+
+    assert headings == [
+        "## Summary",
+        "## Risk",
+        "## Recommended actions",
+        "## Command analysis",
+        "## Uncertainty notes",
+        "## Timeline",
+    ]
