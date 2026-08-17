@@ -1,0 +1,149 @@
+{
+  "report_id": "fea16020-4c7f-460e-a3aa-9a85d22e49b9",
+  "alert_id": "58aacb09-437a-560e-892b-2160f5a4f633",
+  "generated_at": "2026-08-15T12:55:29.843321Z",
+  "alert_summary": "PowerShell was executed via Cursor.exe using an encoded command to perform a recursive deletion of the `.\\dist` directory. This activity appears to be a routine cleanup task associated with standard development workflows.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 58aacb09-437a-560e-892b-2160f5a4f633 ingested; model available: True",
+      "timestamp": "2026-08-15T12:53:27.441973Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T12:54:03.725459Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T12:54:03.725499Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T12:54:04.154948Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=29; follow-up same_command_line_env_wide added 1; open-value search for '-EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T12:54:41.031613Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T12:54:47.379575Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T12:55:09.999217Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T12:55:29.843274Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fea16020-4c7f-460e-a3aa-9a85d22e49b9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:55:29.851626Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:54:03.725481Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:54:03.725481Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:54:03.725493Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:54:03.725493Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:54:03.725496Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:54:03.725496Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The decoded command reveals a standard file system operation used to remove build artifacts, which is common behavior for integrated development environments (IDEs). Because the parent process is Cursor, a legitimate developer tool, this activity is assessed as low risk. The high confidence rating reflects that the encoded payload contains no malicious instructions."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify if the user was actively running a build script or terminal command within Cursor at the time of the alert.",
+    "Cross-reference this event with other process execution logs from 'Cursor.exe' to see if it follows a pattern of standard development lifecycle commands (e.g., npm, webpack, or vite).",
+    "Check for any concurrent network connections originating from Cursor.exe to unusual external IP addresses that might suggest data exfiltration disguised as build activity.",
+    "Confirm if the 'dist' directory being deleted is part of a known project workspace on the local machine."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The command is performing a standard cleanup of a development build directory ('dist') triggered by an IDE (Cursor), which is expected behavior during software compilation or build processes.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand UgBlAG0AbwB2AGUALQBJAHQAZQBtACAALQBSAGUAYwB1AHIAcwBlACAALQBGAG8AcgBjAGUAIAAuAFwAZABpAHMAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "UgBlAG0AbwB2AGUALQBJAHQAZQBtACAALQBSAGUAYwB1AHIAcwBlACAALQBGAG8AcgBjAGUAIAAuAFwAZABpAHMAdAA=",
+        "decoded": "Remove-Item -Recurse -Force .\\dist"
+      }
+    ]
+  }
+}

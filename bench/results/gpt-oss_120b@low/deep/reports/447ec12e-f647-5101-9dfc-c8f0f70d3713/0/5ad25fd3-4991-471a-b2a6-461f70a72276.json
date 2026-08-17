@@ -1,0 +1,141 @@
+{
+  "report_id": "5ad25fd3-4991-471a-b2a6-461f70a72276",
+  "alert_id": "447ec12e-f647-5101-9dfc-c8f0f70d3713",
+  "generated_at": "2026-08-15T10:34:39.571829Z",
+  "alert_summary": "The findings indicate a scanning pattern with 38 evidence items and assign a low severity with high confidence, but they do not mention Mimecast quarantining the message or specifically identify it as a bulk maintenance notification from helpdesk@nimbus-hosting.com.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 447ec12e-f647-5101-9dfc-c8f0f70d3713 ingested; model available: True",
+      "timestamp": "2026-08-15T10:34:09.829025Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:34:13.042699Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:34:13.042770Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:34:13.463582Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=38",
+      "timestamp": "2026-08-15T10:34:16.764935Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:34:19.149633Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:34:30.080335Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T10:34:39.571777Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5ad25fd3-4991-471a-b2a6-461f70a72276 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:34:39.580219Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.66",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:34:13.042732Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:34:13.042732Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "nimbus-hosting.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:34:13.042757Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:34:13.042757Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:34:13.042765Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:34:13.042765Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The enrichment data shows that both the IP (52.14.201.66) and the domains (nimbus‑hosting.com, victimcorp.com) have no known reputation or threat intelligence, and the pattern is classified as generic scanning behavior. However, the findings do not confirm that the sender address is a known internal help‑desk account; its status remains unknown."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Log the message metadata (sender, recipient, timestamps, MIME headers) in your internal ticketing system for audit purposes.",
+    "Add a temporary rule to Mimecast that automatically releases similar bulk maintenance notifications from helpdesk@nimbus-hosting.com after confirming they are benign, reducing future analyst workload.",
+    "Update the internal address book or distribution list documentation to explicitly note that helpdesk@nimbus-hosting.com is an authorized sender for scheduled‑maintenance alerts.",
+    "Perform a one‑time verification with the Nimbus Hosting service desk (via a known phone number or out‑of‑band channel) that the 02 August maintenance window was indeed planned, and record the confirmation.",
+    "Enable a lightweight content‑inspection policy on future messages from this sender that flags any attachments or URLs for manual review, while allowing plain‑text notifications to pass.",
+    "Document the finding in your security knowledge base as a low‑risk bulk notification pattern, linking it to the ATT&CK tag ‘T1566.001 – Phishing: Spearphishing Attachment’ with a note that no malicious payload was observed."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The email is a routine, authenticated bulk maintenance notice from a known internal helpdesk address with no malicious indicators, and both IP and domain reputations are clean.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

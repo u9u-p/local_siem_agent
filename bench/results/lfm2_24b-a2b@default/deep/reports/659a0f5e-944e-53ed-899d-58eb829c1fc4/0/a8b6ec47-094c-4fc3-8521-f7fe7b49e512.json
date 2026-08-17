@@ -1,0 +1,170 @@
+{
+  "report_id": "a8b6ec47-094c-4fc3-8521-f7fe7b49e512",
+  "alert_id": "659a0f5e-944e-53ed-899d-58eb829c1fc4",
+  "generated_at": "2026-08-15T09:43:25.894287Z",
+  "alert_summary": "A highly suspicious PowerShell command was run from a user directory, matching known brute force attack patterns and using obfuscation techniques. This strongly indicates an attempt to compromise the system or extract data.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 659a0f5e-944e-53ed-899d-58eb829c1fc4 ingested; model available: True",
+      "timestamp": "2026-08-15T09:43:13.524322Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:43:15.246012Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:43:15.246085Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:43:15.658272Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=56; follow-up same_rule_id_host added 27",
+      "timestamp": "2026-08-15T09:43:16.173611Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:43:16.883323Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:43:21.129628Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:43:25.894185Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a8b6ec47-094c-4fc3-8521-f7fe7b49e512 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:43:25.901786Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:15.246046Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:15.246046Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:15.246068Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:15.246068Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://localhost:5985/powershell/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:15.246076Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:15.246076Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://code.visualstudio.com/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:15.246081Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:15.246081Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The execution of an encoded PowerShell script from a personal folder—especially one commonly associated with development tools like VS Code—combined with detection of brute force behavior, points to deliberate malicious activity targeting this analyst. The presence of obfuscated code and unusual command patterns further supports the likelihood that this is not routine or benign activity."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Manually review the decoded command payload for malicious intent",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an in-depth forensic review of the user’s endpoint and associated network activity to map out any lateral movement or data exfiltration attempts.",
+    "Correlate this event with other logs across the environment—especially authentication, firewall, and SIEM—to identify broader attack patterns that may have been missed.",
+    "Isolate and analyze the PowerShell binary and its execution context for signs of persistence mechanisms such as scheduled tasks or registry modifications.",
+    "Engage incident response stakeholders to prepare containment steps if any compromise is confirmed, including potential account resets and system quarantines."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an encoded PowerShell command from a user directory, brute force detection signatures, and obfuscated indicators strongly points to malicious activity targeting the analyst rather than benign behavior.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

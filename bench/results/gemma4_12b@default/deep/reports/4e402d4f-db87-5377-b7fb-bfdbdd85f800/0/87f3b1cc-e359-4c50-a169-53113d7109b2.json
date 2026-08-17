@@ -1,0 +1,141 @@
+{
+  "report_id": "87f3b1cc-e359-4c50-a169-53113d7109b2",
+  "alert_id": "4e402d4f-db87-5377-b7fb-bfdbdd85f800",
+  "generated_at": "2026-08-15T16:56:34.221573Z",
+  "alert_summary": "A high-confidence threat involving an unknown domain (stellar-logistics.com) was detected as part of a multi-target campaign with 31 instances of evidence.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4e402d4f-db87-5377-b7fb-bfdbdd85f800 ingested; model available: True",
+      "timestamp": "2026-08-15T16:52:45.514717Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T16:53:09.219361Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:53:09.219433Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T16:53:09.643473Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=31; open-value search for 'SL-40218' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:54:20.741572Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T16:54:34.697370Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T16:55:30.862068Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T16:56:34.221526Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 87f3b1cc-e359-4c50-a169-53113d7109b2 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:56:34.228913Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.117",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:53:09.219397Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:53:09.219397Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "stellar-logistics.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:53:09.219420Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:53:09.219420Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:53:09.219428Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:53:09.219428Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The lack of reputation for both the source IP and domain, combined with a high evidence count (31), supports a high-risk assessment for a coordinated phishing campaign."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'stellar-logistics.com' to determine the registration date; a recently registered domain (NRD) would strongly indicate a disposable infrastructure for this campaign.",
+    "Conduct a sandbox analysis of any attachments or URLs contained within the email to identify potential malware delivery or credential harvesting sites.",
+    "Execute a cross-tenant/internal search for other emails originating from 'stellar-logistics.com' or containing the string 'Remittance advice' to determine if other employees were targeted.",
+    "Verify if 'stellar-logistics.com' has any legitimate business relationship with 'victimcorp.com' by contacting the finance department to confirm if they have an active account with this specific vendor."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a classic BEC lure, high evidence counts, and unknown infrastructure points strongly toward a coordinated phishing campaign rather than a false positive.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

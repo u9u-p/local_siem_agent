@@ -1,0 +1,160 @@
+{
+  "report_id": "f0234d27-ab44-4dbc-bad8-dcb360d66951",
+  "alert_id": "1f859a00-29a9-5904-84cb-8ae6294a8719",
+  "generated_at": "2026-08-16T10:27:51.777286Z",
+  "alert_summary": "A bulk email from an unverified domain (identityguard‑notify.com) was held by Mimecast for the user ke.li.yam@victimcorp.com, warning of a “New sign‑in” to their IdentityGuard account. The message matches classic phishing tactics and is linked to 44 related detections across the environment, indicating a coordinated attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1f859a00-29a9-5904-84cb-8ae6294a8719 ingested; model available: True",
+      "timestamp": "2026-08-16T10:26:43.703951Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:26:52.266550Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T10:26:52.266594Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T10:26:52.701814Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=44; follow-up same_src_ip_24h added 7; open-value search for 'security@identityguard-notify.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:27:03.548426Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:27:08.548853Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:27:28.963034Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T10:27:51.777238Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f0234d27-ab44-4dbc-bad8-dcb360d66951 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:27:51.784388Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:26:52.266572Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:26:52.266572Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "identityguard-notify.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:26:52.266586Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:26:52.266586Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:26:52.266590Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:26:52.266590Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:26:52.266592Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:26:52.266592Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The email’s sender domain and bulk classification suggest mass delivery. Although the originating IP and domains lack known malicious reputations—reducing confidence—the sheer volume of correlated alerts (44) signals a widespread effort, justifying a high‑severity assessment."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a quick verification process by reaching out to the purported sender through an independently verified channel (e.g., official phone number or web portal) to confirm whether the email is legitimate.",
+    "Perform a detailed content audit of the message, checking for subtle indicators such as mismatched URLs, hidden links, or anomalous header fields that could betray spoofing.",
+    "Cross‑reference the originating IP (149.72.14.88) against internal and external threat intelligence feeds to uncover any prior malicious activity or abuse reports that may not yet be reflected in public reputation databases.",
+    "Deploy a sandboxed link/attachment scan on any embedded URLs or files, ensuring they do not trigger known phishing signatures or drive‑by exploits before allowing end users to interact with them.",
+    "Temporarily quarantine the message and monitor for similar bulk emails across the organization; if additional instances surface, consider tightening outbound filtering rules around the sender domain.",
+    "Document all findings in a shared incident log so that future investigations can benefit from this early evidence and refine detection heuristics."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email exhibits classic phishing characteristics and has triggered numerous detections, yet the sender domain and IP lack known malicious reputations, leaving confidence moderate but not definitive.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,140 @@
+{
+  "report_id": "189b111e-53f0-4298-b711-defdd64e1458",
+  "alert_id": "3be39bd8-1980-50dd-b9ac-99d058c6c962",
+  "generated_at": "2026-08-15T12:16:16.222822Z",
+  "alert_summary": "An email from uptimewatch.io to victimcorp.com was flagged as bulk mail.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3be39bd8-1980-50dd-b9ac-99d058c6c962 ingested; model available: True",
+      "timestamp": "2026-08-15T12:14:11.269151Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T12:14:24.350043Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T12:14:24.350115Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T12:14:24.773541Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=37; open-value search for 'uptimewatch.io' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T12:14:51.087545Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T12:15:00.100734Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T12:15:27.567373Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T12:16:16.222772Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 189b111e-53f0-4298-b711-defdd64e1458 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:16:16.229614Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:14:24.350077Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:14:24.350077Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "uptimewatch.io",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:14:24.350101Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:14:24.350101Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:14:24.350109Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:14:24.350109Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The alert was triggered by Mimecast's 'Bulk' filter, which frequently flags automated system notifications like this one. While the high evidence count warrants caution regarding potential links, there are currently no indicators of malicious activity or known bad reputation associated with the sender. The email appears to be a legitimate, expected automated report."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify with the operations team if 'uptimewatch.io' is an authorized third-party monitoring service used by victimcorp.com.",
+    "Inspect the email headers and body for any unexpected redirects or suspicious URLs that might be masked within the report content.",
+    "Cross-reference the sender IP (149.72.14.88) against external threat intelligence databases to ensure it isn't a known source of spam despite being 'unknown' in current enrichment.",
+    "Confirm if the high evidence count (37) refers to repeated occurrences of this specific legitimate report, which would explain the Mimecast Bulk trigger."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert appears to be a benign automated notification from a monitoring service that was simply flagged by a bulk email filter.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

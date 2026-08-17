@@ -1,0 +1,137 @@
+{
+  "report_id": "2499d21b-a5c6-4685-85fa-a2d90929506a",
+  "alert_id": "14a2b003-a2d5-53c3-a0ff-9b83fa26963c",
+  "generated_at": "2026-08-15T11:26:40.537471Z",
+  "alert_summary": "PowerShell was executed with an encoded command by Cursor.exe, but the decoded payload is a routine check for Node.js dependencies. This activity appears to be standard behavior for this development tool.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 14a2b003-a2d5-53c3-a0ff-9b83fa26963c ingested; model available: True",
+      "timestamp": "2026-08-15T11:24:34.223162Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T11:25:11.700173Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T11:25:11.700211Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T11:25:12.119071Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for 'FromBase64String' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T11:26:04.043262Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T11:26:09.503798Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T11:26:29.878115Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:26:40.537422Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2499d21b-a5c6-4685-85fa-a2d90929506a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:26:40.544521Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-dtan06.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:25:11.700197Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:25:11.700197Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "derek.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:25:11.700208Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:25:11.700208Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The encoded command decodes to 'Test-Path .\\node_modules', which is a common and benign operation used by IDEs to verify project dependencies. Because the parent process is Cursor.exe running in a legitimate node context, this activity aligns with expected developer workflows. Consequently, there is no evidence of malicious intent or unauthorized execution."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify that Cursor.exe is a sanctioned application within the organization's development environment.",
+    "Perform a brief audit of other child processes spawned by Cursor.exe to ensure no unexpected network connections or file system modifications are occurring simultaneously.",
+    "Baseline this specific behavior (PowerShell checking for node_modules) so it can be automatically suppressed in future alerts to reduce alert fatigue."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The activity is a standard, benign dependency check performed by an authorized development tool (Cursor) as part of its normal operational workflow.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+    "parent_command_line": "\"C:\\Users\\derek.tan\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+        "decoded": "Test-Path .\\node_modules"
+      }
+    ]
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "report_id": "39b2b2d1-82a8-4e9f-9a95-738031c18c8c",
+  "alert_id": "3197db96-265f-53bb-8b97-bbde79d563a2",
+  "generated_at": "2026-08-16T10:36:42.406466Z",
+  "alert_summary": "An encoded PowerShell command was launched by Cursor.exe on a workstation belonging to user ke.li.yam; the decoded payload is a benign `npx tsc --noEmit` but the surrounding activity and references to unknown domains raise suspicion.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3197db96-265f-53bb-8b97-bbde79d563a2 ingested; model available: True",
+      "timestamp": "2026-08-16T10:35:33.448082Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T10:35:41.911530Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-16T10:35:41.911610Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T10:35:42.338604Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=29; open-value search for 'Cursor.exe' found 10 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:35:56.752378Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T10:36:05.706887Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:36:26.421183Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-16T10:36:42.406409Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 39b2b2d1-82a8-4e9f-9a95-738031c18c8c persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:36:42.414469Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:35:41.911575Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:35:41.911575Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:35:41.911601Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:35:41.911601Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert shows an obfuscated PowerShell invocation from a suspicious local executable, which matches known tactics for hiding malicious code (T1027/T1059.001). Although the decoded command itself is harmless, the presence of 29 correlated events, unfamiliar program/host names, and unknown domains suggests that the process may be part of a broader compromise or automated activity that has not yet manifested overtly. Therefore, a medium‑severity risk assessment is appropriate: we need to confirm whether this is legitimate automation or an attacker’s foothold before taking more drastic containment steps."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the provenance of Cursor.exe by checking its digital signature, file hash, and installation path against known legitimate software catalogs.",
+    "Perform a static and dynamic analysis of the binary to identify any embedded scripts or network communication routines that could be triggered during execution.",
+    "Examine the system’s event logs for additional evidence of persistence mechanisms (e.g., registry run keys, scheduled tasks) that might have been established by Cursor.exe or the encoded PowerShell session.",
+    "Capture and inspect outbound traffic from the host to dev‑klyam01.victimcorp.com and any other domains referenced in correlated events, looking for data exfiltration patterns or command‑and‑control handshakes.",
+    "Cross‑reference the 29 correlated Sysmon events with other telemetry sources (e.g., Windows Defender logs, endpoint detection & response feeds) to determine whether similar activity has been observed elsewhere in the environment.",
+    "If feasible, isolate the affected workstation and run a memory dump through an advanced forensic toolset to uncover any hidden processes or injected code that may not be visible via standard logging."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The encoded PowerShell invocation originates from a suspicious local executable and is linked to unknown domains, yet the decoded payload appears benign; without further evidence of malicious intent or compromise, the alert remains inconclusive.",
+  "uncertainty_notes": "unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+        "decoded": "npx tsc --noEmit"
+      }
+    ]
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "report_id": "cd009451-d1e7-418f-9f85-c6405882fa7a",
+  "alert_id": "1579e01d-e9ff-50f5-9a7b-916b0428643e",
+  "generated_at": "2026-08-15T11:30:46.290458Z",
+  "alert_summary": "An email from an unknown sender (cloudmetrics-io.com) has been identified, which requires investigation to rule out a targeted phishing or impersonation attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1579e01d-e9ff-50f5-9a7b-916b0428643e ingested; model available: True",
+      "timestamp": "2026-08-15T11:28:49.670470Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T11:29:01.545557Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T11:29:01.545590Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T11:29:01.965826Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'cloudmetrics-io.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T11:29:20.128086Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T11:29:28.260947Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T11:29:59.923964Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:30:46.290406Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cd009451-d1e7-418f-9f85-c6405882fa7a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:30:46.298328Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:29:01.545575Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:29:01.545575Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cloudmetrics-io.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:29:01.545585Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:29:01.545585Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:29:01.545588Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:29:01.545588Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The combination of an unknown sender domain (cloudmetrics-io.com) increases the risk of social engineering or business email compromise. Investigation is required to determine if this is a legitimate third-party service or a fraudulent attempt to harvest credentials."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'cloudmetrics-io.com' to determine domain age and registration details; newly registered domains are high-risk indicators.",
+    "Verify with the DevOps or Finance teams whether 'CloudMetrics' is an authorized third-party vendor used for production monitoring or billing.",
+    "Analyze the email headers to confirm if SPF, DKIM, and DMARC checks passed, which would indicate the sender is legitimately authorized by the domain owner.",
+    "Check internal mail logs to see if other employees received similar 'Bulk' messages from this sender, which could indicate a widespread phishing campaign or a legitimate service update.",
+    "Inspect any URLs or attachments within the held message in a secure sandbox environment to check for credential harvesting or malicious payloads."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While 'Bulk' flags often indicate benign automated mailings, the unknown reputation of the sender domain combined with highly specific subject matter regarding production environments makes it impossible to rule out a targeted spear-phishing attempt without further verification.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

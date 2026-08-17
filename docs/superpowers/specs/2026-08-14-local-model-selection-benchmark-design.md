@@ -229,6 +229,16 @@ Verified that Ollama honours `reasoning_effort` on the OpenAI-compatible endpoin
 - `EnrichmentCache`, `ReportRecord` triage columns, and the `on_step` hook — all remain deferred.
 - Benchmarking against public agentic-SOC benchmarks. Researched separately on 14 Aug: no reputable open benchmark scores a SIEM-alert-triage agent end to end, confirmed by the May 2026 survey (arXiv 2605.08316). CyberSOCEval (Meta/CrowdStrike) is the only reputable open defensive-SOC benchmark and grades models, not pipelines. Post-talk track.
 
+## 8a. Contingency — if the ternary build will not run
+
+The Bonsai `Q2_0` GGUF needs custom `Q2_0_g128` hybrid-attention Metal kernels, and Ollama bundles its own llama.cpp. Three outcomes, only one of which needs action:
+
+- **Passes the gate** → nothing to do.
+- **Loads but fails the schema probes** → that *is* the precision-floor datapoint, and the most quotable result in the reference set. No substitute needed.
+- **Will not load at all** → a kernel gap, not a capability finding, and the bottom of the precision curve is then unmeasured.
+
+Only the third case justifies the fallback. MLX builds exist (`prism-ml/Ternary-Bonsai-27B-mlx-2bit`, `prism-ml/Bonsai-27B-mlx-1bit`), but **not via Ollama** — its MLX backend ignores `response_format`, so that route trades an unknown for a known failure. The workable path is LM Studio's OpenAI-compatible server, which uses `mlx-lm` and a different structured-output implementation; `LLM_BASE_URL` is already env-driven, so it needs no code change. The cost is that it **confounds the runtime for one block** — every other model runs Ollama/llama.cpp — which is acceptable for a reference line if labelled, and would be disqualifying for a candidate.
+
 ## 9. Open items
 
 - Whether Stage 2's benign sample of 10 per category gives enough resolution on `benign_escalation_rate`; 10 gives 10% granularity, and widening it is the first thing to spend spare compute on.

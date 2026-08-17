@@ -1,0 +1,145 @@
+{
+  "report_id": "fe041281-1071-4954-81e7-fbb628c2a188",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-15T09:44:31.952721Z",
+  "alert_summary": "A phishing message was sent about a bulk shipment, likely targeting credentials with fake order notifications.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-15T09:44:24.098920Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:44:24.904240Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:44:24.904310Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:44:25.337952Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=45; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T09:44:25.836543Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:44:26.472201Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:44:29.307605Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:44:31.952608Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fe041281-1071-4954-81e7-fbb628c2a188 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:31.961019Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:24.904272Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:24.904272Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:24.904294Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:24.904294Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:24.904302Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:24.904302Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The message is clearly fraudulent and uses high-risk tactics to trick users into revealing sensitive information. The content matches common phishing patterns, making the risk assessment high even though some details are missing."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an automated email sandbox analysis to confirm the malicious payload and delivery chain.",
+    "Cross-reference the sender’s domain reputation using multiple threat intelligence feeds in real time.",
+    "Engage a targeted phishing simulation campaign for internal awareness training focused on similar shipment notifications.",
+    "Set up continuous monitoring of related IP ranges and domains for any further suspicious activity patterns."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The evidence strongly points to a deliberate phishing attempt exploiting business communication norms, with clear indicators aligning with high-severity threat profiles.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

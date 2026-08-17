@@ -1,0 +1,149 @@
+{
+  "report_id": "f0654907-af47-4df6-9626-74b3c51ac775",
+  "alert_id": "1ce96b55-6706-5aa4-8adf-c003fd646a1f",
+  "generated_at": "2026-08-15T15:21:18.398658Z",
+  "alert_summary": "A brute-force attack was detected for user 'jane.tan' from IP 10.20.4.61 involving 15 pieces of evidence. This indicates a high probability that the account was targeted by automated credential guessing.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1ce96b55-6706-5aa4-8adf-c003fd646a1f ingested; model available: True",
+      "timestamp": "2026-08-15T15:16:10.036338Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T15:16:34.482299Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T15:16:34.482408Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T15:16:34.915786Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=15",
+      "timestamp": "2026-08-15T15:18:05.699983Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T15:18:16.764171Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T15:19:25.887293Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T15:21:18.398595Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f0654907-af47-4df6-9626-74b3c51ac775 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:21:18.405897Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:16:34.482362Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:16:34.482362Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:16:34.482396Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:16:34.482396Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:16:34.482402Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:16:34.482402Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection of a high-volume brute-force pattern for user 'jane.tan' from an unknown source IP, combined with a high confidence rating, indicates a likely compromise requiring immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a mandatory password reset and multi-factor authentication (MFA) re-enrollment for the 'jane.tan' account.",
+    "Isolate the source host at 10.20.4.61 from the network to prevent lateral movement while an investigation into the device's integrity is conducted.",
+    "Perform a retrospective audit of all actions performed by 'jane.tan' starting from the timestamp of the successful logon to identify potential data exfiltration or unauthorized configuration changes.",
+    "Scan for other accounts targeted by IP 10.20.4.61 within the same timeframe to determine the scope of the brute-force campaign.",
+    "Review internal logs to see if 'jane.tan' attempted to access sensitive systems or escalate privileges immediately following the successful login."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The transition from a high-volume brute-force pattern (15 evidence points) directly into a successful authentication for user jane.tan is a definitive indicator of account compromise.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,122 @@
+{
+  "report_id": "21c9fd2a-7508-43b9-b4f9-89299fe6090a",
+  "alert_id": "6c5b2078-1db1-5f89-a034-f7c6dd803dfe",
+  "generated_at": "2026-08-15T13:23:06.104489Z",
+  "alert_summary": "An unknown IP address (100.72.44.19) was involved in 26 events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6c5b2078-1db1-5f89-a034-f7c6dd803dfe ingested; model available: True",
+      "timestamp": "2026-08-15T13:20:20.645683Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:20:26.902786Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:20:26.902835Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:20:27.325634Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'mrahman' found 12 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:21:19.383649Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T13:21:27.555443Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T13:21:59.472769Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T13:23:06.104434Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 21c9fd2a-7508-43b9-b4f9-89299fe6090a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:23:06.111420Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:20:26.902818Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:20:26.902818Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The detection of 26 events from a single, unrecognized IP address (100.72.44.19) is anomalous and warrants investigation."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately verify with the user 'mrahman' whether they were performing scheduled administrative tasks or running automated scripts at the time of these logons.",
+    "Perform a deep dive into the command history and session logs for the 'mrahman' account to identify any unauthorized commands, file transfers (SCP/SFTP), or attempts to access sensitive directories.",
+    "Investigate the source IP 100.72.44.19 to determine its ownership—specifically checking if it belongs to a known jump box, a developer workstation, or an unauthorized device on the network.",
+    "Check for any subsequent lateral movement attempts from this user account to other critical assets in the environment immediately following these successful logons.",
+    "Temporarily revoke 'mrahman's' active SSH sessions and consider a mandatory password reset if the activity cannot be immediately validated as legitimate automation."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high frequency of successful logins from an unknown IP is highly indicative of automated lateral movement, it could also represent legitimate administrative automation or a misconfigured service account used by the user.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

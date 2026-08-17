@@ -1,0 +1,149 @@
+{
+  "report_id": "0e56dae9-b95f-4b46-959a-160b8e71e617",
+  "alert_id": "40ee497e-2e88-50a0-b390-c4c504b81612",
+  "generated_at": "2026-08-15T16:38:27.516480Z",
+  "alert_summary": "A PowerShell command was executed with an encoded string by Microsoft VS Code. Analysis of the decoded payload confirms it is a routine developer activity searching for 'TODO' comments within TypeScript files.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 40ee497e-2e88-50a0-b390-c4c504b81612 ingested; model available: True",
+      "timestamp": "2026-08-15T16:35:06.534979Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T16:35:41.027686Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:35:41.027756Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T16:35:41.443834Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=43; open-value search for 'EncodedCommand' found 40 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:36:35.183589Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T16:36:49.526263Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T16:37:42.484179Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:38:27.516437Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0e56dae9-b95f-4b46-959a-160b8e71e617 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:38:27.524996Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-achong03.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:35:41.027721Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:35:41.027721Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "amanda.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:35:41.027742Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:35:41.027742Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:35:41.027750Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:35:41.027750Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While the use of the -EncodedCommand flag can be used to obfuscate malicious intent, the specific content of this command is benign and consistent with standard development workflows. The parent process (VS Code) and the target file types (.ts) indicate that this was a legitimate automated action by a developer tool."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user's role to confirm they are a developer within the organization.",
+    "Analyze other instances of encoded PowerShell commands from this host to determine if it is an isolated occurrence or part of a recurring development workflow.",
+    "Evaluate the possibility of tuning the detection rule to exclude specific, known-safe parent processes (e.g., VS Code) when the decoded command matches common developer patterns like 'Select-String' for 'TODO'.",
+    "Check if other developers in the same department are triggering similar alerts to establish a baseline for standard development activity."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "While the alert correctly identified an encoded PowerShell command, the decoded content confirms it is a benign, routine developer task (searching for 'TODO' comments) performed by a known IDE.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand UwBlAGwAZQBjAHQALQBTAHQAcgBpAG4AZwAgAC0AUABhAHQAaAAgAC4AXABzAHIAYwBcACoALgB0AHMAIAAtAFAAYQB0AHQAZQByAG4AIAAnAFQATwBEAE8AJwA=",
+    "parent_command_line": "\"C:\\Users\\amanda.chong\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "UwBlAGwAZQBjAHQALQBTAHQAcgBpAG4AZwAgAC0AUABhAHQAaAAgAC4AXABzAHIAYwBcACoALgB0AHMAIAAtAFAAYQB0AHQAZQByAG4AIAAnAFQATwBEAE8AJwA=",
+        "decoded": "Select-String -Path .\\src\\*.ts -Pattern 'TODO'"
+      }
+    ]
+  }
+}

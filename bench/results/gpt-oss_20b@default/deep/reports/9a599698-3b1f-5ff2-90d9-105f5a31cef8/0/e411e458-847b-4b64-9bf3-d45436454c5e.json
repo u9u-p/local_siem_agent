@@ -1,0 +1,140 @@
+{
+  "report_id": "e411e458-847b-4b64-9bf3-d45436454c5e",
+  "alert_id": "9a599698-3b1f-5ff2-90d9-105f5a31cef8",
+  "generated_at": "2026-08-16T11:25:00.328205Z",
+  "alert_summary": "There were 15 lateral‑movement events associated with the domain ke.li.yam and source IP 10.20.4.88; however, the report does not confirm a successful logon event for that user from that IP.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9a599698-3b1f-5ff2-90d9-105f5a31cef8 ingested; model available: True",
+      "timestamp": "2026-08-16T11:24:03.936935Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-16T11:24:09.811052Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T11:24:09.811178Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T11:24:10.230568Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-16T11:24:18.361081Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T11:24:23.643453Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T11:24:39.457477Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T11:25:00.328109Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e411e458-847b-4b64-9bf3-d45436454c5e persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:25:00.336436Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:24:09.811130Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:24:09.811130Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:24:09.811165Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:24:09.811165Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:24:09.811172Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:24:09.811172Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert indicates that an account (T1078 – Valid Accounts) has logged in successfully and is linked to numerous lateral‑movement activities, raising the possibility of internal spread. Because the IP address and user domain lack known provider or context information, it is unclear whether this activity is legitimate or malicious, which reduces confidence in the assessment. Nonetheless, the volume of suspicious events warrants a high severity rating as they could represent an ongoing compromise that may affect multiple systems."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin a focused forensic review of the host at 10.20.4.88, collecting volatile memory and disk images for deeper analysis of any persistence mechanisms or credential‑stealing artifacts that may have been installed during the successful logon.",
+    "Cross‑reference the ke.li.yam account’s recent activity against internal audit logs to confirm whether this user normally accesses resources from that IP range; if not, flag the account for immediate password reset and multi‑factor enforcement.",
+    "Deploy a network packet capture on the segment containing dc01.corp.local during the next scheduled maintenance window to capture any ongoing lateral‑movement traffic originating from or destined to the suspicious IP, then run the capture through an IDS/IPS engine tuned for T1078 patterns.",
+    "Engage the identity‑management team to review the account’s group memberships and privilege escalation history; consider temporarily revoking high‑privilege roles until a full integrity check is completed.",
+    "If the investigation uncovers evidence of credential reuse or compromised secrets, trigger an organization‑wide password policy reset for all accounts that share the same authentication domain as ke.li.yam."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows a successful logon from an unknown IP and user account with many lateral‑movement events, but without clear domain or provider context it is unclear whether this activity is legitimate internal use or malicious exploitation.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

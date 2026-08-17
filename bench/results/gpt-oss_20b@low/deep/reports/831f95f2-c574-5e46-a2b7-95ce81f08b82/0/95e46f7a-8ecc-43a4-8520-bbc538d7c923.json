@@ -1,0 +1,123 @@
+{
+  "report_id": "95e46f7a-8ecc-43a4-8520-bbc538d7c923",
+  "alert_id": "831f95f2-c574-5e46-a2b7-95ce81f08b82",
+  "generated_at": "2026-08-15T10:11:43.150254Z",
+  "alert_summary": "An external IP address 203.0.113.30 (unknown provider) was observed with 43 scanning‑related events during the incident window.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 831f95f2-c574-5e46-a2b7-95ce81f08b82 ingested; model available: True",
+      "timestamp": "2026-08-15T10:11:16.399814Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:11:17.447379Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:11:17.447427Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:11:17.853844Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=43; follow-up same_rule_id_host added 21",
+      "timestamp": "2026-08-15T10:11:20.002285Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:11:22.501624Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:11:32.103930Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T10:11:43.150194Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 95e46f7a-8ecc-43a4-8520-bbc538d7c923 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:11:43.157667Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:11:17.447413Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:11:17.447413Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful login from an unrecognized source suggests the attacker may have compromised or stolen credentials for a real user. Coupled with a high volume of reconnaissance activity, this indicates the adversary could be probing the system for additional footholds or data to exfiltrate. Because the IP is unknown and the account was used in a suspicious context, the situation warrants a high‑severity assessment even though the confidence level remains medium due to the lack of definitive malicious payloads."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected host from the internal network to prevent potential lateral movement while investigation continues.",
+    "Force a password reset for user *mrahman* and enforce multi‑factor authentication on all accounts that can reach this machine, then audit recent credential changes or suspicious logins across the domain.",
+    "Deploy a packet capture on the interface handling traffic from 203.0.113.30 to reconstruct the session and identify any exfiltration attempts or additional malicious payloads delivered during the SSH session.",
+    "Run a full host‑based intrusion detection scan (e.g., OSSEC, Wazuh) and a malware analysis sandbox on any files transferred or executed during the session to detect hidden backdoors or persistence mechanisms.",
+    "Cross‑reference the 43 scanning events with internal threat intelligence feeds; if they match known reconnaissance signatures (e.g., port scans, banner grabs), block the source IP at the perimeter firewall and add it to a blacklist for future incidents.",
+    "Review all audit logs for any anomalous file modifications or privilege escalations that occurred after the successful login, focusing on system binaries, cron jobs, and scheduled tasks.",
+    "If feasible, perform a forensic imaging of the host’s disk immediately; preserve volatile memory snapshots to capture any in‑memory artifacts such as injected code or keyloggers.",
+    "Coordinate with the network security team to check for other hosts that may have been accessed from the same IP or by the same user account within the last 24 hours, and apply a broader containment strategy if necessary."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful SSH login from an unknown external IP combined with numerous scanning events suggests malicious intent, but without evidence of credential compromise or lateral movement, it remains unclear whether this is a genuine breach or a false alarm triggered by automated testing tools.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

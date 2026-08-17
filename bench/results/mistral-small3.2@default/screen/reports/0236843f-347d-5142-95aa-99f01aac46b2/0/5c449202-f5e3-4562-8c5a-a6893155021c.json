@@ -1,0 +1,166 @@
+{
+  "report_id": "5c449202-f5e3-4562-8c5a-a6893155021c",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-14T18:32:53.647773Z",
+  "alert_summary": "A potential phishing attempt with impersonation (T1566) was detected targeting an internal recipient at victimcorp.com, involving suspicious sender domains and IP addresses.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-14T18:31:56.067452Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 4 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:32:11.219266Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T18:32:11.219353Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T18:32:11.641666Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=25",
+      "timestamp": "2026-08-14T18:32:13.829952Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:32:17.699725Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:32:36.744318Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 3 flagged",
+      "timestamp": "2026-08-14T18:32:53.647699Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5c449202-f5e3-4562-8c5a-a6893155021c persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:32:53.658055Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:32:11.219310Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:32:11.219310Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:32:11.219332Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:32:11.219332Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:32:11.219340Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:32:11.219340Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:32:11.219344Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:32:11.219344Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:32:11.219348Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:32:11.219348Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert indicates a high-severity risk due to the impersonation technique used, which is a common initial access method. The lack of known information about the sender's domain (meridian-audit.com) and IP address (209.85.220.41) increases suspicion, though confidence remains medium without additional context on scanning patterns or victimcorp.com's legitimacy."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct a thorough review of the email content to identify any suspicious links, attachments, or language patterns indicative of phishing.",
+    "Check if there have been any recent legitimate communications between Jane Tan and Raj Kumar to verify the authenticity of the sender.",
+    "Investigate whether Meridian Audit is a known third-party vendor or auditor for VictimCorp to assess the legitimacy of the request.",
+    "Analyze the scanning pattern (evidence_count=25) to determine if it aligns with typical phishing behavior or if it could be part of legitimate automated processes.",
+    "Review historical email traffic from Meridian-Audit.com to see if similar messages have been flagged in the past.",
+    "Consider reaching out directly to Jane Tan via a verified channel (e.g., phone call or internal directory) to confirm the request.",
+    "Check if Raj Kumar has recently interacted with any other suspicious emails or domains to identify potential patterns of targeting."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the alert shows hallmarks of a phishing attempt, the lack of contextual information about the sender and recipient makes it difficult to definitively classify as true or false positive.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 5 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

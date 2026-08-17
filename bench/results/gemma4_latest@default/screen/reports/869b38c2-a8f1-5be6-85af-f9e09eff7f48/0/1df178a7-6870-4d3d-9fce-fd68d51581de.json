@@ -1,0 +1,152 @@
+{
+  "report_id": "1df178a7-6870-4d3d-9fce-fd68d51581de",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-14T18:29:54.203512Z",
+  "alert_summary": "An Office document executed a suspicious, encoded PowerShell command, indicating a high-confidence initial access attack or payload execution attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "timestamp": "2026-08-14T18:28:21.141769Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:28:33.254856Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:28:33.254894Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "timestamp": "2026-08-14T18:28:33.672406Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=3; follow-up same_rule_id_host added 1; open-value search for '-encodedcommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:28:51.410659Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=critical, confidence=high",
+      "timestamp": "2026-08-14T18:28:59.666306Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:29:28.144378Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 8 flagged",
+      "timestamp": "2026-08-14T18:29:54.203457Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 1df178a7-6870-4d3d-9fce-fd68d51581de persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:29:54.212135Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:28:33.254875Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:28:33.254875Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:28:33.254888Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:28:33.254888Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:28:33.254891Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:28:33.254891Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "critical",
+    "confidence": "high",
+    "rationale": "The observed process chain—an Excel file launching hidden, encoded PowerShell using `IEX` (Invoke-Expression)—is a classic and highly reliable indicator of compromise (IOC). This technique is frequently used by threat actors to execute malicious payloads while attempting to bypass standard security controls. Immediate investigation is required to determine if the decoded payload successfully executed, what resources it accessed, or if lateral movement occurred."
+  },
+  "recommended_actions": [
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the endpoint associated with `jtan-lt01` from the network to prevent lateral movement or data exfiltration.",
+    "Initiate a full memory dump and disk image acquisition of the affected machine for deep forensic analysis. Focus specifically on process lineage, loaded modules, and any dropped files that may not have been captured by Sysmon.",
+    "Analyze the fully decoded PowerShell payload (the content following `IEX`) to determine its exact function. Look for indicators such as network connection attempts (C2 domains), credential harvesting functions (e.g., Mimikatz calls), or file system modifications.",
+    "Review all recent activity logs for the user associated with this machine, specifically looking for unusual login times, access to sensitive shares, or execution of administrative tools that occurred immediately before or after the alert.",
+    "Implement temporary network egress filtering rules blocking common PowerShell encoding patterns and known C2 infrastructure domains identified during payload analysis. This should be a proactive measure until the threat is fully contained.",
+    "Audit all other users who have received similar `.xlsm` files from external sources, treating them as potential vectors for compromise."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of an Office application spawning hidden, encoded PowerShell using `IEX` is a highly reliable and classic indicator of malicious payload execution requiring immediate incident response action.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  }
+}

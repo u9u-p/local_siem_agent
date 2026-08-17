@@ -1,0 +1,119 @@
+{
+  "report_id": "7e7a9f2f-9f6b-4dd2-9ca9-f960fd197777",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-14T22:09:47.588999Z",
+  "alert_summary": "A successful SSH login was detected for user `nprakash` originating from the unenriched IP address 203.0.113.63. While no malicious indicators or threat intelligence matches were identified, the lack of IP context requires verification to confirm this access is authorized.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-14T21:57:18.626545Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T21:58:22.900141Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T21:58:22.900189Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T21:58:23.322990Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=24; open-value search for 'nprakash' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T22:01:15.032509Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-14T22:02:39.312720Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T22:05:59.727716Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 1 audit(s) for 5 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T22:09:47.588927Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7e7a9f2f-9f6b-4dd2-9ca9-f960fd197777 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T22:09:47.596619Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:58:22.900173Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:58:22.900173Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert is rated medium severity because the source IP lacks enrichment data, preventing immediate classification as trusted or malicious. However, the absence of known threat indicators and anomalous behavioral patterns suggests this is likely legitimate administrative activity rather than an active compromise. Analyst review is necessary to cross-reference the login against authorized user baselines and confirm that `nprakash` is expected to connect from this specific IP address. Until authorization is validated, the risk remains moderate due to the potential for unauthorized access masquerading as routine traffic."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the provenance of IP 203.0.113.63 by querying internal asset inventories, DHCP/DNS logs, and firewall NAT tables to determine if this is an unregistered internal host, a VPN endpoint, or a misconfigured enrichment gap; if external, perform manual WHOIS and cross-reference with secondary threat intelligence sources not integrated into the current SIEM.",
+    "Validate the identity and status of user nprakash by checking HR records for active employment/contractor status and reviewing role-based access expectations to confirm whether SSH access aligns with their job function and authorized systems.",
+    "Analyze the evidence_count of 24 by examining timestamps and session metadata to distinguish between a single verbose session, legitimate automation/scripting activity, or rapid repeated authentications that could indicate credential testing or unauthorized tool usage.",
+    "Review historical login baselines for nprakash to identify deviations in time-of-day, frequency, or typical source networks, and inspect post-authentication command logs on the target host(s) for anomalous behavior such as privilege escalation attempts, sensitive file access, or lateral movement indicators."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert lacks malicious indicators but involves an unenriched source IP and unknown user baseline, necessitating verification of authorization before ruling out compromise or confirming benign activity.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

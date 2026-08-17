@@ -1,0 +1,156 @@
+{
+  "report_id": "cae5a57e-901f-41e5-a504-a53ae900d1bf",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-15T05:51:31.983217Z",
+  "alert_summary": "Rule 106001 (Mimecast held a message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com for review - reason Impersonation, subject 'Audit evidence request - Q2 access reviews'.), level 5, on agent wazuh.manager.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-15T05:51:30.299219Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM-assisted extraction failed: generation_failed",
+      "timestamp": "2026-08-15T05:51:30.491731Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T05:51:30.491904Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T05:51:30.914086Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=25",
+      "timestamp": "2026-08-15T05:51:31.297032Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=low",
+      "timestamp": "2026-08-15T05:51:31.470359Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B failed",
+      "timestamp": "2026-08-15T05:51:31.812251Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T05:51:31.983074Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cae5a57e-901f-41e5-a504-a53ae900d1bf persisted, alert marked investigated",
+      "timestamp": "2026-08-15T05:51:31.995618Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:30.491824Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:30.491824Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:30.491875Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:30.491875Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:30.491884Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:30.491884Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:30.491891Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:30.491891Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:30.491896Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:30.491896Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "low",
+    "rationale": "risk assessment failed: generation_failed"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": null,
+  "triage_verdict_experimental": null,
+  "triage_rationale_experimental": null,
+  "uncertainty_notes": "self-check could not run: generation_failed; 5 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,158 @@
+{
+  "report_id": "3f0854ee-7dc9-40e9-9294-7fd2448eb94c",
+  "alert_id": "5a85349b-6e6e-5ade-9eed-02bb71a1c046",
+  "generated_at": "2026-08-15T09:42:12.929075Z",
+  "alert_summary": "Suspicious bulk marketing email detected targeting an internal user, with automated scanning patterns observed.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5a85349b-6e6e-5ade-9eed-02bb71a1c046 ingested; model available: True",
+      "timestamp": "2026-08-15T09:42:04.242594Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:42:05.071994Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:42:05.072076Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:42:05.486162Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=30; follow-up same_src_ip_24h added 4",
+      "timestamp": "2026-08-15T09:42:06.015068Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:42:06.663143Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:42:10.062840Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:42:12.929021Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 3f0854ee-7dc9-40e9-9294-7fd2448eb94c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:42:12.935795Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:05.072029Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:05.072029Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "datavault-crm.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:05.072057Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:05.072057Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:05.072064Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:05.072064Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:42:05.072069Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:42:05.072069Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The message is flagged as mass marketing content, which usually has low individual impact but may indicate broader phishing activity; the correlation pattern suggests automated scanning rather than a targeted attack. The risk assessment rates severity as low due to typical characteristics of bulk emails, though confidence remains high because of the scanning behavior and source IP/domain anonymity."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Isolate the affected host from the network pending investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct a deeper forensic review of the email headers and any embedded links to confirm whether they lead to known malicious infrastructure.",
+    "Cross-reference the sender’s domain with threat intelligence feeds for reputation scoring and possible blacklisting.",
+    "Monitor inbound traffic from the originating IP address (198.2.180.34) for anomalous behavior or lateral movement attempts.",
+    "Alert internal security teams to watch for similar patterns targeting other departments or external partners.",
+    "Consider implementing automated sandboxing of any attachments or URLs referenced in future messages."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message exhibits clear bulk marketing characteristics combined with scanning behavior, strongly suggesting it is part of a coordinated phishing campaign rather than random spam.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

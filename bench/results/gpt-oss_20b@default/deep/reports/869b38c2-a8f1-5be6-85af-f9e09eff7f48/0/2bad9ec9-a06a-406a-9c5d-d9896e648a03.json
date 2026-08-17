@@ -1,0 +1,140 @@
+{
+  "report_id": "2bad9ec9-a06a-406a-9c5d-d9896e648a03",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-16T11:20:04.965703Z",
+  "alert_summary": "An Office (Excel) macro spawned PowerShell with an encoded command, a classic sign of a spear‑phishing compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "timestamp": "2026-08-16T11:19:00.521806Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 0 validated",
+      "timestamp": "2026-08-16T11:19:09.505836Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-16T11:19:09.505911Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "timestamp": "2026-08-16T11:19:09.932077Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=3; follow-up same_rule_id_host added 1; open-value search for 'EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:19:21.845498Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-16T11:19:28.190116Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T11:19:44.159758Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 7 flagged",
+      "timestamp": "2026-08-16T11:20:04.965595Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2bad9ec9-a06a-406a-9c5d-d9896e648a03 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:20:04.973923Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:19:09.505875Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:19:09.505875Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:19:09.505902Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:19:09.505902Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The event shows three correlated findings with pattern_type=other, confirming a suspicious activity. The decoded payload begins with `IEX(New-Object…`, a typical obfuscation technique used by attackers to execute malicious code. This combination of macro execution, PowerShell invocation, and encoded command strongly indicates that the host may have been compromised, warranting high severity and confidence for analyst review."
+  },
+  "recommended_actions": [
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin by isolating the host that executed the Excel macro to prevent further lateral movement while you investigate the payload.",
+    "Open the suspicious workbook in a controlled sandbox environment and capture its macro code; look for any references to external URLs or encoded strings that match the decoded PowerShell snippet.",
+    "Run the decoded PowerShell command through an offline disassembly or deobfuscation tool to identify any additional modules or persistence mechanisms it may be installing.",
+    "Cross‑reference the domain names discovered in the enrichment step (jtan-lt01.victimcorp.com, jane.tan) against internal threat intelligence feeds and DNS logs to confirm whether they have been previously associated with malicious activity.",
+    "Examine the Sysmon event stream for any subsequent child processes or unusual network connections originating from the same host, which could indicate a broader compromise.",
+    "If the macro is confirmed malicious, update your Office security policy to block macros by default and enforce code signing requirements across the organization."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The encoded PowerShell command launched from an Excel macro, coupled with three correlated findings and a decoded payload that begins with IEX(New-Object), strongly matches known spear‑phishing tactics (T1059.001/T1566.001) and warrants a true‑positive classification.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  }
+}

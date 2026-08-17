@@ -1,0 +1,120 @@
+{
+  "report_id": "a2317465-0cd9-48f7-ae2a-bc9de16656c8",
+  "alert_id": "9e4783f7-0be5-5f34-8cac-670bc3f73992",
+  "generated_at": "2026-08-15T13:58:58.953765Z",
+  "alert_summary": "An unknown IP address (203.0.113.52) was involved in 14 events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e4783f7-0be5-5f34-8cac-670bc3f73992 ingested; model available: True",
+      "timestamp": "2026-08-15T13:56:14.963182Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:56:21.270513Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:56:21.270553Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:56:21.717288Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=14; open-value search for 'kchen' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:57:03.771076Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T13:57:12.638456Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T13:58:02.842786Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:58:58.953720Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a2317465-0cd9-48f7-ae2a-bc9de16656c8 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:58:58.960569Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:56:21.270539Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:56:21.270539Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The activity from the unrecognized source (203.0.113.52) requires investigation to determine if it represents legitimate automated behavior or unauthorized access."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Contact user 'kchen' via an out-of-band communication channel (e.g., Slack, Teams, or phone) to confirm if they were performing legitimate administrative tasks from the IP 203.0.113.52.",
+    "Perform a manual threat intelligence lookup on 203.0.113.52 to determine if the IP is associated with known VPN providers, Tor exit nodes, or public cloud infrastructure often used by attackers.",
+    "Review the command history (e.g., .bash_history) and system audit logs for user 'kchen' during the timeframe of these 14 successful logins to identify any suspicious lateral movement or data staging commands.",
+    "Check if this specific IP address has appeared in other authentication logs across the environment, which could indicate a broader credential stuffing or spraying campaign."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the use of an unknown IP and multiple successful logins is a common indicator of compromise, there is currently insufficient evidence to distinguish this from legitimate remote work by the user.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

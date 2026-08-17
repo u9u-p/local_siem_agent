@@ -1,0 +1,119 @@
+{
+  "report_id": "ed86c02b-b12c-4580-8bb6-ad6b48f8f3f9",
+  "alert_id": "831f95f2-c574-5e46-a2b7-95ce81f08b82",
+  "generated_at": "2026-08-16T11:19:00.031015Z",
+  "alert_summary": "An unknown user successfully logged into SSH from an unrecognized IP address (203.0.113.30) with 22 correlated events, indicating possible credential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 831f95f2-c574-5e46-a2b7-95ce81f08b82 ingested; model available: True",
+      "timestamp": "2026-08-16T11:17:31.263763Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:17:34.518899Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T11:17:34.518967Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T11:17:34.942682Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=22; open-value search for 'Accepted' found 21 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:17:52.440200Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-16T11:17:58.156826Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T11:18:35.297551Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T11:19:00.030966Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ed86c02b-b12c-4580-8bb6-ad6b48f8f3f9 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:19:00.039042Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:17:34.518940Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:17:34.518940Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The successful login from a previously unknown external IP raises suspicion of stolen credentials or unauthorized access. The volume of correlated events (22) suggests repeated activity rather than a one‑off mistake, and the lack of prior association combined with persistent login attempts warrants concern. Therefore, we rate the incident as medium severity with high confidence."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a thorough review of the SSH session logs for user mrahman to identify any anomalous commands or file transfers that could indicate lateral movement or data exfiltration.",
+    "Cross‑reference the IP address 203.0.113.30 against internal network maps and VPN usage records; if it is not listed as a known remote workstation, flag it for immediate investigation.",
+    "Examine the user’s recent authentication history across all services (e.g., web portals, database access) to detect any patterns of credential reuse or simultaneous logins from disparate locations.",
+    "If possible, trigger an automated password reset and enforce multi‑factor authentication for the affected account while monitoring for subsequent login attempts from the same IP.",
+    "Deploy a host‑based intrusion detection agent on the target machine to capture detailed process activity during the session window, enabling forensic reconstruction of any potential compromise."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful SSH logon from an unrecognized external IP coupled with 22 correlated events and no known benign context strongly suggests credential compromise rather than legitimate activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

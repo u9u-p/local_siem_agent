@@ -23,15 +23,29 @@ import time
 from pathlib import Path
 
 from bench.labels import Role, label_for
+from bench.stage0 import CONTEXT_TOKENS, bench_variant, footprint_bytes
 
 SNAPSHOT = Path("./data/bench_alerts.db")
 RESULTS = Path("./bench/results")
 
-#: Stage 1 screens breadth-first to kill non-viable models cheaply; stage 2 spends
-#: repeats only on the alerts that must be stable on stage (spec §4).
+#: Stage 1 screens breadth-first to kill non-viable models cheaply; stage 2 spends its
+#: budget where the metrics actually separate models.
+#:
+#: Needles get one run each, not three. The 14 Aug control verification returned 6 of 6
+#: needles correct on the incumbent — detection saturates, because the needles are built
+#: to be findable, so repeating them buys precision on a metric that cannot discriminate.
+#: The earlier 3-repeat allocation spent a third of the expensive stage there.
+#:
+#: The benign floods get that budget instead: 15 per cluster rather than 10, taking the
+#: escalation-rate confidence interval from roughly ±9% to ±7%. Benign escalation is the
+#: metric that separates candidates, and it is the talk's subject.
+#:
+#: fp_control keeps three repeats. mrahman came back `low` on both control runs after
+#: PR #4's grounded correlation — it stopped being a known failure and became a real
+#: discriminator, so its stability is now worth measuring.
 STAGE_PLAN = {
-    "screen": {"benign_per_cluster": 1, "needle_repeats": 1, "benign_repeats": 1},
-    "deep": {"benign_per_cluster": 10, "needle_repeats": 3, "benign_repeats": 1},
+    "screen": {"benign_per_cluster": 1, "needle_repeats": 1, "fp_repeats": 1, "benign_repeats": 1},
+    "deep": {"benign_per_cluster": 15, "needle_repeats": 1, "fp_repeats": 3, "benign_repeats": 1},
 }
 
 
@@ -57,28 +71,23 @@ def select_alerts(db: Path, stage: str) -> list[tuple[str, str, Role, int]]:
                 continue
             benign_taken[label.cluster] = benign_taken.get(label.cluster, 0) + 1
             selected.append((alert_id, label.cluster, label.role, plan["benign_repeats"]))
+        elif label.role is Role.FP_CONTROL:
+            selected.append((alert_id, label.cluster, label.role, plan["fp_repeats"]))
         else:
             selected.append((alert_id, label.cluster, label.role, plan["needle_repeats"]))
     return selected
 
 
-def loaded_model_bytes() -> int | None:
-    """Resident size of the currently-loaded model, per `ollama ps`.
+def loaded_model_bytes(model: str) -> int | None:
+    """Resident size of `model`, per `ollama ps`.
 
-    ponytail: sampled once after a run rather than polled for a true peak. Good
-    enough for the fit gate, which asks whether a model fits ~17GB at all; swap in
-    a polling sampler if a candidate lands within a gigabyte of the ceiling.
+    Delegates to the gate's parser rather than keeping a second copy. The duplicate
+    that lived here read a fixed offset back from the end of the line and landed on
+    "minutes", so every run recorded a footprint of zero — caught by scoring the
+    control run before the sweep rather than after it.
     """
-    try:
-        out = subprocess.run(["ollama", "ps"], capture_output=True, text=True, timeout=15).stdout
-    except (OSError, subprocess.SubprocessError):
-        return None
-    for line in out.splitlines()[1:]:
-        parts = line.split()
-        if len(parts) >= 4 and parts[-3].replace(".", "").isdigit():
-            value, unit = float(parts[-3]), parts[-2].upper()
-            return int(value * (1024**3 if unit.startswith("G") else 1024**2))
-    return None
+    measured = footprint_bytes(model)
+    return measured[0] if measured else None
 
 
 def run_one(model: str, alert_id: str, workdir: Path, repeat: int, effort: str | None) -> dict:
@@ -109,7 +118,7 @@ def run_one(model: str, alert_id: str, workdir: Path, repeat: int, effort: str |
         "elapsed_s": round(elapsed, 1),
         "exit_code": proc.returncode,
         "report_path": str(files[0]) if files else None,
-        "model_bytes": loaded_model_bytes(),
+        "model_bytes": loaded_model_bytes(model),
         # A crashed investigation is a result, not a gap — record it rather than
         # dropping the row, or a model that dies on every alert scores as absent.
         "stderr_tail": proc.stderr.strip()[-400:] if proc.returncode else "",
@@ -137,24 +146,46 @@ def main() -> None:
     workdir.mkdir(parents=True, exist_ok=True)
     shutil.copy(args.snapshot, workdir / "alerts.db")
 
+    # Run the num_ctx-bounded variant, not the base model. Ollama sizes KV from the
+    # model's *default* context when the base name is used -- 128000 for lfm2.5, 262144
+    # for several others -- so the base model measures a footprint the gate never
+    # measured, and each model measures at a different context from every other. The
+    # per-request num_ctx does not survive the OpenAI-compat path; the Modelfile
+    # PARAMETER does, which is what bench_variant bakes in. Results directories stay
+    # keyed on the base name, so the variant is invisible to the scorer.
+    model = bench_variant(args.model) or args.model
+    if model == args.model:
+        print(f"  ! no bounded variant for {args.model} — running its default context", flush=True)
+
     selected = select_alerts(args.snapshot, args.stage)
     total = sum(repeats for *_, repeats in selected)
-    print(f"{args.model} @ {args.effort or 'default'} / {args.stage}: "
-          f"{len(selected)} alerts, {total} runs")
+    print(f"{model} @ {args.effort or 'default'} / {args.stage}: "
+          f"{len(selected)} alerts, {total} runs, num_ctx {CONTEXT_TOKENS}", flush=True)
 
     results_file = workdir / "runs.jsonl"
     done = 0
     with results_file.open("w") as fh:
         for alert_id, cluster, role, repeats in selected:
             for repeat in range(repeats):
-                record = run_one(args.model, alert_id, workdir, repeat, args.effort)
+                record = run_one(model, alert_id, workdir, repeat, args.effort)
                 record.update(cluster=cluster, role=role.value)
                 fh.write(json.dumps(record) + "\n")
                 fh.flush()
                 done += 1
-                print(f"  [{done}/{total}] {cluster:<11} {role.value:<11} {record['elapsed_s']:>6}s")
+                # flush: stdout is block-buffered when redirected to a file, so an
+                # unattended multi-hour sweep would show nothing at all until it exited
+                # — indistinguishable from a hang. runs.jsonl is the durable record;
+                # this is the one you watch.
+                print(
+                    f"  [{done}/{total}] {cluster:<11} {role.value:<11} "
+                    f"{record['elapsed_s']:>6}s  exit={record['exit_code']}",
+                    flush=True,
+                )
 
-    print(f"wrote {results_file}")
+    print(f"wrote {results_file}", flush=True)
+    # Unload here rather than in sweep.sh: only this process knows the variant name, and
+    # stopping the base name leaves the variant resident alongside the next block's model.
+    subprocess.run(["ollama", "stop", model], capture_output=True)
 
 
 if __name__ == "__main__":

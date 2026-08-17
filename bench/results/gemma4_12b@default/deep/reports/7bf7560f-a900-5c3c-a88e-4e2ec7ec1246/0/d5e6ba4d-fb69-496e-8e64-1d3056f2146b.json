@@ -1,0 +1,144 @@
+{
+  "report_id": "d5e6ba4d-fb69-496e-8e64-1d3056f2146b",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-15T19:03:20.991941Z",
+  "alert_summary": "An email containing an 'order shipped' lure was intercepted by Mimecast while targeting a high-value administrative account. The lack of reputation for the sender's domain and IP suggests this is likely part of a phishing campaign.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-15T18:54:39.367088Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T18:55:01.083539Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T18:55:01.083617Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T18:55:01.487031Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=23; open-value search for 'officesupply-direct.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T18:56:02.797875Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T18:56:23.113306Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T19:01:00.010861Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T19:03:20.991842Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d5e6ba4d-fb69-496e-8e64-1d3056f2146b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:03:21.001371Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:55:01.083580Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:55:01.083580Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:55:01.083602Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:55:01.083602Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:55:01.083609Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:55:01.083609Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The use of shipping notifications is a common social engineering tactic designed to create urgency and trick users into interacting with malicious content. Because the target is an administrator, the potential impact of a successful compromise is high due to elevated privileges. Furthermore, the lack of reputation for both the sender's IP and domain indicates that this is likely a malicious attempt rather than a legitimate business communication."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deep-dive analysis of the email headers to identify the originating mail server and infrastructure.",
+    "Conduct sandbox analysis on any embedded URLs or attachments contained within the message.",
+    "Cross-reference the source IP (52.14.201.101) against global threat intelligence feeds for known malicious activity.",
+    "Block the domain 'officesupply-direct.com' and the associated IP at the corporate firewall/email gateway.",
+    "Search mail logs to determine if other internal users received emails from this sender."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a high-value target (admin account), a classic phishing lure, and an unknown reputation for the sending domain strongly indicates a malicious attempt.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,137 @@
+{
+  "report_id": "8441ddd7-d018-4e6d-8a93-91df13199f07",
+  "alert_id": "3197db96-265f-53bb-8b97-bbde79d563a2",
+  "generated_at": "2026-08-15T16:09:45.796056Z",
+  "alert_summary": "An encoded PowerShell command was executed by the Cursor IDE, but it decodes to a standard TypeScript compiler check (npx tsc --noEmit). This activity is consistent with normal developer behavior and does not indicate a security threat.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3197db96-265f-53bb-8b97-bbde79d563a2 ingested; model available: True",
+      "timestamp": "2026-08-15T15:58:57.748576Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM-assisted extraction failed: validation_failed",
+      "timestamp": "2026-08-15T16:04:18.278613Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T16:04:18.278688Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T16:04:18.716347Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=29; open-value search for 'EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:05:32.567936Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T16:05:45.734952Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T16:09:25.977484Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:09:45.795961Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 8441ddd7-d018-4e6d-8a93-91df13199f07 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:09:45.805424Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:04:18.278656Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:04:18.278656Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:04:18.278680Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:04:18.278680Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded PowerShell commands can sometimes be used to mask malicious intent, the specific payload in this instance is a common command for checking TypeScript code without generating output files. Because the parent process is the Cursor IDE, this execution is expected during software development tasks. Therefore, the risk is assessed as low with high confidence."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Monitor the user's activity to ensure no other anomalous encoded commands are executed by Cursor.exe.",
+    "Implement a whitelist for common developer-related commands like 'npx tsc --noEmit' to reduce alert fatigue.",
+    "Verify that the user is authorized to use development tools and has been assigned appropriate permissions."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command is a standard TypeScript compiler check, which constitutes expected behavior for a developer using the Cursor IDE.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+        "decoded": "npx tsc --noEmit"
+      }
+    ]
+  }
+}

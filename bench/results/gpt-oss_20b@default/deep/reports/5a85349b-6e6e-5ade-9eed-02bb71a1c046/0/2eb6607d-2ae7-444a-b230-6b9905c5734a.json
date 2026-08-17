@@ -1,0 +1,147 @@
+{
+  "report_id": "2eb6607d-2ae7-444a-b230-6b9905c5734a",
+  "alert_id": "5a85349b-6e6e-5ade-9eed-02bb71a1c046",
+  "generated_at": "2026-08-16T10:59:02.725313Z",
+  "alert_summary": "Mimecast flagged an email from datavault‑crm.com sent to Jane Tan at VictimCorp; the domain and IP are unknown, no malicious links were detected, and the alert severity is medium with moderate confidence, requiring analyst review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5a85349b-6e6e-5ade-9eed-02bb71a1c046 ingested; model available: True",
+      "timestamp": "2026-08-16T10:57:49.548402Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:57:59.080528Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T10:57:59.080603Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T10:57:59.502473Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=48; follow-up same_rule_id_host added 22; open-value search for 'See how teams cut reporting time by 40%' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T10:58:13.016949Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T10:58:18.943071Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:58:45.336011Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 5 flagged",
+      "timestamp": "2026-08-16T10:59:02.725210Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2eb6607d-2ae7-444a-b230-6b9905c5734a persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:59:02.733732Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:57:59.080562Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:57:59.080562Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "datavault-crm.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:57:59.080585Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:57:59.080585Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:57:59.080593Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:57:59.080593Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:57:59.080598Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:57:59.080598Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The email from datavault‑crm.com sent to Jane Tan at VictimCorp has been placed in Mimecast review. The originating IP (198.2.180.34) and all involved domains are unknown and not linked to known malicious activity; the overall severity remains medium with moderate confidence, so a thorough analyst review is warranted."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin by cross‑checking the sender’s domain against internal whitelists and external threat intelligence feeds to confirm whether it has any prior association with legitimate marketing or malicious activity; if no clear affiliation is found, flag the address for further scrutiny.  Next, examine the message payload for embedded links or attachments that could lead to credential harvesting or malware delivery—especially given the generic “bulk” classification by Mimecast—and consider sandboxing any suspicious content.  Parallelly, monitor outbound traffic from the victim’s network for anomalous DNS queries or HTTP requests originating from the same IP (198.2.180.34) or domain (datavault‑crm.com), as this could indicate a broader phishing campaign targeting multiple users.  Finally, document all findings and share them with the incident response team so that any emerging patterns can be correlated against other alerts in real time."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The message displays typical bulk‑phishing traits but involves unknown IPs and domains without known malicious history, making it unclear whether it is a legitimate marketing outreach or a low‑profile phishing attempt.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

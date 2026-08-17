@@ -1,0 +1,143 @@
+{
+  "report_id": "dfd324c7-64c8-4e46-a927-55fa5adcd988",
+  "alert_id": "1ce96b55-6706-5aa4-8adf-c003fd646a1f",
+  "generated_at": "2026-08-15T10:25:05.709233Z",
+  "alert_summary": "A successful Windows logon was recorded for user **jane.tan** from internal IP **10.20.4.61**, matching a lateral‑movement pattern that has been observed 15 times.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1ce96b55-6706-5aa4-8adf-c003fd646a1f ingested; model available: True",
+      "timestamp": "2026-08-15T10:24:22.714685Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:24:25.261837Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:24:25.261870Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:24:25.676448Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:24:31.826024Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:24:34.843466Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:24:49.007314Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T10:25:05.709120Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report dfd324c7-64c8-4e46-a927-55fa5adcd988 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:25:05.716350Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:24:25.261854Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:24:25.261854Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:24:25.261865Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:24:25.261865Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:24:25.261868Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:24:25.261868Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The structured findings indicate a lateral‑movement pattern with 15 evidences and assign a medium severity with high confidence, but they do not map the activity to ATT&CK technique T1078 or explicitly mention credential misuse. A more accurate statement would be: “The observed activity matches a lateral‑movement pattern (evidence count = 15) and is assessed as medium severity with high confidence. No external threat intelligence is available for the internal IP or domain.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate forensic snapshot of the endpoint associated with user **jane.tan** and capture volatile memory, recent logon sessions, and active network connections to preserve evidence of any potential credential abuse.",
+    "Query Active Directory for recent changes to the account (password resets, group‑membership modifications, delegation settings) and compare them against baseline behavior; flag any anomalies for deeper review.",
+    "Correlate this logon event with other authentication logs across the environment (e.g., VPN, RDP, service accounts) to see if the same source IP or user appears elsewhere within a short time window, which could indicate a broader lateral‑movement campaign.",
+    "Temporarily enforce multi‑factor authentication (MFA) for **jane.tan** and any other privileged accounts that have logged on from the same subnet, reducing the risk of credential replay attacks.",
+    "Isolate or segment the host at 10.20.4.61 if subsequent evidence shows suspicious activity (e.g., unusual process creation, outbound connections to unknown destinations) while maintaining business continuity where possible.",
+    "Run a threat‑intel lookup on the internal IP range and domain controllers for any known compromised assets or recent breach notifications; even though current enrichment is ‘unknown’, external feeds may have updated information.",
+    "Update detection rules to flag successful logons from non‑usual workstations or subnets for high‑privilege users, and consider adding a baseline of typical login locations per user to reduce future noise.",
+    "Document the incident timeline in the central ticketing system, noting timestamps, source/destination hosts, and any investigative steps taken; this will aid post‑incident analysis and potential audit requirements."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The event matches a known lateral‑movement pattern with multiple evidential occurrences and involves a valid credential being used from an internal host, indicating likely malicious reuse rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

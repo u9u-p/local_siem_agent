@@ -1,0 +1,128 @@
+{
+  "report_id": "0d73c5d1-61de-4436-b1e0-fbad8b454d6c",
+  "alert_id": "52e311ab-60aa-53ae-b6fb-f1f1e987dfde",
+  "generated_at": "2026-08-15T17:38:23.196705Z",
+  "alert_summary": "A brute-force attack was detected involving 24 attempts from an unknown IP address (203.0.113.52).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52e311ab-60aa-53ae-b6fb-f1f1e987dfde ingested; model available: True",
+      "timestamp": "2026-08-15T17:30:46.938942Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T17:30:59.487445Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T17:30:59.487495Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T17:30:59.912734Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24",
+      "timestamp": "2026-08-15T17:31:56.742400Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T17:32:06.831517Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T17:33:32.682258Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T17:38:23.196648Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0d73c5d1-61de-4436-b1e0-fbad8b454d6c persisted, alert marked investigated",
+      "timestamp": "2026-08-15T17:38:23.202797Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T17:30:59.487479Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T17:30:59.487479Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection of a high-confidence, high-severity brute-force pattern from an unverified source IP indicates a significant security risk."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or reset the password for account 'kchen' to prevent further unauthorized access.",
+    "Block the source IP address (203.0.113.52) at the perimeter firewall or via a host-based security group.",
+    "Conduct a forensic review of the session logs for user 'kchen' starting from the time of the successful login to identify any lateral movement, unauthorized command execution, or data exfiltration.",
+    "Audit all other system accounts to determine if the same IP address attempted logins against other usernames.",
+    "Review SSH configuration settings (e.g., enforcing MFA, disabling password authentication in favor of keys) to harden the environment against future brute-force attempts."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The direct correlation between a high-volume brute-force pattern and a subsequent successful login from the same source IP provides high confidence that an account compromise has occurred.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

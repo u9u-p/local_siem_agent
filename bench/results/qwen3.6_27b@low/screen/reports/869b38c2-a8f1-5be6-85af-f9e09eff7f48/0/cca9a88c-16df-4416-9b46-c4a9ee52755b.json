@@ -1,0 +1,156 @@
+{
+  "report_id": "cca9a88c-16df-4416-9b46-c4a9ee52755b",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-14T23:53:43.384751Z",
+  "alert_summary": "A macro-enabled Excel file named 'Invoice_2984773.xlsm' executed a hidden, encoded PowerShell command containing an Invoke-Expression download cradle pattern, indicating a likely spearphishing attack delivering a secondary payload.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "timestamp": "2026-08-14T23:40:17.820267Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T23:42:14.306640Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T23:42:14.306711Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "timestamp": "2026-08-14T23:42:14.731573Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=3; follow-up same_command_line_env_wide added 1; open-value search for '-EncodedCommand' found 8 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T23:45:53.153113Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T23:47:03.487434Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T23:50:24.846838Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 12 audit(s) for 13 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T23:53:43.384673Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cca9a88c-16df-4416-9b46-c4a9ee52755b persisted, alert marked investigated",
+      "timestamp": "2026-08-14T23:53:43.393455Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:42:14.306673Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:42:14.306673Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:42:14.306695Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:42:14.306695Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:42:14.306703Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:42:14.306703Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The detection identifies a classic fileless execution chain where a macro-enabled spreadsheet launches PowerShell with parameters designed to evade detection (`-NoP -W Hidden`) and obfuscate the payload via encoding. The decoded command reveals an `Invoke-Expression` pattern initiating a `New-Object` call, which is characteristic of download cradles used to fetch and execute additional malware from remote servers. This behavior aligns with high-confidence indicators of compromise associated with targeted spearphishing campaigns rather than benign administrative tasks, warranting immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected endpoint from the network to prevent lateral movement or data exfiltration while preserving volatile memory and disk state for forensic capture. Extract and statically analyze the embedded macro within Invoice_2984773.xlsm, then fully decode the remaining PowerShell payload to map out download URLs, C2 infrastructure, and any staged binaries. Cross-reference the user's mailbox and email gateway logs to locate the initial delivery vector, identify related phishing campaigns, and determine whether other recipients were targeted. Deploy environment-wide hunting queries to detect similar Office-to-PowerShell execution chains or matching file hashes, and proactively block any newly identified IOCs at proxy, firewall, and EDR layers. Finally, review authentication and privilege escalation logs for this account to assess whether credential compromise has already occurred."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a macro-enabled Excel file executing hidden, encoded PowerShell with an Invoke-Expression download cradle strongly aligns with known malicious spearphishing TTPs and lacks indicators of legitimate administrative use.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  }
+}

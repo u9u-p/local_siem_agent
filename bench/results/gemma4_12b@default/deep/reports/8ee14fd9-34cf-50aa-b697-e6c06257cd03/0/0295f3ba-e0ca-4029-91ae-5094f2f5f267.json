@@ -1,0 +1,121 @@
+{
+  "report_id": "0295f3ba-e0ca-4029-91ae-5094f2f5f267",
+  "alert_id": "8ee14fd9-34cf-50aa-b697-e6c06257cd03",
+  "generated_at": "2026-08-15T19:42:13.735342Z",
+  "alert_summary": "A series of 32 scanning events from an unknown IP (203.0.113.10) was detected, which is assessed as a high-severity event with high confidence.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8ee14fd9-34cf-50aa-b697-e6c06257cd03 ingested; model available: True",
+      "timestamp": "2026-08-15T19:37:13.233005Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T19:37:26.333301Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T19:37:26.333351Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T19:37:26.755132Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=32",
+      "timestamp": "2026-08-15T19:38:05.642887Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T19:38:19.066919Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T19:39:31.692051Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 10 flagged",
+      "timestamp": "2026-08-15T19:42:13.735219Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0295f3ba-e0ca-4029-91ae-5094f2f5f267 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:42:13.743371Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:37:26.333337Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:37:26.333337Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The correlation of 32 scan attempts from an unverified source (IP 203.0.113.10) provides high confidence that this activity represents a significant security risk."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a forced password reset for account 'jsmith' and invalidate all current active sessions.",
+    "Conduct a forensic review of the shell history and system logs for user 'jsmith' starting from the timestamp of the successful login to identify any unauthorized commands or lateral movement.",
+    "Cross-reference the source IP (203.0.113.10) against internal access logs to see if it has interacted with other systems in the network.",
+    "Verify if Multi-Factor Authentication (MFA) was enabled for this account; if so, determine if the MFA challenge was bypassed or successfully completed by the attacker.",
+    "Implement a temporary block on IP 203.0.113.10 at the perimeter firewall until further investigation is complete.",
+    "Notify the user 'jsmith' via an out-of-band communication channel to confirm whether they were performing remote maintenance at the time of the login."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high volume of preceding scan activity followed by a successful login from an unverified source strongly indicates a successful brute-force or credential stuffing attack.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,148 @@
+{
+  "report_id": "7c589d6a-7fc3-48b0-9b59-b79e8d058792",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-15T00:12:12.854393Z",
+  "alert_summary": "A brute-force pattern was detected with evidence_count=8. Enrichment for IP 10.20.4.94 and user tommy.wong is unknown. Findings do not confirm a successful Windows logon or a correlation to that user/IP.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-15T00:02:45.448780Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-15T00:03:46.260391Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T00:03:46.260432Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T00:03:46.690228Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=8",
+      "timestamp": "2026-08-15T00:06:37.423660Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=low",
+      "timestamp": "2026-08-15T00:07:20.400848Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T00:10:02.734144Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T00:12:12.854336Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7c589d6a-7fc3-48b0-9b59-b79e8d058792 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T00:12:12.861540Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:03:46.260411Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:03:46.260411Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:03:46.260424Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:03:46.260424Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:03:46.260428Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:03:46.260428Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:03:46.260430Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:03:46.260430Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "low",
+    "rationale": "Severity is rated high and confidence is rated low. Pattern_type is brute_force with evidence_count=8. Enrichment for IP 10.20.4.94, domain dc01.corp.local, user tommy.wong and corp.local is unknown. Findings do not confirm a successful logon or support a MITRE T1078 mapping."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Given the lack of enrichment, first validate whether 10.20.4.94 is an internal asset, a jump host, or an external source by checking DHCP leases, VPN concentrator logs, and network segmentation records for the time window around the successful logon, and cross-reference the eight correlated brute-force evidences to see if they originate from the same source or a distributed set of IPs targeting tommy.wong or other accounts. Review recent changes to tommy.wong’s account, including password resets, MFA status, privileged group memberships, and last known good logons from recognized workstations, while pulling full Windows Security event logs from dc01.corp.local for logon type, process tree, and post-authentication activity to assess for lateral movement or data access. Temporarily increase monitoring fidelity on the user and source IP, enable detailed sign-in logs in Azure AD/Entra if applicable, and notify the identity and endpoint teams to perform a targeted hunt for credential reuse indicators without yet blocking the account, preserving forensic evidence.",
+    "classification_triage_call_with_one_sentence_rationale"
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The brute-force correlation and successful logon raise concern for credential compromise, but enrichment is completely unknown for IP, domain controller, user and domain, so internal vs external legitimacy cannot be verified to confidently call true positive or false positive.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

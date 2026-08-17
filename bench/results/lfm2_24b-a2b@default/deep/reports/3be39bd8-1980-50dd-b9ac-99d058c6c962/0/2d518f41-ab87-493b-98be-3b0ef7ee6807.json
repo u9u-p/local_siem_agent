@@ -1,0 +1,163 @@
+{
+  "report_id": "2d518f41-ab87-493b-98be-3b0ef7ee6807",
+  "alert_id": "3be39bd8-1980-50dd-b9ac-99d058c6c962",
+  "generated_at": "2026-08-15T09:39:29.512995Z",
+  "alert_summary": "This is a routine bulk marketing message with no signs of malicious activity; all involved systems and domains are currently unlinked from any active threats.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3be39bd8-1980-50dd-b9ac-99d058c6c962 ingested; model available: True",
+      "timestamp": "2026-08-15T09:39:21.413890Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 6 candidates, 6 validated",
+      "timestamp": "2026-08-15T09:39:22.879382Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T09:39:22.879483Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:39:23.267577Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=44; follow-up same_src_ip_24h added 7",
+      "timestamp": "2026-08-15T09:39:23.791300Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:39:24.431730Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:39:27.336475Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:39:29.512942Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2d518f41-ab87-493b-98be-3b0ef7ee6807 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:39:29.520477Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:22.879426Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:22.879426Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "uptimewatch.io",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:22.879457Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:22.879457Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:22.879466Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:22.879466Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://uptimewatch.io/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:22.879472Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:22.879472Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://victimcorp.com/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:39:22.879477Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:39:22.879477Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The message was identified as standard bulk email, not containing malware or suspicious links. All associated IPs and domains remain unverified but show no evidence of compromise or malicious use. The risk is considered low because there is no indication of targeted attack or exploitation."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Document the bulk message as part of routine marketing traffic analysis to maintain visibility on legitimate communications.",
+    "Periodically re-evaluate any unknown domains or IPs associated with standard business correspondence to ensure ongoing legitimacy.",
+    "Consider setting up automated alerts for future messages that match similar bulk patterns, but only if they begin showing signs of suspicious behavior.",
+    "Review internal policies regarding the handling of marketing-related emails to streamline classification and reduce manual review workload."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message is clearly identified as bulk marketing with no malicious intent, yet it warrants documentation due to its high volume and pattern similarity to previous scans.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

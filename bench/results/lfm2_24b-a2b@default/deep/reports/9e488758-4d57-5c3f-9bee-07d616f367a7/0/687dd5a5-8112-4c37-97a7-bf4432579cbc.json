@@ -1,0 +1,151 @@
+{
+  "report_id": "687dd5a5-8112-4c37-97a7-bf4432579cbc",
+  "alert_id": "9e488758-4d57-5c3f-9bee-07d616f367a7",
+  "generated_at": "2026-08-15T09:46:13.860030Z",
+  "alert_summary": "Suspicious logon detected from an unknown IP using brute force methods; immediate investigation recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e488758-4d57-5c3f-9bee-07d616f367a7 ingested; model available: True",
+      "timestamp": "2026-08-15T09:46:03.638235Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:46:04.480891Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:46:04.480929Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:46:04.891515Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=37; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-15T09:46:05.428840Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:46:05.999033Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:46:09.798490Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:46:13.859994Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 687dd5a5-8112-4c37-97a7-bf4432579cbc persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:46:13.865761Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:04.480912Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:04.480912Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "araja.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:04.480923Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:04.480923Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://web-prod-01:53340/",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:46:04.480927Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:46:04.480927Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful login from an unrecognized and geographically distant IP, combined with evidence of repeated automated access attempts (brute force), suggests that credentials may have been compromised or targeted. This raises the risk of unauthorized account use or further malicious activity on this host."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate review of the user’s authentication history and recent activity logs to identify any anomalous patterns beyond what is already known.",
+    "Consider temporarily disabling or requiring multi-factor verification for this account until further validation can be performed, especially given its successful logon from a foreign IP address.",
+    "Expand monitoring on related systems and services that share the same domain or network to detect lateral movement attempts or credential reuse incidents.",
+    "Engage with threat intelligence feeds to cross-reference any indicators (such as file hashes or malicious URLs) associated with this session for deeper context."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon from an unknown IP address and strong brute-force correlation evidence points directly to credential compromise activity consistent with the observed behavior.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

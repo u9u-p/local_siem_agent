@@ -1,0 +1,156 @@
+{
+  "report_id": "d1e1c9f8-474a-4f32-967c-52e4f2856e22",
+  "alert_id": "44fa5035-b7da-5f43-9414-f708bda0db99",
+  "generated_at": "2026-08-15T10:00:02.899309Z",
+  "alert_summary": "No evidence of a successful logon is present; the data only indicates scanning activity from IP 10.20.4.88.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 44fa5035-b7da-5f43-9414-f708bda0db99 ingested; model available: True",
+      "timestamp": "2026-08-15T09:59:40.799708Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:59:43.024445Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:59:43.024554Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:59:43.453735Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=8",
+      "timestamp": "2026-08-15T09:59:46.810772Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T09:59:49.068827Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:59:56.872734Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T10:00:02.899253Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d1e1c9f8-474a-4f32-967c-52e4f2856e22 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:00:02.906988Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:59:43.024507Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:59:43.024507Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:59:43.024537Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:59:43.024537Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:59:43.024544Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:59:43.024544Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:59:43.024548Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:59:43.024548Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The findings show internal‑IP scanning with no indication of privilege escalation or known malicious actors; risk remains low but confidence medium due to limited context."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user’s recent activity logs to confirm that the successful logon aligns with normal work patterns (e.g., time of day, typical workstation usage).",
+    "Cross‑check the source IP 10.20.4.88 against the organization’s DHCP lease database and network topology to ensure it belongs to an authorized device.",
+    "If possible, correlate this event with other security telemetry such as file access or privileged‑command execution on the target machine; absence of suspicious activity would reinforce a benign interpretation.",
+    "Consider enabling temporary audit logging for the ke.li.yam account (e.g., detailed command‑line capture) to surface any anomalous behavior in subsequent sessions.",
+    "If the scanning pattern evidence is derived from network probes or port scans, investigate whether those probes originated from an internal asset that routinely performs vulnerability assessments; if so, document and whitelist accordingly.",
+    "Maintain a watchlist for the ke.li.yam account and the IP 10.20.4.88 in case future events show escalation (e.g., repeated failed logons or lateral movement)."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event shows a legitimate internal login with no overt malicious indicators, yet the generic scanning pattern evidence and lack of contextual data leave ambiguity about whether this is benign reconnaissance or an early stage of compromise.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,161 @@
+{
+  "report_id": "7febd89c-137b-4e6a-b60b-2f4db3fc700f",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-15T02:55:22.141137Z",
+  "alert_summary": "A high-severity alert was triggered due to a correlation pattern involving 25 related events across the environment.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-15T02:51:13.910678Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T02:51:47.704525Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T02:51:47.704605Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T02:51:48.126374Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=25; open-value search for 'raj.kumar@victimcorp.com' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T02:52:57.845278Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T02:53:20.040829Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T02:54:23.894773Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T02:55:22.141055Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7febd89c-137b-4e6a-b60b-2f4db3fc700f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T02:55:22.149447Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:51:47.704559Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:51:47.704559Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:51:47.704582Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:51:47.704582Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:51:47.704590Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:51:47.704590Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:51:47.704594Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:51:47.704594Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:51:47.704598Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:51:47.704598Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert is rated high severity and high confidence based on a correlation of 25 events. The lack of provider information for associated IPs and domains indicates insufficient enrichment data, requiring further investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Validate the sender domain 'meridian-audit.com' via external threat intelligence and WHOIS lookup to determine if it is a newly registered spoofed domain or a legitimate entity with poor reputation, as enrichment data failed.",
+    "Search email logs for other recipients of messages from 'jane.tan@meridian-audit.com' to assess the full campaign scope and identify any potential successful deliveries or user interactions beyond the correlated events.",
+    "Confirm with recipient 'raj.kumar' that no links were clicked or attachments opened prior to the hold, and provide targeted awareness regarding impersonation tactics targeting internal audit processes.",
+    "If external validation confirms malicious intent, add 'meridian-audit.com' to the gateway blocklist and report the sender address to Mimecast for threat intelligence sharing."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert exhibits strong indicators of a Business Email Compromise campaign with high-severity impersonation triggers, significant correlation volume, and successful containment, which outweighs the lack of enrichment data.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

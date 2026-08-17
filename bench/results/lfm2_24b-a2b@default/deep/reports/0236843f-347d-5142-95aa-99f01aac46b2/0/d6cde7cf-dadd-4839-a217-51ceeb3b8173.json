@@ -1,0 +1,175 @@
+{
+  "report_id": "d6cde7cf-dadd-4839-a217-51ceeb3b8173",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-15T09:34:07.011220Z",
+  "alert_summary": "Suspicious message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com appears to be an impersonation attempt and should be treated as high risk.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-15T09:33:49.437347Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 5 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:33:56.528524Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T09:33:56.528617Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:33:56.932222Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=28; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-15T09:33:57.456871Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:33:58.123112Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 15 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:34:02.057511Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 17 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:34:07.011164Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d6cde7cf-dadd-4839-a217-51ceeb3b8173 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:34:07.019303Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:33:56.528576Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:33:56.528576Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:33:56.528599Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:33:56.528599Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:33:56.528606Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:33:56.528606Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:33:56.528610Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:33:56.528610Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:33:56.528613Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:33:56.528613Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The email exhibits classic phishing traits: it comes from a suspicious domain, uses unsolicited sender information, and context suggests an attempt to gain unauthorized access. While some details like the source IP are not fully confirmed, the overall pattern strongly indicates malicious intent targeting sensitive audit data."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate network traffic analysis to verify if the IP address is actively communicating with internal assets.",
+    "Initiate a targeted phishing simulation on the same user group to gauge susceptibility and reinforce awareness training.",
+    "Request full email headers from both parties to confirm the true origin of the message and rule out spoofing.",
+    "Engage legal counsel early if there is any suspicion that sensitive data may have been compromised, even before confirmation.",
+    "Document all findings in a secure incident log and share with relevant stakeholders for ongoing situational awareness."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message displays multiple high-confidence phishing indicators—unsolicited sender, mismatched domains, and context of impersonation—that align with known malicious patterns despite incomplete provider verification.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

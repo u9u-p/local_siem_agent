@@ -1,0 +1,147 @@
+{
+  "report_id": "57c2e257-8b5d-4f28-8cfb-edf0cab2d62a",
+  "alert_id": "64fe5cd8-c579-58bc-bc1a-6e473e99b904",
+  "generated_at": "2026-08-16T11:05:58.719709Z",
+  "alert_summary": "Mimecast flagged a bulk email from concierge@grandmerchant-hotel.com to tommy.wong@victimcorp.com; the sender’s IP (40.107.92.115) and domains are unknown but have no known malicious reputation, indicating a moderate phishing risk.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 64fe5cd8-c579-58bc-bc1a-6e473e99b904 ingested; model available: True",
+      "timestamp": "2026-08-16T11:04:56.701832Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T11:05:06.886431Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T11:05:06.886513Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T11:05:07.308597Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=46; follow-up same_src_ip_24h added 5; open-value search for 'booking confirmation' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:05:19.229490Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T11:05:24.477371Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T11:05:42.360067Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 4 flagged",
+      "timestamp": "2026-08-16T11:05:58.719655Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 57c2e257-8b5d-4f28-8cfb-edf0cab2d62a persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:05:58.726729Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:05:06.886466Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:05:06.886466Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "grandmerchant-hotel.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:05:06.886496Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:05:06.886496Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:05:06.886504Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:05:06.886504Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:05:06.886508Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:05:06.886508Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The message was identified as bulk; originating IP (40.107.92.115) and domains have no recorded malicious activity or blacklisting. The high evidence count for other patterns suggests potential spoofing or social engineering attempts. Because there are no definitive indicators of compromise, we assess the risk as medium."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "It would be prudent to pull the message content into a sandbox environment for deeper inspection—look for obfuscated URLs or attachments that might trigger known malware signatures.  Cross‑check the sender’s SPF, DKIM and DMARC alignment against the IP address; any misalignment could hint at spoofing even if the domain itself is not on a blacklist.  Because the evidence count is high yet no direct malicious indicators exist, you might also want to query internal logs for similar outbound patterns from victimcorp.com—if other employees received comparable “booking confirmation” emails, that would strengthen the case for a coordinated phishing attempt.  Finally, consider setting up a temporary quarantine rule for any future mail from grandmerchant‑hotel.com until its legitimacy can be confirmed by the hotel’s IT or through an external verification channel."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email shows many generic phishing indicators but lacks concrete malicious signatures, so it remains ambiguous whether it is a legitimate booking confirmation or a disguised spear‑phishing attempt.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

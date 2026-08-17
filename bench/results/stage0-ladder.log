@@ -1,0 +1,29 @@
+Stage 0 ladder — 17 model(s), rungs (8192, 32768, 131072, 262144)
+
+  gemma4:12b                                   8192:7.8G  32768:7.8G  131072:8.9G  262144:9.4G   KV 6.5 MB/1K
+  gemma4:26b-a4b-it-qat                        8192:14.2G  32768:14.2G  131072:15.1G  262144:15.6G   KV 5.7 MB/1K
+  gemma4:latest                                8192:9.0G  32768:9.0G  131072:9.7G  131072:9.7G   KV 6.2 MB/1K
+  glm-4.7-flash:latest                         8192:18.2G  32768:19.5G  131072:24.6G  202752:28.1G   KV 53.4 MB/1K
+  gpt-oss:120b                                 8192:60.0G  32768:60.1G  131072:60.2G  131072:60.2G   KV 2.0 MB/1K
+  gpt-oss:20b                                  8192:12.0G  32768:12.0G  131072:12.7G  131072:12.7G   KV 6.1 MB/1K
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+  hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0  no rung loaded
+  lfm2.5:8b-a1b-q4_K_M                         8192:5.0G  32768:5.3G  128000:6.9G  128000:6.9G   KV 17.0 MB/1K
+  lfm2:24b-a2b                                 8192:13.7G  32768:14.3G  32768:14.3G  32768:14.3G   KV 22.0 MB/1K
+  mistral-small3.2:latest                      8192:14.8G  32768:18.6G  131072:34.5G  131072:34.5G   KV 167.9 MB/1K
+  muse-glimmer:30b                             8192:16.3G  32768:16.3G  131072:17.1G  131072:17.1G   KV 6.9 MB/1K
+  nemotron-3-nano:4b                           8192:2.8G  32768:3.2G  131072:5.3G  262144:7.8G   KV 20.8 MB/1K
+  qwen3.5:9b                                   8192:5.4G  32768:6.1G  131072:9.8G  262144:14.3G   KV 36.8 MB/1K
+  qwen3.6:27b                                  8192:15.6G  32768:17.2G  131072:23.9G  262144:32.4G   KV 69.2 MB/1K
+  qwen3.6:27b-bf16                             8192:48.9G  32768:50.3G  131072:56.4G  262144:64.5G   KV 64.4 MB/1K
+  qwen3.6:27b-q8_0                             8192:26.5G  32768:28.1G  131072:34.8G  262144:43.3G   KV 69.2 MB/1K
+  qwen3.6:35b-a3b                              8192:21.3G  32768:21.8G  131072:24.2G  262144:27.2G   KV 24.6 MB/1K
+
+wrote bench/results/stage0-ladder.jsonl

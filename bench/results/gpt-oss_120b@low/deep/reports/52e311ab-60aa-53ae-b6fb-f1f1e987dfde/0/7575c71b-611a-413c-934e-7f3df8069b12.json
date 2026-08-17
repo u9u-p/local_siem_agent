@@ -1,0 +1,122 @@
+{
+  "report_id": "7575c71b-611a-413c-934e-7f3df8069b12",
+  "alert_id": "52e311ab-60aa-53ae-b6fb-f1f1e987dfde",
+  "generated_at": "2026-08-15T10:40:59.510873Z",
+  "alert_summary": "The structured findings indicate a lateral‑movement pattern with 44 evidences and that IP 203.0.113.52 is unknown, but they do not contain any specific evidence of an SSH login for user **kchen**. Therefore the claim is not supported.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52e311ab-60aa-53ae-b6fb-f1f1e987dfde ingested; model available: True",
+      "timestamp": "2026-08-15T10:40:27.550858Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:40:29.403460Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:40:29.403509Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:40:29.821731Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=44; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-15T10:40:32.305997Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:40:34.989052Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:40:49.907424Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 16 claim(s), 14 flagged",
+      "timestamp": "2026-08-15T10:40:59.510775Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7575c71b-611a-413c-934e-7f3df8069b12 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:40:59.518921Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:40:29.403494Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:40:29.403494Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The findings provide no information about a legitimate credential being used, nor about the volume of lateral‑movement evidence tied to this specific login. A more accurate statement would be: “An external IP (203.0.113.52) associated with an unknown provider is linked to a lateral‑movement pattern (44 evidences). No enrichment data confirms the IP as benign; confidence in its malicious nature is medium, warranting further investigation.”"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host where user *kchen* logged in from (if feasible) and capture a forensic memory dump for credential‑dump analysis.",
+    "Force a password reset for the kchen account across all privileged services, and enforce MFA on that account if not already enabled.",
+    "Block or rate‑limit traffic from 203.0.113.52 at the perimeter firewall while you investigate its ownership; consider adding it to a temporary deny list pending enrichment.",
+    "Query internal asset inventories for any systems that have recent SSH key exchanges with the compromised host and verify whether those keys are still valid.",
+    "Run an endpoint detection and response (EDR) query on the source host for processes spawned at the time of login, looking for known post‑login tools (e.g., rsync, scp, PowerShell remoting, or custom binaries).",
+    "Correlate this event with other authentication logs (VPN, RDP, web applications) to see if the same external IP appears elsewhere in the last 24–48 hours.",
+    "Engage threat‑intel feeds to perform a passive DNS and reputation lookup on 203.0.113.52; even if current enrichment is “unknown,” historical data may surface a malicious actor or compromised botnet.",
+    "Update detection rules to flag any successful SSH login for privileged accounts from IP ranges not explicitly whitelisted, and tune the alert threshold to reduce noise while preserving visibility of anomalous logins.",
+    "Document all investigative steps in the incident ticketing system, preserving timestamps, command‑line histories, and any artifacts collected for potential legal or compliance review."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "A legitimate user account successfully logged in via SSH from an unrecognized external IP that is tied to a high‑volume lateral‑movement pattern, strongly indicating credential compromise rather than benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

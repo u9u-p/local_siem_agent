@@ -1,0 +1,149 @@
+{
+  "report_id": "1f02be55-e870-42c3-8d27-ea46582d0e24",
+  "alert_id": "5c48612a-41af-5c0d-8d34-f08ef7a13649",
+  "generated_at": "2026-08-15T12:59:35.655246Z",
+  "alert_summary": "A PowerShell process was executed with an encoded command via Windows Terminal, which decoded to a legitimate Python testing command (`pytest -q`).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5c48612a-41af-5c0d-8d34-f08ef7a13649 ingested; model available: True",
+      "timestamp": "2026-08-15T12:57:23.689605Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T12:58:11.116737Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T12:58:11.116807Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T12:58:11.544641Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=10; follow-up same_command_line_env_wide added 1",
+      "timestamp": "2026-08-15T12:58:26.564937Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T12:58:36.105400Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T12:58:56.040577Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T12:59:35.655166Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 1f02be55-e870-42c3-8d27-ea46582d0e24 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:59:35.662198Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-rkumar04.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:58:11.116771Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:58:11.116771Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:58:11.116793Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:58:11.116793Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:58:11.116801Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:58:11.116801Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded PowerShell commands are frequently used by attackers for obfuscation, the specific payload in this instance is `pytest -q`, a standard tool for running Python tests. This activity is consistent with normal developer workflows and does not indicate malicious intent. Consequently, the risk level is assessed as low."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify if the directory from which 'pytest' was executed is a standard development workspace or a suspicious temporary folder.",
+    "Review the user's recent command history to ensure no other obfuscated commands were run in this session.",
+    "Investigate why the correlation engine flagged this specific activity as 'lateral movement' to tune out future false positives related to developer workflows.",
+    "Confirm that the Python environment being used is an authorized installation on the workstation."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command reveals a legitimate Python testing utility (pytest) being run by a developer, indicating standard development activity rather than malicious obfuscation or lateral movement.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"WindowsTerminal.exe\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

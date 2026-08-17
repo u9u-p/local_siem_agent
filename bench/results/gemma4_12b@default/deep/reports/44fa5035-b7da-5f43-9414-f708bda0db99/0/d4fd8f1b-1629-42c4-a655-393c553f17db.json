@@ -1,0 +1,151 @@
+{
+  "report_id": "d4fd8f1b-1629-42c4-a655-393c553f17db",
+  "alert_id": "44fa5035-b7da-5f43-9414-f708bda0db99",
+  "generated_at": "2026-08-15T16:45:14.635692Z",
+  "alert_summary": "A successful Windows login was recorded for user ke.li.yam from IP 10.20.4.88. No malicious indicators or behavioral anomalies were detected during the initial review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 44fa5035-b7da-5f43-9414-f708bda0db99 ingested; model available: True",
+      "timestamp": "2026-08-15T16:41:46.600479Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T16:42:30.515674Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T16:42:30.515756Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T16:42:30.946165Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=8; open-value search for 'ke.li.yam' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:43:10.598131Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T16:43:29.801934Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T16:44:26.968701Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:45:14.635598Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d4fd8f1b-1629-42c4-a655-393c553f17db persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:45:14.644558Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:42:30.515708Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:42:30.515708Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:42:30.515736Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:42:30.515736Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:42:30.515743Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:42:30.515743Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:42:30.515748Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:42:30.515748Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The authentication succeeded using valid credentials without triggering any known threat patterns, geographic inconsistencies, or connections to malicious infrastructure. Given the lack of suspicious enrichment data and the high confidence in the credential validity, the risk is assessed as low."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform manual lookups on internal assets to identify the owner of IP 10.20.4.88 (e.g., check DHCP logs or VPN gateway records).",
+    "Investigate the 'evidence_count=8' to determine if these represent a series of failed login attempts preceding the successful one.",
+    "Compare the timestamp and source location of this login against the user's historical baseline for account ke.li.yam.",
+    "Verify with the user or their department head if they were performing scheduled tasks or remote work at the time of the event."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert lacks sufficient enrichment data to confirm whether the source IP is a known internal asset or an unauthorized external connection, necessitating manual verification before a final determination can be made.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

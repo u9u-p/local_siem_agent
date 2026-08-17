@@ -1,0 +1,153 @@
+{
+  "report_id": "f831d1be-d49a-47f7-8bef-e4fda6177452",
+  "alert_id": "259806d8-cbf4-5ab0-92c9-72b8762f4635",
+  "generated_at": "2026-08-15T09:54:41.572833Z",
+  "alert_summary": "A bulk email from noreply@zoomcall‑invites.com was detected and flagged as suspicious; it appears to be a phishing attempt masquerading as a vendor sync invitation.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 259806d8-cbf4-5ab0-92c9-72b8762f4635 ingested; model available: True",
+      "timestamp": "2026-08-15T09:54:17.566762Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:54:19.423686Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:54:19.423759Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:54:19.857027Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=47; follow-up same_rule_id_host added 22; open-value search for 'ZoomCall Invites' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T09:54:23.031003Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T09:54:24.881270Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:54:33.425642Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T09:54:41.572743Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f831d1be-d49a-47f7-8bef-e4fda6177452 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:54:41.580709Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:54:19.423721Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:54:19.423721Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "zoomcall-invites.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:54:19.423742Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:54:19.423742Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:54:19.423749Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:54:19.423749Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:54:19.423753Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:54:19.423753Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The message originates from an unfamiliar domain and IP address (40.107.92.115), which is typical of bulk phishing campaigns (T1566). The subject line mimics a legitimate vendor meeting, so the email could bypass casual scrutiny. Because no known legitimate service or user matches these indicators, the risk is considered medium: it warrants investigation but does not pose an immediate critical threat to the network or data integrity."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deeper forensic analysis of the email’s MIME structure to confirm whether it contains any hidden attachments or embedded malicious links, especially given the suspicious sender domain.",
+    "Cross‑reference the originating IP (40.107.92.115) against internal threat intelligence feeds and known bad actor lists; if it appears on any blacklists, flag the message for immediate quarantine.",
+    "Use a sandboxed environment to open the email’s attachments or click the embedded links in a controlled manner, monitoring for any outbound connections or payload execution.",
+    "Check the recipient’s mailbox for any prior similar bulk invitations from the same domain; if multiple users received identical messages, consider a coordinated phishing campaign.",
+    "Notify the IT security team and the victimcorp’s vendor management office to verify whether a legitimate vendor sync was scheduled on that date/time; if not, issue an internal warning to all employees about this specific sender.",
+    "If the email is confirmed malicious, update Mimecast policies to block future messages from noreply@zoomcall‑invites.com and add the IP to the block list.",
+    "Document the findings in a threat intelligence repository for future reference and potential attribution efforts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email exhibits classic bulk phishing characteristics but also contains a seemingly legitimate vendor‑sync subject; without further evidence of malicious payloads or confirmed vendor activity, the alert remains ambiguous.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'No immediate action needed — monitor for recurrence'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

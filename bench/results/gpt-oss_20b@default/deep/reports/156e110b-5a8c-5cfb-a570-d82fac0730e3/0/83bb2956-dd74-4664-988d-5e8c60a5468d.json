@@ -1,0 +1,154 @@
+{
+  "report_id": "83bb2956-dd74-4664-988d-5e8c60a5468d",
+  "alert_id": "156e110b-5a8c-5cfb-a570-d82fac0730e3",
+  "generated_at": "2026-08-16T10:22:24.582264Z",
+  "alert_summary": "A domain user (raj.kumar) logged in successfully from an internal IP, yet 15 correlated events suggest lateral‑movement activity—prompting a high‑severity review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 156e110b-5a8c-5cfb-a570-d82fac0730e3 ingested; model available: True",
+      "timestamp": "2026-08-16T10:21:14.879950Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 4 candidates, 3 validated",
+      "timestamp": "2026-08-16T10:21:20.690536Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T10:21:20.690601Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T10:21:21.119989Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-16T10:21:32.757134Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:21:38.348561Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:22:03.760608Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T10:22:24.582164Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 83bb2956-dd74-4664-988d-5e8c60a5468d persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:22:24.589837Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:21:20.690568Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:21:20.690568Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:21:20.690586Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:21:20.690586Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:21:20.690593Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:21:20.690593Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:21:20.690597Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:21:20.690597Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The logon itself is expected for an internal account, but the volume and pattern of supporting events indicate that valid credentials may be abused to move laterally across the network. Because no external or known malicious indicators are present, certainty remains moderate; however, the sheer number of related events warrants immediate attention. The risk lies in potential credential compromise and unauthorized access to other systems, which could lead to broader exploitation if left unchecked."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin by isolating the workstation that logged the successful credential use and perform a live memory capture for forensic analysis, looking for signs of credential dumping or persistence mechanisms.",
+    "Cross‑reference the 15 correlated events against your internal change‑management logs to determine whether any legitimate administrative tasks were scheduled around the same time frame; if not, flag the account for immediate review.",
+    "Examine the user’s group memberships and recent privilege escalations—particularly membership in privileged AD groups such as Domain Admins or Enterprise Admins—to assess whether the lateral movement could be a result of an elevated role being abused.",
+    "Run a host‑based intrusion detection scan on the source machine to identify any anomalous processes, scheduled tasks, or unusual registry modifications that might indicate compromise.",
+    "If possible, trigger a temporary password reset for the account and enforce multi‑factor authentication for all subsequent logons until the investigation is complete.",
+    "Leverage your SIEM’s threat intelligence feeds to check whether the internal IP 10.20.4.73 has been observed in any known malicious activity or if it matches patterns of compromised hosts within your network.",
+    "Document every step taken and maintain a chain‑of‑custody log for any evidence collected, as this will be critical should further investigation reveal an actual breach."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The high volume of lateral‑movement events is worrisome, yet the lack of external malicious indicators and the internal nature of the logon make it unclear whether this represents a legitimate administrative activity or an attack.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

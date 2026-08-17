@@ -1,0 +1,129 @@
+{
+  "report_id": "3142e756-fc65-4a44-8a00-2305ad997c22",
+  "alert_id": "261d7e62-92be-5144-8473-3eb20b3735be",
+  "generated_at": "2026-08-15T09:55:01.416619Z",
+  "alert_summary": "A user account (nprakash) experienced 16 failed SSH attempts from an unknown external IP. No evidence of a subsequent successful login is present in the findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 261d7e62-92be-5144-8473-3eb20b3735be ingested; model available: True",
+      "timestamp": "2026-08-15T09:54:42.067024Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:54:43.081129Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:54:43.081175Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:54:43.500929Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=16; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-15T09:54:45.768999Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:54:47.924027Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:54:56.538744Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:55:01.416554Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 3142e756-fc65-4a44-8a00-2305ad997c22 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:55:01.423767Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:54:43.081161Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:54:43.081161Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The combination of many brute‑force failures followed by a successful login from an unrecognized source strongly suggests that an attacker has gained access to the account. Because the IP’s provenance is unknown and the volume of attempts is high, there is a significant risk that the adversary could move laterally or exfiltrate data. Prompt action is required to prevent further compromise while preserving evidence for investigation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the compromised host from the internal network to prevent lateral movement.",
+    "Force a password reset for user *nprakash* and enforce multi‑factor authentication (MFA) on all privileged accounts.",
+    "Deploy an endpoint detection and response (EDR) agent if not already present, and run a full memory and disk forensic analysis to look for persistence mechanisms or backdoors.",
+    "Review the SSH configuration: disable root logins, enable key‑based authentication only, and consider implementing fail‑dampening or IP‑rate limiting via tools such as `fail2ban` or `sshguard`.",
+    "Cross‑reference the source IP (203.0.113.63) against threat intelligence feeds to see if it has been associated with known malicious actors or botnets.",
+    "Check for any anomalous outbound connections from the host, especially to non‑standard ports or external services that could indicate data exfiltration.",
+    "If possible, reconstruct the timeline of events using system logs (e.g., `/var/log/auth.log`, `journalctl`) and correlate with other network sensors to determine whether this login was part of a broader attack campaign."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of 16 failed SSH attempts followed by a successful login from an unknown external IP strongly indicates credential compromise, matching known adversary tactics (T1078) and warranting immediate investigation.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

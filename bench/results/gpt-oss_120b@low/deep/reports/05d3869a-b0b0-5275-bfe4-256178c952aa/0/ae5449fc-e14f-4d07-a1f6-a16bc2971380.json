@@ -1,0 +1,153 @@
+{
+  "report_id": "ae5449fc-e14f-4d07-a1f6-a16bc2971380",
+  "alert_id": "05d3869a-b0b0-5275-bfe4-256178c952aa",
+  "generated_at": "2026-08-15T10:16:53.484389Z",
+  "alert_summary": "Evidence shows scanning activity associated with IP 52.14.201.148 and the domains parcelroute‑track.com, a.chong, and victimcorp.com, but there is no indication that Mimecast quarantined an email or that a specific phishing message was identified.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 05d3869a-b0b0-5275-bfe4-256178c952aa ingested; model available: True",
+      "timestamp": "2026-08-15T10:16:20.164914Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:16:23.064118Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:16:23.064191Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:16:23.482474Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=38; follow-up same_src_ip_24h added 1",
+      "timestamp": "2026-08-15T10:16:26.808062Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:16:29.569951Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:16:44.027077Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:16:53.484327Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ae5449fc-e14f-4d07-a1f6-a16bc2971380 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:16:53.493767Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.148",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:16:23.064153Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:16:23.064153Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "parcelroute-track.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:16:23.064174Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:16:23.064174Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:16:23.064182Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:16:23.064182Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:16:23.064186Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:16:23.064186Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings report a high‑confidence, medium‑severity scanning pattern involving the listed IP and domains; they do not specify a bulk‑phishing (T1566) classification, Mimecast detection, or quarantine actions."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct a deeper forensic review of the original email source (full headers, MIME parts) to confirm whether any malicious payloads or credential‑harvesting links were embedded.",
+    "Run a passive DNS and WHOIS lookup on parcelroute-track.com and its associated IP 52.14.201.148 to see if they have been recently registered or are part of known disposable/abuse infrastructure.",
+    "Check internal mail logs for any prior communications from the same sender or domain to other users in victimcorp.com; look for patterns that might indicate a broader campaign.",
+    "If the email contained URLs, submit them to a sandbox (e.g., Cuckoo, FireEye) and URL‑reputation services (VirusTotal, URLhaus) to verify whether they resolve to phishing pages or malware downloads.",
+    "Update Mimecast policies to flag similar bulk‑mail characteristics (subject line patterns like ‘Your parcel … is out for delivery’) as high‑risk, and consider auto‑quarantine for future matches.",
+    "Notify the affected user (a.chong@victimcorp.com) with a brief awareness tip about phishing attempts that mimic package tracking notifications, reinforcing safe‑click practices.",
+    "Document this incident in the organization’s threat intel repository, tagging it with T1566 (Phishing) and linking to any future sightings of the same domain or IP."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "Mimecast successfully quarantined a bulk phishing email that matches known delivery‑notification lure patterns, indicating a genuine malicious attempt despite the lack of prior reputation for the sender’s infrastructure.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

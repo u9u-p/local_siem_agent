@@ -1,0 +1,124 @@
+{
+  "report_id": "a502be47-94a8-456f-9f0e-a0566fc9fb63",
+  "alert_id": "7e42075d-88d8-57f2-aa1e-f6c67514da91",
+  "generated_at": "2026-08-15T09:44:40.097192Z",
+  "alert_summary": "Suspicious logon detected from an unknown IP address with scanning behavior; credentials may be compromised.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7e42075d-88d8-57f2-aa1e-f6c67514da91 ingested; model available: True",
+      "timestamp": "2026-08-15T09:44:32.459105Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:44:33.238058Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:44:33.238083Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:44:33.651279Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=51; follow-up same_rule_id_host added 25",
+      "timestamp": "2026-08-15T09:44:34.165340Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:44:34.739189Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:44:37.740062Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 9 audit(s) for 10 claim(s); corrections not applied",
+      "timestamp": "2026-08-15T09:44:40.097092Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a502be47-94a8-456f-9f0e-a0566fc9fb63 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:40.106423Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:33.238075Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:33.238075Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The successful login from a non-authorized, unrecognized IP combined with evidence of network scanning strongly indicates unauthorized access attempts. This combination raises the risk to high because it suggests both credential compromise and reconnaissance activity that could lead to further exploitation or data exfiltration."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate investigation into the source and intent behind the scanning activity from IP 203.0.113.10.",
+    "Block or closely monitor traffic originating from this address pending further analysis, while ensuring no legitimate services are disrupted.",
+    "Correlate logs with other systems to identify any lateral movement attempts or additional compromised accounts.",
+    "Engage incident response teams for deeper forensic examination and potential containment measures."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of successful unauthorized logon from an unknown IP address, scanning behavior, and high confidence in malicious intent strongly supports this being a true positive detection.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,121 @@
+{
+  "report_id": "cd8707e5-7c4b-4933-a13c-8720f24620a3",
+  "alert_id": "9e4783f7-0be5-5f34-8cac-670bc3f73992",
+  "generated_at": "2026-08-15T10:14:24.864236Z",
+  "alert_summary": "An account was subject to 26 brute‑force attempts from an unknown external IP (203.0.113.52). No evidence of a successful login or specific user is present in the current findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e4783f7-0be5-5f34-8cac-670bc3f73992 ingested; model available: True",
+      "timestamp": "2026-08-15T10:14:02.194601Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:14:03.194327Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:14:03.194379Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:14:03.625638Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=26; follow-up same_rule_id_host added 12",
+      "timestamp": "2026-08-15T10:14:05.822686Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:14:08.021669Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:14:16.305520Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:14:24.864188Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cd8707e5-7c4b-4933-a13c-8720f24620a3 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:14:24.870945Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:14:03.194363Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:14:03.194363Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "Repeated failed logons from an unrecognized source raise suspicion of attempted unauthorized access, but there is no direct evidence of credential theft (T1078) or persistence activity (T1021)."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected host from the internal network to prevent any potential lateral movement.",
+    "Force a password reset for user *kchen* and enforce multi‑factor authentication (MFA) on all privileged accounts.",
+    "Deploy an endpoint detection and response (EDR) agent if not already present, and run a full memory and disk forensic analysis to look for signs of persistence mechanisms or backdoors.",
+    "Cross‑reference the source IP (203.0.113.52) against threat intelligence feeds; if it appears on any malicious actor lists, block it at the perimeter firewall and update intrusion detection signatures accordingly.",
+    "Review SSH logs from the past 30 days to identify whether this login was an isolated event or part of a broader pattern of compromised credentials.",
+    "Conduct a credential stuffing test against the internal authentication system to confirm that the brute‑force attempts were indeed targeting valid accounts.",
+    "If any suspicious files or processes are discovered, quarantine them and perform hash‑based comparison with known malware repositories.",
+    "Notify relevant stakeholders (SOC, IT security, compliance) of the incident and document all actions taken for audit purposes."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful SSH login from an unknown external IP, coupled with 26 preceding brute‑force attempts, strongly indicates that the attacker has likely compromised or guessed a valid account, making this alert a genuine security incident.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,145 @@
+{
+  "report_id": "f261fce0-b4a6-4859-ba17-094bcd353b39",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-14T18:04:28.666083Z",
+  "alert_summary": "PowerShell executed a network connection to an unknown IP and domains, indicating potential lateral movement or C2 activity. Risk assessment is high severity with medium confidence due to limited enrichment data.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-14T18:03:51.699505Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:03:55.628192Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:03:55.628282Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-14T18:03:56.044167Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=1",
+      "timestamp": "2026-08-14T18:03:58.708549Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:04:03.042248Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:04:14.790734Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:04:28.665994Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f261fce0-b4a6-4859-ba17-094bcd353b39 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:04:28.673787Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:55.628242Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:55.628242Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:55.628269Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:55.628269Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:03:55.628277Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:03:55.628277Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The PowerShell network connection to unknown indicators suggests possible malicious activity aligning with MITRE ATT&CK T1071.001 (Web Protocols). However, the lack of additional context reduces confidence in this assessment. Immediate actions include isolating the host and escalating for deeper investigation while preserving evidence."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enrich the IP address and domain indicators through threat intelligence platforms to identify known malicious infrastructure.",
+    "Investigate whether the PowerShell process was part of a legitimate administrative task or an unauthorized activity by reviewing system logs and user behavior.",
+    "Assess the network traffic patterns associated with this connection, including data exfiltration attempts or lateral movement techniques.",
+    "Cross-reference the observed behavior with MITRE ATT&CK tactics to determine if it aligns with known adversary behaviors.",
+    "Validate the source of the Sysmon event to ensure no tampering or false positives have occurred.",
+    "Consider isolating affected systems and conducting a forensic analysis of endpoints involved in this network connection."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The presence of a PowerShell network connection to an unknown IP with associated domains aligns with known malicious patterns, despite incomplete enrichment data, which supports the classification as a true positive.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

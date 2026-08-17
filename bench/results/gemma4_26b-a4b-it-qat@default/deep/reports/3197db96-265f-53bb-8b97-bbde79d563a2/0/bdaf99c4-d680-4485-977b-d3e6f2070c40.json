@@ -1,0 +1,148 @@
+{
+  "report_id": "bdaf99c4-d680-4485-977b-d3e6f2070c40",
+  "alert_id": "3197db96-265f-53bb-8b97-bbde79d563a2",
+  "generated_at": "2026-08-15T12:02:39.773298Z",
+  "alert_summary": "A PowerShell process was executed with an encoded command by the Cursor IDE. The decoded payload reveals a standard TypeScript type-checking operation, indicating routine developer activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3197db96-265f-53bb-8b97-bbde79d563a2 ingested; model available: True",
+      "timestamp": "2026-08-15T12:00:42.597638Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T12:01:10.177010Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T12:01:10.177110Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T12:01:10.613077Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=31; follow-up same_command_line_env_wide added 2; open-value search for '-enc' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T12:01:51.897607Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T12:01:58.621794Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T12:02:20.989482Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T12:02:39.773249Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report bdaf99c4-d680-4485-977b-d3e6f2070c40 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:02:39.781391Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:01:10.177070Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:01:10.177070Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:01:10.177097Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:01:10.177097Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:01:10.177104Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:01:10.177104Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded commands are frequently used to obfuscate malicious scripts, this specific instance is a legitimate function of the Cursor editor's integration with development tools. The command `npx tsc --noEmit` is a common part of a TypeScript workflow and does not exhibit characteristics of unauthorized or malicious activity. Consequently, this event is classified as low risk."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Tune the detection logic to suppress alerts where 'powershell.exe -EncodedCommand' is a child process of known IDE executables (like Cursor.exe or VS Code) and the decoded payload matches standard development toolchains (e.g., npm, npx, tsc).",
+    "Verify if this specific user ('ke.li.yam') frequently performs TypeScript development to confirm the baseline behavior.",
+    "Monitor for any subsequent network connections or file system modifications initiated by this PowerShell process that deviate from standard package management behavior."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The encoded command is a benign TypeScript type-checking operation (`npx tsc --noEmit`) triggered by a legitimate development environment, representing standard developer workflow rather than malicious activity.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "bgBwAHgAIAB0AHMAYwAgAC0ALQBuAG8ARQBtAGkAdAA=",
+        "decoded": "npx tsc --noEmit"
+      }
+    ]
+  }
+}

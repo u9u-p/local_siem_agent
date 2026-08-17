@@ -1,0 +1,147 @@
+{
+  "report_id": "3b8e88df-ef72-414e-8601-7b9d859643da",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-15T00:50:37.545059Z",
+  "alert_summary": "An outbound connection involving host jtan-lt01.victimcorp.com and IP 185.220.101.47 was observed. Correlation findings show pattern_type=none and evidence_count=1, indicating a single isolated event with no correlated activity. Enrichment for the destination IP and the host domain is unknown.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-15T00:41:42.841158Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T00:42:30.610567Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T00:42:30.610653Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-15T00:42:31.037047Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for '185.220.101.47' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T00:45:20.020834Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=low",
+      "timestamp": "2026-08-15T00:46:13.577058Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T00:48:34.891983Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T00:50:37.545035Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 3b8e88df-ef72-414e-8601-7b9d859643da persisted, alert marked investigated",
+      "timestamp": "2026-08-15T00:50:37.551785Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:42:30.610612Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:42:30.610612Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:42:30.610635Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:42:30.610635Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:42:30.610644Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:42:30.610644Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T00:42:30.610649Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T00:42:30.610649Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "low",
+    "rationale": "The alert has pattern_type=none and evidence_count=1, so there is no supporting pattern of behavior to confirm malicious use. Enrichment for destination IP 185.220.101.47 and domains jtan-lt01.victimcorp.com, jane.tan, victimcorp.com is unknown, limiting context. Risk assessment is severity=medium, confidence=low."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Check PowerShell script block logging and Module logging for jtan-lt01.victimcorp.com around the connection timestamp to recover command line arguments, encoded commands, and parent process lineage; review Sysmon Event ID 1 process creation and Event ID 3 network events for the same PID to establish a full process tree and user context for jane.tan. Correlate with authentication logs, EDR telemetry, and proxy/firewall TLS SNI and DNS queries to see if the Tor exit IP was resolved via a hostname or direct IP and whether any other internal hosts contacted the same range. Validate whether a Tor client or proxy tooling is authorized on the endpoint and perform a targeted hunt for T1071.001 indicators such as PowerShell download cradles, base64 encoded payloads, and persistence mechanisms on the host."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "Single isolated PowerShell outbound connection to a Tor exit node with no enrichment, process lineage, or correlated events provides insufficient evidence to confirm malicious intent.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

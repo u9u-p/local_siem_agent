@@ -1,0 +1,125 @@
+{
+  "report_id": "f584e071-4f65-4e1e-a77d-d78edeb81549",
+  "alert_id": "65cf2253-5583-57ff-a6ce-47aac9d11b56",
+  "generated_at": "2026-08-15T09:43:35.757807Z",
+  "alert_summary": "A successful SSH logon from an external IP address was detected, showing brute force patterns and linked to known user accounts; immediate investigation is required.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 65cf2253-5583-57ff-a6ce-47aac9d11b56 ingested; model available: True",
+      "timestamp": "2026-08-15T09:43:26.384648Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:43:27.368539Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T09:43:27.368563Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:43:27.792324Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=61; follow-up same_rule_id_host added 29",
+      "timestamp": "2026-08-15T09:43:28.318963Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:43:29.087792Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:43:32.433792Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:43:35.757759Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f584e071-4f65-4e1e-a77d-d78edeb81549 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:43:35.764968Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:27.368556Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:27.368556Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The combination of a successful remote login with brute force indicators, presence of valid user accounts (T1078), and remote services (T1021) suggests targeted activity. The unknown provider for the source IP further raises suspicion, warranting high confidence in this being an actual attack rather than benign behavior."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider conducting deeper network traffic analysis to identify any anomalous patterns beyond SSH activity.",
+    "Review recent authentication logs and correlate them with user behavior analytics to spot deviations.",
+    "Initiate a focused threat hunting exercise targeting accounts with similar privilege levels or access profiles.",
+    "Engage in proactive credential hygiene by prompting affected users to reset passwords and review session activity.",
+    "Evaluate the possibility of lateral movement attempts by mapping current active sessions against known baseline configurations."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of brute force indicators, successful SSH logon from an external IP, and presence of valid accounts strongly suggests a deliberate attack attempt rather than random noise or benign activity.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

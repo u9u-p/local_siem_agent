@@ -1,0 +1,119 @@
+{
+  "report_id": "5911299f-1902-45f5-9f9d-9d066cfdf9a3",
+  "alert_id": "6205ce71-5402-550d-9c72-d8faa4175448",
+  "generated_at": "2026-08-16T11:04:56.214968Z",
+  "alert_summary": "A login from IP 100.72.44.19 with 50 correlated events detected—suggesting potential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6205ce71-5402-550d-9c72-d8faa4175448 ingested; model available: True",
+      "timestamp": "2026-08-16T11:03:40.190433Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-16T11:03:42.968915Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-16T11:03:42.968963Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-16T11:03:43.389573Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=50; follow-up same_rule_id_host added 24; open-value search for 'mrahman' found 12 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:04:03.688855Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T11:04:09.252412Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T11:04:34.049235Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 13 flagged",
+      "timestamp": "2026-08-16T11:04:56.214914Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5911299f-1902-45f5-9f9d-9d066cfdf9a3 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:04:56.222263Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:03:42.968946Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:03:42.968946Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The successful login came from an IP with no known provider or reputation, and the volume of related events indicates repeated activity that could be malicious. However, there are no definitive malware signatures or clear indicators of compromise yet, so while the situation warrants caution, it does not reach high‑severity levels. The uncertainty in intent keeps the risk assessment at medium, prompting a thorough investigation rather than an immediate punitive response."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Manually review the SSH session logs for user *mrahman* to look for anomalous commands, file transfers, or privilege‑escalation attempts that might indicate misuse of the account.",
+    "Cross‑reference the source IP (100.72.44.19) against internal whitelists and known VPN endpoints; if it is not a recognized corporate address, flag it for deeper investigation.",
+    "Initiate an account‑activity audit for *mrahman*, including password‑change history, MFA usage, and any recent policy changes that could affect credential integrity.",
+    "Deploy a temporary network capture on the host that accepted the SSH connection to collect packet‑level evidence of post‑login behavior (e.g., lateral movement attempts or data exfiltration).",
+    "Notify the user directly and request confirmation of the login event; if the user denies it, trigger an account lockout and reset credentials while logging the incident.",
+    "If any suspicious activity is detected during the review, isolate the affected system from the network until a full forensic analysis can be performed."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event shows 50 correlated events suggesting potential compromise, but the lack of definitive malicious signatures and the presence of a legitimate user keep confidence moderate.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,139 @@
+{
+  "report_id": "d9968e6d-dffa-442f-b3ed-8347da3848eb",
+  "alert_id": "7bf7560f-a900-5c3c-a88e-4e2ec7ec1246",
+  "generated_at": "2026-08-15T13:34:29.730785Z",
+  "alert_summary": "Mimecast held an email from officesupply-direct.com to victimcorp.com. No malicious indicators were identified during the automated enrichment process.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7bf7560f-a900-5c3c-a88e-4e2ec7ec1246 ingested; model available: True",
+      "timestamp": "2026-08-15T13:32:31.894079Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T13:32:44.867275Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T13:32:44.867308Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T13:32:45.301675Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=23; open-value search for 'officesupply-direct.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:33:08.855606Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T13:33:19.744247Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T13:33:43.416561Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:34:29.730696Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d9968e6d-dffa-442f-b3ed-8347da3848eb persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:34:29.738906Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.101",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:32:44.867293Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:32:44.867293Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "officesupply-direct.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:32:44.867303Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:32:44.867303Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:32:44.867306Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:32:44.867306Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The message was intercepted by Mimecast because it was flagged as 'Bulk' content, which is typical for unsolicited commercial or marketing emails. While the sender's IP and domain lack established reputation data in the enrichment findings, there are no specific indicators of a targeted phishing attempt. Consequently, the risk level is assessed as low."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross-reference the order number (#OSD-99412) with internal procurement or accounting records to verify if a legitimate shipment was expected.",
+    "Perform a WHOIS lookup on 'officesupply-direct.com' to check domain age; newly registered domains are frequently used in phishing campaigns.",
+    "Check for similar email patterns (same subject line or sender IP) across the rest of the organization to determine if this is part of a wider campaign.",
+    "Inspect the email headers and body content for any hidden URLs or attachments that may have bypassed initial reputation checks."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While Mimecast categorized the message as benign 'Bulk' mail, the subject line is a classic phishing lure and the lack of domain/IP reputation makes it impossible to rule out a sophisticated spoofing attempt without further verification.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,130 @@
+{
+  "report_id": "2a380418-6bfc-4051-9e6f-0446b43a024f",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-15T11:58:18.550345Z",
+  "alert_summary": "32 failed authentication attempts were detected from an unknown IP address (45.146.164.110), indicating a brute-force attack pattern.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-15T11:53:35.948292Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T11:53:41.890508Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T11:53:41.890562Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T11:53:42.317932Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=32",
+      "timestamp": "2026-08-15T11:55:02.792888Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T11:55:08.558634Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T11:55:57.321756Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:58:18.550287Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2a380418-6bfc-4051-9e6f-0446b43a024f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:58:18.557656Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:53:41.890545Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:53:41.890545Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high severity and confidence are driven by the detection of 32 failed authentication attempts from an unrecognized external source (45.146.164.110)."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'jsmith' user account to prevent further unauthorized access.",
+    "Terminate all active SSH sessions currently associated with the 'jsmith' username.",
+    "Perform a comprehensive audit of all commands executed and files accessed by 'jsmith' during the session following the successful login to determine the scope of lateral movement or data exfiltration.",
+    "Implement an immediate block on IP 45.146.164.110 at the perimeter firewall/IPS.",
+    "Force a mandatory password reset and review/rotate any SSH keys associated with this user account.",
+    "Review authentication logs for other accounts to determine if this IP was attempting a wider credential stuffing campaign."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The direct correlation between a high volume of failed login attempts (brute-force pattern) and an immediate successful logon from an unknown external IP is a definitive indicator of a compromised account.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

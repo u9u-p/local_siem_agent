@@ -1,0 +1,150 @@
+{
+  "report_id": "aaf134b4-0912-48b1-a487-f4d76a27cabf",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-14T22:34:38.459158Z",
+  "alert_summary": "The Cursor IDE application executed a PowerShell process with an encoded command that decodes to `cargo check --quiet`, a standard Rust code validation tool. This activity is consistent with normal software development workflows and does not indicate malicious behavior.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-14T22:23:06.992029Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T22:25:20.383247Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T22:25:20.383315Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-14T22:25:20.812364Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for '-encodedcommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T22:28:21.266466Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-14T22:29:25.155541Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-14T22:32:33.010118Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T22:34:38.459032Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aaf134b4-0912-48b1-a487-f4d76a27cabf persisted, alert marked investigated",
+      "timestamp": "2026-08-14T22:34:38.466969Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:25:20.383282Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:25:20.383282Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:25:20.383302Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:25:20.383302Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T22:25:20.383310Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T22:25:20.383310Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The alert was triggered by the Cursor Integrated Development Environment spawning a PowerShell subprocess using the `-EncodedCommand` parameter, a mechanism frequently utilized by Electron-based applications for process management rather than obfuscation. Decoding the payload reveals the command `cargo check --quiet`, which invokes the Rust toolchain to perform silent code validation, an expected operation during routine programming tasks. The parent process originates from the legitimate Cursor installation path within the user's local directory, and the execution pattern aligns with benign Node.js/Electron framework behavior without any indicators of compromise. Therefore, the event is assessed as low severity with high confidence, representing false-positive noise generated by legitimate developer tooling."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the cryptographic signature and file hash of Cursor.exe against official vendor distributions to ensure the binary hasn't been swapped or modified by a supply-chain compromise.",
+    "Map execution timestamps against user session logs and IDE activity metrics to confirm these spawns correlate with active coding periods rather than idle or off-hours automation.",
+    "Set up a lightweight monitoring rule that flags any deviation in the decoded payload, specifically watching for transitions from local compiler/package-manager calls to network-bound scripts, credential access, or file-system modifications outside the project directory.",
+    "Evaluate tuning the detection logic to suppress alerts when the parent process matches known development tooling paths and the decoded command contains only standard build/validation verbs, while retaining raw event logging for audit and baseline comparison.",
+    "Cross-reference with adjacent telemetry (network connections, child process trees, file integrity monitoring) during these PowerShell invocations to confirm no secondary execution chains or data staging occurs."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert triggers on a documented IDE automation pattern where Cursor legitimately uses an encoded PowerShell command to run routine Rust dependency checks, showing no behavioral, contextual, or payload indicators of compromise.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "report_id": "aafa4e2b-9955-4fbe-874e-fe463845c178",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-14T23:13:57.884071Z",
+  "alert_summary": "Analysis of 32 evidence items associated with IP address 45.146.164.110 shows no detected correlation patterns and no known threat intelligence associations.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-14T23:01:53.907177Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T23:02:57.460531Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T23:02:57.460584Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T23:02:57.898364Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=32; open-value search for 'jsmith' found 24 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T23:07:28.444376Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-14T23:08:39.395938Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-14T23:11:28.500030Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T23:13:57.883996Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aafa4e2b-9955-4fbe-874e-fe463845c178 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T23:13:57.892076Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:02:57.460566Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:02:57.460566Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "Enrichment of IP address 45.146.164.110 returned no threat intelligence matches, and correlation analysis detected no anomalous patterns across 32 evidence items. These factors support a low severity risk assessment with high confidence."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the source IP 45.146.164.110 using external threat intelligence platforms or manual OSINT, as the current enrichment returned 'unknown', which may indicate a data gap in the provider database or potentially novel infrastructure not yet cataloged.",
+    "Review the session activity and command history for user `jsmith` immediately following these logons to ensure no unauthorized commands, privilege escalation, or data access occurred, even though the authentication itself appears routine.",
+    "Analyze the evidence count of 32 to determine temporal distribution; verify whether this represents distinct human interactions over time or a rapid burst of activity that could suggest automated scripting or a successful credential stuffing attempt.",
+    "Confirm with system owners or HR that `jsmith` is an active, authorized user and validate whether access from this IP aligns with known work patterns, remote access policies, or expected geographic locations."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert triggers on a successful SSH logon that analysis confirms is routine operational behavior with no threat intelligence matches, anomalous patterns, or signs of compromise, indicating the detection is noise rather than a security incident.",
+  "uncertainty_notes": "unsupported claim: 'No immediate action needed — monitor for recurrence'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,139 @@
+{
+  "report_id": "b7b3b92c-8ec2-433a-be91-5f7049d99428",
+  "alert_id": "3be39bd8-1980-50dd-b9ac-99d058c6c962",
+  "generated_at": "2026-08-15T16:35:06.053406Z",
+  "alert_summary": "A message from an external domain was flagged due to its classification as bulk mail. The high volume of evidence suggests this may be part of a broader phishing campaign.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3be39bd8-1980-50dd-b9ac-99d058c6c962 ingested; model available: True",
+      "timestamp": "2026-08-15T16:27:21.698124Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T16:27:42.149771Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:27:42.149837Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T16:27:42.592208Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=37; open-value search for 'uptimewatch.io' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T16:28:23.798109Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T16:28:40.492975Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T16:29:38.557090Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:35:06.053320Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b7b3b92c-8ec2-433a-be91-5f7049d99428 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:35:06.062171Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:27:42.149803Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:27:42.149803Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "uptimewatch.io",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:27:42.149824Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:27:42.149824Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:27:42.149831Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:27:42.149831Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert is categorized as medium risk because the 'Bulk' flag indicates a potential automated campaign. While enrichment data for the source IP and domain is currently unknown, the high evidence count of 37 suggests significant activity that requires investigation to determine if the threat is a targeted attack or a broad spam campaign."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'uptimewatch.io' to determine the registration date; newly registered domains are frequently associated with short-lived phishing campaigns.\n\nConduct a sandbox analysis of any links or attachments contained within the held email to identify malicious payloads or credential harvesting sites.\n\nSearch internal mail logs for other recipients who may have received messages from 'team@uptimewatch.io' to determine if this is an isolated incident or a widespread campaign targeting the organization.\n\nCross-reference the source IP (149.72.14.88) against recent threat intelligence feeds to see if it has been associated with other spam or phishing activities in the last 30 days."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The 'Bulk' classification combined with a high evidence count and a common social engineering lure ('Monthly availability report') strongly indicates an automated phishing campaign.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

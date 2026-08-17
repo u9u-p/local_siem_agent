@@ -1,0 +1,158 @@
+{
+  "report_id": "e3ecf9c7-edea-4322-ab01-a6c731236490",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-16T10:17:13.493109Z",
+  "alert_summary": "Encoded PowerShell was launched from a user‑level executable and is linked to 55 lateral‑movement events; while the decoded payload appears benign (a Rust build command), the obfuscation and high correlation count warrant further scrutiny.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-16T10:16:11.182660Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-16T10:16:19.194015Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T10:16:19.194057Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T10:16:19.633255Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=55; follow-up same_rule_id_host added 27",
+      "timestamp": "2026-08-16T10:16:27.456900Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T10:16:33.943375Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:16:55.710488Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 3 flagged",
+      "timestamp": "2026-08-16T10:17:13.493048Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e3ecf9c7-edea-4322-ab01-a6c731236490 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:17:13.501130Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:16:19.194036Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:16:19.194036Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:16:19.194049Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:16:19.194049Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:16:19.194054Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:16:19.194054Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert flags an encoded PowerShell invocation—an obfuscation technique commonly used in malicious activity (T1027/T1059.001). The presence of 55 correlated lateral‑movement events suggests potential misuse of legitimate credentials or automated processes. Although the decoded command (`cargo check --quiet`) is a standard Rust build operation, the context of its execution from an uncommon application path raises suspicion. Therefore, a medium‑risk assessment is appropriate: investigate to confirm legitimacy before taking remedial action."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify that the user \"ke.li.yam\" is a legitimate developer account with known Rust development responsibilities; cross‑check recent project activity and build logs to confirm that running `cargo check --quiet` aligns with scheduled or ad‑hoc builds.",
+    "Inspect the integrity of the executable at C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe – compare its hash against a known good copy, examine its digital signature, and review any recent updates or deployments that might explain why it is launching PowerShell with an encoded payload.",
+    "Examine the 55 correlated lateral‑movement events for patterns such as repeated credential reuse, unusual service creation, or unexpected network connections; correlate those events with the timestamp of this Sysmon record to determine whether they are part of a legitimate deployment pipeline or indicative of malicious propagation.",
+    "Perform a deeper forensic analysis on the encoded PowerShell command: decode it again using multiple tools, check for hidden payloads (e.g., base64‑encoded binaries), and run the resulting script in an isolated sandbox to observe any side effects beyond the benign `cargo` invocation.",
+    "Review network logs for outbound connections originating from the same process or user around the time of execution; look for connections to known malicious domains, unusual DNS queries, or data exfiltration patterns that might have been triggered by a hidden component of the script.",
+    "If possible, enable additional Sysmon logging (e.g., Process Creation with command line arguments, File Creation Time, Network Connections) for the next 24–48 hours to capture any subsequent activity from Cursor.exe or related processes; this will help determine whether the encoded PowerShell call is an isolated event or part of a broader campaign.",
+    "Engage the development team to confirm whether the use of Electron’s “run‑as‑node” flag and the invocation of PowerShell via an encoded command are standard practice for their workflow, and if not, investigate whether this could be a sign of credential compromise or malicious injection."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The decoded payload appears benign (a Rust build check), yet the use of obfuscation and the high number of correlated lateral‑movement events raise suspicion; without additional context, we cannot definitively label this as malicious or legitimate.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Terminate the suspicious process on the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}

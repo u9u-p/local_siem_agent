@@ -1,0 +1,152 @@
+{
+  "report_id": "ce5564de-bb3a-4fff-9681-d72963e48a80",
+  "alert_id": "64fe5cd8-c579-58bc-bc1a-6e473e99b904",
+  "generated_at": "2026-08-15T10:07:43.071732Z",
+  "alert_summary": "A bulk email from concierge@grandmerchant‑hotel.com to tommy.wong@victimcorp.com was detected, but no definitive malicious indicators were identified.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 64fe5cd8-c579-58bc-bc1a-6e473e99b904 ingested; model available: True",
+      "timestamp": "2026-08-15T10:07:20.200974Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:07:22.002015Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:07:22.002094Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:07:22.413742Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=77; follow-up same_rule_id_host added 36",
+      "timestamp": "2026-08-15T10:07:24.723621Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:07:26.842804Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:07:34.495795Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T10:07:43.071704Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ce5564de-bb3a-4fff-9681-d72963e48a80 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:07:43.078581Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:22.002050Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:22.002050Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "grandmerchant-hotel.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:22.002076Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:22.002076Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:22.002084Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:22.002084Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:22.002089Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:22.002089Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The message is identified as a bulk phishing (T1566) with an unknown sender domain and IP address that has not been seen in any reputation feeds.  However, the presence of scanning activity suggests it may be part of a broader campaign.  Because there are no confirmed malware or credential‑stealing indicators yet, the risk remains medium; further investigation is required to confirm whether this is a legitimate business communication or an early-stage phishing attempt."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a deeper forensic review of the message payload to confirm whether it contains any hidden malicious attachments or embedded URLs that could trigger phishing or credential harvesting.",
+    "Cross‑reference the sender’s domain (concierge@grandmerchant-hotel.com) against internal whitelists and external threat intelligence feeds; if it is not on an approved list, flag it for manual vetting by the security operations team.",
+    "Perform a reverse DNS lookup and WHOIS query on the IP address 40.107.92.115 to uncover any historical abuse or ownership changes that might hint at malicious use.",
+    "Deploy a sandbox analysis of the email’s HTML content and any embedded links to observe runtime behavior, especially for potential drive‑by download vectors.",
+    "If the message is part of a broader bulk campaign, consider implementing a temporary block on outbound traffic from victimcorp.com to the identified IP until further investigation clears it.",
+    "Document all findings in the incident ticketing system with timestamps and evidence hashes so that future analysts can trace the decision path and refine detection rules."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows typical bulk‑phishing characteristics but lacks definitive malicious indicators; further analysis is required to determine if it is a legitimate marketing email or part of an ongoing phishing campaign.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

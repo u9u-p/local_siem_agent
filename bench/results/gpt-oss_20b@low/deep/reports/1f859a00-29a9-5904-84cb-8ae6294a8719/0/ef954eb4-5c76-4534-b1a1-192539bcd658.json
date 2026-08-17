@@ -1,0 +1,153 @@
+{
+  "report_id": "ef954eb4-5c76-4534-b1a1-192539bcd658",
+  "alert_id": "1f859a00-29a9-5904-84cb-8ae6294a8719",
+  "generated_at": "2026-08-15T09:53:50.881009Z",
+  "alert_summary": "A bulk phishing email was intercepted by Mimecast, targeting an internal user with a subject suggesting a new IdentityGuard sign‑in; the event is linked to 67 brute‑force attempts from an unclassified IP and domains.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1f859a00-29a9-5904-84cb-8ae6294a8719 ingested; model available: True",
+      "timestamp": "2026-08-15T09:53:27.821200Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:53:29.641832Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:53:29.641903Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:53:30.060169Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=67; follow-up same_rule_id_host added 30",
+      "timestamp": "2026-08-15T09:53:32.096430Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T09:53:34.123090Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:53:43.113626Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 4 flagged",
+      "timestamp": "2026-08-15T09:53:50.880937Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ef954eb4-5c76-4534-b1a1-192539bcd658 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:53:50.888845Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:53:29.641864Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:53:29.641864Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "identityguard-notify.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:53:29.641886Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:53:29.641886Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:53:29.641894Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:53:29.641894Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:53:29.641898Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:53:29.641898Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert represents a classic phishing attempt (T1566) aimed at harvesting credentials. The correlation engine flagged a high volume of brute‑force related events, indicating repeated automated login attempts that could compromise the user account. Although the source IP and domains are not currently listed as known malicious, the sheer number of suspicious activities combined with the targeted nature warrants proactive investigation rather than passive monitoring."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an internal phishing awareness drill focused on the specific email subject line \"New sign‑in to your IdentityGuard account\" to gauge user susceptibility and reinforce safe‑email practices.",
+    "Deploy a temporary block or quarantine rule in Mimecast for any outbound messages originating from the IP address 149.72.14.88 until further analysis confirms its legitimacy, thereby preventing potential credential theft via brute‑force attempts.",
+    "Cross‑reference the bulk email volume against the organization’s legitimate IdentityGuard communications to confirm whether this is a spoofed or compromised account; if no matching legitimate traffic exists, treat it as a high‑risk phishing vector.",
+    "Conduct a forensic review of the victimcorp.com mail logs for any anomalous login attempts or credential reuse patterns that might correlate with the 67 brute‑force events noted in the correlation engine.",
+    "Engage the IdentityGuard vendor to verify whether the notification domain identityguard-notify.com is currently authorized to send bulk alerts on behalf of their service; if not, request immediate revocation of any associated sending privileges.",
+    "Implement a temporary policy that requires multi‑factor authentication (MFA) for all new sign‑in notifications sent to internal users, thereby adding an extra layer of protection against credential compromise.",
+    "Schedule a threat hunting session focused on the victimcorp.com domain to identify any lateral movement or data exfiltration attempts that might have been initiated by compromised credentials from this phishing campaign."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert exhibits classic bulk‑phishing characteristics and a high volume of brute‑force events, yet the involved IP and domains lack known malicious reputation; further investigation is required to confirm whether this is an orchestrated attack or a false alarm.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'No immediate action needed — monitor for recurrence'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

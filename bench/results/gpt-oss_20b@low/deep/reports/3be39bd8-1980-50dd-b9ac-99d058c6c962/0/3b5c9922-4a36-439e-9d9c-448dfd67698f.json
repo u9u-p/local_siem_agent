@@ -1,0 +1,141 @@
+{
+  "report_id": "3b5c9922-4a36-439e-9d9c-448dfd67698f",
+  "alert_id": "3be39bd8-1980-50dd-b9ac-99d058c6c962",
+  "generated_at": "2026-08-15T09:58:53.610933Z",
+  "alert_summary": "An email from an unknown sender (team@uptimewatch.io) was detected and held by Mimecast, targeting an internal address.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3be39bd8-1980-50dd-b9ac-99d058c6c962 ingested; model available: True",
+      "timestamp": "2026-08-15T09:58:30.353177Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:58:32.467082Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:58:32.467146Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:58:32.881192Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=67; follow-up same_rule_id_host added 30",
+      "timestamp": "2026-08-15T09:58:35.241600Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:58:37.307153Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:58:45.792701Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-15T09:58:53.610835Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 3b5c9922-4a36-439e-9d9c-448dfd67698f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:58:53.619844Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:32.467113Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:32.467113Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "uptimewatch.io",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:32.467133Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:32.467133Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:58:32.467141Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:58:32.467141Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The message is flagged as a bulk‑phishing attempt (T1566). The sender domain and originating IP lack any known reputation data, yet there are 67 related scanning events. Because the email is aimed at an internal recipient and the volume of associated findings suggests a broader campaign, we rate it high severity with medium confidence to ensure prompt analyst review."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an internal phishing awareness drill: send a mock version of the email to a small group of employees (including ops@victimcorp.com) and monitor click‑through rates and reporting behavior.",
+    "Perform a reverse‑DNS lookup on 149.72.14.88 and query threat intelligence feeds for any historical activity tied to that IP or its ASN; if no data is found, flag it as a potential new malicious actor.",
+    "Cross‑reference the sender address team@uptimewatch.io against known legitimate business partners or vendors; if there is no prior relationship, treat the domain as unverified and block outbound mail from it until further verification.",
+    "Deploy a sandboxed email attachment scan (if any attachments are present) to detect zero‑day payloads that might be hidden under a benign subject line.",
+    "Set up a temporary quarantine rule for all messages from uptimewatch.io with high‑volume characteristics, while allowing manual review of legitimate business traffic.",
+    "Conduct a network flow audit on the victimcorp.com mail server during the time window of the bulk message to identify any anomalous outbound connections that could indicate data exfiltration or command‑and‑control activity."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email exhibits classic bulk‑phishing traits and originates from an unknown domain/IP, yet there is no definitive malicious payload evidence; further investigation is required to confirm whether it is a legitimate vendor report or a deceptive phishing attempt.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

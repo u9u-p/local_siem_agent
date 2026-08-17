@@ -1,0 +1,150 @@
+{
+  "report_id": "181f7de5-653b-4190-8909-ef05726e60d9",
+  "alert_id": "8e75e331-5651-55f9-b461-610a776e1715",
+  "generated_at": "2026-08-15T19:37:12.748319Z",
+  "alert_summary": "A successful login for user tommy.wong from 10.20.4.94 has been flagged as high-confidence lateral movement. The high volume of related events suggests an attacker is systematically moving through the network using compromised credentials.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8e75e331-5651-55f9-b461-610a776e1715 ingested; model available: True",
+      "timestamp": "2026-08-15T19:31:11.823509Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T19:31:29.606048Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T19:31:29.606116Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T19:31:30.039660Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T19:33:24.633862Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T19:33:40.104561Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T19:35:47.656291Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T19:37:12.748221Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 181f7de5-653b-4190-8909-ef05726e60d9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:37:12.755921Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:31:29.606080Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:31:29.606080Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:31:29.606100Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:31:29.606100Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:31:29.606108Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:31:29.606108Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert is classified as high risk because 15 instances of lateral movement were detected involving this account in a short period. Because both the source IP and user profile are unknown in enrichment data, there is a high probability that an attacker is actively moving through the environment with stolen credentials."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate host 10.20.4.94 from the network immediately to prevent further lateral movement.",
+    "Perform a forced password reset and session termination for the account 'tommy.wong'.",
+    "Conduct a forensic sweep of the source machine (10.20.4.94) to identify any unauthorized tools, scripts, or persistence mechanisms.",
+    "Review the 15 specific instances of lateral movement to determine which target systems were accessed and if data exfiltration occurred.",
+    "Audit the 'tommy.wong' account logs for other anomalous activities, such as unusual login times or access to sensitive file shares."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high evidence count of 15 and the specific classification of lateral movement indicate a systematic and likely malicious progression through the network.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

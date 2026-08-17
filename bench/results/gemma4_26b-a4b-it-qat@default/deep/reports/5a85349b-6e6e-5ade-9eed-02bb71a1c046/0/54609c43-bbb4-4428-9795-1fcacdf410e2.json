@@ -1,0 +1,150 @@
+{
+  "report_id": "54609c43-bbb4-4428-9795-1fcacdf410e2",
+  "alert_id": "5a85349b-6e6e-5ade-9eed-02bb71a1c046",
+  "generated_at": "2026-08-15T12:57:23.202511Z",
+  "alert_summary": "Mimecast successfully intercepted and held a bulk marketing email from datavault-crm.com addressed to jane.tan@victimcorp.com. The message was prevented from reaching the recipient's inbox because it was identified as spam.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5a85349b-6e6e-5ade-9eed-02bb71a1c046 ingested; model available: True",
+      "timestamp": "2026-08-15T12:55:30.329791Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T12:55:40.857018Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T12:55:40.857095Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T12:55:41.283975Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'datavault-crm.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T12:55:59.572889Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T12:56:07.136715Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T12:56:29.490859Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T12:57:23.202427Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 54609c43-bbb4-4428-9795-1fcacdf410e2 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T12:57:23.210643Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:55:40.857054Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:55:40.857054Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "datavault-crm.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:55:40.857078Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:55:40.857078Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:55:40.857086Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:55:40.857086Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T12:55:40.857090Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T12:55:40.857090Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The risk is assessed as low with high confidence."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'datavault-crm.com' to determine the domain age; newly registered domains used for marketing are often indicators of phishing campaigns.",
+    "Check email headers for SPF, DKIM, and DMARC alignment to ensure the sender is not spoofing a legitimate service.",
+    "Search mail logs for other recipients within 'victimcorp.com' who may have received similar messages from this or related domains to identify potential targeted campaigns.",
+    "Verify if 'datavault-crm.com' is a known vendor used by the marketing or sales departments to rule out a legitimate but poorly configured automated mailing service."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The detection correctly identified and successfully intercepted a bulk/marketing email as intended by the Mimecast policy, preventing any potential delivery to the end user.",
+  "uncertainty_notes": "unsupported claim: \"Mimecast successfully intercepted and held a bulk marketing email from datavault-crm.com addressed to jane.tan@victimcorp.com. The message was prevented from reaching the recipient's inbox because it was identified as spam.\"; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

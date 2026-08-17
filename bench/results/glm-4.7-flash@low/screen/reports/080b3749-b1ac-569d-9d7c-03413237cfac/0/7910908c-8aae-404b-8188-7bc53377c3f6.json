@@ -1,0 +1,118 @@
+{
+  "report_id": "7910908c-8aae-404b-8188-7bc53377c3f6",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-15T04:13:47.980821Z",
+  "alert_summary": "The structured findings do not specify the protocol (SSH) or the user (nprakash); they only indicate a pattern of type \"other\" with 24 evidence points involving IP 203.0.113.63.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-15T04:01:39.755908Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T04:01:52.155856Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T04:01:52.155908Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T04:01:52.580642Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=24; open-value search for 'nprakash' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T04:12:05.131387Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T04:12:17.225332Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T04:12:56.811680Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T04:13:47.980730Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7910908c-8aae-404b-8188-7bc53377c3f6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T04:13:47.988369Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:01:52.155891Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:01:52.155891Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The structured findings do not specify the protocol (SSH) or the user (nprakash); they only indicate a pattern of type \"other\" with 24 evidence points involving IP 203.0.113.63."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the network configuration to determine if the firewall rules inadvertently allow traffic from the RFC 5737 reserved range (203.0.113.0/24), as this IP address is mathematically impossible to originate from a real device.",
+    "Review the SSH daemon logs for subsequent activity or failed authentication attempts to see if this login was part of a scripted test or a misconfigured logging scenario.",
+    "Verify if the user 'nprakash' is a test or development account that should have restricted access, and check if the IP address associated with that user's legitimate access matches the log entry."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The IP address 203.0.113.63 is a reserved RFC 5737 address used exclusively for documentation and examples, making it impossible for a legitimate external connection to originate from this address.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "glm-4.7-flash:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

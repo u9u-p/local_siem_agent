@@ -1,0 +1,140 @@
+{
+  "report_id": "13a6d481-9506-49ee-a69f-d2f2bc0b45ee",
+  "alert_id": "1579e01d-e9ff-50f5-9a7b-916b0428643e",
+  "generated_at": "2026-08-15T09:36:20.422795Z",
+  "alert_summary": "Support is not substantiated by the structured findings. While scanning patterns and high evidence count exist, there is insufficient direct evidence linking these indicators to a specific compromise event in this routine report.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1579e01d-e9ff-50f5-9a7b-916b0428643e ingested; model available: True",
+      "timestamp": "2026-08-15T09:36:12.025371Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 7 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:36:13.658896Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:36:13.658966Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:36:14.066220Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=30; follow-up same_src_ip_24h added 4",
+      "timestamp": "2026-08-15T09:36:14.604464Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T09:36:15.255841Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:36:18.051173Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:36:20.422743Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 13a6d481-9506-49ee-a69f-d2f2bc0b45ee persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:36:20.430383Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:13.658930Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:13.658930Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cloudmetrics-io.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:13.658953Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:13.658953Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:13.658961Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:13.658961Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The message is part of a standard business reporting process and contains only expected data. There are no indications that the sender account has been compromised or that the content is malicious. The recipient’s credentials appear secure, and there is no evidence of unauthorized access or suspicious activity beyond normal automated communication."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the sender’s domain reputation and cross-check internal contact lists to confirm whether this is an expected communication pattern.",
+    "Review recent correspondence history between CloudMetrics IO and VictimCorp to see if similar bulk reports are routine for budgeting cycles.",
+    "If possible, perform a quick sanity check on the data payload (e.g., verify that figures align with known spending trends) before dismissing it outright."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message is clearly part of an automated business reporting process and contains no evidence of malicious intent despite being flagged as bulk.",
+  "uncertainty_notes": "unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

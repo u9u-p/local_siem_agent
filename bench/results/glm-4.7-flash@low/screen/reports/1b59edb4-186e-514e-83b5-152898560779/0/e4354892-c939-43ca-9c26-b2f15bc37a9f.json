@@ -1,0 +1,136 @@
+{
+  "report_id": "e4354892-c939-43ca-9c26-b2f15bc37a9f",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-15T04:40:54.203468Z",
+  "alert_summary": "The correlation findings indicate a network connection to 185.220.101.47, but do not specify the rule ID, Sysmon event ID, or agent name.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-15T04:29:07.764213Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T04:29:25.548393Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T04:29:25.548465Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-15T04:29:25.975017Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for '185.220.101.47' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T04:30:06.165688Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T04:30:18.388234Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T04:40:30.422756Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T04:40:54.203338Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e4354892-c939-43ca-9c26-b2f15bc37a9f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T04:40:54.211309Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:29:25.548426Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:29:25.548426Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:29:25.548447Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:29:25.548447Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:29:25.548454Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:29:25.548454Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The enrichment findings list the domain and IP as 'unknown' with no provider, so it cannot be confirmed that the IP resolves to Cloudflare or that the domain is a known simulation domain."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the specific PowerShell command-line arguments to determine if a legitimate script was executed; verify the hash of the PowerShell executable to rule out binary masquerading; and check the user context to confirm if the activity originated from a developer or testing environment."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert targets a known simulation domain via a Cloudflare CDN, and the provided risk assessment confirms the connection is likely benign administrative traffic or a test alert.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "glm-4.7-flash:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

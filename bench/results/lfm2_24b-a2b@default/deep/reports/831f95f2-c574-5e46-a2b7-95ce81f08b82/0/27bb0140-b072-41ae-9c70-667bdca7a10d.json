@@ -1,0 +1,135 @@
+{
+  "report_id": "27bb0140-b072-41ae-9c70-667bdca7a10d",
+  "alert_id": "831f95f2-c574-5e46-a2b7-95ce81f08b82",
+  "generated_at": "2026-08-15T09:44:48.673274Z",
+  "alert_summary": "Suspicious SSH logon detected from an external IP using brute force methods; immediate risk of credential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 831f95f2-c574-5e46-a2b7-95ce81f08b82 ingested; model available: True",
+      "timestamp": "2026-08-15T09:44:40.578731Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:44:41.422385Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T09:44:41.422417Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T09:44:41.834965Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=43; follow-up same_rule_id_host added 21",
+      "timestamp": "2026-08-15T09:44:42.343274Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:44:42.913812Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:44:45.925981Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:44:48.673215Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 27bb0140-b072-41ae-9c70-667bdca7a10d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:48.680076Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:41.422405Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:41.422405Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://web-prod-01:51204",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:44:41.422414Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:44:41.422414Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The successful login originated externally and is linked to repeated failed attempts, indicating possible credential theft. This raises the likelihood that unauthorized access occurred or could occur, warranting medium severity due to potential impact on account security and data integrity."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper forensic analysis of the target host to verify if any unauthorized changes have occurred.",
+    "Review and rotate all potentially compromised credentials associated with the affected systems.",
+    "Enhance monitoring on related accounts for anomalous activity, especially during off-hours.",
+    "Investigate whether additional services or protocols are exposed beyond SSH that could be leveraged by attackers.",
+    "Consider implementing multi-factor authentication where feasible to strengthen access controls."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The evidence aligns with a genuine credential compromise event, as indicated by the brute-force pattern and successful logon from an external IP.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

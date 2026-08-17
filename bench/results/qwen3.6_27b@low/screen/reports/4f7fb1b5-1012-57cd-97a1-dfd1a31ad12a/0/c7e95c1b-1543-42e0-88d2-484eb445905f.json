@@ -1,0 +1,139 @@
+{
+  "report_id": "c7e95c1b-1543-42e0-88d2-484eb445905f",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T23:27:25.246328Z",
+  "alert_summary": "High-risk alert: User mrahman successfully authenticated to domain controller dc01.corp.local from IP 100.72.44.19, triggering a lateral movement correlation with 42 evidence points indicating potential credential abuse or active compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T23:13:58.368887Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-14T23:15:25.338275Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T23:15:25.338309Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T23:15:25.768814Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=42; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-14T23:17:59.474550Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T23:19:00.680658Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T23:22:59.621299Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 12 audit(s) for 13 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T23:27:25.246226Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c7e95c1b-1543-42e0-88d2-484eb445905f persisted, alert marked investigated",
+      "timestamp": "2026-08-14T23:27:25.254236Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:15:25.338295Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:15:25.338295Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T23:15:25.338306Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T23:15:25.338306Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert carries a high severity rating due to the successful authentication targeting dc01.corp.local, a critical domain controller asset, which suggests an attacker may be attempting to escalate privileges or pivot further into the network. Confidence is rated high based on the detection of a robust lateral movement pattern with 42 correlated evidence points, strongly indicating active credential abuse rather than benign activity. Although the source IP 100.72.44.19 lacks external threat intelligence enrichment, the volume of internal behavioral indicators and the strategic value of the targeted host provide sufficient grounds to treat this as a likely compromise requiring immediate attention."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately quarantine host 100.72.44.19 at the network level to sever connectivity and prevent further propagation or data exfiltration while preserving volatile memory for forensic capture.",
+    "Force a credential reset and temporary disablement for user mrahman, pending verification of whether this is a compromised human account or a hijacked service identity; if legitimate, rotate secrets across all systems where these credentials are cached.",
+    "Expand the investigation to map the full attack chain represented by the 42 correlated evidence points, identifying the initial access vector and determining if the lateral movement pattern indicates automated tooling (e.g., Cobalt Strike, Mimikatz) or manual exploitation.",
+    "Conduct a deep-dive forensic analysis on dc01.corp.local to check for indicators of credential dumping, DCSync operations, Kerberoasting, or persistence mechanisms established during the session, as domain controller compromise often leads to full domain control.",
+    "Search the environment for other logons using mrahman's credentials from anomalous sources or at unusual times to assess the breadth of credential abuse and identify potentially compromised lateral movement paths."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The convergence of a high-volume lateral movement correlation (42 evidence points) targeting a critical domain controller creates an overwhelming signal-to-noise ratio that is statistically inconsistent with benign administrative activity or system noise, strongly indicating active compromise.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.6:27b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,149 @@
+{
+  "report_id": "24b2b07b-6876-484f-aa55-d0cc871ece5e",
+  "alert_id": "2a42c319-3f45-581d-a6ec-1f1a3e49f2b0",
+  "generated_at": "2026-08-15T15:46:53.036493Z",
+  "alert_summary": "A PowerShell command was executed with an encoded string by the Cursor IDE application. The decoded command, 'pytest -q', identifies a standard Python testing framework being run in quiet mode.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2a42c319-3f45-581d-a6ec-1f1a3e49f2b0 ingested; model available: True",
+      "timestamp": "2026-08-15T15:41:49.528048Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T15:42:08.867992Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T15:42:08.868028Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T15:42:09.293265Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=47; follow-up same_command_line_env_wide added 3; open-value search for 'EncodedCommand' found 40 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T15:43:32.895443Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T15:43:47.816349Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T15:45:04.879907Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T15:46:53.036438Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 24b2b07b-6876-484f-aa55-d0cc871ece5e persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:46:53.044477Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:42:08.868012Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:42:08.868012Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:42:08.868023Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:42:08.868023Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T15:42:08.868026Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T15:42:08.868026Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While encoded PowerShell commands are often flagged as suspicious, they are commonly used by integrated development environments (IDEs) like Cursor to pass parameters safely through the shell environment. Because the specific decoded payload is a common developer tool for software testing, this activity is consistent with expected behavior and does not indicate malicious intent."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user's role; if 'ke.li.yam' is a known developer, this activity aligns with standard software development workflows.",
+    "Perform a historical lookback on the host to determine if Cursor.exe frequently executes encoded PowerShell commands for other common tools (e.g., npm, pip, or python).",
+    "If high volumes of similar alerts are generated by the Cursor IDE, consider tuning the detection logic to exclude specific known-good parent processes or paths associated with authorized development environments.",
+    "Cross-reference the 'pytest' execution with recent project commits or local repository activity to confirm it aligns with current tasks."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert correctly identified an encoded PowerShell command, but the decoded content confirms it is a standard, non-malicious development tool (pytest) being invoked by a known IDE.",
+  "uncertainty_notes": "unsupported claim: 'Manually review the decoded command payload for malicious intent'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand cAB5AHQAZQBzAHQAIAAtAHEA",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "cAB5AHQAZQBzAHQAIAAtAHEA",
+        "decoded": "pytest -q"
+      }
+    ]
+  }
+}

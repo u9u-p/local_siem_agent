@@ -1,0 +1,140 @@
+{
+  "report_id": "857138ac-3db6-4262-a6eb-220031622c23",
+  "alert_id": "447ec12e-f647-5101-9dfc-c8f0f70d3713",
+  "generated_at": "2026-08-15T16:41:46.120647Z",
+  "alert_summary": "A phishing campaign involving nimbus-hosting.com was identified with high confidence, showing evidence of a coordinated scanning pattern across 38 instances.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 447ec12e-f647-5101-9dfc-c8f0f70d3713 ingested; model available: True",
+      "timestamp": "2026-08-15T16:38:28.007159Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T16:38:50.639551Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:38:50.639621Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T16:38:51.056725Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=38",
+      "timestamp": "2026-08-15T16:39:57.717356Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T16:40:13.519699Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T16:41:12.697339Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T16:41:46.120596Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 857138ac-3db6-4262-a6eb-220031622c23 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:41:46.127694Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.66",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:38:50.639586Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:38:50.639586Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "nimbus-hosting.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:38:50.639608Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:38:50.639608Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:38:50.639615Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:38:50.639615Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high risk assessment is driven by the identification of an unknown IP and domain associated with a scanning pattern (38 instances), indicating an organized campaign rather than an isolated event."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deep dive into the 'nimbus-hosting.com' domain registration details to identify potential look-alike characteristics or recent registration dates.\n\nConduct a search across the internal mail gateway for any other instances of 'nimbus-hosting.com' or related subdomains to determine the scope of the campaign.\n\nIf the email contains links or attachments, these should be isolated and detonated in a secure sandbox environment to identify the final payload (e.g., credential harvesting page or malware).\n\nImplement a proactive block on the source IP (52.14.201.66) and the 'nimbus-hosting.com' domain at the corporate firewall and mail gateway.\n\nIssue a targeted security awareness notification to the operations team regarding the specific 'Planned maintenance' lure used in this campaign."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of high-volume scanning behavior, an unknown sender domain, and a classic social engineering tactic (maintenance window) strongly indicates a coordinated phishing attempt.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

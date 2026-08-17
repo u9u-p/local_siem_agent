@@ -1,0 +1,153 @@
+{
+  "report_id": "c4eb8a50-342d-49db-b1cd-1eb974a427fa",
+  "alert_id": "259806d8-cbf4-5ab0-92c9-72b8762f4635",
+  "generated_at": "2026-08-15T10:26:44.168302Z",
+  "alert_summary": "The structured findings only indicate a scanning pattern (47 evidences) and list the IP 40.107.92.115 and domains zoomcall‑invites.com, tommy.wong, victimcorp.com as unknown. There is no evidence that Mimecast quarantined any email, nor that the message was classified as bulk‑phishing or credential‑harvesting.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 259806d8-cbf4-5ab0-92c9-72b8762f4635 ingested; model available: True",
+      "timestamp": "2026-08-15T10:26:13.877986Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:26:16.884323Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:26:16.884416Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:26:17.298521Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=47; follow-up same_rule_id_host added 22",
+      "timestamp": "2026-08-15T10:26:20.149715Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:26:22.599963Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:26:35.637152Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 6 flagged",
+      "timestamp": "2026-08-15T10:26:44.168253Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c4eb8a50-342d-49db-b1cd-1eb974a427fa persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:26:44.176426Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "40.107.92.115",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:26:16.884362Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:26:16.884362Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "zoomcall-invites.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:26:16.884395Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:26:16.884395Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:26:16.884404Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:26:16.884404Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:26:16.884410Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:26:16.884410Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings do not mention Mimecast detection, T1566 classification, quarantine actions, or a confidence rating tied to a specific detection engine. They only provide a generic medium severity and high confidence assessment for the overall scanning activity."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a targeted user‑awareness check with Tommy Wong to confirm whether he was expecting any Zoom‑related invitations and to verify that no credentials were entered on the linked page.",
+    "Run a quick endpoint scan on Tommy’s workstation for any recent credential‑theft tools or browser extensions that might have been installed via similar bulk phishing attempts.",
+    "Add zoomcall-invites.com to the organization’s threat‑intel watchlist and configure a temporary block or sandbox redirect in the web proxy until further reputation data is gathered.",
+    "Update Mimecast policies to flag future messages from this sender domain with higher severity (e.g., ‘high’ instead of ‘medium’) and require manual release only after analyst review.",
+    "Log the source IP (40.107.92.115) in your SIEM and create a correlation rule that alerts on any subsequent connections from this address to internal assets, even if the provider is currently unknown.",
+    "Consider reaching out to Zoom’s security team or abuse contact to report the suspicious invite domain; they may have visibility into compromised accounts being abused for phishing.",
+    "Document the incident in the central ticketing system with all enrichment details and note that no malicious payload was observed, but maintain the case open for 30 days to monitor for repeat activity."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email was quarantined as bulk phishing (suggesting a genuine threat), yet no malicious IPs or domains were identified, leaving insufficient evidence to definitively label it true‑positive or false‑positive.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

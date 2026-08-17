@@ -1,0 +1,65 @@
+=== reference / screen — 4 blocks — Sat Aug 15 10:44:10 +08 2026
+--- gpt-oss:120b @ low — 10:44:10
+gpt-oss:120b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        65.4s  exit=0
+  [2/11] winlogon    benign        33.0s  exit=0
+  [3/11] ssh         benign        31.3s  exit=0
+  [4/11] winlogon    fp_control    37.1s  exit=0
+  [5/11] powershell  benign        39.8s  exit=0
+  [6/11] tp_chain    needle        39.0s  exit=0
+  [7/11] powershell  needle        35.6s  exit=0
+  [8/11] ssh         needle        31.1s  exit=0
+  [9/11] winlogon    fp_control    33.4s  exit=0
+  [10/11] email       needle        38.2s  exit=0
+  [11/11] tp_chain    needle        38.3s  exit=0
+wrote bench/results/gpt-oss_120b@low/screen/runs.jsonl
+    ok   7 min
+--- qwen3.6:35b-a3b @ low — 10:51:13
+qwen3.6:35b-a3b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       248.7s  exit=0
+  [2/11] winlogon    benign       346.7s  exit=0
+  [3/11] ssh         benign       211.4s  exit=0
+  [4/11] winlogon    fp_control   272.9s  exit=0
+  [5/11] powershell  benign       193.5s  exit=0
+  [6/11] tp_chain    needle       314.7s  exit=0
+  [7/11] powershell  needle       233.7s  exit=0
+  [8/11] ssh         needle       230.2s  exit=0
+  [9/11] winlogon    fp_control   285.8s  exit=0
+  [10/11] email       needle       194.5s  exit=0
+  [11/11] tp_chain    needle       227.6s  exit=0
+wrote bench/results/qwen3.6_35b-a3b@low/screen/runs.jsonl
+    ok   46 min
+--- glm-4.7-flash @ low — 11:37:13
+glm-4.7-flash:bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       761.6s  exit=0
+  [2/11] winlogon    benign       703.8s  exit=0
+  [3/11] ssh         benign       728.7s  exit=0
+  [4/11] winlogon    fp_control   710.0s  exit=0
+  [5/11] powershell  benign       209.3s  exit=0
+  [6/11] tp_chain    needle       706.9s  exit=0
+  [7/11] powershell  needle       752.1s  exit=0
+  [8/11] ssh         needle       752.5s  exit=0
+  [9/11] winlogon    fp_control   713.1s  exit=0
+  [10/11] email       needle       727.9s  exit=0
+  [11/11] tp_chain    needle      1289.4s  exit=0
+wrote bench/results/glm-4.7-flash@low/screen/runs.jsonl
+    ok   134 min
+--- hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0 @ default — 13:51:29
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+  ! no bounded variant for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0 — running its default context
+hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0 @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign         2.2s  exit=0
+  [2/11] winlogon    benign         2.1s  exit=0
+  [3/11] ssh         benign         2.1s  exit=0
+  [4/11] winlogon    fp_control     2.1s  exit=0
+  [5/11] powershell  benign         2.1s  exit=0
+  [6/11] tp_chain    needle         2.1s  exit=0
+  [7/11] powershell  needle         2.1s  exit=0
+  [8/11] ssh         needle         2.1s  exit=0
+  [9/11] winlogon    fp_control     2.1s  exit=0
+  [10/11] email       needle         2.1s  exit=0
+  [11/11] tp_chain    needle         2.1s  exit=0
+wrote bench/results/hf.co/prism-ml/Ternary-Bonsai-27B-gguf_Q2_0@default/screen/runs.jsonl
+    ok   0 min
+=== reference done in 187 min — Sat Aug 15 13:51:53 +08 2026

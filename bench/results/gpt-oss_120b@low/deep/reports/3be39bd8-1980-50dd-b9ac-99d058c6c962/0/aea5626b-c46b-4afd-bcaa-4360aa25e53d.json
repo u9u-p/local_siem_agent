@@ -1,0 +1,141 @@
+{
+  "report_id": "aea5626b-c46b-4afd-bcaa-4360aa25e53d",
+  "alert_id": "3be39bd8-1980-50dd-b9ac-99d058c6c962",
+  "generated_at": "2026-08-15T10:33:34.739897Z",
+  "alert_summary": "The available findings only indicate a scanning pattern (pattern_type=scanning, evidence_count=67) and provide enrichment data for the IP address 149.72.14.88 and the domains uptimewatch.io and victimcorp.com. There is no information about Mimecast, quarantine actions, or specific email subjects.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3be39bd8-1980-50dd-b9ac-99d058c6c962 ingested; model available: True",
+      "timestamp": "2026-08-15T10:33:06.297884Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:33:09.030032Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:33:09.030108Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:33:09.456120Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=67; follow-up same_rule_id_host added 30",
+      "timestamp": "2026-08-15T10:33:12.001221Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:33:14.556546Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:33:26.482830Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T10:33:34.739853Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report aea5626b-c46b-4afd-bcaa-4360aa25e53d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:33:34.746024Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:33:09.030065Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:33:09.030065Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "uptimewatch.io",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:33:09.030092Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:33:09.030092Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:33:09.030100Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:33:09.030100Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The findings do not contain any details about bulk‑traffic identification, isolation by Mimecast, or analysis of email content. They only show that the IP and domains have an \"unknown\" reputation. A more accurate statement would be: \"Reputation checks for the source IP (149.72.14.88) and the involved domains returned 'unknown'. No malicious indicators were identified in the limited data available, resulting in a low‑severity assessment with high confidence.\""
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a quick content review of the quarantined email (e.g., open in a sandboxed viewer) to confirm that the attachment or body does not contain any hidden macros, scripts, or phishing links.",
+    "Check the sending mailbox (team@uptimewatch.io) for recent activity: verify that it is an authorized service account used by UptimeWatch and that its credentials have not been compromised.",
+    "Correlate the sender’s IP address (149.72.14.88) with any recent login events on your VPN or remote‑access gateways to rule out lateral movement attempts from a newly observed host.",
+    "Add temporary allow‑list entries for both the domain uptimewatch.io and the specific sending address if the content is verified clean, but retain monitoring for any future bulk messages from this source.",
+    "Log the event in your SIEM as an informational ‘bulk email quarantine’ case and set up a low‑severity alert to trigger if the same sender starts delivering attachments with executable file types or if the volume spikes dramatically.",
+    "Engage the business owner of the availability reporting process (e.g., IT Operations) to confirm that the 99.94% report is expected on this schedule, thereby reducing the chance of a social‑engineering spoof."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "Mimecast flagged the message solely as bulk; there are no malicious indicators, reputation data is clean, and the email appears to be a routine operational report, indicating it is likely benign.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'No immediate action needed — monitor for recurrence'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

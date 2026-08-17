@@ -1,0 +1,149 @@
+{
+  "report_id": "ac9f2777-eb28-4d42-8d4c-bb2d90bbb6f1",
+  "alert_id": "156e110b-5a8c-5cfb-a570-d82fac0730e3",
+  "generated_at": "2026-08-15T09:51:44.306355Z",
+  "alert_summary": "A user account named *raj.kumar* was observed in lateral‑movement activity originating from internal IP 10.20.4.73, with 15 related events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 156e110b-5a8c-5cfb-a570-d82fac0730e3 ingested; model available: True",
+      "timestamp": "2026-08-15T09:51:20.571334Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T09:51:22.189128Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:51:22.189201Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:51:22.603623Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T09:51:25.931606Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T09:51:28.378890Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:51:37.228944Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:51:44.306304Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ac9f2777-eb28-4d42-8d4c-bb2d90bbb6f1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:51:44.312858Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:51:22.189163Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:51:22.189163Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:51:22.189188Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:51:22.189188Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:51:22.189195Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:51:22.189195Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The presence of 15 lateral‑movement indicators associated with the internal IP 10.20.4.73 and account *raj.kumar* suggests potential credential abuse (MITRE ATT&CK T1078). While provider information is unknown, the pattern warrants high severity consideration; confidence remains medium due to lack of definitive legitimacy evidence."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate containment investigation on the host 10.20.4.73 to verify whether the successful logon was legitimate or a result of credential compromise.",
+    "Perform a live‑session forensic analysis (process list, network connections, scheduled tasks) on the machine that authenticated as *raj.kumar* to look for signs of lateral movement such as SMB shares, PowerShell remoting, or suspicious registry modifications.",
+    "Cross‑reference the 15 evidence points flagged as lateral‑movement activity against internal asset maps and known privileged accounts; flag any anomalies for deeper review.",
+    "Deploy a host‑based intrusion detection rule that watches for repeated logons from *raj.kumar* to non‑trusted subnets or unusual services, and trigger an alert if thresholds are exceeded.",
+    "If the account is found to be compromised, reset its password immediately, enforce MFA, and audit all recent changes made under this credential.",
+    "Coordinate with the network security team to temporarily block outbound traffic from 10.20.4.73 to critical internal resources until the investigation concludes."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The logon event shows potential lateral‑movement indicators, but without corroborating evidence of malicious activity or confirmation that *raj.kumar* is a legitimate privileged user, it remains unclear whether this is a true incident or an innocuous administrative action.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

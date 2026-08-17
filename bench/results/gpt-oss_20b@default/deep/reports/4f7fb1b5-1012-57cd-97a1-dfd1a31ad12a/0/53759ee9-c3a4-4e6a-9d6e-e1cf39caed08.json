@@ -1,0 +1,141 @@
+{
+  "report_id": "53759ee9-c3a4-4e6a-9d6e-e1cf39caed08",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-16T10:50:19.228438Z",
+  "alert_summary": "The findings indicate 22 brute‑force attempts from internal IP 100.72.44.19; no specific user or successful login is confirmed.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-16T10:49:07.056949Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-16T10:49:12.482543Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T10:49:12.482577Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T10:49:12.899053Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=22",
+      "timestamp": "2026-08-16T10:49:22.592386Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:49:28.325870Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-16T10:49:53.430818Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 11 flagged",
+      "timestamp": "2026-08-16T10:50:19.228413Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 53759ee9-c3a4-4e6a-9d6e-e1cf39caed08 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:50:19.234454Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:49:12.482561Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:49:12.482561Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:49:12.482571Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:49:12.482571Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:49:12.482574Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:49:12.482574Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert shows 22 rapid login attempts from internal IP 100.72.44.19, indicating a brute‑force attack; the risk assessment is high severity with medium confidence."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately reset the password for user mrahman and enforce a mandatory MFA re‑enrollment to prevent further unauthorized use of that account.",
+    "Isolate the host at 100.72.44.19 from the internal network until a full forensic analysis can confirm whether credential dumping or lateral movement has occurred.",
+    "Examine all authentication logs for that IP in the past 48 hours to identify any other anomalous logons, especially those involving privileged accounts or unusual time‑of‑day activity.",
+    "Run an endpoint detection scan on the affected machine to look for signs of malware that could have been used to automate the brute‑force attempts.",
+    "Cross‑reference the internal IP with your organization’s asset inventory; if it belongs to a workstation rather than a server, consider tightening network segmentation or applying stricter access controls.",
+    "Notify the user and relevant stakeholders about the incident, advising them to monitor for any suspicious activity on their accounts and to report any anomalies immediately."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The correlation of 22 brute‑force attempts culminating in a successful logon strongly indicates credential compromise, making this alert a true positive despite limited external threat intel.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,161 @@
+{
+  "report_id": "beaf6bbc-daa2-49d9-96fc-09cefb82a2e6",
+  "alert_id": "6d4137d3-a3f9-583d-b816-2ec6a6e0804c",
+  "generated_at": "2026-08-15T09:44:02.810784Z",
+  "alert_summary": "Suspicious logon detected from an unknown source, with scanning activity and unidentified IPs/domains. Immediate investigation recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6d4137d3-a3f9-583d-b816-2ec6a6e0804c ingested; model available: True",
+      "timestamp": "2026-08-15T09:43:52.377190Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 6 candidates, 4 validated",
+      "timestamp": "2026-08-15T09:43:53.675539Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:43:53.675627Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:43:54.102555Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=30; follow-up same_rule_id_host added 15",
+      "timestamp": "2026-08-15T09:43:54.579154Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:43:55.182348Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:43:58.807526Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 2 flagged",
+      "timestamp": "2026-08-15T09:44:02.810676Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report beaf6bbc-daa2-49d9-96fc-09cefb82a2e6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:44:02.818677Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.107",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:53.675586Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:53.675586Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:53.675607Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:53.675607Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:53.675615Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:53.675615Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://example.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:43:53.675622Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:43:53.675622Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The user successfully logged in using a known account, but suspicious scanning and unknown network elements indicate possible reconnaissance by a threat actor. Combined with the presence of unknown IPs and domains, this raises concern that an attacker may be probing for vulnerabilities or planning further intrusion attempts. Prompt action is needed to prevent potential compromise."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper network traffic analysis around the identified IP and domain to detect any anomalous behavior.",
+    "Correlate this event with other recent logon attempts or security alerts within your environment for broader context.",
+    "Review endpoint logs on host 10.20.4.107 for signs of suspicious processes, user activity, or privilege escalation.",
+    "Initiate threat hunting queries targeting known indicators associated with reconnaissance activities.",
+    "Consider temporarily restricting access to sensitive systems until the investigation is complete."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon event and scanning behavior strongly points toward malicious reconnaissance, warranting classification as a true positive.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Escalate to a human analyst for manual review'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,141 @@
+{
+  "report_id": "c488e372-5973-4f86-bad5-c5c762c0c8b1",
+  "alert_id": "120a4772-b441-5a2e-9d93-24899db89888",
+  "generated_at": "2026-08-15T11:21:43.495960Z",
+  "alert_summary": "An unknown domain (printhub-sg.com) and IP (52.14.201.94) were identified in connection with 45 pieces of evidence.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 120a4772-b441-5a2e-9d93-24899db89888 ingested; model available: True",
+      "timestamp": "2026-08-15T11:19:10.082455Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T11:19:21.323849Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T11:19:21.323923Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T11:19:21.747915Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=45; follow-up same_rule_id_host added 22; open-value search for 'printhub-sg.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T11:19:44.122479Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T11:19:51.796834Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T11:20:29.015358Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T11:21:43.495868Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c488e372-5973-4f86-bad5-c5c762c0c8b1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T11:21:43.504784Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:19:21.323883Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:19:21.323883Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "printhub-sg.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:19:21.323910Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:19:21.323910Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T11:19:21.323918Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T11:19:21.323918Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The sender's domain and IP are unrecognized, and the high volume of evidence (45) suggests a potential threat."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'printhub-sg.com' to determine if the domain was recently registered, which is a common indicator of malicious infrastructure.",
+    "Conduct a retroactive search across all mailboxes in the organization for any other messages originating from '52.14.201.94' or containing the subject line 'Ticket #88213'.",
+    "Inspect the email headers and body (if accessible) to identify any embedded URLs or attachments that may lead to credential harvesting sites or malware delivery.",
+    "Verify with internal procurement or IT departments whether a service named 'PrintHub' is an authorized vendor used by VictimCorp.",
+    "Implement a temporary block on the sender domain 'printhub-sg.com' at the email gateway level until the legitimacy of the sender can be confirmed."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a high-volume bulk delivery, an unverified domain, and a classic 'ticket resolved' social engineering pretext targeting a privileged administrative account strongly suggests a coordinated phishing campaign.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

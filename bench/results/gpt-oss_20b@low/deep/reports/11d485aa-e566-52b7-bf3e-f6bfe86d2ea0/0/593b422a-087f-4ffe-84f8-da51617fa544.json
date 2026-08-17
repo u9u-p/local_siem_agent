@@ -1,0 +1,151 @@
+{
+  "report_id": "593b422a-087f-4ffe-84f8-da51617fa544",
+  "alert_id": "11d485aa-e566-52b7-bf3e-f6bfe86d2ea0",
+  "generated_at": "2026-08-15T09:49:50.570064Z",
+  "alert_summary": "A PowerShell command encoded in Base‑64 was launched from VS Code on the user’s workstation, but it only ran a harmless `Get‑Location` query with no external activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 11d485aa-e566-52b7-bf3e-f6bfe86d2ea0 ingested; model available: True",
+      "timestamp": "2026-08-15T09:49:33.281808Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:49:35.263123Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:49:35.263169Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T09:49:35.677606Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=84; follow-up same_rule_id_host added 41; open-value search for 'EncodedCommand' found 40 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T09:49:38.271677Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T09:49:40.371306Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T09:49:47.702765Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:49:50.569975Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 593b422a-087f-4ffe-84f8-da51617fa544 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:49:50.578248Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:35.263146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:35.263146Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:35.263161Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:35.263161Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:49:35.263165Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:49:35.263165Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The decoded payload is benign and there are no signs of data exfiltration, lateral movement, or malicious arguments. The use of an encoded command can be a red flag, yet in this instance the command performs a simple local operation and does not contact any known malicious domains. Because no further suspicious activity was observed, the overall risk remains low while maintaining confidence that the event is legitimate."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user’s intent: confirm with Sarah Lim whether she was intentionally running PowerShell from VS Code and if the `Get‑Location` command was part of a legitimate development workflow.",
+    "Check the surrounding Sysmon events for any anomalous child processes or file modifications that might indicate a staged payload, even though none were detected in this single event.",
+    "Enable stricter logging on the VS Code executable to capture future invocations of PowerShell with encoded commands, ensuring that any subsequent activity is recorded and can be correlated.",
+    "Review the user’s recent code commits or scripts for hidden base64‑encoded payloads; a benign `Get‑Location` could be a test harness masking more complex logic.",
+    "If possible, isolate the workstation temporarily to prevent potential lateral movement while the investigation continues, especially if other indicators of compromise surface in later logs."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command is a harmless `Get‑Location` with no external network activity or malicious artifacts; combined with the user context and lack of further suspicious behavior, this event is best classified as a false positive.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand RwBlAHQALQBMAG8AYwBhAHQAaQBvAG4A",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "RwBlAHQALQBMAG8AYwBhAHQAaQBvAG4A",
+        "decoded": "Get-Location"
+      }
+    ]
+  }
+}

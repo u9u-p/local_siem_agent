@@ -1,0 +1,142 @@
+{
+  "report_id": "cf13e736-b2e6-44da-b4ae-662ee415f034",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-15T03:01:08.847465Z",
+  "alert_summary": "An authentication event involving user tommy.wong and IP 10.20.4.94 was detected. Enrichment data is currently unknown for both entities, with no malicious patterns identified (pattern_type=none) and a low severity rating.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-15T02:55:22.659706Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T02:57:22.155023Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T02:57:22.155111Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T02:57:22.593945Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=8; open-value search for 'kerberos' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T02:59:11.906304Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T02:59:32.019824Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T03:00:23.219413Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T03:01:08.847412Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report cf13e736-b2e6-44da-b4ae-662ee415f034 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:01:08.855579Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:57:22.155065Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:57:22.155065Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:57:22.155093Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:57:22.155093Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:57:22.155102Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:57:22.155102Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "This alert captures a routine internal logon event that does not align with known malicious patterns or threat intelligence feeds, supporting a low severity rating. Confidence remains medium because the enrichment data did not confirm whether tommy.wong is an expected user or if 10.20.4.94 is a standard workstation in this environment. Without additional context on typical access behavior, the event cannot be fully validated as routine. Therefore, light-touch verification is appropriate to rule out unauthorized access while avoiding unnecessary disruption."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross-reference tommy.wong against HR and Active Directory records to confirm active employment status, department, and expected privilege level.",
+    "Query DHCP, MDM, or CMDB logs to verify that 10.20.4.94 is an authorized endpoint assigned to this user and matches their typical location/network segment.",
+    "Establish a behavioral baseline for tommy.wong’s normal logon times, authentication methods (e.g., Kerberos/NTLM), and frequency to enable faster anomaly detection on future events.",
+    "Integrate internal identity and asset management feeds into the enrichment pipeline to eliminate 'unknown' status on routine authentication alerts.",
+    "Maintain passive session monitoring for 24–48 hours to ensure no follow-on privilege escalation, lateral movement, or unusual service logons originate from this credential set."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event shows no malicious indicators and aligns with standard internal authentication behavior, but missing contextual enrichment prevents definitive validation of the user's legitimacy and expected access patterns until baseline verification is completed.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

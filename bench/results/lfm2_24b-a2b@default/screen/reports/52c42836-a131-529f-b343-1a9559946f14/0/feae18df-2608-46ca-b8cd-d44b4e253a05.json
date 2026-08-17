@@ -1,0 +1,175 @@
+{
+  "report_id": "feae18df-2608-46ca-b8cd-d44b4e253a05",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-14T18:31:45.165501Z",
+  "alert_summary": "Suspicious email detected with urgent invoice request from a spoofed CFO address; high risk of phishing attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-14T18:31:32.893315Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 10 candidates, 4 validated",
+      "timestamp": "2026-08-14T18:31:35.211415Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T18:31:35.211495Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T18:31:35.637490Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=14; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-14T18:31:36.159842Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T18:31:36.750735Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 15 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:31:40.784096Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 17 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T18:31:45.165445Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report feae18df-2608-46ca-b8cd-d44b4e253a05 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:31:45.171909Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:31:35.211451Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:31:35.211451Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:31:35.211474Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:31:35.211474Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:31:35.211482Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:31:35.211482Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:31:35.211486Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:31:35.211486Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:31:35.211490Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:31:35.211490Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The message is clearly designed to trick you into acting quickly by impersonating your company's CFO and demanding immediate payment. The sender’s details are suspicious, the content follows common phishing patterns, and there is strong pressure to respond without verification. This combination makes it highly likely to be malicious."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct an immediate internal review of all recent communications involving the sender’s domain and associated IP addresses to confirm legitimacy.",
+    "Engage third-party threat intelligence providers to cross-reference the suspicious domains and IP with known phishing campaigns or malicious infrastructure.",
+    "Initiate a targeted awareness campaign within the organization, specifically highlighting this type of impersonation attempt as an example for staff training.",
+    "Implement automated email filtering rules that flag messages containing urgent payment requests from external CFO-support addresses unless pre-approved by verified channels.",
+    "Document and escalate the incident to relevant legal or compliance teams if there is any indication of attempted financial fraud targeting victimcorp.com."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message exhibits clear phishing indicators such as urgency, suspicious sender details, and mismatched domains, strongly suggesting malicious intent aimed at the analyst.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

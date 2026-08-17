@@ -1,0 +1,182 @@
+=== candidates / screen — 12 blocks — Sat Aug 15 01:50:31 +08 2026
+--- nemotron-3-nano:4b @ default — 01:50:31
+nemotron-3-nano:4b-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        61.4s  exit=0
+  [2/11] winlogon    benign        46.0s  exit=0
+  [3/11] ssh         benign        60.6s  exit=0
+  [4/11] winlogon    fp_control    39.0s  exit=0
+  [5/11] powershell  benign        60.3s  exit=0
+  [6/11] tp_chain    needle        41.9s  exit=0
+  [7/11] powershell  needle        64.1s  exit=0
+  [8/11] ssh         needle        50.8s  exit=0
+  [9/11] winlogon    fp_control    41.6s  exit=0
+  [10/11] email       needle        57.5s  exit=0
+  [11/11] tp_chain    needle        39.3s  exit=0
+wrote bench/results/nemotron-3-nano_4b@default/screen/runs.jsonl
+    ok   9 min
+--- lfm2.5:8b-a1b-q4_K_M @ default — 01:59:54
+lfm2.5:8b-a1b-q4_K_M-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        45.8s  exit=0
+  [2/11] winlogon    benign        41.9s  exit=0
+  [3/11] ssh         benign        48.5s  exit=0
+  [4/11] winlogon    fp_control    46.1s  exit=0
+  [5/11] powershell  benign        54.5s  exit=0
+  [6/11] tp_chain    needle        37.4s  exit=0
+  [7/11] powershell  needle        73.7s  exit=0
+  [8/11] ssh         needle        48.4s  exit=0
+  [9/11] winlogon    fp_control    45.6s  exit=0
+  [10/11] email       needle        55.7s  exit=0
+  [11/11] tp_chain    needle        39.9s  exit=0
+wrote bench/results/lfm2.5_8b-a1b-q4_K_M@default/screen/runs.jsonl
+    ok   8 min
+--- gpt-oss:20b @ low — 02:08:52
+gpt-oss:20b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        31.7s  exit=0
+  [2/11] winlogon    benign        23.5s  exit=0
+  [3/11] ssh         benign        21.6s  exit=0
+  [4/11] winlogon    fp_control    23.5s  exit=0
+  [5/11] powershell  benign        28.7s  exit=0
+  [6/11] tp_chain    needle        22.1s  exit=0
+  [7/11] powershell  needle        25.2s  exit=0
+  [8/11] ssh         needle        21.3s  exit=0
+  [9/11] winlogon    fp_control    21.7s  exit=0
+  [10/11] email       needle        27.7s  exit=0
+  [11/11] tp_chain    needle        22.0s  exit=0
+wrote bench/results/gpt-oss_20b@low/screen/runs.jsonl
+    ok   4 min
+--- gemma4:latest @ default — 02:13:21
+gemma4:latest-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       103.6s  exit=0
+  [2/11] winlogon    benign        96.2s  exit=0
+  [3/11] ssh         benign        73.5s  exit=0
+  [4/11] winlogon    fp_control    85.2s  exit=0
+  [5/11] powershell  benign        88.7s  exit=0
+  [6/11] tp_chain    needle       102.5s  exit=0
+  [7/11] powershell  needle        88.3s  exit=0
+  [8/11] ssh         needle        86.3s  exit=0
+  [9/11] winlogon    fp_control    85.6s  exit=0
+  [10/11] email       needle        88.5s  exit=0
+  [11/11] tp_chain    needle        93.5s  exit=0
+wrote bench/results/gemma4_latest@default/screen/runs.jsonl
+    ok   16 min
+--- lfm2:24b-a2b @ default — 02:29:54
+lfm2:24b-a2b-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        18.6s  exit=0
+  [2/11] winlogon    benign         9.0s  exit=0
+  [3/11] ssh         benign         9.1s  exit=0
+  [4/11] winlogon    fp_control     8.9s  exit=0
+  [5/11] powershell  benign        12.1s  exit=0
+  [6/11] tp_chain    needle        10.6s  exit=0
+  [7/11] powershell  needle        13.2s  exit=0
+  [8/11] ssh         needle         8.3s  exit=0
+  [9/11] winlogon    fp_control     7.8s  exit=0
+  [10/11] email       needle        12.7s  exit=0
+  [11/11] tp_chain    needle        10.0s  exit=0
+wrote bench/results/lfm2_24b-a2b@default/screen/runs.jsonl
+    ok   2 min
+--- mistral-small3.2 @ default — 02:31:55
+mistral-small3.2:bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign        58.1s  exit=0
+  [2/11] winlogon    benign        39.1s  exit=0
+  [3/11] ssh         benign        43.7s  exit=0
+  [4/11] winlogon    fp_control    39.9s  exit=0
+  [5/11] powershell  benign        42.6s  exit=0
+  [6/11] tp_chain    needle        48.6s  exit=0
+  [7/11] powershell  needle        58.4s  exit=0
+  [8/11] ssh         needle        37.9s  exit=0
+  [9/11] winlogon    fp_control    39.6s  exit=0
+  [10/11] email       needle        51.5s  exit=0
+  [11/11] tp_chain    needle        47.6s  exit=0
+wrote bench/results/mistral-small3.2@default/screen/runs.jsonl
+    ok   8 min
+--- gemma4:26b-a4b-it-qat @ default — 02:40:22
+gemma4:26b-a4b-it-qat-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       149.0s  exit=0
+  [2/11] winlogon    benign       138.6s  exit=0
+  [3/11] ssh         benign       159.1s  exit=0
+  [4/11] winlogon    fp_control   141.7s  exit=0
+  [5/11] powershell  benign       121.2s  exit=0
+  [6/11] tp_chain    needle       240.2s  exit=0
+  [7/11] powershell  needle       171.9s  exit=0
+  [8/11] ssh         needle       283.6s  exit=0
+  [9/11] winlogon    fp_control   161.0s  exit=0
+  [10/11] email       needle       115.1s  exit=0
+  [11/11] tp_chain    needle       157.5s  exit=0
+wrote bench/results/gemma4_26b-a4b-it-qat@default/screen/runs.jsonl
+    ok   30 min
+--- muse-glimmer:30b @ low — 03:11:02
+muse-glimmer:30b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       128.3s  exit=0
+  [2/11] winlogon    benign       109.0s  exit=0
+  [3/11] ssh         benign        74.0s  exit=0
+  [4/11] winlogon    fp_control   118.3s  exit=0
+  [5/11] powershell  benign       108.3s  exit=0
+  [6/11] tp_chain    needle       133.4s  exit=0
+  [7/11] powershell  needle       139.3s  exit=0
+  [8/11] ssh         needle       106.9s  exit=0
+  [9/11] winlogon    fp_control   116.1s  exit=0
+  [10/11] email       needle       113.4s  exit=0
+  [11/11] tp_chain    needle       119.7s  exit=0
+wrote bench/results/muse-glimmer_30b@low/screen/runs.jsonl
+    ok   21 min
+--- qwen3.5:9b @ low — 03:32:09
+qwen3.5:9b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       810.6s  exit=0
+  [2/11] winlogon    benign       624.3s  exit=0
+  [3/11] ssh         benign       664.6s  exit=0
+  [4/11] winlogon    fp_control   576.1s  exit=0
+  [5/11] powershell  benign       506.3s  exit=0
+  [6/11] tp_chain    needle       654.0s  exit=0
+  [7/11] powershell  needle       677.2s  exit=0
+  [8/11] ssh         needle       637.9s  exit=0
+  [9/11] winlogon    fp_control   534.3s  exit=0
+  [10/11] email       needle       719.0s  exit=0
+  [11/11] tp_chain    needle       683.0s  exit=0
+wrote bench/results/qwen3.5_9b@low/screen/runs.jsonl
+    ok   118 min
+--- qwen3.6:27b @ low — 05:30:17
+qwen3.6:27b-bench-ctx8k @ low / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       864.9s  exit=0
+  [2/11] winlogon    benign       755.3s  exit=0
+  [3/11] ssh         benign       749.5s  exit=0
+  [4/11] winlogon    fp_control   798.9s  exit=0
+  [5/11] powershell  benign       692.0s  exit=0
+  [6/11] tp_chain    needle       786.0s  exit=0
+  [7/11] powershell  needle       849.0s  exit=0
+  [8/11] ssh         needle       724.5s  exit=0
+  [9/11] winlogon    fp_control   807.4s  exit=0
+  [10/11] email       needle       772.1s  exit=0
+  [11/11] tp_chain    needle       806.0s  exit=0
+wrote bench/results/qwen3.6_27b@low/screen/runs.jsonl
+    ok   143 min
+--- muse-glimmer:30b @ default — 07:53:43
+muse-glimmer:30b-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       541.0s  exit=0
+  [2/11] winlogon    benign       567.9s  exit=0
+  [3/11] ssh         benign       496.8s  exit=0
+  [4/11] winlogon    fp_control   616.8s  exit=0
+  [5/11] powershell  benign       655.8s  exit=0
+  [6/11] tp_chain    needle       535.2s  exit=0
+  [7/11] powershell  needle       624.5s  exit=0
+  [8/11] ssh         needle       557.9s  exit=0
+  [9/11] winlogon    fp_control   606.1s  exit=0
+  [10/11] email       needle       524.2s  exit=0
+  [11/11] tp_chain    needle       599.6s  exit=0
+wrote bench/results/muse-glimmer_30b@default/screen/runs.jsonl
+    ok   105 min
+--- gemma4:12b @ default — 09:39:10
+gemma4:12b-bench-ctx8k @ default / screen: 11 alerts, 11 runs, num_ctx 8192
+  [1/11] email       benign       320.1s  exit=0
+  [2/11] winlogon    benign       216.0s  exit=0
+  [3/11] ssh         benign       208.2s  exit=0
+  [4/11] winlogon    fp_control   255.0s  exit=0
+  [5/11] powershell  benign       246.3s  exit=0
+  [6/11] tp_chain    needle       334.7s  exit=0
+  [7/11] powershell  needle       261.5s  exit=0
+  [8/11] ssh         needle       283.8s  exit=0
+  [9/11] winlogon    fp_control   259.2s  exit=0
+  [10/11] email       needle       431.9s  exit=0
+  [11/11] tp_chain    needle       421.2s  exit=0
+wrote bench/results/gemma4_12b@default/screen/runs.jsonl
+    ok   53 min
+=== candidates done in 522 min — Sat Aug 15 10:33:09 +08 2026

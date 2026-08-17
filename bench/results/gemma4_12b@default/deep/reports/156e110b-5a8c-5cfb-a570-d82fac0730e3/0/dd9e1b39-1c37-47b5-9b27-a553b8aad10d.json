@@ -1,0 +1,157 @@
+{
+  "report_id": "dd9e1b39-1c37-47b5-9b27-a553b8aad10d",
+  "alert_id": "156e110b-5a8c-5cfb-a570-d82fac0730e3",
+  "generated_at": "2026-08-15T15:00:42.903841Z",
+  "alert_summary": "A successful login for user raj.kumar was detected from IP 10.20.4.73 immediately following a high-volume brute-force attack. This indicates that the account's credentials were likely compromised through an automated cracking attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 156e110b-5a8c-5cfb-a570-d82fac0730e3 ingested; model available: True",
+      "timestamp": "2026-08-15T14:53:01.313577Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T14:53:25.507138Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T14:53:25.507218Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T14:53:25.934902Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=15",
+      "timestamp": "2026-08-15T14:53:59.134344Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T14:54:10.415675Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T14:55:10.958973Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T15:00:42.903769Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report dd9e1b39-1c37-47b5-9b27-a553b8aad10d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T15:00:42.916639Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:53:25.507179Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:53:25.507179Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:53:25.507200Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:53:25.507200Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:53:25.507208Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:53:25.507208Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T14:53:25.507213Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T14:53:25.507213Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The correlation of 15 pieces of evidence for a brute-force pattern followed by a successful login provides high confidence that the user's credentials have been cracked. Because all associated entities (IP, domain, and username) are unknown, this activity is highly indicative of an active unauthorized intrusion rather than a routine login error."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a forced password reset and account lockout for user 'raj.kumar' to prevent further unauthorized access.\n\nBlock the source IP address (10.20.4.73) at the perimeter firewall or internal gateway to sever the attacker's connection.\n\nConduct a retrospective log review of all activity performed by 'raj.kumar' starting from the timestamp of the successful login to identify potential lateral movement or data exfiltration.\n\nVerify if Multi-Factor Authentication (MFA) was enabled for this account; if it was bypassed or not present, prioritize its implementation for this user and the broader domain.\n\nPerform a scan of the host at 10.20.4.73 to determine if it is a compromised internal machine or an external actor's entry point."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high-confidence correlation of 15 brute-force attempts followed immediately by a successful login from the same source IP strongly indicates a successful credential compromise.",
+  "uncertainty_notes": "self-check could not run: validation_failed; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

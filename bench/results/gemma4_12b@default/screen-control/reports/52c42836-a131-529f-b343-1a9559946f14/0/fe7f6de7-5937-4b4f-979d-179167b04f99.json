@@ -1,0 +1,167 @@
+{
+  "report_id": "fe7f6de7-5937-4b4f-979d-179167b04f99",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-14T15:21:42.182464Z",
+  "alert_summary": "A phishing email attempting to impersonate a corporate officer was intercepted by Mimecast due to its suspicious sender domain and high-pressure language regarding invoice payments. The message is consistent with Business Email Compromise (BEC) tactics aimed at soliciting fraudulent funds.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-14T15:15:51.307385Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T15:16:16.142774Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T15:16:16.142840Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T15:16:16.581055Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=11; open-value search for 'secure-invoice-updates.com' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T15:18:50.737752Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T15:19:06.435867Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T15:20:29.441194Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T15:21:42.182412Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report fe7f6de7-5937-4b4f-979d-179167b04f99 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T15:21:42.188764Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T15:16:16.142806Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T15:16:16.142806Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T15:16:16.142823Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T15:16:16.142823Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T15:16:16.142829Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T15:16:16.142829Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T15:16:16.142833Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T15:16:16.142833Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T15:16:16.142836Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T15:16:16.142836Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert identifies a high-confidence phishing attempt (T1566) utilizing impersonation techniques and urgent messaging ('Urgent', 'Invoice Payment') to manipulate the recipient. Given the unknown sender domain and specific targeting of financial processes, this is classified as a high-severity threat requiring immediate investigation."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a WHOIS lookup on 'secure-invoice-updates.com' to determine registration date; domains registered within the last 30 days are high indicators of malicious intent.",
+    "Cross-reference the sender's IP (185.220.101.47) against known threat intelligence feeds and proxy reputation databases.",
+    "Conduct a search across the mail gateway for any other internal recipients who may have received emails from this specific domain or originating from the same IP address.",
+    "Initiate a 'teachable moment' notification to jane.tan@victimcorp.com, informing her that a phishing attempt was intercepted and highlighting the red flags (e.g., urgent language, suspicious sender domain).",
+    "Blacklist the domain 'secure-invoice-updates.com' and the IP address 185.220.101.47 at the corporate firewall and email gateway levels."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of high-pressure language, a non-standard sender domain, and an automated 'Impersonation' flag strongly aligns with established Business Email Compromise (BEC) patterns.",
+  "uncertainty_notes": "5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

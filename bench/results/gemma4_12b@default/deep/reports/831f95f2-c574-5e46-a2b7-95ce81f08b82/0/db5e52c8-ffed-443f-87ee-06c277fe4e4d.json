@@ -1,0 +1,120 @@
+{
+  "report_id": "db5e52c8-ffed-443f-87ee-06c277fe4e4d",
+  "alert_id": "831f95f2-c574-5e46-a2b7-95ce81f08b82",
+  "generated_at": "2026-08-15T19:13:38.063754Z",
+  "alert_summary": "User mrahman successfully established an SSH connection from an unknown IP address (203.0.113.30).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 831f95f2-c574-5e46-a2b7-95ce81f08b82 ingested; model available: True",
+      "timestamp": "2026-08-15T19:10:15.558005Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T19:10:28.422226Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T19:10:28.422257Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T19:10:28.837410Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T19:11:23.500109Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T19:11:43.191452Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T19:12:41.273557Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T19:13:38.063632Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report db5e52c8-ffed-443f-87ee-06c277fe4e4d persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:13:38.071630Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:10:28.422247Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:10:28.422247Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While the source IP is not associated with a known provider, there are no indicators of brute-force attempts or malicious infrastructure involvement. The event is currently classified as low risk because it appears to be a standard operational login, though verification of the user's typical behavior is recommended."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross-reference the source IP (203.0.113.30) against known corporate VPN ranges or common employee geolocation data to determine if it aligns with expected remote access patterns.",
+    "Perform a behavioral analysis of the session following the login; specifically, check for commands like 'whoami', 'ls -la /etc/', or any network scanning activity that might indicate post-exploitation reconnaissance.",
+    "Verify whether Multi-Factor Authentication (MFA) was successfully challenged and completed during this specific SSH handshake.",
+    "Check if user 'mrahman' has a history of logging in from various geographic locations or different IP ranges within a short timeframe."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the login is confirmed as successful, the lack of known malicious indicators combined with an unknown source IP makes it impossible to distinguish between a legitimate remote user and a potentially compromised credential without further behavioral context.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

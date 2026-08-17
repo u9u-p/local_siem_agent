@@ -1,0 +1,140 @@
+{
+  "report_id": "9478e9cb-2bcb-4034-b068-026773b1ca42",
+  "alert_id": "14a2b003-a2d5-53c3-a0ff-9b83fa26963c",
+  "generated_at": "2026-08-15T10:22:04.337355Z",
+  "alert_summary": "A PowerShell instance launched by Cursor.exe executed an encoded command that simply checks for a local `node_modules` folder; no malicious activity was observed.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 14a2b003-a2d5-53c3-a0ff-9b83fa26963c ingested; model available: True",
+      "timestamp": "2026-08-15T10:21:33.478974Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T10:21:36.880736Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:21:36.880806Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T10:21:37.301613Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=55; follow-up same_rule_id_host added 27; open-value search for 'EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:21:41.262389Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:21:43.870214Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:21:56.125630Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T10:22:04.337305Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 9478e9cb-2bcb-4034-b068-026773b1ca42 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:22:04.344842Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-dtan06.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:21:36.880777Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:21:36.880777Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "derek.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:21:36.880798Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:21:36.880798Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The decoded payload (`Test‑Path .\\node_modules`) is a benign filesystem check and does not perform any harmful actions. The parent process (Cursor.exe) is a legitimate application used by the user, and there are no indicators of compromise associated with the domains or host. Given the low severity and high confidence in the benign nature of the command, this event is unlikely to represent an actual threat, though standard forensic hygiene should be maintained."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Capture the full process tree for the Cursor.exe instance (including any child processes) and archive the associated binary for later static analysis – this will confirm whether the executable has been tampered with or is a known legitimate component of the Cursor development tool.",
+    "Collect the user’s recent PowerShell history, environment variables, and the contents of the working directory where the command was executed (especially any `node_modules` folder) to verify that the script is not being used as a drop‑point for later stages of an attack.",
+    "Query endpoint telemetry for any subsequent file writes, network connections, or privilege escalations that occurred within 5 minutes after this PowerShell invocation; even a benign command can be part of a multi‑stage chain.",
+    "Cross‑reference the hash of `Cursor.exe` against known software inventories and threat intel feeds (e.g., VirusTotal, internal SBOM) to rule out a compromised or repackaged version of the tool.",
+    "If the binary is confirmed clean and no follow‑on activity is observed, consider adding a low‑severity detection rule that suppresses future alerts for this exact encoded command pattern, while retaining logging for any deviation (e.g., different encoded payloads).",
+    "Document the finding in the incident response ticket as a ‘benign PowerShell usage’ case, but retain the evidence package in case of later correlation with other indicators."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command merely checks for a local `node_modules` directory and shows no malicious behavior; combined with high confidence in the benign nature of the payload, the alert is most likely an innocuous use of PowerShell by the Cursor application.",
+  "uncertainty_notes": "unsupported claim: 'Manually review the decoded command payload for malicious intent'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+    "parent_command_line": "\"C:\\Users\\derek.tan\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "VABlAHMAdAAtAFAAYQB0AGgAIAAuAFwAbgBvAGQAZQBfAG0AbwBkAHUAbABlAHMA",
+        "decoded": "Test-Path .\\node_modules"
+      }
+    ]
+  }
+}

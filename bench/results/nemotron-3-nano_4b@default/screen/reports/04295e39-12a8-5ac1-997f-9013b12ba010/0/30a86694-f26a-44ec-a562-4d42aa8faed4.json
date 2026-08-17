@@ -1,0 +1,149 @@
+{
+  "report_id": "30a86694-f26a-44ec-a562-4d42aa8faed4",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-14T17:52:18.864549Z",
+  "alert_summary": "A user named Tommy Wong logged on from an internal IP address, which appears legitimate, but the system also detected scanning activity linked to this login.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "timestamp": "2026-08-14T17:51:33.335998Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-14T17:51:38.301141Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T17:51:38.301206Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T17:51:38.713628Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=8; follow-up same_src_ip_24h added 0",
+      "timestamp": "2026-08-14T17:51:45.179368Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-14T17:51:49.891668Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T17:52:07.913964Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 4 audit(s) for 12 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T17:52:18.864468Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 30a86694-f26a-44ec-a562-4d42aa8faed4 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T17:52:18.874282Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:51:38.301173Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:51:38.301173Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:51:38.301193Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:51:38.301193Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T17:51:38.301201Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T17:51:38.301201Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The alert shows a normal logon for a known domain account and group, yet it is correlated with eight pieces of evidence indicating scanning behavior. This suggests that the user may be conducting reconnaissance or attempting lateral movement within the network. Because the source IP is internal and the activity is suspicious, the risk is assessed as medium with high confidence."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Observe whether the login occurred outside of normal business hours or at an atypical time for user tommy.wong.",
+    "Inspect the source IP address 10.20.4.94 against known internal asset inventories to confirm it belongs to a legitimate host.",
+    "Check if any other anomalous events (e.g., file access, privilege escalation) coincide with this login event.",
+    "Review the user's account history for recent password changes or unusual activity that might indicate compromise.",
+    "Correlate the scanning correlation pattern with known threat actor TTPs to gauge whether it aligns with reconnaissance behavior."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The presence of a legitimate user login combined with an active scanning correlation strongly suggests malicious intent rather than benign activity, supporting a true positive classification.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

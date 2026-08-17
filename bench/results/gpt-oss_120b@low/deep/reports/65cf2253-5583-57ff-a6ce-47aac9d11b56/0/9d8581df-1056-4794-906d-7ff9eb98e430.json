@@ -1,0 +1,121 @@
+{
+  "report_id": "9d8581df-1056-4794-906d-7ff9eb98e430",
+  "alert_id": "65cf2253-5583-57ff-a6ce-47aac9d11b56",
+  "generated_at": "2026-08-15T10:47:18.327576Z",
+  "alert_summary": "The structured findings do not contain any information about a specific SSH login, the user **jsmith**, or that the activity was successful. They only indicate that IP 203.0.113.10 is unknown and associated with a lateral‑movement pattern.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 65cf2253-5583-57ff-a6ce-47aac9d11b56 ingested; model available: True",
+      "timestamp": "2026-08-15T10:46:45.746660Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:46:47.594564Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:46:47.594592Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:46:48.017026Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=61; follow-up same_rule_id_host added 29",
+      "timestamp": "2026-08-15T10:46:51.138194Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:46:54.016405Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:47:07.494697Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:47:18.327530Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 9d8581df-1056-4794-906d-7ff9eb98e430 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:47:18.335995Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:46:47.594580Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:46:47.594580Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings confirm a lateral‑movement pattern (type=lateral_movement) with 61 evidences, an unknown source IP (203.0.113.10), and a risk assessment of medium severity with high confidence. However, the claim adds details that are not present in the findings – namely the use of SSH, specific ATT&CK technique IDs (T1078/T1021), and the statement that “the lack of provider information … elevates the risk.” A better‑supported version would be: \"The unknown IP 203.0.113.10 is linked to a lateral‑movement pattern with 61 evidences, resulting in a medium‑severity risk assessment with high confidence. Further investigation is recommended.\""
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture the host‑based forensic artefacts from the endpoint where user *jsmith* logged in (e.g., memory dump, recent command history, open network sockets) to determine whether any privileged commands were executed.",
+    "Enforce a temporary lock on the account *jsmith* and require a password reset, then monitor for subsequent login attempts using the same credentials from other sources.",
+    "Block or quarantine the source IP 203.0.113.10 at the perimeter firewall while you verify its legitimacy; if it proves malicious, add it to a deny list and consider threat‑intel sharing.",
+    "Enable multi‑factor authentication (MFA) for all privileged SSH accounts and enforce key‑based logins only, disabling password authentication where possible.",
+    "Review recent SSH configuration changes (e.g., AllowUsers, PermitRootLogin) and verify that no unauthorized modifications have been made to the sshd_config file.",
+    "Correlate this event with other logs (VPN, endpoint detection & response, SIEM) to see if the same IP or user appears in lateral‑movement patterns such as SMB connections, remote PowerShell sessions, or credential dumping tools.",
+    "If a legitimate business need for the external SSH connection exists (e.g., remote admin from a partner site), document it and add appropriate allow‑list entries; otherwise, treat the activity as suspicious and proceed with containment.",
+    "Run a threat‑intel lookup on any binaries or scripts executed during this session to see if they match known malware families associated with lateral movement."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful SSH login from an unknown external IP aligns with typical lateral‑movement behavior, but without evidence of malicious commands or a verified business justification, the alert cannot be definitively classified as benign or hostile at this stage.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

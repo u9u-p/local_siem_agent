@@ -1,0 +1,132 @@
+{
+  "report_id": "c7f6ad84-443e-4282-b9a8-3e81459d4978",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T19:06:29.545216Z",
+  "alert_summary": "There are 22 pieces of evidence involving an unknown source IP (100.72.44.19).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T19:03:49.061200Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T19:04:00.927385Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T19:04:00.927446Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T19:04:01.349484Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T19:04:30.962349Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-14T19:04:40.703390Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T19:05:15.050228Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T19:06:29.545089Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c7f6ad84-443e-4282-b9a8-3e81459d4978 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T19:06:29.553093Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:04:00.927418Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:04:00.927418Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:04:00.927438Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:04:00.927438Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The high evidence count (22) from an unknown source IP (100.72.44.19) requires investigation to determine if this represents legitimate service account activity or unauthorized access."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review authentication logs for this account over a wider time window",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the source host (100.72.44.19) to identify the specific process or service initiating these 22 authentication requests.",
+    "Review user 'mrahman's' historical baseline to determine if high-frequency logons from this specific IP are a deviation from normal behavior.",
+    "Cross-reference the timing of these logons with any scheduled tasks, automated scripts, or service account activities associated with that user.",
+    "Examine subsequent activity on dc01.corp.local following these successful logons to check for unauthorized command execution or sensitive file access (lateral movement indicators).",
+    "Verify if 100.72.44.19 is a known administrative jump box or an endpoint typically used by this user."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high frequency of successful logons suggests automated activity characteristic of lateral movement, there is insufficient context to distinguish between malicious credential use and a misconfigured service or script.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

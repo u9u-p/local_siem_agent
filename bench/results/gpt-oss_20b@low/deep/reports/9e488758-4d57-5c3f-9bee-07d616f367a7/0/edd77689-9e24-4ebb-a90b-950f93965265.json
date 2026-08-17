@@ -1,0 +1,128 @@
+{
+  "report_id": "edd77689-9e24-4ebb-a90b-950f93965265",
+  "alert_id": "9e488758-4d57-5c3f-9bee-07d616f367a7",
+  "generated_at": "2026-08-15T10:14:48.403052Z",
+  "alert_summary": "An account was successfully authenticated via SSH from IP 203.0.113.20 following 37 failed brute‑force attempts, indicating potential credential compromise.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e488758-4d57-5c3f-9bee-07d616f367a7 ingested; model available: True",
+      "timestamp": "2026-08-15T10:14:25.348793Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:14:26.699805Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:14:26.699855Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:14:27.115338Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=37; follow-up same_src_ip_24h added 3",
+      "timestamp": "2026-08-15T10:14:29.346271Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:14:31.380974Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:14:39.979494Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T10:14:48.402995Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report edd77689-9e24-4ebb-a90b-950f93965265 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:14:48.411375Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.20",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:14:26.699839Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:14:26.699839Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful SSH authentication from IP 203.0.113.20 after 37 brute‑force attempts indicates that the account may have been compromised; this warrants a high‑severity review for potential lateral movement."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the affected host from the internal network to prevent lateral movement while investigation continues.",
+    "Force a password reset for user *araja* and enforce multi‑factor authentication (MFA) on all accounts that have accessed the system via SSH in the last 24 hours.",
+    "Deploy an endpoint detection & response (EDR) agent with real‑time monitoring of credential usage, and enable logging of all subsequent SSH attempts from any IP address.",
+    "Conduct a forensic review of the host’s audit logs to identify any additional anomalous activity (e.g., privilege escalation, file tampering, or outbound connections).",
+    "Cross‑reference the source IP (203.0.113.20) against threat intelligence feeds and internal incident databases; if it appears on known malicious lists, block it at the firewall level.",
+    "If the user *araja* is a legitimate employee, verify that their credentials have not been compromised by performing an account integrity check (e.g., password age, last successful login, MFA status).",
+    "Consider implementing rate‑limiting or fail‑fast mechanisms on the SSH service to mitigate future brute‑force attempts.",
+    "Document all findings and actions taken in a detailed incident report for compliance and audit purposes."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The successful login from an unknown external IP coupled with numerous prior failed attempts suggests potential credential abuse, but without evidence of malicious activity post‑login the event cannot be definitively classified as a true positive or false positive.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

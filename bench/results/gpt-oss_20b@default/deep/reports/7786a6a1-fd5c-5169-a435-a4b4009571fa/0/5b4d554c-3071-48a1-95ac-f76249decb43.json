@@ -1,0 +1,142 @@
+{
+  "report_id": "5b4d554c-3071-48a1-95ac-f76249decb43",
+  "alert_id": "7786a6a1-fd5c-5169-a435-a4b4009571fa",
+  "generated_at": "2026-08-16T11:14:56.124579Z",
+  "alert_summary": "Mimecast held a bulk email from an unknown vendor domain (hardwarehub‑wholesale.com) to admin@victimcorp.com, flagging it as potential phishing (T1566). The alert is rated medium risk because the sender’s IP and domains lack known malicious reputation, yet 66 correlated evidence items suggest suspicious content that warrants analyst review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7786a6a1-fd5c-5169-a435-a4b4009571fa ingested; model available: True",
+      "timestamp": "2026-08-16T11:13:45.242587Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-16T11:13:54.654178Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T11:13:54.654250Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-16T11:13:55.071162Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=66; follow-up same_rule_id_host added 30; open-value search for 'hardwarehub-wholesale.com' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:14:14.090181Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-16T11:14:19.409243Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T11:14:41.249059Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 3 flagged",
+      "timestamp": "2026-08-16T11:14:56.124486Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5b4d554c-3071-48a1-95ac-f76249decb43 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:14:56.132784Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "198.2.180.34",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:13:54.654214Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:13:54.654214Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "hardwarehub-wholesale.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:13:54.654237Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:13:54.654237Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:13:54.654244Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:13:54.654244Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The email originates from an unfamiliar vendor domain with no established reputation data, raising suspicion of a possible phishing attempt. Although the source IP (198.2.180.34) is not listed as malicious, the high correlation evidence count indicates anomalous or potentially harmful content within the message. This combination of unknown origin and significant suspicious indicators justifies a medium‑severity assessment while still allowing for further investigation before any hard blocking actions are taken."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a deeper content inspection of the message body and any embedded links or attachments to look for malicious payloads or social‑engineering cues.",
+    "Verify the sender’s SPF, DKIM, and DMARC alignment against the claimed domain; any misalignment should trigger further scrutiny.",
+    "Cross‑reference the originating IP (198.2.180.34) with internal threat intelligence feeds and external reputation services to confirm whether it has been observed in prior campaigns.",
+    "If the email contains a link or attachment, isolate it in a sandbox environment and observe its behavior before allowing any user interaction.",
+    "Consider temporarily blocking outbound traffic from that IP for the victimcorp domain while the investigation is underway, especially if other users report similar bulk messages.",
+    "Set up a monitoring rule to flag future emails from hardwarehub‑wholesale.com or similar vendor domains with high correlation evidence counts, so you can catch any repeat attempts early."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The message originates from an unknown domain and IP that currently lack malicious reputation, yet Mimecast flagged it as a potential phishing attempt and the evidence count is unusually high; without further content or contextual confirmation, we cannot confidently label it true or false positive.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

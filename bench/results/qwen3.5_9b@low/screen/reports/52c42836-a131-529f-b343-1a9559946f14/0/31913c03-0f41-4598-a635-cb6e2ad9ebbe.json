@@ -1,0 +1,167 @@
+{
+  "report_id": "31913c03-0f41-4598-a635-cb6e2ad9ebbe",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-14T21:18:54.455722Z",
+  "alert_summary": "Mimecast has flagged an impersonation email targeting finance personnel with urgent invoice payment requests, triggering a high-severity alert due to multiple correlated indicators despite unknown sender reputation data.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-14T21:06:55.923747Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-14T21:07:57.354358Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T21:07:57.354400Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T21:07:57.776281Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=11; open-value search for 'secure-invoice-updates.com' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T21:13:15.994102Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T21:13:40.994634Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T21:15:33.347952Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 1 audit(s) for 11 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T21:18:54.455621Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 31913c03-0f41-4598-a635-cb6e2ad9ebbe persisted, alert marked investigated",
+      "timestamp": "2026-08-14T21:18:54.464419Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:07:57.354380Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:07:57.354380Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:07:57.354391Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:07:57.354391Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:07:57.354394Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:07:57.354394Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:07:57.354396Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:07:57.354396Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T21:07:57.354398Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T21:07:57.354398Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The severity rating reflects the confirmed impersonation tactic targeting sensitive financial information and eleven associated correlation indicators, which suggests an organized threat actor presence. Confidence remains medium because critical infrastructure metadata regarding the sender's IP address and domain is currently unavailable for reputation analysis. Consequently, further investigation into authentication logs and credential exposure risks is necessary to validate whether user accounts have been compromised or if this was a false positive from spoofed automation services."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately quarantine the message and any associated attachments to prevent credential harvesting or malware execution.",
+    "Initiate a targeted user awareness check with jane.tan@victimcorp.com regarding recent invoice requests from external sources."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The confirmed impersonation tactic targeting financial data combined with multiple correlated indicators indicates malicious intent despite the current lack of infrastructure reputation metadata. }",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.5:9b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,153 @@
+{
+  "report_id": "74f42280-4a25-4a99-b726-ce2628a754b6",
+  "alert_id": "526c0260-591d-5187-8ea1-55319d6e5ec8",
+  "generated_at": "2026-08-15T09:41:21.244010Z",
+  "alert_summary": "A successful logon from an unknown source was detected, but no immediate threats were found; however, scanning activity was noted and requires monitoring.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 526c0260-591d-5187-8ea1-55319d6e5ec8 ingested; model available: True",
+      "timestamp": "2026-08-15T09:41:13.038863Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 8 candidates, 5 validated",
+      "timestamp": "2026-08-15T09:41:14.730857Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T09:41:14.730920Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:41:15.146035Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=30; follow-up same_rule_id_host added 15",
+      "timestamp": "2026-08-15T09:41:15.649870Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T09:41:16.268554Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T09:41:19.201485Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:41:21.243964Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 74f42280-4a25-4a99-b726-ce2628a754b6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:41:21.250008Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:41:14.730882Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:41:14.730882Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:41:14.730903Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:41:14.730903Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:41:14.730911Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:41:14.730911Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:41:14.730915Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:41:14.730915Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The user logged in successfully using a known IP address, which is not inherently suspicious. However, the system flagged scanning behavior as evidence of reconnaissance, suggesting potential intent to exploit later. Since there are no signs of compromise or malicious indicators yet, immediate action isn't required beyond close observation and further investigation."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider correlating the scanning pattern with internal network logs to pinpoint exact source IPs and timestamps.",
+    "Review recent authentication events across related domains to detect any anomalous spikes or repeated failed attempts that might have been overlooked.",
+    "If possible, enable temporary enhanced logging on the target account for a short observation window to capture detailed activity without impacting normal operations.",
+    "Cross-reference this event with any existing threat intelligence feeds focused on scanning tools targeting Windows environments."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The logon succeeded but was flagged as scanning behavior, suggesting reconnaissance rather than exploitation; however, enrichment data is inconclusive and no direct malicious artifacts were observed.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

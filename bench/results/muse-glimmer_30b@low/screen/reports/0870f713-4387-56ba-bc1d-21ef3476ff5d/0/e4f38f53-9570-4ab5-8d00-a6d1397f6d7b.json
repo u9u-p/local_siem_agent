@@ -1,0 +1,139 @@
+{
+  "report_id": "e4f38f53-9570-4ab5-8d00-a6d1397f6d7b",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-14T19:18:12.359287Z",
+  "alert_summary": "User mrahman successfully logged on from IP 100.72.44.19, which is part of a brute-force pattern with 42 related events. The activity is consistent with credential compromise via valid accounts abuse.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "timestamp": "2026-08-14T19:16:14.591846Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-14T19:16:27.236936Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T19:16:27.237007Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T19:16:27.679341Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=42; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-14T19:16:49.835323Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T19:17:03.613912Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T19:17:36.695003Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 11 flagged",
+      "timestamp": "2026-08-14T19:18:12.359187Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e4f38f53-9570-4ab5-8d00-a6d1397f6d7b persisted, alert marked investigated",
+      "timestamp": "2026-08-14T19:18:12.368023Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:16:27.236968Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:16:27.236968Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:16:27.236992Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:16:27.236992Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:16:27.236999Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:16:27.236999Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The successful logon follows a clear brute-force pattern with 42 correlated authentication events, indicating systematic attempts to obtain valid credentials. This aligns with T1078 Valid Accounts abuse and suggests the account may have been compromised rather than used legitimately. Enrichment for the source IP and domain is unavailable, which limits context on whether the access is expected, but does not reduce the risk given the correlation strength. The combination of high-volume attempts followed by success warrants a high severity assessment with medium confidence due to missing enrichment."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate host 100.72.44.19 at network perimeter and block inbound/outbound to corp.local until attribution is confirmed.",
+    "Force password reset for user mrahman and require MFA re-enrollment, then review recent privileged actions taken under that account.",
+    "Correlate the 42 brute-force events with other source IPs and accounts to identify full blast radius and potential lateral movement.",
+    "Enable enhanced logging for successful logons from unknown IPs and request external threat intel enrichment for 100.72.44.19."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The brute-force pattern and successful logon are suspicious, but lack of enrichment for the source IP and domain prevents confident attribution to credential compromise versus legitimate access.",
+  "uncertainty_notes": "unsupported claim: 'User mrahman successfully logged on from IP 100.72.44.19, which is part of a brute-force pattern with 42 related events. The activity is consistent with credential compromise via valid accounts abuse.'; unsupported claim: 'The successful logon follows a clear brute-force pattern with 42 correlated authentication events, indicating systematic attempts to obtain valid credentials. This aligns with T1078 Valid Accounts abuse and suggests the account may have been compromised rather than used legitimately. Enrichment for the source IP and domain is unavailable, which limits context on whether the access is expected, but does not reduce the risk given the correlation strength. The combination of high-volume attempts followed by success warrants a high severity assessment with medium confidence due to missing enrichment.'; unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

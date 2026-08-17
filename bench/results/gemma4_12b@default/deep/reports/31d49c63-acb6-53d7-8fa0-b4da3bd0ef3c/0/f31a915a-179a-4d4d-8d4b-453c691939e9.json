@@ -1,0 +1,139 @@
+{
+  "report_id": "f31a915a-179a-4d4d-8d4b-453c691939e9",
+  "alert_id": "31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c",
+  "generated_at": "2026-08-15T16:14:33.176446Z",
+  "alert_summary": "A brute-force attack involving 17 attempts was detected from an unknown IP address (45.146.164.110).",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c ingested; model available: True",
+      "timestamp": "2026-08-15T16:09:46.281385Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T16:10:07.657794Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T16:10:07.657827Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T16:10:08.067616Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=17",
+      "timestamp": "2026-08-15T16:10:51.906394Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T16:11:02.505448Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T16:11:53.109451Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T16:14:33.176393Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f31a915a-179a-4d4d-8d4b-453c691939e9 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T16:14:33.184142Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:10:07.657812Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:10:07.657812Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:10:07.657821Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:10:07.657821Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T16:10:07.657824Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T16:10:07.657824Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The high severity and confidence levels are driven by a detected brute-force pattern of 17 events from an unknown IP address (45.146.164.110)."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or lock the 'jsmith' account to prevent further unauthorized access.\nForce a password reset and invalidate all active session tokens for this user.\nBlock the source IP address (45.146.164.110) at the perimeter firewall/WAF.\nConduct a forensic review of the activity logs for 'jsmith' following the successful login to identify potential lateral movement or data exfiltration.\nReview other accounts targeted during the same brute-force window to determine if additional accounts were compromised.",
+    "triage_call\": \"true_positive\", \"triage_rationale\": \"The high-confidence correlation between a 17-count brute-force pattern and an immediate successful login from the same source IP is a definitive indicator of a successful credential compromise.\""
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high-confidence correlation between a 17-count brute-force pattern and an immediate successful login from the same source IP is a definitive indicator of a successful credential compromise.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

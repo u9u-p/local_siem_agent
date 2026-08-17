@@ -1,0 +1,148 @@
+{
+  "report_id": "2fa65096-eb65-4b2c-a39b-4b106345b6f6",
+  "alert_id": "17a9cc7c-5b06-5797-9a37-b32b1d3cdda1",
+  "generated_at": "2026-08-15T10:23:44.529449Z",
+  "alert_summary": "The structured findings only indicate a pattern_type of lateral_movement with an evidence count of 8 and list the IP (10.20.4.61) and user (jane.tan) as unknown entities. They do not contain any logon event details, nor do they confirm that the logon was successful or that it originated from the listed IP.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 17a9cc7c-5b06-5797-9a37-b32b1d3cdda1 ingested; model available: True",
+      "timestamp": "2026-08-15T10:23:12.094223Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:23:14.657624Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:23:14.657704Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:23:15.074227Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T10:23:18.152316Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:23:21.159635Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:23:35.797857Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 11 claim(s), 5 flagged",
+      "timestamp": "2026-08-15T10:23:44.529381Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2fa65096-eb65-4b2c-a39b-4b106345b6f6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:23:44.537948Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:23:14.657667Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:23:14.657667Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:23:14.657690Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:23:14.657690Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:23:14.657698Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:23:14.657698Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings provide a medium‑severity, high‑confidence assessment for lateral movement but give no information about credential compromise, insider activity, or the nature of the source host. Therefore the narrative about compromised credentials and insider risk is not directly supported."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture a memory dump and recent event logs from the host at 10.20.4.61 for forensic analysis, focusing on LSASS, PowerShell, and scheduled task activity.",
+    "Isolate the endpoint (network quarantine) while preserving its state to prevent further lateral movement but allow investigators to continue data collection.",
+    "Query Active Directory for recent changes to Jane.Tan’s group memberships, privileged attribute modifications, and any newly created service accounts that might be tied to this credential.",
+    "Search for concurrent logons of the same user from disparate hosts (especially privileged workstations) within a short time window; flag any anomalies as potential credential stuffing.",
+    "Deploy a rapid credential‑theft detection rule (e.g., Windows Event ID 4624 with Logon Type 3 from internal IPs, paired with subsequent SMB or WMI activity) across the environment to surface similar patterns.",
+    "Force a password reset for Jane.Tan and any other accounts that share the same privileged groups; enforce MFA on all high‑value accounts if not already enabled.",
+    "Review recent admin tool usage (e.g., PsExec, WMIC, PowerShell Remoting) from 10.20.4.61 and correlate with known benign administrative activity to separate legitimate maintenance from malicious use.",
+    "If the IP belongs to a managed workstation, verify its patch level, installed security agents, and endpoint detection logs for signs of compromise (e.g., suspicious DLL loads or abnormal process trees).",
+    "Consider issuing a short‑term “watchlist” alert for any future logons by Jane.Tan from non‑standard subnets or devices, escalating to incident response if the pattern repeats.",
+    "Document all findings in the ticketing system and update the threat intelligence repository with indicators (IP 10.20.4.61, user SID, timestamps) for future correlation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful logon of a legitimate privileged account from an internal host coincides with eight lateral‑movement evidences, strongly indicating credential misuse rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

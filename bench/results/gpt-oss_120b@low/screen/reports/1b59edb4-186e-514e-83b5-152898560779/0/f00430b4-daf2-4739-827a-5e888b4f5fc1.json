@@ -1,0 +1,144 @@
+{
+  "report_id": "f00430b4-daf2-4739-827a-5e888b4f5fc1",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-15T02:48:16.188492Z",
+  "alert_summary": "A PowerShell process on a Windows host opened an outbound TLS connection to the external IP 185.220.101.47:443, which is currently unrecognized and may indicate command‑and‑control or data‑exfiltration activity.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-15T02:47:37.642869Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T02:47:40.886362Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T02:47:40.886431Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-15T02:47:41.302589Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for 'Invoke-WebRequest' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T02:47:46.097802Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T02:47:49.301752Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T02:48:07.596670Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 12 flagged",
+      "timestamp": "2026-08-15T02:48:16.188360Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f00430b4-daf2-4739-827a-5e888b4f5fc1 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T02:48:16.197643Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:47:40.886394Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:47:40.886394Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:47:40.886418Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:47:40.886418Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T02:47:40.886426Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T02:47:40.886426Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The structured findings only indicate a single PowerShell process making an outbound TLS connection to IP 185.220.101.47:443 with medium severity and confidence; they do not contain any ATT&CK mapping, frequency analysis, or additional context required to assert the detailed reasoning presented in claim 2."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin by pulling the full Sysmon event record (Event ID 3) for the PowerShell process that opened the TLS session – capture the command line, parent‑process chain, and any loaded modules to see whether the script was launched from a legitimate admin tool or an obscure launcher.",
+    "Query endpoint telemetry (e.g., Windows Defender ATP, CrowdStrike, or Sysmon logs) for any other network connections originating from the same host within the past 24 hours, especially to ports 443/80 or to IP ranges that overlap with 185.220.101.47.",
+    "Run a reverse DNS lookup and WHOIS on 185.220.101.47; if the address resolves to a cloud provider or known malicious hosting service, flag it for deeper investigation. Even though the enrichment currently shows “unknown,” external services may have updated data.",
+    "Check the DNS cache and recent query logs on the endpoint for look‑ups of *jtan‑lt01.victimcorp.com* and *jane.tan*. If these names were resolved shortly before the PowerShell connection, they could be dynamically generated C2 domains.",
+    "Isolate the host from the network (or place it in a quarantine VLAN) while you perform memory acquisition. A live dump can reveal injected PowerShell scripts, encoded commands, or reflective DLLs that are not persisted on disk.",
+    "Search for any scheduled tasks, services, or startup registry entries that reference PowerShell.exe with unusual arguments (e.g., `-EncodedCommand`, `-ExecutionPolicy Bypass`). These artifacts often persist after an initial compromise.",
+    "If you have a sandbox environment, replay the exact command line captured from Sysmon in an isolated VM to observe network behavior and any secondary payloads. Capture outbound traffic with Wireshark or Zeek to see if additional C2 hosts are contacted.",
+    "Update your threat‑intel feeds with the IP address and domain names; even if they are currently “unknown,” future correlation may surface related activity across other assets.",
+    "Document all findings in the incident ticket, noting timestamps, host identifiers, and any remediation steps taken, so that subsequent analysts can track the investigation’s progress."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The single PowerShell‑initiated TLS connection to an unknown external IP could indicate malicious C2 activity, but without corroborating events or contextual evidence it cannot be definitively classified as a true positive nor dismissed as benign.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

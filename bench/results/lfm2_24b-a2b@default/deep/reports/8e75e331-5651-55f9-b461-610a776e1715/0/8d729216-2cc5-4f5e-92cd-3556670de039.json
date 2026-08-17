@@ -1,0 +1,186 @@
+{
+  "report_id": "8d729216-2cc5-4f5e-92cd-3556670de039",
+  "alert_id": "8e75e331-5651-55f9-b461-610a776e1715",
+  "generated_at": "2026-08-15T09:45:32.087070Z",
+  "alert_summary": "Suspicious login detected from an unknown IP address associated with brute force attempts targeting user tommy.wong.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 8e75e331-5651-55f9-b461-610a776e1715 ingested; model available: True",
+      "timestamp": "2026-08-15T09:45:20.018903Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 8 candidates, 6 validated",
+      "timestamp": "2026-08-15T09:45:21.690513Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 6 indicator(s)",
+      "timestamp": "2026-08-15T09:45:21.690608Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:45:22.115211Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=30; follow-up same_rule_id_host added 15",
+      "timestamp": "2026-08-15T09:45:22.647935Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:45:23.268537Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 15 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:45:27.066227Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 17 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:45:32.087012Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 8d729216-2cc5-4f5e-92cd-3556670de039 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:45:32.094782Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690560Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690560Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690587Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690587Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690594Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690594Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://DC01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690598Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690598Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://DEV-TWONG02",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690601Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690601Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:21.690604Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:21.690604Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The logon event originated from an unrecognized and potentially malicious source, indicating a high risk of unauthorized access. The repeated failed attempts suggest automated attack activity, warranting immediate protective measures to safeguard the account and underlying systems."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate review of all recent authentication logs tied to the user account and associated IP ranges.",
+    "Engage incident response teams to assess whether any credentials or sessions were compromised during this period.",
+    "Temporarily enforce multi-factor authentication for the affected user profile until further verification is completed.",
+    "Conduct a targeted network scan from internal assets toward the suspicious external IP address to identify potential lateral movement indicators.",
+    "Update and harden endpoint detection rules around unusual login patterns, especially those involving administrative privileges."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The logon event originated from an unknown IP with a high volume of brute-force attempts, strongly suggesting malicious intent targeting the user account.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 6 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

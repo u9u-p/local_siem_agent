@@ -1,0 +1,155 @@
+{
+  "report_id": "8e1d578c-9a52-4051-bfc2-8561d6ca8bc5",
+  "alert_id": "17a9cc7c-5b06-5797-9a37-b32b1d3cdda1",
+  "generated_at": "2026-08-16T10:24:37.625325Z",
+  "alert_summary": "User jane.tan was observed logging in from the internal address 10.20.4.61—an IP that isn’t recognized in our enrichment data—and this event is linked to eight separate lateral‑movement indicators, raising a high‑priority concern for possible credential misuse.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 17a9cc7c-5b06-5797-9a37-b32b1d3cdda1 ingested; model available: True",
+      "timestamp": "2026-08-16T10:23:36.885928Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-16T10:23:41.807394Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-16T10:23:41.807467Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-16T10:23:42.245256Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-16T10:23:51.921659Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-16T10:23:57.657734Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-16T10:24:13.824500Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 9 flagged",
+      "timestamp": "2026-08-16T10:24:37.625229Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 8e1d578c-9a52-4051-bfc2-8561d6ca8bc5 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T10:24:37.633030Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.61",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:23:41.807429Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:23:41.807429Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:23:41.807450Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:23:41.807450Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:23:41.807458Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:23:41.807458Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T10:23:41.807462Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T10:23:41.807462Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert flags a legitimate logon but from an unknown internal source and is correlated with multiple lateral‑movement patterns (pattern_type=lateral_movement). This combination strongly suggests that the account may have been compromised or abused to move laterally within the network. While we lack definitive context on normal user behavior, the volume of correlated evidence warrants treating this as a high‑severity incident with medium confidence—enough to trigger immediate containment and investigation steps."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Begin a focused audit of the user’s recent activity by pulling all event logs (Security, System, Application) for the past 48 hours to identify any anomalous processes or services that started after the successful logon.",
+    "Cross‑reference the source IP 10.20.4.61 against the organization’s DHCP lease database and network topology maps; verify whether this address is normally assigned to a workstation, server, or a device that should be able to authenticate as jane.tan.",
+    "Run an automated credential‑dumping scan on any machines that have logged in with jane.tan during the same timeframe, looking for evidence of tools such as Mimikatz or PowerShell scripts that could indicate lateral movement.",
+    "Check the domain controller’s authentication logs for concurrent logons from other accounts that might suggest a compromised session or pass‑the‑hash activity.",
+    "If possible, isolate the affected workstation or server to prevent further spread while you investigate; consider disabling jane.tan’s account temporarily if the risk assessment warrants it.",
+    "Engage the incident response team to perform a forensic image of the host and conduct a memory dump analysis for hidden processes or rootkits that could be facilitating lateral movement.",
+    "Document all findings in a shared ticketing system, tagging them with the correlation evidence count so that future alerts can reference this case as a potential baseline for similar patterns."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows strong lateral‑movement indicators and an unrecognized internal IP, but without baseline behavior data for jane.tan it is unclear whether this logon is legitimate or malicious.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

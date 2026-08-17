@@ -1,0 +1,154 @@
+{
+  "report_id": "4a94e47d-3c0f-4fed-8dd3-b16a87385fea",
+  "alert_id": "1f859a00-29a9-5904-84cb-8ae6294a8719",
+  "generated_at": "2026-08-15T10:25:37.546124Z",
+  "alert_summary": "Mimecast blocked a bulk phishing email purporting to be from IdentityGuard that was sent to ke.li.yam@victimcorp.com.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1f859a00-29a9-5904-84cb-8ae6294a8719 ingested; model available: True",
+      "timestamp": "2026-08-15T10:25:06.198463Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:25:09.068383Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:25:09.068419Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:25:09.493857Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=44; follow-up same_src_ip_24h added 7",
+      "timestamp": "2026-08-15T10:25:12.804281Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:25:15.572206Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:25:30.068547Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 7 flagged",
+      "timestamp": "2026-08-15T10:25:37.546071Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4a94e47d-3c0f-4fed-8dd3-b16a87385fea persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:25:37.554123Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "149.72.14.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:25:09.068400Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:25:09.068400Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "identityguard-notify.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:25:09.068412Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:25:09.068412Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:25:09.068415Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:25:09.068415Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:25:09.068417Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:25:09.068417Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The message was identified as bulk credential‑phishing (T1566) and was stopped by Mimecast, indicating the attempt did not reach the user’s inbox. The sender domain mimics a legitimate service but has no known malicious reputation, and there are no associated malicious IPs or domains, leading to a medium severity rating with moderate confidence. While no compromise is evident, the tactic suggests an active phishing campaign targeting credentials, warranting further investigation of the affected account’s activity."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate a rapid user‑awareness outreach to the affected mailbox (ke.li.yam@victimcorp.com) confirming that no legitimate communication from IdentityGuard would be sent via this address and reminding users not to click any links or provide credentials.",
+    "Extract the full MIME content of the held message for sandbox analysis – look for embedded URLs, attachments, or scripts that could reveal a malicious payload or command‑and‑control beacon.",
+    "Run passive DNS and WHOIS history queries on identityguard-notify.com and ke.li.yam to uncover any prior registrations, recent changes, or ties to known phishing infrastructure.",
+    "Perform an active threat‑intel lookup of the source IP (149.72.14.88) across multiple reputation feeds (e.g., VirusTotal, AbuseIPDB, GreyNoise) and consider adding it to a temporary blocklist if any malicious activity is observed.",
+    "Create a detection rule in your email security platform that flags future messages from the exact sender address or any sub‑domains of identityguard-notify.com, especially those containing “sign‑in” language, and route them to quarantine for manual review.",
+    "Log the incident in your SIEM with enrichment tags (domain, IP, T1566) and correlate against recent authentication logs for victimcorp.com accounts – look for any anomalous sign‑in attempts that might have been prompted by this phishing email.",
+    "If a user inadvertently interacted with the message, enforce an immediate password reset for their IdentityGuard credentials and monitor for abnormal login patterns across corporate resources.",
+    "Document the incident in your threat‑intel repository as a potential ‘brand‑impersonation’ campaign targeting IdentityGuard users; share indicators of compromise (IOCs) with industry ISACs or relevant information‑sharing groups."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The email exhibits classic bulk phishing characteristics and was correctly blocked, but the lack of known malicious infrastructure means we cannot definitively label it a true positive without further analysis.",
+  "uncertainty_notes": "unsupported claim: 'Mimecast blocked a bulk phishing email purporting to be from IdentityGuard that was sent to ke.li.yam@victimcorp.com.'; unsupported claim: 'The message was identified as bulk credential‑phishing (T1566) and was stopped by Mimecast, indicating the attempt did not reach the user’s inbox. The sender domain mimics a legitimate service but has no known malicious reputation, and there are no associated malicious IPs or domains, leading to a medium severity rating with moderate confidence. While no compromise is evident, the tactic suggests an active phishing campaign targeting credentials, warranting further investigation of the affected account’s activity.'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

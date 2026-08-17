@@ -1,0 +1,145 @@
+{
+  "report_id": "a8944b95-99b4-4e78-94c4-62066db73097",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T18:07:16.380419Z",
+  "alert_summary": "A successful logon from an unknown IP using a brute-force pattern was detected, indicating potential credential stuffing or attack activity. The alert is rated high severity with medium confidence due to limited enrichment data but significant threat indicators.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T18:06:31.258765Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:06:33.315923Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T18:06:33.315974Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T18:06:33.728961Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=24; follow-up same_src_ip_24h added 2",
+      "timestamp": "2026-08-14T18:06:44.037306Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T18:06:47.094987Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:07:01.088383Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 14 audit(s) for 15 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T18:07:16.380355Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a8944b95-99b4-4e78-94c4-62066db73097 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:07:16.388289Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:06:33.315955Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:06:33.315955Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:06:33.315970Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:06:33.315970Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The detection of a successful login from an unidentified source combined with a brute-force pattern suggests possible unauthorized access attempts, aligning with MITRE ATT&CK T1078 (Valid Accounts). However, the lack of additional context and unknown enrichment details prevents definitive attribution. The correlation of 24 related events further supports the assessment that this is part of a broader attack campaign requiring immediate investigation."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Patch or update the vulnerable software identified for this host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Enhance monitoring of the user account mrahman across all domains and privileged groups to detect anomalous activity",
+    "Investigate potential lateral movement from the source IP address 100.72.44.19 into internal systems",
+    "Review authentication logs for similar brute-force patterns targeting other accounts within the same network segment",
+    "Validate whether the domain dc01.corp.local is associated with known infrastructure or compromised assets",
+    "Assess if this activity aligns with any scheduled maintenance windows or automated processes",
+    "Consider implementing temporary account lockout policies for the affected user account",
+    "Coordinate with the identity provider to check for credential reuse across systems",
+    "Perform a forensic analysis of session tokens and session persistence mechanisms used during the successful login",
+    "Engage threat intelligence sources to determine if 100.72.44.19 is linked to known malicious infrastructure"
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a confirmed successful logon from an unknown IP with a brute-force pattern, coupled with MITRE ATT&CK mapping and multiple correlated events, indicates a high-confidence threat despite limited enrichment data.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2.5:8b-a1b-q4_K_M-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

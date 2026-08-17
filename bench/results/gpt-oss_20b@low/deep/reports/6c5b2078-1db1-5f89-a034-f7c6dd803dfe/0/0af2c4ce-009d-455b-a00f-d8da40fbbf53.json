@@ -1,0 +1,120 @@
+{
+  "report_id": "0af2c4ce-009d-455b-a00f-d8da40fbbf53",
+  "alert_id": "6c5b2078-1db1-5f89-a034-f7c6dd803dfe",
+  "generated_at": "2026-08-15T10:09:10.419545Z",
+  "alert_summary": "An SSH session using account *mrahman* was observed from external IP 100.72.44.19; the IP is linked to a pattern of lateral movement and has no known provider association.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6c5b2078-1db1-5f89-a034-f7c6dd803dfe ingested; model available: True",
+      "timestamp": "2026-08-15T10:08:48.071168Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:08:49.104430Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:08:49.104481Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:08:49.531731Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=50; follow-up same_rule_id_host added 24",
+      "timestamp": "2026-08-15T10:08:51.576484Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:08:53.662864Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:09:02.712735Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 11 flagged",
+      "timestamp": "2026-08-15T10:09:10.419444Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 0af2c4ce-009d-455b-a00f-d8da40fbbf53 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:09:10.427745Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:08:49.104466Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:08:49.104466Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The presence of an authenticated session from an unknown source, combined with 50 evidence points indicating lateral‑movement activity (T1021), suggests potential credential compromise or misuse. The IP’s lack of provider information contributes to uncertainty; therefore a medium confidence assessment is warranted while maintaining a high severity rating."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate forensic review of the target host’s audit logs for any anomalous activity following the SSH session, focusing on privilege escalation attempts or unauthorized file modifications.",
+    "Deploy a network packet capture (NetFlow/Zeek) around the affected host to reconstruct the full communication pattern from 100.72.44.19 and identify any additional lateral movement vectors such as SMB or RDP traffic.",
+    "Perform an in‑depth credential analysis: cross‑reference the mrahman account’s password history, MFA status, and any recent changes to group memberships or local admin rights.",
+    "Isolate the compromised host from the internal network until a full integrity check (e.g., hash comparison against known good baselines) confirms no persistence mechanisms are in place.",
+    "Engage threat intelligence feeds to search for prior incidents involving the IP 100.72.44.19, including any known malicious actor or botnet activity.",
+    "If feasible, conduct a live‑session capture (e.g., using Sysmon or Windows Defender ATP) to identify any post‑login processes that may indicate lateral movement tools such as Mimikatz or PowerShell Empire.",
+    "Coordinate with the incident response team to prepare an immediate containment plan that includes resetting the mrahman credentials and enforcing MFA for all privileged accounts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the SSH logon from an unknown external IP coupled with a high lateral‑movement evidence count suggests potential compromise, the lack of definitive malicious payloads or confirmed credential theft leaves room for alternative explanations such as legitimate remote administration or misconfigured VPN access.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

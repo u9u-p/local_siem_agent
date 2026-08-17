@@ -1,0 +1,141 @@
+{
+  "report_id": "5d7b900d-5586-4221-9fd9-ad075944a7c6",
+  "alert_id": "2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26",
+  "generated_at": "2026-08-15T10:28:32.662812Z",
+  "alert_summary": "Scanning detected generic bulk‑mail patterns (37 hits). No specific information about Mimecast, the sender address, or the recipient address is present in the findings.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 2dc0f8fe-ba32-57e2-8a79-9abde3cc5b26 ingested; model available: True",
+      "timestamp": "2026-08-15T10:28:01.158378Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 7 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:28:03.899700Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:28:03.899769Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T10:28:04.316090Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=37",
+      "timestamp": "2026-08-15T10:28:08.185301Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:28:10.422623Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:28:22.198980Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T10:28:32.662762Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 5d7b900d-5586-4221-9fd9-ad075944a7c6 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:28:32.671098Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.133",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:28:03.899733Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:28:03.899733Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "united-telco.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:28:03.899756Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:28:03.899756Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:28:03.899763Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:28:03.899763Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The findings show a scanning pattern_type=scanning with 37 hits and a low‑severity, high‑confidence risk assessment. No details about Mimecast blocking, specific email addresses, or confirmation that the message never reached an inbox are provided."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Continue monitoring the sender address (statements@united-telco.com) for any changes in behavior or content that might indicate a shift from bulk informational mail to targeted phishing attempts.",
+    "Add the originating IP (52.14.201.133) and both domains (united‑telco.com, victimcorp.com) to an internal watchlist so future traffic involving them can be automatically flagged for deeper inspection.",
+    "Review Mimecast’s bulk‑mail detection rules to ensure they are tuned appropriately; if similar legitimate billing notifications are routinely blocked, consider creating a safe‑sender list or adjusting the sensitivity thresholds for this specific sender/domain pair.",
+    "Run a quick sandbox analysis on any attachments or embedded links that were present in the original message (if available) to confirm there is no hidden payload, even though Mimecast already classified it as bulk.",
+    "Inform the finance team that the email was intercepted and advise them not to reply to or click any links within the blocked message; provide a short briefing on how to recognize legitimate billing communications versus potential phishing attempts.",
+    "Log this incident in your ticketing system with the full Mimecast alert details, including the correlation count (37) and risk assessment (low severity, high confidence), so that trend analysis can be performed over time."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "Mimecast correctly identified the message as bulk phishing with no malicious indicators, and the low‑severity, high‑confidence assessment indicates it does not represent an active threat to the organization.",
+  "uncertainty_notes": "unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

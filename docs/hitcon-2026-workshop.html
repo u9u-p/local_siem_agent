@@ -1,0 +1,649 @@
+<title>Agentic SOC Without the GPU Bill</title>
+<style>
+  :root {
+    --ground:      #EDF0F3;
+    --surface:     #FFFFFF;
+    --surface-2:   #E3E8ED;
+    --ink:         #151B23;
+    --ink-dim:     #57636F;
+    --ink-faint:   #8A96A3;
+    --accent:      #A8600F;
+    --accent-soft: #F0E0CB;
+    --good:        #2C7A56;
+    --bad:         #B93F32;
+    --rule:        #D3DAE1;
+    --rule-strong: #B4BFCA;
+
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --pad: clamp(2.5rem, 5vw, 6rem);
+    --rail: 3rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #12161C;
+      --surface:     #1A2028;
+      --surface-2:   #232B35;
+      --ink:         #E8EAEE;
+      --ink-dim:     #96A0AE;
+      --ink-faint:   #667180;
+      --accent:      #F2A65A;
+      --accent-soft: #3A2C1B;
+      --good:        #5FBF8F;
+      --bad:         #E5695B;
+      --rule:        #28303B;
+      --rule-strong: #3B4553;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #12161C;
+    --surface:     #1A2028;
+    --surface-2:   #232B35;
+    --ink:         #E8EAEE;
+    --ink-dim:     #96A0AE;
+    --ink-faint:   #667180;
+    --accent:      #F2A65A;
+    --accent-soft: #3A2C1B;
+    --good:        #5FBF8F;
+    --bad:         #E5695B;
+    --rule:        #28303B;
+    --rule-strong: #3B4553;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck {
+    height: 100dvh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    counter-reset: slide;
+  }
+  @media (prefers-reduced-motion: reduce) { .deck { scroll-behavior: auto; } }
+
+  .slide {
+    counter-increment: slide;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    min-height: 100dvh;
+    padding: var(--pad) var(--pad) calc(var(--rail) + 1.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1.5rem;
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .slide::after {
+    content: attr(data-sec);
+    position: absolute;
+    left: var(--pad);
+    bottom: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .slide::before {
+    content: counter(slide);
+    position: absolute;
+    right: var(--pad);
+    bottom: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4.6rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  h2 {
+    font-size: clamp(1.9rem, 4.2vw, 3.2rem);
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    font-weight: 680;
+    margin: 0;
+    text-wrap: balance;
+    max-width: 20ch;
+  }
+  h3 { font-size: clamp(1.05rem, 1.9vw, 1.4rem); line-height: 1.2; font-weight: 660; margin: 0; }
+
+  p, li {
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    line-height: 1.5;
+    color: var(--ink-dim);
+    margin: 0;
+    max-width: 62ch;
+  }
+  .lead { color: var(--ink); font-size: clamp(1.15rem, 2vw, 1.55rem); }
+  strong { color: var(--ink); font-weight: 640; }
+  em { font-style: normal; color: var(--accent); }
+
+  ul { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 0.7rem; }
+  li::marker { color: var(--ink-faint); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--surface-2);
+    padding: 0.12em 0.4em;
+    border-radius: 3px;
+    color: var(--ink);
+  }
+
+  /* section dividers */
+  .sec { justify-content: flex-end; background: var(--surface); }
+  .sec h1 { max-width: 18ch; }
+  .sec .no {
+    font-family: var(--mono);
+    font-size: clamp(4rem, 14vw, 11rem);
+    line-height: 0.8;
+    color: var(--accent-soft);
+    letter-spacing: -0.04em;
+  }
+  .queue {
+    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .queue .qh {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .queue ul { padding-left: 1.1em; gap: 0.25rem; }
+  .queue li { font-size: 0.95rem; color: var(--ink-faint); }
+
+  .title { background: var(--surface); }
+  .byline {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 1.2rem;
+  }
+
+  .metric-row { display: flex; flex-wrap: wrap; gap: clamp(1.5rem, 4vw, 4rem); align-items: flex-end; }
+  .metric { display: flex; flex-direction: column; gap: 0.3rem; }
+  .metric .val {
+    font-family: var(--mono);
+    font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+  }
+  .metric .val.hot { color: var(--bad); }
+  .metric .val.ok  { color: var(--good); }
+  .metric .val.acc { color: var(--accent); }
+  .metric .cap {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    max-width: 26ch;
+  }
+
+  .scroller { overflow-x: auto; max-width: 100%; }
+  table { border-collapse: collapse; font-size: clamp(0.82rem, 1.25vw, 1rem); min-width: 100%; }
+  th, td { text-align: left; padding: 0.55rem 1.3rem 0.55rem 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  td { color: var(--ink-dim); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+  tr.pick td { background: var(--accent-soft); color: var(--ink); }
+  tr.pick td.num { color: var(--ink); }
+
+  .note { border-left: 3px solid var(--rule-strong); padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .note.warn { border-color: var(--bad); }
+  .note.good { border-color: var(--good); }
+  .note.acc  { border-color: var(--accent); }
+  .note .tag { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+  .note.warn .tag { color: var(--bad); }
+  .note.good .tag { color: var(--good); }
+  .note.acc  .tag { color: var(--accent); }
+
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px,100%),1fr)); gap: clamp(1.5rem,3.5vw,3.5rem); align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+  figure svg { max-width: 100%; height: auto; max-height: 42dvh; display: block; }
+  figcaption { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); max-width: 70ch; line-height: 1.5; }
+  .fig-wrap { overflow-x: auto; }
+
+  /* Short projectors: tighten rather than overflow the snap point. */
+  @media (max-height: 820px) {
+    .slide { gap: 1rem; }
+    p, li { font-size: clamp(0.9rem, 1.3vw, 1.08rem); }
+    .lead { font-size: clamp(1rem, 1.7vw, 1.3rem); }
+    th, td { padding: 0.4rem 1.1rem 0.4rem 0; }
+    .metric .val { font-size: clamp(1.9rem, 4.5vw, 3.2rem); }
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+</style>
+
+<div class="deck" id="deck" tabindex="-1">
+
+<section class="slide title" data-sec="Title">
+  <p class="eyebrow">HITCON 2026 · Hacking 101 · Day 1</p>
+  <h1>Your First Agentic SOC Without the GPU Bill</h1>
+  <p class="lead">Local LLM triage on Apple Silicon.</p>
+  <div class="byline">
+    <span>Tommy Wong</span><span>Ke Li Yam</span><span>Fri 21 Aug 2026</span>
+  </div>
+</section>
+
+<!-- ═══ 1 PROBLEM ═══ -->
+<section class="slide sec" data-sec="1 · Problem">
+  <div class="no">01</div>
+  <h1>Problem statement</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>SOC economics — cost per alert, why cloud triage is a non-starter for log data</li>
+      <li>The 24 GB laptop constraint, and what actually fits on it</li>
+      <li>Why "just pick a model off a leaderboard" fails for this task</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="1 · Problem">
+  <p class="eyebrow">The work being automated</p>
+  <h2>Every alert costs an analyst the same four questions.</h2>
+  <p>Who owns this host? Has this address appeared before? Is this the user's own VPN egress? Was there an MFA push?</p>
+  <p class="lead">The queue length isn't the pain. <em>Re-deriving the same context, from scratch, per alert</em> is the pain.</p>
+</section>
+
+<section class="slide" data-sec="1 · Problem">
+  <p class="eyebrow">The second problem, which nobody writes about</p>
+  <h2>No leaderboard tells you which local model can do this.</h2>
+  <ul>
+    <li>Benchmarks measure reasoning, coding, trivia — not "does it escalate benign Windows logons"</li>
+    <li>The failures are <strong>per alert class</strong>, and they invert between models</li>
+    <li>Nothing published tells you what a model costs in RAM at the context you need</li>
+  </ul>
+  <p class="lead">So we had to measure it ourselves. That measurement is most of this talk.</p>
+</section>
+
+<!-- ═══ 2 HYPOTHESIS ═══ -->
+<section class="slide sec" data-sec="2 · Hypothesis">
+  <div class="no">02</div>
+  <h1>Hypothesis</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Why free-form ReAct fails at this model size</li>
+      <li>The closed-schema rule and its two deliberate exceptions</li>
+      <li>Read-only by construction — no remediation tool exists to be called</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="2 · Hypothesis">
+  <p class="eyebrow">The bet</p>
+  <h2>Constrain the model. Don't scale it.</h2>
+  <p class="lead">A small local model, inside a deterministic state graph, answering one narrow schema-constrained question at a time — should beat a larger model given freedom.</p>
+  <p>The model never picks a tool, never chooses the next step, never sees a transcript of its own earlier output.</p>
+</section>
+
+<section class="slide" data-sec="2 · Hypothesis">
+  <p class="eyebrow">Three things we assumed, and then tested</p>
+  <h2>All three turned out to be wrong.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Bigger is better</h3>
+      <p>Assumed scaling up would improve everything.</p>
+    </div>
+    <div class="col">
+      <h3>More reasoning is better</h3>
+      <p>Assumed a higher effort setting was a free upgrade.</p>
+    </div>
+    <div class="col">
+      <h3>A screening run predicts the real one</h3>
+      <p>Assumed a cheap n=4 pass would rank models correctly.</p>
+    </div>
+  </div>
+  <div class="note acc">
+    <span class="tag">Section 5 pays these off</span>
+    <p>Each was refuted by measurement, and the reasoning one was refuted in the dangerous direction.</p>
+  </div>
+</section>
+
+<!-- ═══ 3 RESULTS ═══ -->
+<section class="slide sec" data-sec="3 · Results">
+  <div class="no">03</div>
+  <h1>Results</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Corpus design — 182 alerts, 130 graded, four clusters, needle vs benign vs FP-control</li>
+      <li>Stage 1 screen: 16 configurations, 522 + 187 min</li>
+      <li>Why needle recall saturates and benign escalation discriminates</li>
+      <li>Triage-accuracy collapse between stages — a metric artefact, not a model property</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">What was run</p>
+  <h2>602 investigations. Zero crashes.</h2>
+  <div class="metric-row">
+    <div class="metric"><span class="val acc">602</span><span class="cap">Investigations · 176 screen, 426 deep</span></div>
+    <div class="metric"><span class="val">16</span><span class="cap">Configurations screened</span></div>
+    <div class="metric"><span class="val">5</span><span class="cap">Finalists at n=71</span></div>
+    <div class="metric"><span class="val">3.2–68.7<span style="font-size:0.4em"> GB</span></span><span class="cap">Model size span</span></div>
+  </div>
+  <p>Zero missing reports across the whole field. <strong>~21 hours of local inference</strong> on a 128 GB Mac Studio.</p>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">Stage 2 · n=71</p>
+  <h2>The pick is the smallest serious candidate.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>model</th><th>benign esc.↓</th><th>needle↑</th><th>fp-control↓</th><th>sev. dist.↓</th><th>median</th><th>footprint</th></tr></thead>
+      <tbody>
+        <tr><td><code>gpt-oss:120b</code>@low</td><td class="num">20%</td><td class="num">60%</td><td class="num">0/6</td><td class="num">0.20</td><td class="num">35s</td><td class="num">64.0 GiB</td></tr>
+        <tr><td><code>gpt-oss:20b</code>@low</td><td class="num">45%</td><td class="num">80%</td><td class="num">0/6</td><td class="num">0.39</td><td class="num">24s</td><td class="num">12.0 GiB</td></tr>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">47%</td><td class="num">100%</td><td class="num">0/6</td><td class="num">0.39</td><td class="num">259s</td><td class="num">8.4 GiB</td></tr>
+        <tr><td><code>gemma4:26b-a4b-it-qat</code></td><td class="num">53%</td><td class="num">100%</td><td class="num">3/6</td><td class="num">0.49</td><td class="num">155s</td><td class="num">15.0 GiB</td></tr>
+        <tr><td><code>lfm2:24b-a2b</code></td><td class="num">58%</td><td class="num">60%</td><td class="num">0/6</td><td class="num">0.52</td><td class="num">10s</td><td class="num">14.0 GiB</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>One criterion nothing else meets:</strong> the only configuration with full needle recall <em>and</em> a clean false-positive control, at the smallest footprint.</p>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">The cost of that pick</p>
+  <h2>259 seconds per alert, and reasoning effort can't fix it.</h2>
+  <div class="metric-row">
+    <div class="metric"><span class="val hot">259<span style="font-size:0.4em">s</span></span><span class="cap">Per alert, 128 GB Studio</span></div>
+    <div class="metric"><span class="val">1.34<span style="font-size:0.4em">×</span></span><span class="cap">gemma4 low→high spread</span></div>
+    <div class="metric"><span class="val">28<span style="font-size:0.4em">×</span></span><span class="cap">gpt-oss:20b low→high spread</span></div>
+  </div>
+  <p class="lead">gemma4 barely responds to the effort knob, so ~220s is the floor. <em>A live demo needs 60–90s.</em></p>
+  <div class="note warn">
+    <span class="tag">Consequence for this talk</span>
+    <p>The demo is pre-recorded or cut away from. That is a measured conclusion, not a staging preference.</p>
+  </div>
+</section>
+
+<!-- ═══ 4 DEEPDIVE ═══ -->
+<section class="slide sec" data-sec="4 · Deepdive">
+  <div class="no">04</div>
+  <h1>Deepdive</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>Grounded correlation (PR #4) — mrahman went <code>high</code>/<code>high</code> → <code>low</code></li>
+      <li><code>contains</code> was OR-over-tokens: two decoy domains returned the same 4 hits as the real one</li>
+      <li>Self-check as a re-read, and what it does and doesn't catch</li>
+      <li>Wazuh seeding mechanics — why <code>evidence_count</code> is non-deterministic</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The shape</p>
+  <h2>Nine steps, fixed order, six LLM calls.</h2>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 1180 290" role="img" aria-label="Nine-step linear pipeline; steps 2, 5, 6, 7 and 8 make schema-constrained LLM calls while steps 1, 3, 4 and 9 are deterministic code. Control flow never branches on a model decision.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" fill="currentColor"/>
+        </marker>
+      </defs>
+      <text x="0" y="60" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">LLM CALL</text>
+      <text x="0" y="196" font-family="ui-monospace, monospace" font-size="11" fill="currentColor" opacity="0.5">CODE ONLY</text>
+      <line x1="95" y1="140" x2="1150" y2="140" stroke="currentColor" stroke-width="1.5" opacity="0.35" marker-end="url(#ar)"/>
+      <g font-family="ui-monospace, monospace" font-size="11">
+        <rect x="100" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+        <text x="152" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">1 Ingest</text>
+        <text x="152" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">&amp; parse</text>
+        <line x1="152" y1="160" x2="152" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+
+        <rect x="216" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="268" y="95" text-anchor="middle" fill="var(--accent)">2 Extract</text>
+        <text x="268" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">indicators</text>
+        <line x1="268" y1="120" x2="268" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
+
+        <rect x="332" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+        <text x="384" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">3 Enrich</text>
+        <text x="384" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">registry</text>
+        <line x1="384" y1="160" x2="384" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+
+        <rect x="448" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+        <text x="500" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">4 Context</text>
+        <text x="500" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">host / rule</text>
+        <line x1="500" y1="160" x2="500" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+
+        <rect x="564" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="616" y="95" text-anchor="middle" fill="var(--accent)">5 Correlate</text>
+        <text x="616" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">+ pattern</text>
+        <line x1="616" y1="120" x2="616" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
+
+        <rect x="680" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="732" y="95" text-anchor="middle" fill="var(--accent)">6 Risk</text>
+        <text x="732" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">severity</text>
+        <line x1="732" y1="120" x2="732" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
+
+        <rect x="796" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="848" y="95" text-anchor="middle" fill="var(--accent)">7 Draft</text>
+        <text x="848" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">A + B</text>
+        <line x1="848" y1="120" x2="848" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
+
+        <rect x="912" y="78" width="104" height="42" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <text x="964" y="95" text-anchor="middle" fill="var(--accent)">8 Self-check</text>
+        <text x="964" y="110" text-anchor="middle" fill="var(--accent)" opacity="0.7">audit</text>
+        <line x1="964" y1="120" x2="964" y2="138" stroke="var(--accent)" stroke-width="1.2"/>
+
+        <rect x="1028" y="160" width="104" height="42" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+        <text x="1080" y="177" text-anchor="middle" fill="currentColor" opacity="0.75">9 Persist</text>
+        <text x="1080" y="192" text-anchor="middle" fill="currentColor" opacity="0.45">report</text>
+        <line x1="1080" y1="160" x2="1080" y2="142" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+      </g>
+      <text x="95" y="258" font-family="ui-monospace, monospace" font-size="12" fill="var(--accent)" opacity="0.9">every amber box returns a validated object, or a safe default</text>
+    </svg>
+    <figcaption>Order is fixed in code. No step chooses the next step. The model answers one narrow question per amber box.</figcaption>
+  </figure>
+  </div>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The mechanism, proven on a real payload</p>
+  <h2>It decoded base64 out of a PowerShell command and found the C2 — 8 runs out of 8.</h2>
+  <p>The address <code>45.146.164.110</code> appears in <strong>no plaintext field</strong> of the alert. It is inside a UTF-16LE <code>-EncodedCommand</code> payload. Both <code>source_ip</code> and <code>destination_ip</code> are <code>None</code>.</p>
+  <div class="metric-row">
+    <div class="metric"><span class="val ok">8/8</span><span class="cap">Runs recovering IP and URL</span></div>
+    <div class="metric"><span class="val ok">100%</span><span class="cap">Passed the strict validator</span></div>
+  </div>
+  <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
+</section>
+
+<!-- ═══ 5 LEARNINGS ═══ -->
+<section class="slide sec" data-sec="5 · Learnings">
+  <div class="no">05</div>
+  <h1>Learnings</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>GGUF vs MLX — same weights, one silently ignores your schema</li>
+      <li>The harness completes an investigation with <em>no working model at all</em> — and scores like a cautious one</li>
+      <li>Models fail by cluster, and the clusters invert between models</li>
+      <li>Screen-stage ranking moved 28 points at real sample size</li>
+      <li>Don't derive tok/s from Ollama's <code>usage</code> — off by 8×</li>
+      <li>Docker binds single files by inode; git rewrites break the mount silently</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 1 · the counterintuitive one</p>
+  <h2>More reasoning made it worse, in the dangerous direction.</h2>
+  <p><code>gpt-oss:20b</code>, same model, <code>low</code> against default effort, n=71:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>metric</th><th>@low</th><th>@default</th></tr></thead>
+      <tbody>
+        <tr><td>benign escalation</td><td class="num">45%</td><td class="num">58%</td></tr>
+        <tr><td>severity distance</td><td class="num">0.39</td><td class="num">0.63</td></tr>
+        <tr><td>needle recall</td><td class="num">80%</td><td class="num">80%</td></tr>
+        <tr class="pick"><td><strong>false-positive control</strong></td><td class="num">0/6 correct</td><td class="num">6/6 wrong</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead">The VPN egress <em>is</em> a real anomaly — reason about it long enough and you argue yourself into flagging it. <strong>Three independent models show the same inversion.</strong></p>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 2 · the deployment one</p>
+  <h2>KV cache, not weights, decides what fits on your laptop.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>model</th><th>MB per 1K ctx</th><th>max context under 17.5 GiB</th></tr></thead>
+      <tbody>
+        <tr><td><code>gpt-oss:120b</code></td><td class="num">2.0</td><td>does not fit</td></tr>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">6.5</td><td class="num">262,144</td></tr>
+        <tr><td><code>qwen3.6:27b</code></td><td class="num">69.2</td><td class="num">32,768</td></tr>
+        <tr><td><code>mistral-small3.2</code></td><td class="num">167.9</td><td class="num">8,192</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>84× spread, uncorrelated with model size.</strong> Quantisation shrinks weights but leaves KV identical — q4 and q8 of the same model measure exactly 69.2 MB/1K.</p>
+  <div class="note acc">
+    <span class="tag">And the default will surprise you</span>
+    <p>Ollama sizes KV from the model's <em>default</em> context. <code>qwen3.6:27b</code> is 36.5 GB at default and 16 GB at <code>num_ctx=8192</code>. Invisible on a 128 GB Studio. Decisive on a laptop.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 3 · the measurement one</p>
+  <h2>Every footprint we published was 7.7% too heavy.</h2>
+  <p><code>ollama ps</code> prints <em>decimal</em> GB. The parser multiplied by 1024³. Every number in the project was wrong by the same constant.</p>
+  <div class="note warn">
+    <span class="tag">Why it survived</span>
+    <p>It cleared a full gate, a 16-configuration sweep and two writeups — because <strong>a uniform multiplier reorders nothing</strong>. Every ranking was still correct. It eliminated one model for the wrong reason.</p>
+  </div>
+  <p class="lead">It surfaced only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB/1K, flat across three rungs.</p>
+  <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
+</section>
+
+<!-- ═══ 6 CONCLUSIONS ═══ -->
+<section class="slide sec" data-sec="6 · Conclusions">
+  <div class="no">06</div>
+  <h1>Conclusions</h1>
+  <div class="queue">
+    <span class="qh">Material available to expand into</span>
+    <ul>
+      <li>The go/no-go smoke test as the take-home artifact</li>
+      <li>Named gaps between here and autonomous, each with a file</li>
+      <li>Repo, slides, contact</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="6 · Conclusions">
+  <p class="eyebrow">What we'd tell you to do</p>
+  <h2>Four things, all measured.</h2>
+  <ul>
+    <li><strong>Constrain before you scale.</strong> The harness carries the structure; extra model capacity mostly buys room to argue away the grounded answer.</li>
+    <li><strong>Use <code>low</code> reasoning effort</strong> wherever the model honours it — and verify it honours it by counting reasoning characters, not by checking the request didn't error.</li>
+    <li><strong>Size by KV at your real context</strong>, not by download size. Bake <code>num_ctx</code> into a Modelfile variant; per-request doesn't survive.</li>
+    <li><strong>Measure on your own alert classes.</strong> Failures cluster, and clusters invert between models. A leaderboard position does not transfer.</li>
+  </ul>
+</section>
+
+<section class="slide" data-sec="6 · Conclusions">
+  <p class="eyebrow">Position</p>
+  <h2>It builds the hypothesis. You still make the call.</h2>
+  <p class="lead">Strictly read-only. No remediation tool is wired to the model — not disabled, <em>not present</em>.</p>
+  <div class="metric-row">
+    <div class="metric"><span class="val acc">8.4<span style="font-size:0.4em"> GiB</span></span><span class="cap">Everything you saw, resident</span></div>
+    <div class="metric"><span class="val acc">0</span><span class="cap">Bytes sent to a cloud model</span></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+  (function () {
+    var deck = document.getElementById('deck');
+    var slides = Array.prototype.slice.call(deck.querySelectorAll('.slide'));
+    function current() {
+      var top = deck.scrollTop, best = 0, bestGap = Infinity;
+      slides.forEach(function (s, i) {
+        var gap = Math.abs(s.offsetTop - top);
+        if (gap < bestGap) { bestGap = gap; best = i; }
+      });
+      return best;
+    }
+    function go(d) {
+      var n = Math.min(slides.length - 1, Math.max(0, current() + d));
+      deck.scrollTo({ top: slides[n].offsetTop, behavior: 'instant' });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.key) {
+        case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
+          e.preventDefault(); go(1); break;
+        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+          e.preventDefault(); go(-1); break;
+        case 'Home': e.preventDefault(); deck.scrollTo({ top: 0, behavior: 'instant' }); break;
+        case 'End': e.preventDefault(); go(slides.length); break;
+        case 'f': case 'F':
+          if (document.fullscreenElement) document.exitFullscreen();
+          else document.documentElement.requestFullscreen();
+          break;
+      }
+    });
+  })();
+</script>

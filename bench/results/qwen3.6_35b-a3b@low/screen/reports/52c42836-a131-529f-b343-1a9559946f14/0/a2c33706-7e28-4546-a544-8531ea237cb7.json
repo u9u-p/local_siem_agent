@@ -1,0 +1,164 @@
+{
+  "report_id": "a2c33706-7e28-4546-a544-8531ea237cb7",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-15T03:33:25.582921Z",
+  "alert_summary": "Network scanning activity was detected across 11 evidence points targeting IP 185.220.101.47 and domains cfo.support, secure-invoice-updates.com, jane.tan, and victimcorp.com. All indicators returned unknown enrichment status. The event is assessed as high severity with medium confidence due to the lack of threat intelligence context.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "timestamp": "2026-08-15T03:30:11.592851Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T03:30:41.655394Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T03:30:41.655477Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T03:30:42.071622Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=11",
+      "timestamp": "2026-08-15T03:31:32.865571Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T03:31:48.857612Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 2 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T03:32:43.256462Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 4 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T03:33:25.582827Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a2c33706-7e28-4546-a544-8531ea237cb7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T03:33:25.592307Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:30:41.655431Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:30:41.655431Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:30:41.655455Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:30:41.655455Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:30:41.655463Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:30:41.655463Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:30:41.655467Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:30:41.655467Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T03:30:41.655472Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T03:30:41.655472Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert reflects a high-severity network scanning pattern (11 evidence points) involving IP 185.220.101.47 and domains cfo.support, secure-invoice-updates.com, jane.tan, and victimcorp.com. Confidence is rated as medium because all indicators returned unknown enrichment status, preventing external validation of the scanning campaign's scope or reputation. Broader environment correlation is required to determine if this represents an isolated reconnaissance attempt or part of a wider targeting campaign."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately block the sender domain 'secure-invoice-updates.com' and IP '185.220.101.47' at the email gateway and perimeter firewall to prevent further delivery attempts.",
+    "Conduct a deep-dive investigation on recipient jane.tan@victimcorp.com: review mailbox for any replies, forwards, or clicks on links/attachments, and scan her endpoint for indicators of compromise (IOCs) such as credential dumping tools or malware droppers.",
+    "Perform a WHOIS lookup on 'secure-invoice-updates.com' to assess domain registration age and registrar details; newly registered domains strongly support malicious intent.",
+    "Search internal logs and Mimecast reports for other emails originating from this domain, IP, or similar lookalike patterns targeting finance staff or executives to determine the scope of the campaign.",
+    "Notify the executive communications team and CFO office that their identity is being spoofed to mitigate reputational risk and warn them to ignore any unsolicited financial requests.",
+    "Review the 'scanning' correlation evidence (count=11) to identify if this represents a reconnaissance phase or mass phishing blast, and adjust detection rules accordingly."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The alert displays high-fidelity indicators of a Business Email Compromise attack—including executive impersonation via a suspicious lookalike domain, urgent financial subject line, and correlation with scanning patterns—which collectively outweigh the lack of threat intelligence enrichment typical of fresh campaigns.",
+  "uncertainty_notes": "5 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.6:35b-a3b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

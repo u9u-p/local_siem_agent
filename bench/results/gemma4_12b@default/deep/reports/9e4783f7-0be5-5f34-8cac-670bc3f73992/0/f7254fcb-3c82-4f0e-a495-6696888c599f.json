@@ -1,0 +1,119 @@
+{
+  "report_id": "f7254fcb-3c82-4f0e-a495-6696888c599f",
+  "alert_id": "9e4783f7-0be5-5f34-8cac-670bc3f73992",
+  "generated_at": "2026-08-15T19:49:44.806925Z",
+  "alert_summary": "A successful SSH login was recorded for user kchen from IP 203.0.113.52. No indicators of compromise or brute-force patterns were identified during the initial review.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9e4783f7-0be5-5f34-8cac-670bc3f73992 ingested; model available: True",
+      "timestamp": "2026-08-15T19:46:24.535974Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T19:46:37.609621Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T19:46:37.609671Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T19:46:38.036156Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=14; open-value search for 'kchen' found 2 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T19:47:18.944489Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=medium",
+      "timestamp": "2026-08-15T19:47:39.683657Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 3 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T19:48:44.932709Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 5 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T19:49:44.806863Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report f7254fcb-3c82-4f0e-a495-6696888c599f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:49:44.815251Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.52",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:46:37.609654Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:46:37.609654Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The risk is assessed as low because the source IP does not have a known malicious reputation and there are no surrounding signs of suspicious behavior. While the provider for the IP is unknown, the lack of preceding failed login attempts suggests this was likely an authorized access event rather than an unauthorized intrusion."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Notify the asset owner of the affected host or agent",
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Perform a geo-location and ISP lookup on 203.0.113.52 to determine if the login originated from a known corporate range, a common VPN provider, or a high-risk region.",
+    "Cross-reference the timestamp of the successful login with the user's typical working hours and historical login patterns for account 'kchen'.",
+    "Review subsequent commands executed by user 'kchen' immediately following the login to identify any unauthorized privilege escalation attempts (e.g., sudo usage) or lateral movement.",
+    "Verify with the user ('kchen') via an out-of-band communication channel to confirm if they initiated the session from the identified IP."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While there are no immediate indicators of a brute-force attack, the 'unknown' status of the source IP and lack of historical context for this specific connection make it impossible to confirm if the login was authorized by the user or performed by an adversary.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

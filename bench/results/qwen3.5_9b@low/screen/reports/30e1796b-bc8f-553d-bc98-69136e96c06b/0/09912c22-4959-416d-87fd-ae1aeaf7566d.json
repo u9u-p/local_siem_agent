@@ -1,0 +1,123 @@
+{
+  "report_id": "09912c22-4959-416d-87fd-ae1aeaf7566d",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-14T20:58:01.136010Z",
+  "alert_summary": "A successful SSH login was detected for user jsmith originating from an unknown external IP address, indicating potential credential compromise or unauthorized access that requires immediate verification against authorization policies. Analysts must determine whether this connection aligns with established network baselines and authorized remote work permissions before assuming legitimacy.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-14T20:47:23.734769Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T20:48:00.125899Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T20:48:00.125950Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T20:48:00.548936Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=32; open-value search for 'jsmith' found 24 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T20:53:14.508820Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-14T20:54:05.010940Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 9 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T20:55:54.135620Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 1 audit(s) for 11 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T20:58:01.135872Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 09912c22-4959-416d-87fd-ae1aeaf7566d persisted, alert marked investigated",
+      "timestamp": "2026-08-14T20:58:01.144651Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:48:00.125933Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:48:00.125933Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The detection of valid credentials being used from an unregistered external source presents a significant risk as it could indicate that user passwords have been leaked or stolen. Since the provider for this IP is unknown, we cannot confirm if this traffic originates from a trusted location like a home office or data center without further investigation. Therefore, high confidence in this finding necessitates verifying whether jsmith has authorized remote access permissions and checking for lateral movement indicators immediately following this session to ensure host integrity remains intact."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate user jsmith's recent travel records or approved remote work policies to determine if 45.146.164.110 falls within an authorized range.",
+    "Cross-reference the session ID associated with this login against other active sessions from that IP address to check for lateral movement patterns."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert cannot be definitively classified as a confirmed compromise without verifying whether user jsmith has legitimate authorization or recent travel plans corresponding to the unknown external IP address. }",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "qwen3.5:9b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

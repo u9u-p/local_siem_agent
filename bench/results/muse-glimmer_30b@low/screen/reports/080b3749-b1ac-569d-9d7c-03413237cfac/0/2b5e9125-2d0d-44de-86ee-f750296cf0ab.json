@@ -1,0 +1,116 @@
+{
+  "report_id": "2b5e9125-2d0d-44de-86ee-f750296cf0ab",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-14T19:16:14.105120Z",
+  "alert_summary": "...",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-14T19:15:00.621485Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T19:15:10.192989Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T19:15:10.193018Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T19:15:10.609571Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=44; follow-up same_rule_id_host added 20",
+      "timestamp": "2026-08-14T19:15:29.596587Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T19:15:41.045919Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 0 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T19:16:06.742598Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 0 audit(s) for 2 claim(s); corrections not applied",
+      "timestamp": "2026-08-14T19:16:14.105026Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2b5e9125-2d0d-44de-86ee-f750296cf0ab persisted, alert marked investigated",
+      "timestamp": "2026-08-14T19:16:14.113283Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T19:15:10.193010Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T19:15:10.193010Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "..."
+  },
+  "recommended_actions": [],
+  "recommended_actions_freeform_experimental": [
+    "Isolate host and review nprakash account activity for lateral movement, credential reuse, and data exfiltration since first successful logon.",
+    "Block 203.0.113.63 at perimeter and in SSH allowlists, and add to threat intel watchlist pending enrichment.",
+    "Force password reset for nprakash and review MFA status; consider disabling or converting account to key-only if service account.",
+    "Correlate with authentication logs across other services for same source IP and user to identify broader campaign.",
+    "Enable and tune SSH brute-force detection thresholds and implement fail2ban/rate limiting on exposed SSH endpoints."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "Successful authentication after 44 brute-force attempts strongly indicates compromise rather than benign activity.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "muse-glimmer:30b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

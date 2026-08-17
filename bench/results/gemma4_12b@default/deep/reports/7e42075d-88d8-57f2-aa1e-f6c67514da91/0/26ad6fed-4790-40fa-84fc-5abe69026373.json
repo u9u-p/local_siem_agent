@@ -1,0 +1,123 @@
+{
+  "report_id": "26ad6fed-4790-40fa-84fc-5abe69026373",
+  "alert_id": "7e42075d-88d8-57f2-aa1e-f6c67514da91",
+  "generated_at": "2026-08-15T19:10:15.075290Z",
+  "alert_summary": "A series of 26 scanning activities was detected from an unknown IP (203.0.113.10), indicating a high-confidence automated probing attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7e42075d-88d8-57f2-aa1e-f6c67514da91 ingested; model available: True",
+      "timestamp": "2026-08-15T19:03:21.476957Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T19:03:35.079698Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T19:03:35.079746Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T19:03:35.505591Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=scanning, evidence_count=26",
+      "timestamp": "2026-08-15T19:05:46.092360Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T19:06:00.010820Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T19:08:07.069566Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 18 claim(s), 10 flagged",
+      "timestamp": "2026-08-15T19:10:15.075158Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 26ad6fed-4790-40fa-84fc-5abe69026373 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T19:10:15.082963Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T19:03:35.079730Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T19:03:35.079730Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The alert is classified as high risk because a significant volume of scanning behavior (26 instances) was detected from an unverified source IP (203.0.113.10)."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a mandatory password reset and session termination for account 'jsmith'.",
+    "Implement a temporary firewall block on IP 203.0.113.10 to prevent further interaction from this source.",
+    "Conduct a forensic review of the activity logs for user 'jsmith' starting from the timestamp of the successful login to identify potential lateral movement or data exfiltration.",
+    "Audit other accounts on the system to determine if they were also targeted during the 26 identified scanning events.",
+    "Verify if Multi-Factor Authentication (MFA) is enabled for this account; if not, prioritize its implementation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The high volume of preceding scan attempts followed by a successful login from an unverified IP strongly indicates a successful brute-force or credential stuffing attack.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

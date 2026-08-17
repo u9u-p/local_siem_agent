@@ -1,0 +1,114 @@
+{
+  "report_id": "2cd54193-293d-4394-9cc4-a522bb6ff465",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-15T05:05:58.821757Z",
+  "alert_summary": "An unknown event pattern was detected from IP 45.146.164.110, which requires immediate verification of legitimacy.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-15T04:53:26.830669Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T04:53:40.931811Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T04:53:40.931859Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T04:53:41.360357Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=32; open-value search for 'jsmith' found 24 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T05:04:06.123736Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T05:04:22.414977Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T05:05:00.810710Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T05:05:58.821657Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 2cd54193-293d-4394-9cc4-a522bb6ff465 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T05:05:58.830219Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T04:53:40.931845Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T04:53:40.931845Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The source IP address (45.146.164.110) is not recognized in the enrichment data, indicating it may be a remote connection or a compromised endpoint. A successful login from an unknown source poses a significant risk of unauthorized access or lateral movement within the network. Analysts must determine if this connection is authorized (e.g., via a VPN) or if it indicates a potential compromise requiring further investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross-reference the timestamp of this event with VPN access logs to verify if the connection originated from a corporate gateway, and review the subsequent command execution history of the `jsmith` user to detect any anomalous lateral movement patterns."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The IP is unknown and the user is generic, requiring further verification to distinguish between a legitimate remote access attempt and a potential compromise.",
+  "uncertainty_notes": "unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "glm-4.7-flash:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,140 @@
+{
+  "report_id": "73372a04-d2c2-40e9-9afa-10f91cfada49",
+  "alert_id": "4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a",
+  "generated_at": "2026-08-14T21:06:55.426972Z",
+  "alert_summary": "Remove specific username reference as it is not present in structured findings; generalize to 'affected user account'.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f7fb1b5-1012-57cd-97a1-dfd1a31ad12a ingested; model available: True",
+      "timestamp": "2026-08-14T20:58:01.644210Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T20:59:09.517085Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T20:59:09.517117Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-14T20:59:09.948780Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=22",
+      "timestamp": "2026-08-14T21:02:53.121386Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-14T21:03:28.939290Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T21:05:14.335420Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 15 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T21:06:55.426830Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 73372a04-d2c2-40e9-9afa-10f91cfada49 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T21:06:55.435460Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:59:09.517104Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:59:09.517104Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T20:59:09.517114Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T20:59:09.517114Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert carries high severity because the correlation engine identified 22 distinct instances of lateral movement using a valid user account, suggesting an ongoing attack rather than isolated noise. Confidence remains medium due to missing enrichment data for both the source IP and domain, which hinders attribution without external threat intelligence feeds. Consequently, this event warrants immediate investigation to validate whether credentials are compromised or if unauthorized access has occurred within the internal network before containment measures are finalized."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate any endpoints that have initiated connections to the source IP 100.72.44.19 or received authentication requests from user mrahman",
+    "Review session logs for mrahman specifically looking for time-of-day anomalies, impossible travel scenarios, or access to sensitive data stores outside of normal business hours",
+    "Verify if the domain dc01.corp.local is a known internal resource and check trust relationships with external networks that might explain traffic from this IP range",
+    "Cross-reference user mrahman's role within Active Directory to determine if they possess administrative privileges that would justify lateral movement patterns"
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the volume of evidence suggests active compromise, attribution remains uncertain due to a lack of external threat intelligence regarding the source IP and domain status.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "qwen3.5:9b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

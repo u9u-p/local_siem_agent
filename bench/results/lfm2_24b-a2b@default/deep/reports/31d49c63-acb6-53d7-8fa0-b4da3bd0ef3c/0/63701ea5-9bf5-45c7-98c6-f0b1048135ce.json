@@ -1,0 +1,138 @@
+{
+  "report_id": "63701ea5-9bf5-45c7-98c6-f0b1048135ce",
+  "alert_id": "31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c",
+  "generated_at": "2026-08-15T09:38:43.065819Z",
+  "alert_summary": "Supports it. Brute-force patterns and use of valid credentials indicate potential credential theft.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 31d49c63-acb6-53d7-8fa0-b4da3bd0ef3c ingested; model available: True",
+      "timestamp": "2026-08-15T09:38:33.428813Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:38:34.158174Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T09:38:34.158241Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:38:34.585389Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=34; follow-up same_rule_id_host added 17",
+      "timestamp": "2026-08-15T09:38:35.105890Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:38:35.737657Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 11 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:38:39.428931Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 13 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T09:38:43.065765Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 63701ea5-9bf5-45c7-98c6-f0b1048135ce persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:38:43.073348Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:38:34.158211Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:38:34.158211Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:38:34.158234Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:38:34.158234Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The successful login from an unrecognized source, combined with evidence of repeated failed attempts (brute force), indicates that attackers may have obtained or are attempting to use legitimate user credentials. This raises the risk of unauthorized access and potential insider activity, warranting a medium severity assessment due to the likelihood of credential theft."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to the incident response / Tier 2 team"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Conduct deeper forensic analysis of the user’s recent activity and session context to identify any anomalous behavior beyond credential use.",
+    "Review authentication logs across related systems (including domain controllers) for signs of lateral movement or repeated failed attempts from other sources.",
+    "Initiate a targeted review of account privileges, especially those with elevated access, to ensure no unauthorized changes have been made post-logon.",
+    "Correlate this event with any recent security alerts or threat intelligence feeds relevant to credential stuffing campaigns targeting similar organizations."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful logon from an unknown IP using valid credentials strongly aligns with known indicators of credential compromise, warranting classification as true positive despite the absence of additional malicious evidence at this stage.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

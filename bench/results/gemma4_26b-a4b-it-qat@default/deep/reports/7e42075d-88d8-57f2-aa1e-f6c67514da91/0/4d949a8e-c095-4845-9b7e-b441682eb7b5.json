@@ -1,0 +1,122 @@
+{
+  "report_id": "4d949a8e-c095-4845-9b7e-b441682eb7b5",
+  "alert_id": "7e42075d-88d8-57f2-aa1e-f6c67514da91",
+  "generated_at": "2026-08-15T13:36:28.611417Z",
+  "alert_summary": "An unknown IP address (203.0.113.10) was involved in 26 events, which warrants investigation.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 7e42075d-88d8-57f2-aa1e-f6c67514da91 ingested; model available: True",
+      "timestamp": "2026-08-15T13:34:30.213697Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:34:36.211621Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T13:34:36.211646Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T13:34:36.642617Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=26; open-value search for 'jsmith' found 9 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T13:35:01.599503Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T13:35:10.546660Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T13:35:37.525699Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:36:28.611361Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4d949a8e-c095-4845-9b7e-b441682eb7b5 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:36:28.619470Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:34:36.211639Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:34:36.211639Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The high confidence rating is driven by the 26 successful authentication attempts originating from an unrecognized source, which deviates from typical single-session behavior. While the use of valid credentials indicates the account is active, the unknown IP address presents a significant risk of unauthorized access or account takeover. Investigation is required to differentiate between legitimate remote user activity and malicious exploitation."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify with user 'jsmith' whether they are currently working from a new location, using a VPN, or traveling.",
+    "Perform a deep dive into the 26 evidence events to determine if this represents a successful brute-force attack (multiple failed attempts followed by one success) or rapid automated session establishment.",
+    "Cross-reference the source IP (203.0.113.10) against threat intelligence to check for associations with known Tor exit nodes, data center proxies, or malicious botnets.",
+    "Review all post-authentication activity for user 'jsmith'—specifically looking for lateral movement attempts, unauthorized file transfers (SCP/SFTP), or privilege escalation commands.",
+    "Check if other users have had successful or failed logins from this same IP address within the last 24 hours to identify a wider campaign."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the high evidence count and unknown source IP are highly suspicious indicators of credential stuffing or brute-force success, it remains unconfirmed until user activity is verified against legitimate remote work patterns.",
+  "uncertainty_notes": "1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,135 @@
+{
+  "report_id": "66392b69-6efa-4ddb-bd4b-c941cb6c0216",
+  "alert_id": "888aab5a-47ce-59ca-89f3-4d0a18e23746",
+  "generated_at": "2026-08-15T13:43:50.385318Z",
+  "alert_summary": "An account successfully logged on from an unknown IP address, triggering 17 distinct indicators of lateral movement. This pattern strongly suggests that the account may be compromised and is being used to traverse the network.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 888aab5a-47ce-59ca-89f3-4d0a18e23746 ingested; model available: True",
+      "timestamp": "2026-08-15T13:41:48.328545Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T13:42:01.546632Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T13:42:01.546699Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T13:42:01.991513Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=17",
+      "timestamp": "2026-08-15T13:42:14.203078Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T13:42:22.536144Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T13:42:52.009725Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T13:43:50.385264Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 66392b69-6efa-4ddb-bd4b-c941cb6c0216 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T13:43:50.396275Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.10",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:42:01.546666Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:42:01.546666Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T13:42:01.546691Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T13:42:01.546691Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "While a single successful logon is standard behavior, the high frequency of lateral movement patterns (17 instances) indicates highly suspicious activity. This volume of evidence suggests an attacker is likely using legitimate credentials to move between systems within the environment. Immediate investigation is required to determine the scope of this unauthorized traversal and prevent further escalation."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately disable or reset the credentials for user 'jsmith' to prevent further movement.",
+    "Isolate any host(s) that were accessed by 'jsmith' immediately following this logon event to contain potential malware or attacker activity.",
+    "Perform a deep-dive analysis of process execution logs (e.g., Sysmon Event ID 1 or Windows Event ID 4688) on the target systems to identify command-line activity like 'net user', 'whoami', or PowerShell encoded commands.",
+    "Investigate the source IP (203.0.113.10) to determine if it originates from a known VPN, a compromised external asset, or an unauthorized remote access point.",
+    "Review all authentication logs for the last 24 hours to see if 'jsmith' or other accounts have exhibited similar high-frequency connection patterns from different source IPs."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The extremely high evidence count (17) specifically correlated to lateral movement patterns, combined with an unknown source IP, strongly indicates active unauthorized network traversal rather than routine administrative activity.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:26b-a4b-it-qat-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

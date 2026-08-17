@@ -1,0 +1,112 @@
+{
+  "report_id": "6bb39c85-f2a6-463d-9e19-c6b5a853cc78",
+  "alert_id": "080b3749-b1ac-569d-9d7c-03413237cfac",
+  "generated_at": "2026-08-15T05:51:36.281993Z",
+  "alert_summary": "Rule 100080 (SSH: successful logon for user nprakash from 203.0.113.63.), level 3, on agent wazuh.manager.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 080b3749-b1ac-569d-9d7c-03413237cfac ingested; model available: True",
+      "timestamp": "2026-08-15T05:51:34.614525Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM-assisted extraction failed: generation_failed",
+      "timestamp": "2026-08-15T05:51:34.804881Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T05:51:34.805049Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T05:51:35.215102Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=24",
+      "timestamp": "2026-08-15T05:51:35.595657Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=low",
+      "timestamp": "2026-08-15T05:51:35.768054Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B failed",
+      "timestamp": "2026-08-15T05:51:36.110511Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T05:51:36.281864Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 6bb39c85-f2a6-463d-9e19-c6b5a853cc78 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T05:51:36.294982Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.63",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:34.805003Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:34.805003Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "low",
+    "rationale": "risk assessment failed: generation_failed"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": null,
+  "triage_verdict_experimental": null,
+  "triage_rationale_experimental": null,
+  "uncertainty_notes": "self-check could not run: generation_failed; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

@@ -1,0 +1,147 @@
+{
+  "report_id": "ec8ff782-07ea-46a3-8aac-1b72dd8acd8b",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-14T18:36:27.619702Z",
+  "alert_summary": "PowerShell initiated a network connection to an IP address (185.220.101.47) commonly associated with data exfiltration or command-and-control activity, but limited enrichment data is available for further context.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "timestamp": "2026-08-14T18:35:39.495056Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-14T18:35:43.162339Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-14T18:35:43.162437Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "timestamp": "2026-08-14T18:35:43.583012Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for 'PowerShell network connection' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:35:46.758945Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-14T18:35:50.383283Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:36:08.300696Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T18:36:27.619598Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ec8ff782-07ea-46a3-8aac-1b72dd8acd8b persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:36:27.629995Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:35:43.162385Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:35:43.162385Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:35:43.162419Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:35:43.162419Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:35:43.162426Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:35:43.162426Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert indicates PowerShell initiating a network connection to an IP address (185.220.101.47) with unknown enrichment data, which limits context for assessing its association with web protocols or specific techniques like data exfiltration or command-and-control (T1071.001). The medium risk assessment is appropriate given the limited evidence and unknown IP address."
+  },
+  "recommended_actions": [
+    "Isolate the affected host from the network pending investigation",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the PowerShell script or command that initiated this connection to determine if it was authorized or expected.",
+    "Check for any unusual processes or services running on the endpoint around the time of this alert.",
+    "Review network traffic logs to see if there were other connections to similar IP addresses or domains.",
+    "Examine the user account (jane.tan) associated with the domain to determine if it has been compromised or misused.",
+    "Consult threat intelligence feeds for any recent reports on the IP address 185.220.101.47 or related indicators.",
+    "Consider enabling additional logging for PowerShell activity to gather more context for future alerts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows potential signs of malicious activity but lacks sufficient enrichment data and contextual evidence to confidently classify it as a true or false positive.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

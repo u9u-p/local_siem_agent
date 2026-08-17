@@ -1,0 +1,167 @@
+{
+  "report_id": "ef195c38-8687-4c0e-8157-fb5b52356085",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-14T18:15:05.662938Z",
+  "alert_summary": "A high-severity security event involving multiple unknown indicators (IPs/domains) was detected. The high correlation count of 47 strongly suggests that the activity is not isolated but rather part of a large, active, and coordinated threat campaign.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "timestamp": "2026-08-14T18:13:22.541262Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-14T18:13:42.205983Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-14T18:13:42.206080Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-14T18:13:42.625843Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=47; follow-up same_rule_id_host added 22; open-value search for 'Impersonation' found 4 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:14:04.163283Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-14T18:14:13.298042Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-14T18:14:42.330763Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-14T18:15:05.662839Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report ef195c38-8687-4c0e-8157-fb5b52356085 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:15:05.673175Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:13:42.206035Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:13:42.206035Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:13:42.206059Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:13:42.206059Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:13:42.206066Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:13:42.206066Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:13:42.206071Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:13:42.206071Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:13:42.206075Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:13:42.206075Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The activity is highly suspicious due to its high severity rating and the presence of multiple unknown indicators (e.g., 209.85.220.41, jane.tan, meridian-audit.com). The significant correlation count (47) strongly indicates that this alert is part of an ongoing, coordinated attack campaign requiring immediate investigation to determine scope and source."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately initiate a full scope review of the `meridian-audit.com` domain and associated IPs to determine if any other malicious messages have been sent or are queued for delivery.",
+    "Temporarily block all incoming emails originating from, or impersonating, the `jane.tan@meridian-audit.com` address at the gateway level until the legitimacy of the sender can be confirmed by the internal audit team.",
+    "Conduct a targeted review of the recipient's (Raj Kumar) recent activity logs and access credentials to ensure no unauthorized logins occurred following exposure to this phishing attempt.",
+    "Elevate user awareness training for all employees, specifically focusing on recognizing high-urgency, impersonation-based requests related to sensitive topics like 'audit evidence,' regardless of how legitimate the sender appears."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of explicit impersonation flagging, highly sensitive subject matter ('Audit evidence'), and a high correlation count (47) strongly indicates an active, targeted spear-phishing campaign that requires immediate containment.",
+  "uncertainty_notes": "5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:latest-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

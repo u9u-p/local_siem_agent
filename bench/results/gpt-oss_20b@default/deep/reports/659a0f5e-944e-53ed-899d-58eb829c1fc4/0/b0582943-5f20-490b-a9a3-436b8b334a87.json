@@ -1,0 +1,151 @@
+{
+  "report_id": "b0582943-5f20-490b-a9a3-436b8b334a87",
+  "alert_id": "659a0f5e-944e-53ed-899d-58eb829c1fc4",
+  "generated_at": "2026-08-16T11:08:17.820809Z",
+  "alert_summary": "A PowerShell command executed from VS Code was detected but decoded to a benign `git log` operation; no malicious indicators were found.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 659a0f5e-944e-53ed-899d-58eb829c1fc4 ingested; model available: True",
+      "timestamp": "2026-08-16T11:05:59.206957Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-16T11:07:32.159180Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-16T11:07:32.159291Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-16T11:07:32.584832Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=56; follow-up same_rule_id_host added 27; open-value search for 'sarah.lim' found 3 (noisier, unstructured match)",
+      "timestamp": "2026-08-16T11:07:46.211737Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-16T11:07:52.426428Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-16T11:08:07.331335Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-16T11:08:17.820763Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b0582943-5f20-490b-a9a3-436b8b334a87 persisted, alert marked investigated",
+      "timestamp": "2026-08-16T11:08:17.829164Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:07:32.159242Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:07:32.159242Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:07:32.159278Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:07:32.159278Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-16T11:07:32.159286Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-16T11:07:32.159286Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The encoded payload simply runs the routine developer command `git log --oneline -20`, which is expected when using Visual Studio Code. No suspicious domains, file hashes, or other indicators of compromise appear in the event. Given the clear benign nature and lack of any malicious artifacts, the incident is assessed as low severity with high confidence."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Cross‑reference this PowerShell invocation against the user’s recent activity logs to confirm that the command was indeed issued as part of a legitimate development workflow.",
+    "Inspect the VS Code process tree for any child processes or modules that were loaded at the same time; an unexpected DLL injection or additional encoded payloads would raise suspicion.",
+    "Enable verbose logging on the Git client and monitor the repository for anomalous commits or pushes that might correlate with this event, ensuring no unauthorized code is being introduced.",
+    "Deploy a short‑term network flow capture around the timestamp of the Sysmon event to verify that no outbound connections were initiated by the PowerShell process beyond those expected for routine Git operations (e.g., fetching from a remote repository).",
+    "Schedule a periodic review of all encoded PowerShell commands executed on the workstation; even benign examples can be leveraged by attackers if they learn the encoding pattern.",
+    "Consider implementing an inline policy that flags any PowerShell execution originating from non‑standard parent processes (such as editors or IDEs) for manual triage, while allowing known safe patterns to pass through automatically."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command is a routine Git operation executed by VS Code under the user’s profile, with no malicious domains, file hashes, or anomalous network activity detected.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "report_id": "4c6616ce-87c6-4f24-8a28-7e64781890d2",
+  "alert_id": "5876792b-bc67-50f5-89e2-da6af71ea5dd",
+  "generated_at": "2026-08-15T10:41:35.477826Z",
+  "alert_summary": "A successful SSH login was observed for user **dwilson** from an unknown external IP address (203.0.113.41), matching a pattern of lateral‑movement activity that has been seen 27 times previously.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5876792b-bc67-50f5-89e2-da6af71ea5dd ingested; model available: True",
+      "timestamp": "2026-08-15T10:40:59.997898Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:41:01.846944Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:41:01.846999Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:41:02.274962Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=27; follow-up same_rule_id_host added 12",
+      "timestamp": "2026-08-15T10:41:05.531776Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:41:07.968645Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:41:24.733419Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 3 flagged",
+      "timestamp": "2026-08-15T10:41:35.477767Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4c6616ce-87c6-4f24-8a28-7e64781890d2 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:41:35.485100Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:41:01.846979Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:41:01.846979Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The use of a legitimate credential (T1078) from an unrecognized source suggests the account may have been compromised, and the high count of similar events points to ongoing lateral movement across the environment. While no additional malicious actions have yet been detected on the host, the combination of credential misuse and external access elevates the threat to a medium severity with high confidence. The unknown nature of the IP and the potential for further propagation justify immediate containment and deeper investigation."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Notify the asset owner of the affected host or agent",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host where user *dwilson* logged in from (203.0.113.41) and capture a forensic memory dump for credential‑dump analysis.",
+    "Force a password reset for the dwilson account across all privileged services, then enforce multi‑factor authentication (MFA) on that account if not already enabled.",
+    "Block or geo‑filter traffic from 203.0.113.41 at the perimeter firewall and add it to a watchlist for any future connection attempts.",
+    "Review recent SSH session logs for command execution patterns, especially looking for file transfers, sudo usage, or attempts to enumerate other hosts (e.g., `ssh`, `scp`, `netstat`, `ps aux`).",
+    "Correlate the 27 prior evidence events with known internal assets to map a possible lateral‑movement path; prioritize containment of any systems that appear in those evidences.",
+    "Deploy host‑based intrusion detection (HIDS) or endpoint detection and response (EDR) agents on the affected host to monitor for post‑login anomalies such as credential dumping tools, PowerShell scripts, or unusual process trees.",
+    "Conduct a rapid user awareness check with dwilson to confirm whether the login was legitimate; if not, treat it as a confirmed compromise and initiate incident response escalation.",
+    "Update your SSH hardening controls: disable password authentication where possible, enforce key‑based logins, limit allowed source IP ranges, and enable logging of all command activity (auditd).",
+    "Run a threat‑intel lookup on the external IP 203.0.113.41 to see if it appears in any recent malicious actor infrastructure feeds; even though currently unknown, future intel may surface.",
+    "Document the timeline of this event in your incident management system and schedule a post‑mortem to refine detection rules for legitimate versus anomalous SSH logons."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The successful SSH login from an unrecognized external IP using a valid credential, combined with extensive prior evidence of lateral movement, strongly indicates a compromised account rather than benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

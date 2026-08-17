@@ -1,0 +1,143 @@
+{
+  "report_id": "7625c3b9-af42-4742-abce-3c7ce1f880c7",
+  "alert_id": "4f1cb34a-b22d-5820-ba1a-a2454f1f84d3",
+  "generated_at": "2026-08-15T10:37:37.507377Z",
+  "alert_summary": "A successful Windows logon was observed for user **raj.kumar** from internal IP **10.20.4.73**, accompanied by eight lateral‑movement evidences.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 4f1cb34a-b22d-5820-ba1a-a2454f1f84d3 ingested; model available: True",
+      "timestamp": "2026-08-15T10:37:00.172207Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "timestamp": "2026-08-15T10:37:03.290113Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T10:37:03.290148Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:37:03.699220Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=8",
+      "timestamp": "2026-08-15T10:37:06.720572Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:37:09.607649Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 8 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:37:23.669102Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 10 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:37:37.507270Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 7625c3b9-af42-4742-abce-3c7ce1f880c7 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:37:37.514657Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:37:03.290133Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:37:03.290133Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:37:03.290143Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:37:03.290143Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:37:03.290146Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:37:03.290146Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The findings provide a medium severity and high‑confidence assessment, and they note eight lateral‑movement evidences, but they do not contain information about the credential type (T1078), legitimacy of the logon, or contextual factors such as login time or privilege level."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately capture the current session state on the source host (10.20.4.73) and collect volatile data (process list, network connections, logged‑on users, LSASS dump) for forensic analysis.",
+    "Query Active Directory to verify the privilege level of the account \"raj.kumar\" – check group memberships, delegated rights, and any recent changes to its permissions.",
+    "Correlate this logon event with other authentication logs (e.g., Kerberos, RDP, SMB) across the environment for the same time window to see if the credentials were reused elsewhere.",
+    "Review endpoint detection and response (EDR) alerts on both the source host (10.20.4.73) and any downstream systems that show signs of lateral movement (e.g., remote service creation, Pass‑the‑Hash, SMB relay).",
+    "If the account is not privileged or its activity appears anomalous, consider forcing a password reset for \"raj.kumar\" and disabling the account pending investigation.",
+    "Update detection rules to flag successful logons from internal IP ranges that are atypical for the user’s normal work hours or device profile.",
+    "Engage the incident response team to perform a containment drill: isolate the source host, monitor for persistence mechanisms (scheduled tasks, services), and verify whether any data exfiltration channels were opened.",
+    "Document all findings in the case management system, noting the eight lateral‑movement evidences and their timestamps, to support potential escalation to threat hunting or threat intel teams."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a successful internal logon with multiple correlated lateral‑movement indicators strongly suggests credential misuse rather than routine activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; 3 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

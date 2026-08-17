@@ -1,0 +1,140 @@
+{
+  "report_id": "4e579d3d-60b1-4b3d-ae74-e61763580841",
+  "alert_id": "659a0f5e-944e-53ed-899d-58eb829c1fc4",
+  "generated_at": "2026-08-15T10:46:45.260288Z",
+  "alert_summary": "A PowerShell process launched from VS Code executed an encoded command that decodes to a harmless `git log --oneline -20` operation performed by user sarah.lim.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 659a0f5e-944e-53ed-899d-58eb829c1fc4 ingested; model available: True",
+      "timestamp": "2026-08-15T10:46:15.157183Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:46:18.632777Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:46:18.632812Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T10:46:19.062437Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=56; follow-up same_rule_id_host added 27; open-value search for 'EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:46:23.242613Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T10:46:25.632060Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T10:46:37.236947Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T10:46:45.260238Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 4e579d3d-60b1-4b3d-ae74-e61763580841 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:46:45.268501Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:46:18.632796Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:46:18.632796Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:46:18.632808Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:46:18.632808Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "The encoded PowerShell payload was decoded and found to contain only a standard Git query, which is typical developer activity. The parent process is the VS Code executable, a legitimate development tool, and no suspicious network or file‑system actions were observed. Correlation data shows this pattern occurring frequently (56 instances) without associated malicious indicators. Given the low severity, high confidence in benign intent, and lack of any evidence of compromise, the event does not warrant immediate remediation."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Because the decoded PowerShell payload is simply invoking `git log --oneline -20`, which aligns with normal developer workflow in VS Code, there is no immediate need for containment actions such as process termination or endpoint isolation.",
+    "Log the event for audit purposes and add a comment to the ticket noting that this specific occurrence has been reviewed and deemed benign. This will help future analysts understand why similar events were not escalated.",
+    "Update any existing detection tuning rules (e.g., Sysmon rule 100075) to include an allow‑list entry for VS Code launching PowerShell with the `-EncodedCommand` flag when the decoded payload matches known harmless Git commands. This reduces noise without disabling the broader detection capability.",
+    "Consider enriching future alerts with contextual data from your source‑code management system (e.g., recent commits, active branches) to automatically correlate Git‑related PowerShell calls with legitimate developer activity.",
+    "If you have a baseline of typical command‑line usage for each user, feed this event into the baseline to improve anomaly scoring for that user’s future behavior.",
+    "Maintain periodic review of any new encoded PowerShell commands that appear in VS Code processes; if a pattern emerges where the decoded payload deviates from benign Git operations, trigger a higher‑severity investigation."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The encoded command resolves to a standard `git log` query executed from VS Code, matching expected developer behavior and lacking any malicious indicators.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

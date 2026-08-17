@@ -1,0 +1,160 @@
+{
+  "report_id": "b4fa357b-7993-4348-abc1-ddd61005d410",
+  "alert_id": "60daca89-820e-5e24-b8e5-b0b30ccfa460",
+  "generated_at": "2026-08-15T18:14:09.611764Z",
+  "alert_summary": "A PowerShell command was executed using an encoded string, but analysis confirms it is a standard Git operation performed by the 'claude-code' developer tool.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 60daca89-820e-5e24-b8e5-b0b30ccfa460 ingested; model available: True",
+      "timestamp": "2026-08-15T18:10:55.484336Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 12 candidates, 3 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T18:11:11.897176Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T18:11:11.897288Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T18:11:12.314766Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=9; open-value search for '-enc' found 1 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T18:12:44.554806Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=high",
+      "timestamp": "2026-08-15T18:12:59.841081Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B: experimental triage=false_positive",
+      "timestamp": "2026-08-15T18:13:51.455061Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 3 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T18:14:09.611668Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b4fa357b-7993-4348-abc1-ddd61005d410 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T18:14:09.620888Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-twong02.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:11:11.897241Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:11:11.897241Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:11:11.897270Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:11:11.897270Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cli.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:11:11.897277Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:11:11.897277Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:11:11.897282Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:11:11.897282Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "high",
+    "rationale": "While the use of the -EncodedCommand flag can sometimes indicate malicious obfuscation, the decoded payload (git log --oneline -20) is a routine command used for version control. The execution context involves the Anthropic Claude CLI tool, which utilizes these commands as part of its standard functionality. Consequently, this activity is classified as low risk and consistent with expected developer behavior."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider implementing a whitelist for the specific path `C:\\Program Files\\nodejs\\node.exe` when executing PowerShell, provided the decoded command matches known-good patterns like git operations.",
+    "Update the detection logic to specifically flag encoded commands that contain high-risk keywords (e.g., 'IEX', 'DownloadString', 'Net.WebClient') rather than flagging all instances of -EncodedCommand.",
+    "Create a documentation entry for the `claude-code` CLI tool to inform SOC analysts that this specific behavior is expected and non-malicious during routine development tasks.",
+    "Monitor for any deviations in the decoded command string; while 'git log' is benign, any sudden shift to script execution or network requests from this parent process should trigger an immediate high-priority alert."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert was triggered by the use of the -EncodedCommand flag, but the decoded content is a standard Git command used by a known developer tool, indicating no malicious intent or risk.",
+  "uncertainty_notes": "4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Program Files\\nodejs\\node.exe\" \"C:\\Users\\tommy.wong\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

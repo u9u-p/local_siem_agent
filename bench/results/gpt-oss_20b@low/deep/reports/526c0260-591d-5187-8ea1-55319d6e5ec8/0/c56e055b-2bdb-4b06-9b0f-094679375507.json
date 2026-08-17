@@ -1,0 +1,154 @@
+{
+  "report_id": "c56e055b-2bdb-4b06-9b0f-094679375507",
+  "alert_id": "526c0260-591d-5187-8ea1-55319d6e5ec8",
+  "generated_at": "2026-08-15T10:03:16.072901Z",
+  "alert_summary": "A user named tommy.wong successfully logged on from the internal workstation 10.20.4.94, an event that normally would be benign but has been flagged as part of a lateral‑movement pattern with 15 supporting evidence points.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 526c0260-591d-5187-8ea1-55319d6e5ec8 ingested; model available: True",
+      "timestamp": "2026-08-15T10:02:49.686636Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 3 validated",
+      "timestamp": "2026-08-15T10:02:51.862812Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 4 indicator(s)",
+      "timestamp": "2026-08-15T10:02:51.862890Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T10:02:52.273028Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=15",
+      "timestamp": "2026-08-15T10:02:55.109210Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T10:02:57.421717Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:03:06.844675Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 5 flagged",
+      "timestamp": "2026-08-15T10:03:16.072855Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report c56e055b-2bdb-4b06-9b0f-094679375507 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:03:16.081073Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:02:51.862851Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:02:51.862851Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:02:51.862873Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:02:51.862873Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:02:51.862881Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:02:51.862881Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:02:51.862885Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:02:51.862885Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The logon itself is typical for an internal user, yet the correlation engine identified it within a broader set of events suggestive of coordinated credential abuse. Because no domain or provider context is available, we cannot confirm that this activity is legitimate or automated. The medium severity and confidence levels indicate that further investigation is warranted to rule out malicious lateral movement before any hard‑line actions are taken."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Initiate an immediate review of the workstation 10.20.4.94’s event logs (Security, System, Application) for any anomalous processes or scheduled tasks that could indicate credential dumping or persistence mechanisms.",
+    "Cross‑reference the user tommy.wong’s recent logon history across all domain controllers to identify any unusual time stamps, geographic locations, or repeated failed attempts that might suggest a compromised account.",
+    "Deploy a host‑based intrusion detection probe on 10.20.4.94 to capture live network traffic and process activity during the next 24 hours, focusing on SMB, RDP, and PowerShell usage.",
+    "Perform a forensic image of the workstation’s volatile memory (RAM) and disk for deeper analysis with tools such as Volatility or FTK Imager, looking for evidence of credential theft or lateral‑movement scripts.",
+    "Verify that the user’s account has not been granted excessive privileges (e.g., Domain Admin, Enterprise Admin) beyond what is required for their role; if so, immediately revoke and audit any recent changes to group memberships.",
+    "Check for the presence of known malicious binaries or scripts in the user’s profile directories (e.g., AppData\roaming, Documents) that could be used for lateral movement.",
+    "If possible, isolate the workstation from the network temporarily while investigation is underway to prevent potential spread if the account is indeed compromised.",
+    "Review any recent changes to group policy objects or security settings that might have inadvertently broadened access rights or enabled remote execution capabilities."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The event aligns with a lateral‑movement pattern but lacks definitive malicious indicators; further investigation is required to confirm whether it represents credential abuse or benign administrative activity.",
+  "uncertainty_notes": "unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; 4 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

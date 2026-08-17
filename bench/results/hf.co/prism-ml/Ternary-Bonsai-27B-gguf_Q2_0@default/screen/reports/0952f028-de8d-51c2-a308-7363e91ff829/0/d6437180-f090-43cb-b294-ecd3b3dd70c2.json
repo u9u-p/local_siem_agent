@@ -1,0 +1,133 @@
+{
+  "report_id": "d6437180-f090-43cb-b294-ecd3b3dd70c2",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-15T05:51:40.569814Z",
+  "alert_summary": "Rule 100075 (Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe.), level 10, on agent wazuh.manager.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-15T05:51:38.922145Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM-assisted extraction failed: generation_failed",
+      "timestamp": "2026-08-15T05:51:39.110793Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T05:51:39.110942Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T05:51:39.518591Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=28",
+      "timestamp": "2026-08-15T05:51:39.894787Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=low, confidence=low",
+      "timestamp": "2026-08-15T05:51:40.063933Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 1 action(s) selected; draft-B failed",
+      "timestamp": "2026-08-15T05:51:40.400377Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check call failed; corrections not applied",
+      "timestamp": "2026-08-15T05:51:40.569706Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d6437180-f090-43cb-b294-ecd3b3dd70c2 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T05:51:40.582730Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:39.110879Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:39.110879Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T05:51:39.110931Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T05:51:39.110931Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "low",
+    "rationale": "risk assessment failed: generation_failed"
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": null,
+  "triage_verdict_experimental": null,
+  "triage_rationale_experimental": null,
+  "uncertainty_notes": "self-check could not run: generation_failed; 2 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "report_id": "493fd10e-8121-4317-b365-0725e6ce3c60",
+  "alert_id": "30e1796b-bc8f-553d-bc98-69136e96c06b",
+  "generated_at": "2026-08-14T18:38:03.883727Z",
+  "alert_summary": "A successful SSH logon was detected for user 'jsmith' from IP 45.146.164.110, which may indicate valid account usage or a potential security incident.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 30e1796b-bc8f-553d-bc98-69136e96c06b ingested; model available: True",
+      "timestamp": "2026-08-14T18:37:26.467348Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:37:28.509068Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-14T18:37:28.509115Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-14T18:37:28.941622Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=32; open-value search for 'jsmith' found 24 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:37:31.836672Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-14T18:37:35.965986Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 5 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:37:51.370502Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 7 claim(s), 1 flagged",
+      "timestamp": "2026-08-14T18:38:03.883632Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 493fd10e-8121-4317-b365-0725e6ce3c60 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:38:03.890987Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:37:28.509098Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:37:28.509098Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The alert suggests a medium-risk scenario due to the use of valid credentials (T1078) via remote services (T1021). While the IP is unknown and no correlation patterns were found, this activity could be legitimate administrative access or an unauthorized login. Further investigation is needed to assess intent and determine if additional indicators of compromise exist."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Review the user jsmith's recent activity and access patterns to identify any anomalies.",
+    "Check if the IP address 45.146.164.110 has been used in previous legitimate logins or is associated with known administrative tasks.",
+    "Verify if multi-factor authentication (MFA) was required for this SSH login, as its absence could increase risk.",
+    "Examine system logs around the time of the alert to see if any unusual commands or data transfers occurred post-login.",
+    "Consider temporarily restricting SSH access from unknown IPs until further investigation is complete."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows valid credentials and no clear correlation patterns, making it difficult to definitively classify as either a true or false positive without additional context.",
+  "uncertainty_notes": "unsupported claim: 'Run an antivirus/EDR scan on the affected host'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

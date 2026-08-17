@@ -1,0 +1,122 @@
+{
+  "report_id": "a26b3edc-b44e-4193-89f4-26d6b8d1d27a",
+  "alert_id": "3584c8b1-dcd1-5738-b334-739627bff1a8",
+  "generated_at": "2026-08-15T10:31:49.782857Z",
+  "alert_summary": "A successful SSH login was observed for user **dwilson** from an unknown external IP address (203.0.113.41), matching a pattern of lateral‑movement activity that has been seen 27 times previously.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 3584c8b1-dcd1-5738-b334-739627bff1a8 ingested; model available: True",
+      "timestamp": "2026-08-15T10:31:07.865269Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:31:09.727324Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:31:09.727375Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:31:10.142545Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=lateral_movement, evidence_count=27; follow-up same_rule_id_host added 12",
+      "timestamp": "2026-08-15T10:31:14.151613Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T10:31:16.615888Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:31:33.024692Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 8 flagged",
+      "timestamp": "2026-08-15T10:31:49.782799Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a26b3edc-b44e-4193-89f4-26d6b8d1d27a persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:31:49.790146Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:31:09.727358Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:31:09.727358Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The use of a legitimate credential (T1078) from an unrecognized source suggests the account may have been compromised, and the repeated lateral‑movement evidence indicates the attacker is attempting to move laterally within the environment. However, no additional malicious actions (e.g., file changes, process injection) have been detected yet, so the overall risk is assessed as **medium** with high confidence. Prompt containment and further investigation are warranted to prevent escalation."
+  },
+  "recommended_actions": [
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the host where user *dwilson* logged in from (203.0.113.41) and capture a forensic memory dump for credential‑dump analysis.",
+    "Force a password reset for the dwilson account across all privileged services, then enforce multi‑factor authentication (MFA) on that account if not already enabled.",
+    "Block or geo‑filter traffic from 203.0.113.41 at the perimeter firewall and add it to a watchlist for any future connection attempts.",
+    "Review recent SSH session logs for command execution, file transfers, or sudo usage; correlate with the 27 prior lateral‑movement evidences to map potential pivot paths.",
+    "Deploy host‑based intrusion detection (e.g., OSSEC, Falco) on the affected system to alert on anomalous processes, especially those spawning network connections or privilege escalations.",
+    "Conduct a rapid credential‑reuse audit: search for other accounts that may have been accessed from the same external IP or share similar password hashes.",
+    "Update your threat intelligence feeds with the unknown IP indicator and monitor for any emerging reputation data; consider sharing the IOC with industry ISACs.",
+    "Run an endpoint detection and response (EDR) query to locate any persistence mechanisms (cron jobs, systemd services, SSH authorized_keys modifications) that may have been planted during this session."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "A legitimate user account successfully logged in via SSH from an unrecognized external IP, combined with a strong pattern of prior lateral‑movement evidence, strongly suggests credential compromise rather than benign activity.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Escalate to a human analyst for manual review'; 1 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:120b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

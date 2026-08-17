@@ -1,0 +1,150 @@
+{
+  "report_id": "d9b278a4-b887-4768-ac59-4762dcba8c05",
+  "alert_id": "156e110b-5a8c-5cfb-a570-d82fac0730e3",
+  "generated_at": "2026-08-15T09:36:11.545092Z",
+  "alert_summary": "A successful logon from an unexpected user was detected, accompanied by brute force activity; immediate action is recommended.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 156e110b-5a8c-5cfb-a570-d82fac0730e3 ingested; model available: True",
+      "timestamp": "2026-08-15T09:36:01.839691Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-15T09:36:02.554677Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:36:02.554746Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:36:02.976171Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=30; follow-up same_rule_id_host added 15",
+      "timestamp": "2026-08-15T09:36:03.469374Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-15T09:36:04.068279Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 12 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:36:07.725878Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 14 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:36:11.545033Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report d9b278a4-b887-4768-ac59-4762dcba8c05 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:36:11.552591Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.73",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:02.554710Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:02.554710Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:02.554733Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:02.554733Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:36:02.554741Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:36:02.554741Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The account experienced a successful authentication event that was not typical for its usage pattern and showed signs of repeated unauthorized login attempts. Although no direct compromise has been confirmed yet, the combination of these factors indicates a heightened risk of credential abuse or attempted intrusion. Therefore, proactive steps are warranted to reduce potential exposure."
+  },
+  "recommended_actions": [
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Escalate to the incident response / Tier 2 team",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Consider implementing multi-factor authentication to strengthen protection against brute-force attempts.",
+    "Review and tighten password policies for users in the Windows domain, especially those with elevated privileges.",
+    "Monitor login activity closely from IPs that are not recognized or associated with legitimate corporate resources.",
+    "Conduct periodic audits of successful logons to detect anomalous patterns early.",
+    "Enhance alerting mechanisms so suspicious authentication events trigger immediate investigation."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The confirmed successful login combined with brute-force correlation evidence points directly to an attempted credential abuse, warranting classification as a true positive despite no direct compromise proof yet.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

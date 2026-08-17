@@ -1,0 +1,124 @@
+{
+  "report_id": "b53cb769-4fbf-4f46-ad99-156addb35b63",
+  "alert_id": "5876792b-bc67-50f5-89e2-da6af71ea5dd",
+  "generated_at": "2026-08-15T10:04:27.679136Z",
+  "alert_summary": "An account was targeted by 15 brute‑force login attempts from IP 203.0.113.41.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 5876792b-bc67-50f5-89e2-da6af71ea5dd ingested; model available: True",
+      "timestamp": "2026-08-15T10:04:07.118760Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 1 validated; LLM: 1 candidates, 1 validated",
+      "timestamp": "2026-08-15T10:04:08.119684Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 1 indicator(s)",
+      "timestamp": "2026-08-15T10:04:08.119743Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100080",
+      "timestamp": "2026-08-15T10:04:08.541704Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=15",
+      "timestamp": "2026-08-15T10:04:10.191117Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:04:11.995445Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T10:04:19.517799Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 8 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T10:04:27.679081Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report b53cb769-4fbf-4f46-ad99-156addb35b63 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:04:27.686497Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:04:08.119725Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:04:08.119725Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The burst of 15 failed login attempts from an unknown external IP (203.0.113.41) indicates a brute‑force attack; the source IP is unrecognized and poses a high‑risk remote access vector."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate the compromised host from the internal network to prevent lateral movement.",
+    "Force a password reset for user *dwilson* and enforce MFA if not already in place; consider disabling the account temporarily until an investigation confirms legitimacy.",
+    "Collect full system logs (kernel, auditd, sshd) and perform a memory dump of the affected machine for forensic analysis.",
+    "Run a host-based intrusion detection scan to look for persistence mechanisms such as cron jobs, SSH key additions, or backdoor binaries.",
+    "Cross‑reference the source IP against threat intelligence feeds; if it remains unknown, add it to internal blocklists and monitor for further activity from that address.",
+    "Verify whether any other accounts have been accessed from the same IP or during the same timeframe; flag any anomalous logins for review.",
+    "If possible, enable SSH session recording (e.g., using `auditd` or a third‑party tool) to capture the attacker’s commands for later analysis."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of a burst of 15 brute‑force attempts followed by a successful login from an unknown external IP strongly indicates that an adversary has compromised a legitimate account, making this alert highly likely to be a genuine intrusion.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 1 enrichment lookup(s) errored or returned unknown verdicts; correlation follow-up/open-value search menu was not used",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

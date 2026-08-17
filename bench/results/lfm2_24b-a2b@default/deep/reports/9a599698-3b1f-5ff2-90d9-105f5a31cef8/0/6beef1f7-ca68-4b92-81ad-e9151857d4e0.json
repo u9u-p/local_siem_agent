@@ -1,0 +1,151 @@
+{
+  "report_id": "6beef1f7-ca68-4b92-81ad-e9151857d4e0",
+  "alert_id": "9a599698-3b1f-5ff2-90d9-105f5a31cef8",
+  "generated_at": "2026-08-15T09:45:53.605238Z",
+  "alert_summary": "A successful Windows logon from an unknown IP was detected, accompanied by 30 brute force attempts; immediate investigation is required.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 9a599698-3b1f-5ff2-90d9-105f5a31cef8 ingested; model available: True",
+      "timestamp": "2026-08-15T09:45:41.434305Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 5 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:45:42.682211Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 3 indicator(s)",
+      "timestamp": "2026-08-15T09:45:42.682261Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T09:45:43.099305Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=30; follow-up same_rule_id_host added 15",
+      "timestamp": "2026-08-15T09:45:43.608095Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:45:44.251431Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:45:48.302351Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "self-check returned 19 audit(s) for 15 claim(s); corrections not applied",
+      "timestamp": "2026-08-15T09:45:53.605214Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 6beef1f7-ca68-4b92-81ad-e9151857d4e0 persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:45:53.612300Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.88",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:42.682240Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:42.682240Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:42.682256Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:42.682256Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:45:42.682259Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:45:42.682259Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The combination of a successful login and multiple failed attempts indicates possible credential abuse or targeted attack activity. The presence of both successful access and repeated unauthorized tries raises the risk level to high, as it suggests an attempt to compromise credentials followed by actual use."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Notify the asset owner of the affected host or agent",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate and block the source IP address (10.20.4.88) at the network perimeter to prevent further unauthorized access attempts.",
+    "Conduct a focused forensic review of all authentication logs for the domain ke.li.yam, including timestamps matching the brute force pattern, to identify any successful credential compromises or lateral movement indicators.",
+    "Initiate multi-factor verification requirements for all privileged accounts within the dc01.corp.local domain until further notice and perform a full security posture assessment of endpoint devices associated with ke.li.yam.",
+    "Engage in proactive threat hunting across related user accounts, especially those sharing similar naming conventions or access patterns to detect potential credential reuse or phishing exploitation vectors."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The combination of brute force activity and a successful logon from an unknown IP targeting a sensitive Windows domain strongly suggests malicious intent rather than benign error.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

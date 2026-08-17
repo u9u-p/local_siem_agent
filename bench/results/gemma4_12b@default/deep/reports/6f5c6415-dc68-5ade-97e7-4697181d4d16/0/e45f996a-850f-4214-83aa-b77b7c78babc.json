@@ -1,0 +1,135 @@
+{
+  "report_id": "e45f996a-850f-4214-83aa-b77b7c78babc",
+  "alert_id": "6f5c6415-dc68-5ade-97e7-4697181d4d16",
+  "generated_at": "2026-08-15T18:50:22.938046Z",
+  "alert_summary": "User mrahman successfully logged into domain controller dc01.corp.local from an unknown external IP address (203.0.113.30). This requires verification of whether this login aligns with the user's typical access patterns for critical infrastructure.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 6f5c6415-dc68-5ade-97e7-4697181d4d16 ingested; model available: True",
+      "timestamp": "2026-08-15T18:46:38.142243Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 2 candidates, 2 validated",
+      "timestamp": "2026-08-15T18:47:02.515759Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T18:47:02.515826Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "timestamp": "2026-08-15T18:47:02.937778Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=22; open-value search for 'mrahman' found 15 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T18:47:56.673440Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=medium",
+      "timestamp": "2026-08-15T18:48:15.318321Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 7 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T18:49:10.654692Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 9 claim(s), 0 flagged",
+      "timestamp": "2026-08-15T18:50:22.937990Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report e45f996a-850f-4214-83aa-b77b7c78babc persisted, alert marked investigated",
+      "timestamp": "2026-08-15T18:50:22.945318Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "203.0.113.30",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:47:02.515795Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:47:02.515795Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T18:47:02.515818Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T18:47:02.515818Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The authentication originated from an external IP that is not currently identified as a known or trusted source in our records. Because the target system is a domain controller, any successful login from an unfamiliar location poses a potential risk to core network security. A manual review is necessary to determine if this activity is a legitimate outlier or a sign of unauthorized access."
+  },
+  "recommended_actions": [
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Notify the asset owner of the affected host or agent",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify if 'mrahman' is a privileged account or an administrator, as access to dc01 suggests high-level permissions.",
+    "Cross-reference the source IP (203.0.113.30) against corporate VPN logs to determine if it belongs to a known remote employee connection.",
+    "Perform a geographic and ISP lookup on the source IP to identify potential anomalies or high-risk locations.",
+    "Review subsequent activity from this session on dc01, specifically looking for directory enumeration or unauthorized account modifications.",
+    "Check MFA (Multi-Factor Authentication) logs to see if a secondary factor was successfully challenged during this login."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the access to a domain controller from an unknown IP is suspicious, it is unclear if this represents a legitimate remote admin session or an unauthorized intrusion without further context on the user's role and VPN status.",
+  "uncertainty_notes": "2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "gemma4:12b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

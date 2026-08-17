@@ -1,0 +1,141 @@
+{
+  "report_id": "eadafc83-7096-4779-9f45-2b8805f7e18f",
+  "alert_id": "659a0f5e-944e-53ed-899d-58eb829c1fc4",
+  "generated_at": "2026-08-15T10:08:06.987039Z",
+  "alert_summary": "An encoded PowerShell command was launched from VS Code on a user’s workstation, decoding to a benign Git query but raising suspicion due to the encoding and the large number of correlated events.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 659a0f5e-944e-53ed-899d-58eb829c1fc4 ingested; model available: True",
+      "timestamp": "2026-08-15T10:07:43.551811Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 0 candidates, 0 validated",
+      "timestamp": "2026-08-15T10:07:45.145067Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-15T10:07:45.145122Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-15T10:07:45.564787Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=other, evidence_count=56; follow-up same_rule_id_host added 27; open-value search for 'EncodedCommand' found 26 (noisier, unstructured match)",
+      "timestamp": "2026-08-15T10:07:48.056639Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=medium",
+      "timestamp": "2026-08-15T10:07:50.634530Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-15T10:08:00.157205Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 12 claim(s), 10 flagged",
+      "timestamp": "2026-08-15T10:08:06.986943Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report eadafc83-7096-4779-9f45-2b8805f7e18f persisted, alert marked investigated",
+      "timestamp": "2026-08-15T10:08:06.994838Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-slim05.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:45.145096Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:45.145096Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "sarah.lim",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T10:07:45.145116Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T10:07:45.145116Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The use of an encoded PowerShell payload is a known obfuscation technique (T1027). While the decoded command appears benign, the encoding and 56 correlated events warrant further investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Verify the user’s intent: contact sarah.lim to confirm whether she was intentionally running a Git command from VS Code at that time.",
+    "Inspect the full PowerShell script that was encoded – decode it again and search for any hidden or obfuscated code beyond the visible `git log` call (e.g., base64‑encoded payloads, nested calls, or network activity).",
+    "Examine the surrounding Sysmon events (56 evidence items) to identify patterns such as repeated encoded commands, unusual file writes, or outbound connections that could indicate a staged attack.",
+    "Check the integrity of the VS Code installation and its extensions; look for any recently installed or updated extensions that might inject PowerShell code into the editor process.",
+    "Run a sandboxed execution of the decoded command in an isolated environment to observe any side effects (file system changes, registry edits, or network traffic).",
+    "Correlate with other telemetry sources – Windows Event Logs, DNS queries, and endpoint detection logs – to see if there are concurrent indicators of compromise that align temporally.",
+    "If the user confirms legitimate activity, whitelist the specific encoded command pattern for future monitoring; otherwise, block execution of any PowerShell commands launched from VS Code until a deeper investigation is complete."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The presence of an encoded PowerShell invocation from a legitimate development tool raises suspicion, but the decoded payload appears benign and could be part of normal workflow; further context is needed to determine malicious intent.",
+  "uncertainty_notes": "unsupported claim: 'Escalate to the incident response / Tier 2 team'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: 'Escalate to a human analyst for manual review'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "gpt-oss:20b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+    "parent_command_line": "\"C:\\Users\\sarah.lim\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "ZwBpAHQAIABsAG8AZwAgAC0ALQBvAG4AZQBsAGkAbgBlACAALQAyADAA",
+        "decoded": "git log --oneline -20"
+      }
+    ]
+  }
+}

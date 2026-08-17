@@ -1,0 +1,175 @@
+{
+  "report_id": "40efe884-f0f7-4c7b-b79b-81e6a6f0228b",
+  "alert_id": "05d3869a-b0b0-5275-bfe4-256178c952aa",
+  "generated_at": "2026-08-15T09:34:28.912355Z",
+  "alert_summary": "Suspicious delivery notification detected — likely phishing attempt targeting recipient with urgent message about parcel delivery.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 05d3869a-b0b0-5275-bfe4-256178c952aa ingested; model available: True",
+      "timestamp": "2026-08-15T09:34:16.532915Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 8 candidates, 4 validated; LLM: 7 candidates, 3 validated",
+      "timestamp": "2026-08-15T09:34:18.193830Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 5 indicator(s)",
+      "timestamp": "2026-08-15T09:34:18.193910Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "timestamp": "2026-08-15T09:34:18.595610Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=brute_force, evidence_count=38; follow-up same_src_ip_24h added 1",
+      "timestamp": "2026-08-15T09:34:19.136283Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=high, confidence=high",
+      "timestamp": "2026-08-15T09:34:19.790349Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 15 action(s) selected; draft-B: experimental triage=true_positive",
+      "timestamp": "2026-08-15T09:34:23.780136Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 17 claim(s), 1 flagged",
+      "timestamp": "2026-08-15T09:34:28.912327Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report 40efe884-f0f7-4c7b-b79b-81e6a6f0228b persisted, alert marked investigated",
+      "timestamp": "2026-08-15T09:34:28.918103Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "52.14.201.148",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:34:18.193864Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:34:18.193864Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "parcelroute-track.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:34:18.193888Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:34:18.193888Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "a.chong",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:34:18.193896Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:34:18.193896Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:34:18.193900Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:34:18.193900Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "https://parcelroute-track.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-15T09:34:18.193905Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-15T09:34:18.193905Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The email is a classic example of a phishing campaign, using urgent language and spoofed sender details to trick the user into trusting it. The domain and URL are unknown, indicating possible malicious intent, while high evidence count suggests multiple indicators align with known attack patterns. This combination warrants immediate action."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Immediately isolate and block all associated IP addresses and domains to prevent further delivery attempts.",
+    "Conduct an automated scan of the recipient’s environment for any signs of compromise or malicious payloads linked to the message.",
+    "Initiate a targeted awareness campaign to educate staff about sophisticated parcel-related phishing tactics, including checking sender authenticity and verifying unexpected delivery notifications.",
+    "Engage with the email service provider to request detailed logs and forensic artifacts that could aid in tracing the origin of the attack.",
+    "Update internal threat intelligence feeds with this incident details so future similar messages can be flagged automatically."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The message exhibits classic phishing indicators—urgent delivery language, spoofed sender address, and suspicious domain—that align precisely with known malicious patterns observed in prior campaigns targeting similar recipients.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "lfm2:24b-a2b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": null
+}

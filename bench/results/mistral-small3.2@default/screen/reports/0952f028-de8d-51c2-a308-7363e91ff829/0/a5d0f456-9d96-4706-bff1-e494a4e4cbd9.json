@@ -1,0 +1,140 @@
+{
+  "report_id": "a5d0f456-9d96-4706-bff1-e494a4e4cbd9",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-14T18:35:39.011912Z",
+  "alert_summary": "PowerShell executed an encoded command by Cursor.exe, which decodes to 'cargo check --quiet', a Rust package manager operation. While this appears benign, unknown domains and obfuscation techniques warrant further investigation.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": null,
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "timestamp": "2026-08-14T18:34:56.873407Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": null,
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 2 candidates, 1 validated",
+      "timestamp": "2026-08-14T18:35:02.314844Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": null,
+      "output_summary": "enriched 2 indicator(s)",
+      "timestamp": "2026-08-14T18:35:02.314923Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": null,
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "timestamp": "2026-08-14T18:35:02.749661Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": null,
+      "output_summary": "pattern_type=none, evidence_count=28; open-value search for 'PowerShell encoded command' found 0 (noisier, unstructured match)",
+      "timestamp": "2026-08-14T18:35:05.480344Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "severity=medium, confidence=high",
+      "timestamp": "2026-08-14T18:35:09.857294Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "draft-A: 4 action(s) selected; draft-B: experimental triage=uncertain",
+      "timestamp": "2026-08-14T18:35:25.767383Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": null,
+      "output_summary": "audited 6 claim(s), 2 flagged",
+      "timestamp": "2026-08-14T18:35:39.011827Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "completed",
+      "tool_used": "alert_store",
+      "input": null,
+      "output_summary": "report a5d0f456-9d96-4706-bff1-e494a4e4cbd9 persisted, alert marked investigated",
+      "timestamp": "2026-08-14T18:35:39.021149Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:35:02.314892Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:35:02.314892Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-14T18:35:02.314916Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-14T18:35:02.314916Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "high",
+    "rationale": "The alert involves PowerShell with an encoded command, a technique often associated with obfuscation (T1027) and execution via PowerShell (T1059.001). However, the decoded command 'cargo check --quiet' suggests a legitimate Rust package manager operation, reducing immediate concern. The unknown domains (dev-klyam01.victimcorp.com and ke.li.yam) add uncertainty but do not significantly elevate risk. Further investigation is needed to confirm benign intent."
+  },
+  "recommended_actions": [
+    "Manually review the decoded command payload for malicious intent",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Investigate the 'Cursor.exe' application to determine its legitimacy and purpose within the environment.",
+    "Review recent network connections from the user's machine to identify any unusual domain communications.",
+    "Check if the Rust package manager (cargo) is expected to be used by legitimate applications on this system.",
+    "Examine the user's recent activity for signs of unusual behavior or deviations from normal patterns.",
+    "Consider enabling additional logging for PowerShell execution to capture more context around similar events."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "While the decoded command appears benign, the unknown domains and use of encoded PowerShell commands create enough ambiguity to warrant further investigation.",
+  "uncertainty_notes": "unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Escalate to a human analyst for manual review'; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "mistral-small3.2:bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4d-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  }
+}
