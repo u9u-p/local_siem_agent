@@ -540,4 +540,88 @@ def test_second_calls_failure_does_not_carry_first_calls_raw_response():
     assert call.error_kind == "timeout"
     assert call.prompt_ref == "call_b"
     assert call.attempts == 1
-    assert call.raw_response is None
+
+
+def _malformed_usage_response(parsed_content: str) -> httpx.Response:
+    """A body whose `usage` object fails `CompletionUsage.model_validate` — missing
+    the required `completion_tokens`/`total_tokens` fields entirely."""
+    message = {"role": "assistant", "content": parsed_content, "refusal": None}
+    body = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "created": 1234567890,
+        "model": "qwen3.5:9b",
+        "choices": [{"index": 0, "message": message, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": "not-a-number"},
+    }
+    return httpx.Response(200, json=body)
+
+
+@respx.mock
+def test_generate_structured_degrades_gracefully_when_usage_is_malformed():
+    """A regression test: pre-branch code parsed a body with usage={"prompt_tokens": 5}
+    fine. HEAD raises pydantic.ValidationError out of CompletionUsage.model_validate,
+    which is neither an openai.OpenAIError nor an LLMClientError, so it escapes
+    generate_structured entirely rather than degrading to an unmeasured call."""
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_malformed_usage_response('{"label": "malicious", "confidence": "high"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    response = client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    assert response.value.label == "malicious"
+    assert response.call.prompt_tokens is None
+    assert response.call.completion_tokens is None
+
+
+@respx.mock
+def test_call_record_keeps_tokens_unmeasured_once_an_earlier_attempt_lacked_usage():
+    """Mixed case for _CallTally.add_usage's `if self.prompt_tokens is not None` guard:
+    attempt 1 has no usage (poisons the tally to None), attempt 2 (the retry) does
+    report usage. The poisoned tally must stay None rather than the second attempt's
+    real numbers overwriting it — a partial sum is not a smaller sum, it is unknown."""
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response("not valid json at all", include_usage=False),
+            _chat_completion_response(
+                '{"label": "malicious", "confidence": "high"}', prompt_tokens=150, completion_tokens=30
+            ),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.attempts == 2
+    assert call.prompt_tokens is None
+    assert call.completion_tokens is None
+
+
+@respx.mock
+def test_call_record_captures_reasoning_when_both_attempts_fail_to_parse():
+    """The self-check call that forces a fallback default (both attempts fail) is
+    exactly the call with the least other information recorded — raw_response only
+    holds the second attempt's failure text, and prompt only the first attempt's
+    text. Without reading reasoning from the raw body, this call carries no model
+    output at all. reasoning must survive even though raw.parse() raises on every
+    attempt."""
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response(
+                "still not json", reasoning="First attempt's reasoning trace."
+            ),
+            _chat_completion_response(
+                "still not json either", reasoning="Second attempt's reasoning trace."
+            ),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    call = exc_info.value.call
+    assert call is not None
+    # Last attempt wins, per spec §1.1.
+    assert call.reasoning == "Second attempt's reasoning trace."

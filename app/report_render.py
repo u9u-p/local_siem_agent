@@ -104,6 +104,7 @@ def render_text(sections: list[Section]) -> str:
             continue
         if section.title == "Uncertainty notes":
             lines.append(f"Uncertainty notes: {section.body[0]}")
+            lines.extend(section.body[1:])
             continue
         if section.title:
             lines.append(f"{section.title}:")

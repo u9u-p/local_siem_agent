@@ -144,7 +144,8 @@ def _compute_uncertainty_notes(
     if errored_or_unknown:
         gaps.append(f"{len(errored_or_unknown)} enrichment lookup(s) errored or returned unknown verdicts")
 
-    if "follow-up" not in correlate_step.output_summary and "open-value search" not in correlate_step.output_summary:
+    correlate_output = correlate_step.output or {}
+    if correlate_output.get("follow_up") is None and correlate_output.get("open_value") is None:
         gaps.append("correlation follow-up/open-value search menu was not used")
 
     if not alert.mitre:
@@ -155,14 +156,19 @@ def _compute_uncertainty_notes(
 
 def _roll_up_usage(timeline: list[InvestigationStep], wall_clock_ms: int) -> LLMUsageTotals:
     calls = [c for step in timeline for c in step.llm_calls]
-    # A single unmeasured call makes the whole total unknown — see _CallTally.
-    known = all(c.prompt_tokens is not None for c in calls)
+    # Each field is guarded independently: _CallTally keeps prompt_tokens and
+    # completion_tokens in lockstep for OllamaClient, but LLMClient is a swappable
+    # Protocol and LLMCallRecord lets the two vary independently, so a record with
+    # one set and the other None must not crash the rollup with `int + NoneType`.
+    # (`all([])` is True, so an empty timeline correctly yields 0, not None.)
+    prompt_known = all(c.prompt_tokens is not None for c in calls)
+    completion_known = all(c.completion_tokens is not None for c in calls)
     return LLMUsageTotals(
         calls=len(calls),
         failed_calls=sum(1 for c in calls if c.error_kind is not None),
         attempts=sum(c.attempts for c in calls),
-        prompt_tokens=sum(c.prompt_tokens for c in calls) if known else None,
-        completion_tokens=sum(c.completion_tokens for c in calls) if known else None,
+        prompt_tokens=sum(c.prompt_tokens for c in calls) if prompt_known else None,
+        completion_tokens=sum(c.completion_tokens for c in calls) if completion_known else None,
         reasoning_chars=sum(len(c.reasoning or "") for c in calls),
         llm_latency_ms=sum(c.latency_ms for c in calls),
         wall_clock_ms=wall_clock_ms,
@@ -527,6 +533,8 @@ class AgenticAnalyst:
                         for t, r in results.items()
                     },
                     "pattern_type": PatternType.OTHER.value,
+                    "follow_up": None,
+                    "open_value": None,
                     "evidence_count": evidence_count,
                     "failed_searches": failed_count,
                 },
@@ -546,20 +554,34 @@ class AgenticAnalyst:
         pattern_type = decision.pattern_type
 
         follow_up_note = ""
+        follow_up_output: dict[str, object] | None = None
         if decision.follow_up_query != SearchTemplate.NONE_NEEDED:
             follow_up_query = queries.get(decision.follow_up_query)
             if follow_up_query is not None:
+                # SearchQuery.clauses has min_length=1, so [0] always exists.
+                follow_up_value = follow_up_query.clauses[0].value
                 try:
                     follow_up_result = self._siem.search(follow_up_query)
                     evidence_count += follow_up_result.total_count
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} added {follow_up_result.total_count}"
+                    follow_up_output = {
+                        "template": decision.follow_up_query.value,
+                        "value": follow_up_value,
+                        "hit_count": follow_up_result.total_count,
+                    }
                 except SIEMConnectorError:
                     follow_up_note = f"; follow-up {decision.follow_up_query.value} failed"
                     self._degraded_reasons.append(f"correlation follow-up {decision.follow_up_query.value} failed")
+                    follow_up_output = {
+                        "template": decision.follow_up_query.value,
+                        "value": follow_up_value,
+                        "hit_count": None,
+                    }
 
         open_value_note = ""
+        open_value_output: dict[str, object] | None = None
         if pattern_type in (PatternType.NONE, PatternType.OTHER):
-            open_value_note, open_value_calls = self._run_open_value_search(alert, results)
+            open_value_note, open_value_output, open_value_calls = self._run_open_value_search(alert, results)
             calls += open_value_calls
 
         step = InvestigationStep(
@@ -582,6 +604,8 @@ class AgenticAnalyst:
                     for t, r in results.items()
                 },
                 "pattern_type": pattern_type.value,
+                "follow_up": follow_up_output,
+                "open_value": open_value_output,
                 "evidence_count": evidence_count,
                 "failed_searches": failed_count,
             },
@@ -617,7 +641,7 @@ class AgenticAnalyst:
 
     def _run_open_value_search(
         self, alert: Alert, canonical_results: dict[SearchTemplate, SearchResult]
-    ) -> tuple[str, list[LLMCallRecord]]:
+    ) -> tuple[str, dict[str, object] | None, list[LLMCallRecord]]:
         prompt = build_open_value_search_prompt(alert, canonical_results)
         logger.debug("_run_open_value_search prompt: %s", prompt)
         try:
@@ -626,7 +650,7 @@ class AgenticAnalyst:
             )
         except LLMClientError as exc:
             logger.debug("_run_open_value_search: proposal call failed, skipping")
-            return "", _records(exc)
+            return "", None, _records(exc)
         proposal = response.value
         logger.debug("_run_open_value_search result: %s", proposal.model_dump_json())
 
@@ -638,15 +662,21 @@ class AgenticAnalyst:
             result = self._siem.search(query)
         except SIEMConnectorError:
             logger.debug("_run_open_value_search: SIEM search failed for value %r", proposal.search_value)
-            return f"; open-value search for {proposal.search_value!r} failed", [response.call]
+            return (
+                f"; open-value search for {proposal.search_value!r} failed",
+                {"search_value": proposal.search_value, "hit_count": None},
+                [response.call],
+            )
         logger.debug(
             "_run_open_value_search: SIEM search for %r found %s result(s)",
             proposal.search_value, result.total_count,
         )
         return (
             f"; open-value search for {proposal.search_value!r} found {result.total_count} "
-            "(noisier, unstructured match)"
-        ), [response.call]
+            "(noisier, unstructured match)",
+            {"search_value": proposal.search_value, "hit_count": result.total_count},
+            [response.call],
+        )
 
     def _step_risk_assessment(
         self, alert: Alert, pattern_type: PatternType, evidence_count: int,
@@ -741,7 +771,9 @@ class AgenticAnalyst:
                     "evidence_count": evidence_count,
                     "severity": risk_assessment.severity.value,
                     "confidence": risk_assessment.confidence.value,
+                    "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
                     "has_command_context": command_context is not None,
+                    "has_raw_log": _context_raw_log(alert) is not None,
                 },
                 output={
                     "canonical": draft.model_dump(mode="json"),
@@ -771,7 +803,9 @@ class AgenticAnalyst:
                 "evidence_count": evidence_count,
                 "severity": risk_assessment.severity.value,
                 "confidence": risk_assessment.confidence.value,
+                "enrichment_verdicts": [e.verdict.value for e in enrichment_results],
                 "has_command_context": command_context is not None,
+                "has_raw_log": _context_raw_log(alert) is not None,
             },
             output={
                 "canonical": draft.model_dump(mode="json"),

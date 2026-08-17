@@ -165,8 +165,30 @@ class OllamaClient:
         except openai.OpenAIError as exc:
             raise _as_llm_client_error(exc) from exc
 
-        usage_data = raw.http_response.json().get("usage")
-        tally.add_usage(CompletionUsage.model_validate(usage_data) if usage_data else None)
+        # Read usage and the reasoning trace from the raw body before attempting to
+        # parse structured content below. Both reads must degrade gracefully:
+        # instrumentation must not be able to fail the call it only exists to measure.
+        try:
+            body = raw.http_response.json()
+        except ValueError:
+            body = {}
+
+        try:
+            usage_data = body.get("usage")
+            tally.add_usage(CompletionUsage.model_validate(usage_data) if usage_data else None)
+        except (ValueError, pydantic.ValidationError):
+            # Unmeasured is a fine outcome; unparseable usage must not fail the call.
+            tally.add_usage(None)
+
+        # Ollama returns the reasoning trace as a non-standard sibling of `content`.
+        # Reading it here — off the raw body, not the parsed completion — means it
+        # survives even when raw.parse() below raises on every attempt, which is
+        # exactly the double-failure call this trace matters most for. Last attempt
+        # wins: each call to _attempt overwrites unconditionally.
+        try:
+            tally.reasoning = body["choices"][0]["message"].get("reasoning")
+        except (KeyError, IndexError, TypeError):
+            tally.reasoning = None
 
         try:
             completion = raw.parse()
@@ -188,10 +210,6 @@ class OllamaClient:
             raise _as_llm_client_error(exc) from exc
 
         message = completion.choices[0].message
-        # Ollama returns the reasoning trace as a non-standard field, so the SDK parks
-        # it in model_extra rather than a typed attribute. Read both: a future SDK that
-        # types it would otherwise silently stop being captured.
-        tally.reasoning = getattr(message, "reasoning", None) or (message.model_extra or {}).get("reasoning")
         if message.refusal is not None:
             raise LLMClientError("generation_failed", f"model refused: {message.refusal}")
         if message.parsed is not None:

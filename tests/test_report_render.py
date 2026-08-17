@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from tests.test_schemas import _make_report
-from app.report_render import render_markdown, render_text, report_sections
+from app.report_render import Section, render_markdown, render_text, report_sections
 from app.schemas import (
     CommandDecodeResult,
     Confidence,
@@ -76,6 +76,17 @@ def test_text_rendering_matches_the_established_show_report_layout():
 def test_uncertainty_notes_render_as_none_when_empty():
     output = render_text(report_sections(_make_report()))
     assert "Uncertainty notes: (none)" in output
+
+
+def test_uncertainty_notes_render_every_body_line_not_only_the_first():
+    """Mirrors the Risk section's body[1:] extend immediately above it — a second
+    line must not be silently dropped if uncertainty_notes ever grows one."""
+    section = Section(title="Uncertainty notes", body=["first line", "second line"])
+
+    output = render_text([section])
+
+    assert "Uncertainty notes: first line" in output
+    assert "second line" in output
 
 
 def test_command_analysis_section_is_omitted_when_absent():

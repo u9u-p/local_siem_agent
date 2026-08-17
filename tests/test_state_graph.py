@@ -79,7 +79,12 @@ class _FakeAlertStore:
         self.status_updates.append((alert_id, status))
 
     def save_report(self, report):
-        self.reports.append(report)
+        # A deep copy, not the live object: appending the object itself makes
+        # `store.reports[0] is report`, so any assertion comparing the two can never
+        # fail — it would pass even if the caller mutated `report` after saving it,
+        # or if the store silently dropped data on the way in. Copying is what makes
+        # this fake honest about what a real store's round-trip would show.
+        self.reports.append(report.model_copy(deep=True))
         return str(report.report_id)
 
     def get_report(self, report_id):
@@ -378,6 +383,9 @@ def test_step_extract_indicators_merges_llm_candidates_with_regex_results():
     values = {i.value for i in indicators}
     assert values == {"203.0.113.5", "evil.test"}
     assert "LLM: 1 candidates, 1 validated" in step.output_summary
+    # Mutation-tested: deleting `llm_calls=llm_calls` in _step_extract_indicators
+    # drops this to 0 without any other test noticing.
+    assert len(step.llm_calls) == 1
 
 
 def test_step_extract_indicators_discards_invalid_llm_candidates():
@@ -624,6 +632,35 @@ def test_step_correlate_classifies_pattern_and_runs_follow_up_query():
     assert "same_src_ip_24h" in step.output_summary
 
 
+def test_step_correlate_records_follow_up_in_typed_output():
+    """Spec §2's correlate output table requires `follow_up: {...} | null` — the
+    template, value and hit count must be typed, not only inside the frozen
+    output_summary prose."""
+    siem = _FakeSIEMConnector(
+        search_results={
+            "data.srcip": SearchResult(alerts=[], total_count=14),
+            "rule.id": SearchResult(alerts=[], total_count=14),
+        }
+    )
+    llm_client = _FakeLLMClient(
+        model_available=True,
+        responses={
+            CorrelationDecision: CorrelationDecision(
+                pattern_type=PatternType.BRUTE_FORCE, follow_up_query=SearchTemplate.SAME_SRC_IP_24H
+            )
+        },
+    )
+    analyst = _make_analyst(siem=siem, llm_client=llm_client)
+    alert = _make_alert(source_ip="203.0.113.5", destination_ip=None)
+
+    _, _, step = analyst._step_correlate(alert, [], model_available=True)
+
+    assert step.output["follow_up"] == {
+        "template": "same_src_ip_24h", "value": "203.0.113.5", "hit_count": 14,
+    }
+    assert step.output["open_value"] is None
+
+
 def test_step_correlate_skips_follow_up_when_none_needed():
     siem = _FakeSIEMConnector(search_results={"rule.id": SearchResult(alerts=[], total_count=1)})
     llm_client = _FakeLLMClient(
@@ -644,6 +681,8 @@ def test_step_correlate_skips_follow_up_when_none_needed():
     assert pattern_type == PatternType.BRUTE_FORCE
     assert evidence_count == 1
     assert len(siem.search_calls) == 1  # only the one canonical search — no follow-up executed
+    assert step.output["follow_up"] is None
+    assert step.output["open_value"] is None
 
 
 def test_step_correlate_falls_back_to_other_when_classification_call_fails():
@@ -685,6 +724,12 @@ def test_step_correlate_runs_open_value_search_when_pattern_is_none():
     full_log_calls = [c for c in siem.search_calls if c.clauses[0].field == "full_log"]
     assert len(full_log_calls) == 1
     assert full_log_calls[0].clauses[0].operator == "contains"
+    assert step.output["open_value"] == {"search_value": "admin@evil.test", "hit_count": 3}
+    # Two LLM calls: the classification call plus the open-value proposal call.
+    # Mutation-tested: deleting `calls += open_value_calls` in _step_correlate drops
+    # this to 1 without any other test noticing.
+    assert len(step.llm_calls) == 2
+    assert step.output["follow_up"] is None
 
 
 def test_step_correlate_skips_open_value_search_when_pattern_is_identified():
@@ -767,8 +812,9 @@ def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
     canonical_results = {}
 
     with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
-        result, _calls = analyst._run_open_value_search(alert, canonical_results)
+        result, output, _calls = analyst._run_open_value_search(alert, canonical_results)
 
+    assert output == {"search_value": "admin@evil.test", "hit_count": 5}
     assert "_run_open_value_search prompt" in caplog.text
     assert "_run_open_value_search result" in caplog.text
     assert "_run_open_value_search: SIEM search for" in caplog.text
@@ -885,15 +931,21 @@ def test_step_draft_report_returns_canonical_and_experimental_drafts():
     analyst = _make_analyst(llm_client=llm_client)
     alert = _make_alert()
     risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    enrichment_results = [_make_enrichment_result()]
 
     draft, experimental, step = analyst._step_draft_report(
-        alert, PatternType.BRUTE_FORCE, 14, [], risk_assessment, model_available=True
+        alert, PatternType.BRUTE_FORCE, 14, enrichment_results, risk_assessment, model_available=True
     )
 
     assert draft == draft_canonical
     assert experimental == draft_experimental
     assert step.step_name == Step.DRAFT_REPORT.value
     assert step.action == "completed"
+    # Spec §2: draft_report's input is "same shape as risk_assessment, plus
+    # {severity, confidence}" — both drafts consume enrichment results and the
+    # gated raw log, so the record must show what the step actually consumed.
+    assert step.input["enrichment_verdicts"] == [enrichment_results[0].verdict.value]
+    assert step.input["has_raw_log"] is True  # _make_alert() has no typed fields
 
 
 def test_step_draft_report_falls_back_when_canonical_call_fails():
@@ -925,6 +977,8 @@ def test_step_draft_report_skips_when_model_unavailable():
     assert draft.recommended_actions == [RecommendedAction.ESCALATE_TO_HUMAN_ANALYST]
     assert experimental is None
     assert step.action == "skipped"
+    assert step.input["enrichment_verdicts"] == []
+    assert step.input["has_raw_log"] is True  # _make_alert() has no typed fields
 
 
 def test_draft_canonical_prompt_contains_pattern_type_and_evidence_count():
@@ -1021,6 +1075,9 @@ def test_step_self_check_keeps_all_claims_when_all_supported():
         "no MITRE ATT&CK mapping available for this alert"
     )
     assert step.action == "completed"
+    # Mutation-tested: deleting `llm_calls=calls` in _step_self_check's completed
+    # branch drops this to 0 without any other test noticing.
+    assert len(step.llm_calls) == 1
 
 
 def test_step_self_check_applies_correction_to_unsupported_free_text_claim():
@@ -1190,6 +1247,42 @@ def test_step_self_check_notes_unused_correlation_menu():
     )
 
     assert "correlation follow-up/open-value search menu was not used" in notes
+
+
+def test_step_self_check_reads_typed_follow_up_output_not_output_summary_prose():
+    """_compute_uncertainty_notes must read the typed follow_up/open_value keys, not
+    substring-sniff output_summary — this is the point of correlate's typed-output
+    fix (finding #3): the frozen prose and the typed facts must be decoupled."""
+    draft = _draft_with_two_actions()
+    llm_client = _FakeLLMClient(responses={
+        SelfCheckResult: SelfCheckResult(audits=[
+            ClaimAudit(claim=draft.alert_summary, supported=True),
+            ClaimAudit(claim=draft.rationale, supported=True),
+            ClaimAudit(claim=RecommendedAction.BLOCK_SOURCE_IP.value, supported=True),
+            ClaimAudit(claim=RecommendedAction.DISABLE_OR_RESET_ACCOUNT.value, supported=True),
+        ])
+    })
+    analyst = _make_analyst(llm_client=llm_client)
+    alert = _make_alert()
+    risk_assessment = RiskAssessment(severity=Severity.HIGH, confidence=Confidence.HIGH, rationale="x")
+    correlate_step = InvestigationStep(
+        step_name=Step.CORRELATE.value, action="completed", tool_used="siem_connector+llm", input=None,
+        # Deliberately no "follow-up"/"open-value search" text in the summary, so a
+        # substring-based check would (wrongly) call the menu unused.
+        output_summary="pattern_type=brute_force, evidence_count=14",
+        output={
+            "follow_up": {"template": "same_src_ip_24h", "value": "203.0.113.5", "hit_count": 14},
+            "open_value": None,
+        },
+        timestamp=datetime.now(timezone.utc),
+    )
+
+    corrected, notes, step = analyst._step_self_check(
+        alert, draft, PatternType.BRUTE_FORCE, 14, [], risk_assessment,
+        correlate_step, model_available=True,
+    )
+
+    assert "correlation follow-up/open-value search menu was not used" not in notes
 
 
 def test_step_self_check_notes_missing_mitre_mapping():
@@ -1392,6 +1485,18 @@ def test_investigate_runs_full_pipeline_and_persists_report(tmp_path):
     assert len(report.enrichment_findings) == 1
     assert alert_store.get_report(str(report.report_id)).report_id == report.report_id
     assert alert_store.get_alert(str(alert.alert_id)).status == AlertStatus.INVESTIGATED
+    # Absolute list, not just a count: the rollup-only check (report.llm_usage.calls
+    # == len(recorded)) is self-referential and stays green even if a step silently
+    # stops attaching its llm_calls, because both sides fall to zero together.
+    recorded = [c.prompt_ref for s in report.investigation_timeline for c in s.llm_calls]
+    assert recorded == [
+        "build_extract_indicators_prompt",
+        "build_correlation_decision_prompt",
+        "build_risk_assessment_prompt",
+        "build_draft_canonical_prompt",
+        "build_draft_experimental_prompt",
+        "build_self_check_prompt",
+    ]
 
 
 def test_report_records_the_current_prompt_version():
@@ -2239,3 +2344,24 @@ def test_llm_usage_counts_failed_calls_separately():
     assert totals.calls == 1
     assert totals.failed_calls == 1
     assert totals.attempts == 2
+
+
+def test_roll_up_usage_does_not_crash_when_one_token_field_is_partially_measured():
+    """LLMClient is a swappable Protocol and LLMCallRecord lets prompt_tokens and
+    completion_tokens vary independently, even though _CallTally keeps OllamaClient's
+    own records in lockstep. A record with prompt_tokens set and completion_tokens
+    None (or vice versa) must roll up to None for that field, not crash the whole
+    report assembly with `int + NoneType`."""
+    step = InvestigationStep(
+        step_name="risk_assessment", action="completed", output_summary="x",
+        timestamp=datetime.now(timezone.utc),
+        llm_calls=[
+            LLMCallRecord(prompt_ref="a", prompt="p", attempts=1, latency_ms=5,
+                          prompt_tokens=10, completion_tokens=None),
+        ],
+    )
+
+    totals = _roll_up_usage([step], wall_clock_ms=100)
+
+    assert totals.prompt_tokens == 10
+    assert totals.completion_tokens is None
