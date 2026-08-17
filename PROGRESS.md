@@ -139,11 +139,39 @@ Stage 2, all figures at n=71:
 
 **`gemma4:12b` responds to `reasoning_effort` too weakly to be a latency lever.** Four samples per level on an identical prompt: median reasoning characters 1436 (`low`) / 1703 (default) / 1924 (`high`), medians ordering correctly on both characters and wall clock but with heavily overlapping ranges — `low`'s longest run exceeded `high`'s median. The effect is **1.34× between low and high against `gpt-oss:20b`'s 28×**, so this is a nudge, not a reasoning-budget control. Scaling by the median gap puts `gemma4:12b`@low at roughly 220s per alert against 259s: **a live demo needs ~60–90s, so the demo must be pre-recorded or cut away from.** This also means the gate's `effort: ok` column, which only proves the endpoint did not error, must never be read as evidence a model honours the parameter — measure reasoning characters at two levels instead.
 
+**The self-check is a strong predictor of a wrong report — but only on the models that use it sparingly.** Comparing reports where the self-check flagged at least one claim against those where it flagged none, on severity correctness (`python -m bench.analyze`, n=71 per config):
+
+| config | flags | flagged correct | clean correct | delta |
+|---|---|---|---|---|
+| `gemma4:12b` | 20/71 | **25%** | **74%** | **−49.5** |
+| `gemma4:26b-a4b-it-qat` | 14/71 | 29% | 56% | −27.5 |
+| `gpt-oss:120b`@low | 66/71 | 79% | 100% | −21.2 |
+| `gpt-oss:20b`@default | 62/71 | 40% | 44% | −4.1 |
+| `gpt-oss:20b`@low | 61/71 | 61% | 60% | +0.7 |
+| `lfm2:24b-a2b` | 51/71 | 53% | 35% | **+17.9** |
+
+**When `gemma4:12b`'s self-check flags a claim, that report is three times more likely to be wrong.** The signal tracks selectivity: the two models that flag under a third of reports carry 28–50 points of discrimination, the ones flagging 85–93% carry almost none, and `lfm2:24b-a2b`'s flags are *anti*-correlated — its self-check actively misleads. So `needs_human_review` is a real triage decision on the pick and a workload dial elsewhere. **A self-check that fires on everything is not a cautious self-check, it is an uninformative one.**
+
+**The model's own stated confidence is anti-calibrated on both gemmas, and this confirms a design decision empirically.** Severity correctness by the confidence the model attached to it:
+
+| config | medium | high |
+|---|---|---|
+| `gemma4:12b` | 67% (n=18) | **58%** (n=53) |
+| `gemma4:26b-a4b-it-qat` | 75% (n=12) | **46%** (n=59) |
+| `gpt-oss:120b`@low | 55% (n=29) | 98% (n=42) |
+| `gpt-oss:20b`@low | 56% (n=61) | 90% (n=10) |
+
+On the pick, "high confidence" means *less* accurate than "medium". The `gpt-oss` family is properly calibrated, so this is a model property, not a harness artefact. `low` is essentially never emitted — 1 sample in 426. CLAUDE.md §4.2 rule 3 already refused to derive `uncertainty_notes` from self-assessed confidence, on the grounds that LLMs are unreliable at introspection; the measurement now shows introspected confidence is *worse than useless* on the chosen model while its structural self-check is the strongest quality signal available. **Two self-assessment mechanisms in one pipeline, opposite in value, and the design picked the right one before there was data.**
+
+**Latency has a tail, and a demo is sized by p95.** `gemma4:12b`: p50 259s, p90 447s, **p95 462s, max 648s** — a 1.8× tail ratio, the worst measured. That is **10.8 minutes for a single alert** at worst on the 128 GB Studio. `gpt-oss:20b`@low is p50 24s / p95 31s at a 1.3× tail. Quoting medians understated the demo problem: the pick's *worst case* is 27× the runner-up's.
+
+**Models disagree about what to do, even choosing from a fixed catalog.** Across 1,005 cross-model pairs on the same alert, mean Jaccard overlap of the selected `recommended_actions` is **0.25 and the median is 0.14**. Eighteen distinct catalog actions were used in total, but per-report selection varies from 2.0 (`gpt-oss:20b`) to 9.1 (`lfm2:24b-a2b`). The closed vocabulary constrains *what can be said* without converging *what is said* — model choice reaches the analyst's page, so "any model will do" is false for the recommendation section even where severity agrees.
+
 **Models fail by cluster, not diffusely, and the clusters invert between them.** `lfm2:24b-a2b` escalates **15/15** benign PowerShell but only 4/15 winlogon; `gemma4:26b-a4b-it-qat` is **0/15** on benign PowerShell and **14/15** on winlogon. `gemma4:26b-a4b`'s two failures share one log source — 93% of ordinary Windows logons plus half the VPN-egress control — which is a systematic misreading of Windows authentication, not noise. The practical consequence is that a model must be evaluated on the alert classes it will actually see; a leaderboard position does not transfer.
 
 **The FP control held at 0/6 for four of the five finalists**, so PR #4's grounded correlation is robust at proper sample size rather than a two-alert fluke. The exception, `gemma4:26b-a4b-it-qat` at 3/6, is disqualifying for the demo independently of its 100% needle recall: mrahman is the alert the demo exists to show being reasoned about correctly.
 
-**The harness completes an investigation with no working model at all.** The Bonsai `Q2_0` block never loaded (`tensor "output.weight" size overflow` — Ollama's loader cannot read the ternary GGUF, so ternary quantisation is not currently reachable through Ollama at any quality). Each of its 11 runs still exited 0 in ~2.1s, having run every deterministic step (regex extraction 5 validated, enrichment, host/rule context) and degraded every LLM step to its safe default: `model_version: 'none'`, `severity: low`, `status: needs_human_review`. This is §4.2 rule 1 demonstrated end to end. **It is also a benchmark hazard**: a dead model produces `exit_code 0` and `ok 0 min` in the sweep log and is indistinguishable in the scoreboard from a maximally-conservative model. It escaped this run only because the `hf.co/…` name has slashes and the scorer globs one directory level. `model_version == 'none'` is the field that should gate it, and does not yet.
+**The harness completes an investigation with no working model at all.** The Bonsai `Q2_0` block never loaded (`tensor "output.weight" size overflow` — Ollama's loader cannot read the ternary GGUF, so ternary quantisation is not currently reachable through Ollama at any quality). Each of its 11 runs still exited 0 in ~2.1s, having run every deterministic step (regex extraction 5 validated, enrichment, host/rule context) and degraded every LLM step to its safe default: `model_version: 'none'`, `severity: low`, `status: needs_human_review`. This is §4.2 rule 1 demonstrated end to end. **It is also a benchmark hazard**: a dead model produces `exit_code 0` and `ok 0 min` in the sweep log and is indistinguishable in the scoreboard from a maximally-conservative model. It escaped this run only because the `hf.co/…` name has slashes and the scorer globs one directory level. *Corrected 17 Aug — an earlier version of this note proposed gating on `model_version == 'none'`. **No field distinguishes it.** `model_metadata.model_version` is `'none'` on all 624 reports, so it is not populated at all, and `model_name` is never `'none'` despite `state_graph.py:679` setting it that way when the model is unavailable — because **`model_available()` checks that the model is in the registry, not that it loads.** Bonsai was pulled, so the check passed and every generate call then degraded into a safe default. `bench/analyze.py` therefore excludes the block by name. The real fix is for availability to mean loadable, and for `model_version` to carry something.*
 
 ### Findings that change how the demo is deployed
 
@@ -169,6 +197,8 @@ Stage 2, all figures at n=71:
 | `qwen3.6:27b` | 15.6 | 17.2 | 23.9 | 32.4 | **69.2** | 32,768 |
 | `qwen3.6:27b-q8_0` | 26.5 | 28.1 | 34.8 | 43.3 | **69.2** | does not fit |
 | `mistral-small3.2` | 14.8 | 18.6 | 34.5 | — | **167.9** | **8,192** |
+
+**A generation of architecture work cut KV cost 15.7× and bought zero additional context on the target device.** `qwen3.8:27b`, gated 17 Aug against its predecessor: KV **69.2 → 4.4 MB/1K**, ladder growth **+16.8 → +1.1 GiB**. And max affordable context under 17.5 GiB is **32,768 for both**, because the base footprint grew 15.6 → 16.9 GiB and absorbed the entire gain. It is also slower — 51 chars/s against 99, and 64.3s against 43.3s on the same probe — so against a model that was already the slowest thing in the sweep at 786s/alert, it is worse. Gated but not swept: a screen block is ~3.5h to measure correctness on a model that is heavier, slower and capped at the same context as the one it replaces. **"Newer" is not a scalar** — this is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.
 
 **Quantisation shrinks weights, not KV.** `qwen3.6:27b` at q4 and q8_0 have *identical* KV cost (69.2 MB/1K) and identical absolute growth (+16.8 GiB from 8K to 256K); bf16 is 64.4. So quantising buys a constant, not a proportional saving, and the more context you want the less it helps. **The last column is the number that matters for deployment** — it converts KV cost into how much context a model can actually afford on the demo laptop, and it eliminates models the 8192 column does not: `mistral-small3.2` and `muse-glimmer:30b` sit 1.5 GiB apart loaded, and 17.4 GiB apart at 128K. Two models you would size identically from their weights. The pick affords full 262,144 at 9.4 GiB.
 
