@@ -1,0 +1,222 @@
+{
+  "rows_analysed": 602,
+  "deep_rows": 426,
+  "latency": {
+    "gpt-oss:20b@default": {
+      "n": 71,
+      "p50": 64.6,
+      "p90": 74.6,
+      "p95": 80.6,
+      "max": 139.1,
+      "tail_ratio": 1.25
+    },
+    "lfm2:24b-a2b@default": {
+      "n": 71,
+      "p50": 9.9,
+      "p90": 12.9,
+      "p95": 13.7,
+      "max": 18.0,
+      "tail_ratio": 1.38
+    },
+    "gemma4:12b@default": {
+      "n": 71,
+      "p50": 258.7,
+      "p90": 446.8,
+      "p95": 462.1,
+      "max": 648.5,
+      "tail_ratio": 1.79
+    },
+    "gemma4:26b-a4b-it-qat@default": {
+      "n": 71,
+      "p50": 155.2,
+      "p90": 201.9,
+      "p95": 247.8,
+      "max": 283.1,
+      "tail_ratio": 1.6
+    },
+    "gpt-oss:120b@low": {
+      "n": 71,
+      "p50": 34.6,
+      "p90": 41.0,
+      "p95": 44.7,
+      "max": 57.8,
+      "tail_ratio": 1.29
+    },
+    "gpt-oss:20b@low": {
+      "n": 71,
+      "p50": 23.5,
+      "p90": 28.3,
+      "p95": 30.8,
+      "max": 33.0,
+      "tail_ratio": 1.31
+    }
+  },
+  "self_check_signal": {
+    "gpt-oss:20b@default": {
+      "flagged_n": 62,
+      "flagged_correct": 0.403,
+      "clean_n": 9,
+      "clean_correct": 0.444,
+      "delta": -0.041
+    },
+    "lfm2:24b-a2b@default": {
+      "flagged_n": 51,
+      "flagged_correct": 0.529,
+      "clean_n": 20,
+      "clean_correct": 0.35,
+      "delta": 0.179
+    },
+    "gemma4:12b@default": {
+      "flagged_n": 20,
+      "flagged_correct": 0.25,
+      "clean_n": 51,
+      "clean_correct": 0.745,
+      "delta": -0.495
+    },
+    "gemma4:26b-a4b-it-qat@default": {
+      "flagged_n": 14,
+      "flagged_correct": 0.286,
+      "clean_n": 57,
+      "clean_correct": 0.561,
+      "delta": -0.275
+    },
+    "gpt-oss:120b@low": {
+      "flagged_n": 66,
+      "flagged_correct": 0.788,
+      "clean_n": 5,
+      "clean_correct": 1.0,
+      "delta": -0.212
+    },
+    "gpt-oss:20b@low": {
+      "flagged_n": 61,
+      "flagged_correct": 0.607,
+      "clean_n": 10,
+      "clean_correct": 0.6,
+      "delta": 0.007
+    }
+  },
+  "confidence_calibration": {
+    "gpt-oss:20b@default": {
+      "low": {
+        "n": 1,
+        "correct": 1.0
+      },
+      "medium": {
+        "n": 60,
+        "correct": 0.35
+      },
+      "high": {
+        "n": 10,
+        "correct": 0.7
+      }
+    },
+    "lfm2:24b-a2b@default": {
+      "medium": {
+        "n": 3,
+        "correct": 0.333
+      },
+      "high": {
+        "n": 68,
+        "correct": 0.485
+      }
+    },
+    "gemma4:12b@default": {
+      "medium": {
+        "n": 18,
+        "correct": 0.667
+      },
+      "high": {
+        "n": 53,
+        "correct": 0.585
+      }
+    },
+    "gemma4:26b-a4b-it-qat@default": {
+      "medium": {
+        "n": 12,
+        "correct": 0.75
+      },
+      "high": {
+        "n": 59,
+        "correct": 0.458
+      }
+    },
+    "gpt-oss:120b@low": {
+      "medium": {
+        "n": 29,
+        "correct": 0.552
+      },
+      "high": {
+        "n": 42,
+        "correct": 0.976
+      }
+    },
+    "gpt-oss:20b@low": {
+      "medium": {
+        "n": 61,
+        "correct": 0.557
+      },
+      "high": {
+        "n": 10,
+        "correct": 0.9
+      }
+    }
+  },
+  "actions": {
+    "catalog_size_observed": 18,
+    "by_config": {
+      "gpt-oss:20b@default": {
+        "n": 71,
+        "catalog_mean": 2.8,
+        "freeform_mean": 5.7,
+        "distinct_catalog_actions_used": 16,
+        "reports_with_remediation_verb_freeform": 42,
+        "reports_with_remediation_verb_catalog": 16
+      },
+      "lfm2:24b-a2b@default": {
+        "n": 71,
+        "catalog_mean": 9.1,
+        "freeform_mean": 4.4,
+        "distinct_catalog_actions_used": 18,
+        "reports_with_remediation_verb_freeform": 18,
+        "reports_with_remediation_verb_catalog": 61
+      },
+      "gemma4:12b@default": {
+        "n": 71,
+        "catalog_mean": 4.9,
+        "freeform_mean": 3.8,
+        "distinct_catalog_actions_used": 18,
+        "reports_with_remediation_verb_freeform": 32,
+        "reports_with_remediation_verb_catalog": 29
+      },
+      "gemma4:26b-a4b-it-qat@default": {
+        "n": 71,
+        "catalog_mean": 5.3,
+        "freeform_mean": 4.6,
+        "distinct_catalog_actions_used": 18,
+        "reports_with_remediation_verb_freeform": 41,
+        "reports_with_remediation_verb_catalog": 34
+      },
+      "gpt-oss:120b@low": {
+        "n": 71,
+        "catalog_mean": 2.0,
+        "freeform_mean": 7.9,
+        "distinct_catalog_actions_used": 10,
+        "reports_with_remediation_verb_freeform": 54,
+        "reports_with_remediation_verb_catalog": 0
+      },
+      "gpt-oss:20b@low": {
+        "n": 71,
+        "catalog_mean": 2.0,
+        "freeform_mean": 6.8,
+        "distinct_catalog_actions_used": 14,
+        "reports_with_remediation_verb_freeform": 56,
+        "reports_with_remediation_verb_catalog": 7
+      }
+    }
+  },
+  "action_agreement": {
+    "pairs": 1005,
+    "mean_jaccard": 0.25,
+    "median_jaccard": 0.143
+  }
+}

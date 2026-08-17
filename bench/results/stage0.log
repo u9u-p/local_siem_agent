@@ -1,0 +1,163 @@
+Stage 0 — 18 model(s), ceiling 17.5 GB, num_ctx 8192
+
+  PASS    gemma4:12b                 3 probes, 7.8 GB @ 8192 ctx
+          trivial=2.1s  flat-enum=8.7s  nested-list=10.3s
+          ctx    8192    7.8 GB  fits
+          ctx   32768    7.8 GB  fits
+          ctx  131072    8.9 GB  fits
+          ctx  262144    9.4 GB  fits
+          KV cost 6.5 MB per 1K tokens of context
+          9.9s wall   188 chars/s   1648 reasoning + 216 answer chars (88% reasoning)
+  PASS    gemma4:26b-a4b-it-qat      3 probes, 14.2 GB @ 8192 ctx
+          trivial=1.1s  flat-enum=4.7s  nested-list=5.8s
+          ctx    8192   14.2 GB  fits
+          ctx   32768   14.2 GB  fits
+          ctx  131072   15.1 GB  fits
+          ctx  262144   15.6 GB  fits
+          KV cost 5.7 MB per 1K tokens of context
+          5.1s wall   421 chars/s   1857 reasoning + 290 answer chars (86% reasoning)
+  PASS    gemma4:latest              3 probes, 9.0 GB @ 8192 ctx
+          trivial=6.0s  flat-enum=6.0s  nested-list=7.5s
+          ctx    8192    9.0 GB  fits
+          ctx   32768    9.0 GB  fits
+          ctx  131072    9.7 GB  fits
+          ctx  131072    9.7 GB  fits (clamped from 262144)
+          KV cost 6.2 MB per 1K tokens of context
+          6.3s wall   355 chars/s   2014 reasoning + 227 answer chars (90% reasoning)
+  STUDY   glm-4.7-flash:latest       schema ok but 18.2 GB exceeds the laptop budget
+          trivial=1.6s  flat-enum=7.5s  nested-list=10.7s
+          ctx    8192   18.2 GB  OVER
+          ctx   32768   19.5 GB  OVER
+          ctx  131072   24.6 GB  OVER
+          ctx  202752   28.1 GB  OVER (clamped from 262144)
+          KV cost 53.4 MB per 1K tokens of context
+          10.3s wall   362 chars/s   3523 reasoning + 202 answer chars (95% reasoning)
+  STUDY   gpt-oss:120b               schema ok but 60.0 GB exceeds the laptop budget
+          trivial=1.3s  flat-enum=3.5s  nested-list=7.4s
+          ctx    8192   60.0 GB  OVER
+          ctx   32768   60.1 GB  OVER
+          ctx  131072   60.0 GB  OVER
+          ctx  131072   60.0 GB  OVER (clamped from 262144)
+          KV cost 0.1 MB per 1K tokens of context
+          4.0s wall   282 chars/s   866 reasoning + 257 answer chars (77% reasoning)
+  PASS    gpt-oss:20b                3 probes, 12.0 GB @ 8192 ctx
+          trivial=0.9s  flat-enum=3.2s  nested-list=5.6s
+          ctx    8192   12.0 GB  fits
+          ctx   32768   12.0 GB  fits
+          ctx  131072   12.7 GB  fits
+          ctx  131072   12.7 GB  fits (clamped from 262144)
+          KV cost 6.1 MB per 1K tokens of context
+          4.0s wall   411 chars/s   1367 reasoning + 265 answer chars (84% reasoning)
+    ! variant creation failed for hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0: [?2026h[?25l[1Ggathering model components [K[?25h[?2026l
+Error: 500 Internal Server Error: tensor "output.weight" size overflow
+  REJECT  hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0 cannot honour schema (FAIL:generation_failed)
+          trivial=0.2s
+  PASS    lfm2.5:8b-a1b-q4_K_M       3 probes, 5.0 GB @ 8192 ctx
+          trivial=0.7s  flat-enum=2.2s  nested-list=2.4s
+          ctx    8192    5.0 GB  fits
+          ctx   32768    5.3 GB  fits
+          ctx  128000    6.9 GB  fits (clamped from 131072)
+          ctx  128000    6.9 GB  fits (clamped from 262144)
+          KV cost 17.0 MB per 1K tokens of context
+          3.4s wall   1026 chars/s   3247 reasoning + 278 answer chars (92% reasoning)
+  PASS    lfm2:24b-a2b               3 probes, 13.7 GB @ 8192 ctx
+          trivial=0.2s  flat-enum=0.6s  nested-list=1.1s
+          ctx    8192   13.7 GB  fits
+          ctx   32768   14.3 GB  fits
+          ctx   32768   14.3 GB  fits (clamped from 131072)
+          ctx   32768   14.3 GB  fits (clamped from 262144)
+          KV cost 22.0 MB per 1K tokens of context
+          0.5s wall   662 chars/s   0 reasoning + 337 answer chars (0% reasoning)
+  PASS    mistral-small3.2:latest    3 probes, 14.8 GB @ 8192 ctx
+          trivial=0.5s  flat-enum=1.8s  nested-list=3.2s
+          ctx    8192   14.8 GB  fits
+          ctx   32768   18.6 GB  OVER
+          ctx  131072   34.5 GB  OVER
+          ctx  131072   34.5 GB  OVER (clamped from 262144)
+          KV cost 167.9 MB per 1K tokens of context
+          1.7s wall   118 chars/s   0 reasoning + 199 answer chars (0% reasoning)
+  PASS    muse-glimmer:30b           3 probes, 16.3 GB @ 8192 ctx
+          trivial=6.3s  flat-enum=35.1s  nested-list=42.7s
+          ctx    8192   16.3 GB  fits
+          ctx   32768   16.3 GB  fits
+          ctx  131072   17.1 GB  fits
+          ctx  131072   17.1 GB  fits (clamped from 262144)
+          KV cost 6.9 MB per 1K tokens of context
+          26.5s wall   114 chars/s   2772 reasoning + 240 answer chars (92% reasoning)
+  PASS    nemotron-3-nano:4b         3 probes, 2.8 GB @ 8192 ctx
+          trivial=0.8s  flat-enum=1.6s  nested-list=5.7s
+          ctx    8192    2.8 GB  fits
+          ctx   32768    3.2 GB  fits
+          ctx  131072    5.3 GB  fits
+          ctx  262144    7.8 GB  fits
+          KV cost 20.8 MB per 1K tokens of context
+          3.6s wall   363 chars/s   1102 reasoning + 218 answer chars (83% reasoning)
+  PASS    qwen3.5:9b                 3 probes, 5.4 GB @ 8192 ctx
+          trivial=2.8s  flat-enum=11.1s  nested-list=22.1s
+          ctx    8192    5.4 GB  fits
+          ctx   32768    6.1 GB  fits
+          ctx  131072    9.8 GB  fits
+          ctx  262144   14.3 GB  fits
+          KV cost 36.8 MB per 1K tokens of context
+          30.1s wall   277 chars/s   8099 reasoning + 238 answer chars (97% reasoning)
+  PASS    qwen3.6:27b                3 probes, 15.6 GB @ 8192 ctx
+          trivial=10.0s  flat-enum=37.5s  nested-list=51.2s
+          ctx    8192   15.6 GB  fits
+          ctx   32768   17.2 GB  fits
+          ctx  131072   23.9 GB  OVER
+          ctx  262144   32.4 GB  OVER
+          KV cost 69.2 MB per 1K tokens of context
+          46.0s wall   99 chars/s   4305 reasoning + 243 answer chars (95% reasoning)
+  STUDY   qwen3.6:27b-bf16           schema ok but 48.9 GB exceeds the laptop budget
+          trivial=23.3s  flat-enum=184.4s  nested-list=146.1s
+          ctx    8192   48.9 GB  OVER
+          ctx   32768   50.3 GB  OVER
+          ctx  131072   56.4 GB  OVER
+          ctx  262144   64.9 GB  OVER
+          KV cost 66.0 MB per 1K tokens of context
+          103.9s wall   36 chars/s   3538 reasoning + 245 answer chars (94% reasoning)
+  STUDY   qwen3.6:27b-q8_0           schema ok but 26.5 GB exceeds the laptop budget
+          trivial=14.5s  flat-enum=47.1s  nested-list=76.4s
+          ctx    8192   26.5 GB  OVER
+          ctx   32768   28.1 GB  OVER
+          ctx  131072   34.8 GB  OVER
+          ctx  262144   43.3 GB  OVER
+          KV cost 69.2 MB per 1K tokens of context
+          63.2s wall   67 chars/s   3922 reasoning + 301 answer chars (93% reasoning)
+  STUDY   qwen3.6:35b-a3b            schema ok but 21.3 GB exceeds the laptop budget
+          trivial=2.5s  flat-enum=14.7s  nested-list=16.7s
+          ctx    8192   21.3 GB  OVER
+          ctx   32768   21.8 GB  OVER
+          ctx  131072   24.2 GB  OVER
+          ctx  262144   27.2 GB  OVER
+          KV cost 24.6 MB per 1K tokens of context
+          12.3s wall   397 chars/s   4602 reasoning + 276 answer chars (94% reasoning)
+  PASS    qwen3.8:27b                3 probes, 16.9 GB @ 8192 ctx
+          trivial=3.8s  flat-enum=52.2s  nested-list=26.0s
+          ctx    8192   16.9 GB  fits
+          ctx   32768   17.0 GB  fits
+          ctx  131072   17.9 GB  OVER
+          ctx  262144   18.0 GB  OVER
+          KV cost 4.4 MB per 1K tokens of context
+          69.4s wall   51 chars/s   3106 reasoning + 407 answer chars (88% reasoning)
+
+| model | verdict | footprint | wall | chars/s | reasoning | effort | schema probes |
+|---|---|---|---|---|---|---|---|
+| `gemma4:12b` | PASS | 7.8 GB | 9.9s | 188 | 88% | ok | ok/ok/ok |
+| `gemma4:26b-a4b-it-qat` | PASS | 14.2 GB | 5.1s | 421 | 86% | ok | ok/ok/ok |
+| `gemma4:latest` | PASS | 9.0 GB | 6.3s | 355 | 90% | ok | ok/ok/ok |
+| `glm-4.7-flash:latest` | STUDY | 18.2 GB | 10.3s | 362 | 95% | ok | ok/ok/ok |
+| `gpt-oss:120b` | STUDY | 60.0 GB | 4.0s | 282 | 77% | ok | ok/ok/ok |
+| `gpt-oss:20b` | PASS | 12.0 GB | 4.0s | 411 | 84% | ok | ok/ok/ok |
+| `hf.co/prism-ml/Ternary-Bonsai-27B-gguf:Q2_0` | REJECT | — | —s | — | — | no | FAIL/FAIL/FAIL |
+| `lfm2.5:8b-a1b-q4_K_M` | PASS | 5.0 GB | 3.4s | 1026 | 92% | ok | ok/ok/ok |
+| `lfm2:24b-a2b` | PASS | 13.7 GB | 0.5s | 662 | 0% | no | ok/ok/ok |
+| `mistral-small3.2:latest` | PASS | 14.8 GB | 1.7s | 118 | 0% | no | ok/ok/ok |
+| `muse-glimmer:30b` | PASS | 16.3 GB | 26.5s | 114 | 92% | ok | ok/ok/ok |
+| `nemotron-3-nano:4b` | PASS | 2.8 GB | 3.6s | 363 | 83% | ok | ok/ok/ok |
+| `qwen3.5:9b` | PASS | 5.4 GB | 30.1s | 277 | 97% | ok | ok/ok/ok |
+| `qwen3.6:27b` | PASS | 15.6 GB | 46.0s | 99 | 95% | ok | ok/ok/ok |
+| `qwen3.6:27b-bf16` | STUDY | 48.9 GB | 103.9s | 36 | 94% | ok | ok/ok/ok |
+| `qwen3.6:27b-q8_0` | STUDY | 26.5 GB | 63.2s | 67 | 93% | ok | ok/ok/ok |
+| `qwen3.6:35b-a3b` | STUDY | 21.3 GB | 12.3s | 397 | 94% | ok | ok/ok/ok |
+| `qwen3.8:27b` | PASS | 16.9 GB | 69.4s | 51 | 88% | ok | ok/ok/ok |
