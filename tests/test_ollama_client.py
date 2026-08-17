@@ -17,23 +17,33 @@ class Verdict(BaseModel):
     confidence: str
 
 
-def _chat_completion_response(parsed_content: str, finish_reason: str = "stop") -> httpx.Response:
-    return httpx.Response(
-        200,
-        json={
-            "id": "chatcmpl-1",
-            "object": "chat.completion",
-            "created": 1234567890,
-            "model": "qwen3.5:9b",
-            "choices": [
-                {
-                    "index": 0,
-                    "message": {"role": "assistant", "content": parsed_content, "refusal": None},
-                    "finish_reason": finish_reason,
-                }
-            ],
-        },
-    )
+def _chat_completion_response(
+    parsed_content: str,
+    finish_reason: str = "stop",
+    prompt_tokens: int = 120,
+    completion_tokens: int = 40,
+    include_usage: bool = True,
+    reasoning: str | None = None,
+) -> httpx.Response:
+    message = {"role": "assistant", "content": parsed_content, "refusal": None}
+    if reasoning is not None:
+        # Ollama returns the reasoning trace as a non-standard sibling of `content`;
+        # the OpenAI SDK surfaces it through model_extra rather than a typed field.
+        message["reasoning"] = reasoning
+    body = {
+        "id": "chatcmpl-1",
+        "object": "chat.completion",
+        "created": 1234567890,
+        "model": "qwen3.5:9b",
+        "choices": [{"index": 0, "message": message, "finish_reason": finish_reason}],
+    }
+    if include_usage:
+        body["usage"] = {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": prompt_tokens + completion_tokens,
+        }
+    return httpx.Response(200, json=body)
 
 
 def test_ollama_client_satisfies_llm_client_protocol():
@@ -47,7 +57,7 @@ def test_generate_structured_returns_parsed_object_on_first_attempt():
     )
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
-    result = client.generate_structured("classify this", Verdict)
+    result = client.generate_structured("classify this", Verdict, "build_test_prompt").value
 
     assert result.label == "malicious"
     assert result.confidence == "high"
@@ -63,7 +73,7 @@ def test_generate_structured_retries_once_after_non_conforming_first_attempt():
     )
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
-    result = client.generate_structured("classify this", Verdict)
+    result = client.generate_structured("classify this", Verdict, "build_test_prompt").value
 
     assert result.label == "clean"
     assert route.call_count == 2
@@ -79,7 +89,7 @@ def test_retry_prompt_carries_original_prompt_and_the_validation_error():
     )
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
-    client.generate_structured("classify this alert", Verdict)
+    client.generate_structured("classify this alert", Verdict, "build_test_prompt")
 
     assert route.call_count == 2
     retry_body = json.loads(route.calls[1].request.content)
@@ -98,7 +108,7 @@ def test_generate_structured_raises_validation_failed_after_retry_also_fails():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "validation_failed"
 
 
@@ -115,7 +125,7 @@ def test_generate_structured_retries_after_truncation():
     respx.post(f"{BASE_URL}chat/completions").mock(side_effect=_side_effect)
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
-    result = client.generate_structured("classify this", Verdict)
+    result = client.generate_structured("classify this", Verdict, "build_test_prompt").value
 
     assert result.label == "clean"
     assert call_count["n"] == 2
@@ -146,7 +156,7 @@ def test_generate_structured_raises_unreachable_on_connection_error():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "unreachable"
 
 
@@ -158,7 +168,7 @@ def test_generate_structured_raises_model_not_found_on_404():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "model_not_found"
 
 
@@ -170,7 +180,7 @@ def test_generate_structured_raises_generation_failed_on_server_error():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "generation_failed"
     assert "500" in str(exc_info.value)
 
@@ -183,7 +193,7 @@ def test_generate_structured_raises_timeout_on_client_timeout():
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "timeout"
 
 
@@ -193,7 +203,7 @@ def test_generate_structured_raises_generation_failed_on_refusal_without_retry()
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
     with pytest.raises(LLMClientError) as exc_info:
-        client.generate_structured("classify this", Verdict)
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
     assert exc_info.value.kind == "generation_failed"
     assert route.call_count == 1
 
@@ -266,7 +276,7 @@ def test_reasoning_effort_is_omitted_when_not_configured():
     )
     client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
 
-    client.generate_structured("classify this", Verdict)
+    client.generate_structured("classify this", Verdict, "build_test_prompt")
 
     assert "reasoning_effort" not in json.loads(route.calls[0].request.content)
 
@@ -281,7 +291,7 @@ def test_reasoning_effort_is_sent_when_configured():
     )
     client = OllamaClient(base_url=BASE_URL, model="gpt-oss:20b", reasoning_effort="low")
 
-    client.generate_structured("classify this", Verdict)
+    client.generate_structured("classify this", Verdict, "build_test_prompt")
 
     assert json.loads(route.calls[0].request.content)["reasoning_effort"] == "low"
 
@@ -322,3 +332,212 @@ def test_model_available_does_not_match_a_different_tag_of_the_same_model():
     client = OllamaClient(base_url=BASE_URL, model="gemma4:12b")
 
     assert client.model_available() is False
+
+
+@respx.mock
+def test_generate_structured_returns_response_with_call_record():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "malicious", "confidence": "high"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    response = client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    assert response.value.label == "malicious"
+    call = response.call
+    assert call.prompt_ref == "build_test_prompt"
+    assert call.prompt == "classify this"
+    assert call.attempts == 1
+    assert call.retried is False
+    assert call.raw_response is None
+    assert call.parsed_output == {"label": "malicious", "confidence": "high"}
+    assert call.prompt_tokens == 120
+    assert call.completion_tokens == 40
+    assert call.error_kind is None
+    assert call.latency_ms >= 0
+
+
+@respx.mock
+def test_call_record_reports_none_tokens_when_backend_omits_usage():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response(
+            '{"label": "clean", "confidence": "low"}', include_usage=False
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.prompt_tokens is None
+    assert call.completion_tokens is None
+    # The rest of the record is unaffected by a backend that does not report usage.
+    assert call.attempts == 1
+    assert call.parsed_output == {"label": "clean", "confidence": "low"}
+
+
+@respx.mock
+def test_call_record_captures_the_reasoning_trace():
+    """completion_tokens counts the JSON only; the reasoning is where the output went.
+
+    Measured on gemma4:12b: 1,608 characters of reasoning reported as 18 completion
+    tokens. Without this the record would claim a 40-token call that in fact generated
+    several hundred tokens' worth of text.
+    """
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response(
+            '{"label": "malicious", "confidence": "high"}',
+            reasoning="The source IP appears in three prior alerts, so this is not isolated.",
+        )
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.reasoning == "The source IP appears in three prior alerts, so this is not isolated."
+
+
+@respx.mock
+def test_call_record_reasoning_is_none_for_a_model_that_does_not_emit_one():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response('{"label": "clean", "confidence": "low"}')
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.reasoning is None
+
+
+@respx.mock
+def test_call_record_sums_tokens_across_the_retry_and_keeps_the_bad_response():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response("not valid json at all", prompt_tokens=100, completion_tokens=10),
+            _chat_completion_response(
+                '{"label": "malicious", "confidence": "high"}', prompt_tokens=150, completion_tokens=30
+            ),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    call = client.generate_structured("classify this", Verdict, "build_test_prompt").call
+
+    assert call.attempts == 2
+    assert call.retried is True
+    # The prompt stored is the original; the retry prompt is that text plus a fixed suffix.
+    assert call.prompt == "classify this"
+    assert "not valid json at all" in call.raw_response
+    assert call.prompt_tokens == 250
+    assert call.completion_tokens == 40
+
+
+@respx.mock
+def test_timeout_error_carries_a_call_record():
+    respx.post(f"{BASE_URL}chat/completions").mock(side_effect=httpx.TimeoutException("too slow"))
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    call = exc_info.value.call
+    assert call is not None
+    assert call.error_kind == "timeout"
+    assert call.prompt_ref == "build_test_prompt"
+    assert call.prompt == "classify this"
+    assert call.attempts == 1
+    assert call.parsed_output is None
+    assert call.latency_ms >= 0
+
+
+@respx.mock
+def test_validation_failure_after_retry_carries_a_call_record():
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        return_value=_chat_completion_response("still not json")
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    call = exc_info.value.call
+    assert call is not None
+    assert call.error_kind == "validation_failed"
+    assert call.attempts == 2
+    assert call.retried is True
+    assert call.prompt_tokens == 240  # 120 per attempt, both attempts reached the model
+
+
+def _content_filter_response() -> httpx.Response:
+    return httpx.Response(
+        200,
+        json={
+            "id": "chatcmpl-1",
+            "object": "chat.completion",
+            "created": 1234567890,
+            "model": "qwen3.5:9b",
+            "choices": [{
+                "index": 0,
+                "message": {"role": "assistant", "content": None, "refusal": None},
+                "finish_reason": "content_filter",
+            }],
+            "usage": {"prompt_tokens": 9, "completion_tokens": 1, "total_tokens": 10},
+        },
+    )
+
+
+@respx.mock
+def test_content_filter_error_becomes_llm_client_error_with_a_record():
+    """openai.ContentFilterFinishReasonError is raised from raw.parse() (the content
+    step), not the HTTP round-trip — it must still be caught and mapped, and it must
+    still carry a record, exactly like every other failure path.
+
+    Unlike LengthFinishReasonError/pydantic.ValidationError (which return None and
+    let generate_structured retry once), this is not a "retry with a hint" case, so
+    it raises immediately: one attempt, no retry.
+    """
+    respx.post(f"{BASE_URL}chat/completions").mock(return_value=_content_filter_response())
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as exc_info:
+        client.generate_structured("classify this", Verdict, "build_test_prompt")
+
+    assert exc_info.value.kind == "generation_failed"
+    call = exc_info.value.call
+    assert call is not None
+    assert call.prompt_ref == "build_test_prompt"
+    assert call.error_kind == "generation_failed"
+    assert call.attempts == 1
+    assert call.retried is False
+    # Usage is read before the content parse is attempted, so even this hard failure
+    # is measured rather than silently costing nothing.
+    assert call.prompt_tokens == 9
+    assert call.completion_tokens == 1
+
+
+@respx.mock
+def test_second_calls_failure_does_not_carry_first_calls_raw_response():
+    """One OllamaClient instance serves every call of an investigation. A failure's
+    raw_response must come from that call's own attempts only — never a previous,
+    unrelated call's discarded output left over on shared client state."""
+    respx.post(f"{BASE_URL}chat/completions").mock(
+        side_effect=[
+            _chat_completion_response("call A's bad output, attempt 1"),
+            _chat_completion_response("call A's bad output, attempt 2"),
+            httpx.TimeoutException("too slow"),
+        ]
+    )
+    client = OllamaClient(base_url=BASE_URL, model="qwen3.5:9b")
+
+    with pytest.raises(LLMClientError) as first_exc_info:
+        client.generate_structured("prompt A", Verdict, "call_a")
+    assert first_exc_info.value.kind == "validation_failed"
+
+    with pytest.raises(LLMClientError) as second_exc_info:
+        client.generate_structured("prompt B", Verdict, "call_b")
+
+    call = second_exc_info.value.call
+    assert call is not None
+    assert call.error_kind == "timeout"
+    assert call.prompt_ref == "call_b"
+    assert call.attempts == 1
+    assert call.raw_response is None

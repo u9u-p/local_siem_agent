@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.llm.client import LLMCallRecord
+
 
 class AlertStatus(str, Enum):
     NEW = "new"
@@ -113,7 +115,9 @@ class InvestigationStep(BaseModel):
     action: str
     tool_used: str | None = None
     input: dict[str, Any] | None = None
+    output: dict[str, Any] | None = None
     output_summary: str
+    llm_calls: list[LLMCallRecord] = Field(default_factory=list)
     timestamp: datetime
 
 

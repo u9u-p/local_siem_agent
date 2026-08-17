@@ -20,6 +20,7 @@ from app.agent.state_graph import AgenticAnalyst, Step, _lacks_typed_context
 from app.enrichment.registry import EnrichmentRegistry
 from app.integration.errors import SIEMConnectorError
 from app.integration.models import AgentContext, RuleMetadata, SearchResult
+from app.llm.client import LLMCallRecord, LLMResponse
 from app.llm.errors import LLMClientError
 from app.schemas import AgentRef, Alert, EnrichmentResult, InvestigationStep, ProcessExecutionFields
 from app.schemas import EnrichmentVerdict, IndicatorType
@@ -91,6 +92,13 @@ class _FakeAlertStore:
         return []
 
 
+def _fake_call(prompt: str, prompt_ref: str = "fake_ref") -> LLMCallRecord:
+    return LLMCallRecord(
+        prompt_ref=prompt_ref, prompt=prompt, attempts=1, latency_ms=7,
+        prompt_tokens=11, completion_tokens=5,
+    )
+
+
 class _FakeLLMClient:
     def __init__(self, model_available=True, responses=None, error=None,
                  model_name="fake-model:test"):
@@ -100,12 +108,14 @@ class _FakeLLMClient:
         self._error = error
         self.calls: list[tuple[str, type]] = []
 
-    def generate_structured(self, prompt, schema):
+    def generate_structured(self, prompt, schema, prompt_ref):
         self.calls.append((prompt, schema))
         if self._error is not None:
             raise self._error
         if schema in self._responses:
-            return self._responses[schema]
+            return LLMResponse(
+                value=self._responses[schema], call=_fake_call(prompt, prompt_ref)
+            )
         raise NotImplementedError(f"no canned response configured for {schema}")
 
     def health_check(self):
@@ -123,8 +133,8 @@ def test_fake_llm_client_records_prompt_and_schema_per_call():
         severity=Severity.LOW, confidence=Confidence.LOW, rationale="x"
     )})
 
-    client.generate_structured("first prompt", RiskAssessment)
-    client.generate_structured("second prompt", RiskAssessment)
+    client.generate_structured("first prompt", RiskAssessment, "fake_ref")
+    client.generate_structured("second prompt", RiskAssessment, "fake_ref")
 
     assert client.calls == [("first prompt", RiskAssessment), ("second prompt", RiskAssessment)]
 
@@ -158,6 +168,85 @@ def _make_analyst(**overrides):
     )
     defaults.update(overrides)
     return AgenticAnalyst(**defaults)
+
+
+def test_risk_assessment_step_records_its_llm_call():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        RiskAssessment: RiskAssessment(
+            severity=Severity.HIGH, confidence=Confidence.MEDIUM, rationale="because"
+        )
+    }))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert len(step.llm_calls) == 1
+    assert step.llm_calls[0].prompt_ref == "build_risk_assessment_prompt"
+    assert step.llm_calls[0].prompt_tokens == 11
+
+
+def test_risk_assessment_step_records_the_call_that_failed():
+    error = LLMClientError("timeout", "too slow", call=LLMCallRecord(
+        prompt_ref="build_risk_assessment_prompt", prompt="p", attempts=1,
+        latency_ms=360000, error_kind="timeout",
+    ))
+    analyst = _make_analyst(llm_client=_FakeLLMClient(error=error))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert len(step.llm_calls) == 1
+    assert step.llm_calls[0].error_kind == "timeout"
+    assert step.llm_calls[0].latency_ms == 360000
+    # The existing degrade behaviour is untouched.
+    assert "risk assessment failed" in _assessment.rationale
+
+
+def test_llm_client_error_without_a_record_does_not_break_the_step():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(error=LLMClientError("timeout", "too slow")))
+    alert = _make_alert()
+
+    _assessment, step = analyst._step_risk_assessment(
+        alert, PatternType.NONE, 0, [], model_available=True
+    )
+
+    assert step.llm_calls == []
+
+
+def test_draft_report_step_records_both_canonical_and_experimental_calls():
+    analyst = _make_analyst(llm_client=_FakeLLMClient(responses={
+        DraftReportCanonical: DraftReportCanonical(
+            alert_summary="s", rationale="r",
+            recommended_actions=[RecommendedAction.ESCALATE_TO_IR],
+        ),
+        DraftReportExperimental: DraftReportExperimental(
+            recommended_actions_freeform=["do a thing"],
+            triage_verdict=TriageVerdict.TRUE_POSITIVE, triage_rationale="tr",
+        ),
+    }))
+    alert = _make_alert()
+    risk = RiskAssessment(severity=Severity.LOW, confidence=Confidence.LOW, rationale="x")
+
+    _draft, _experimental, step = analyst._step_draft_report(
+        alert, PatternType.NONE, 0, [], risk, model_available=True
+    )
+
+    assert [c.prompt_ref for c in step.llm_calls] == [
+        "build_draft_canonical_prompt", "build_draft_experimental_prompt"
+    ]
+
+
+def test_steps_without_a_model_call_record_no_llm_calls():
+    analyst = _make_analyst()
+    alert = _make_alert()
+
+    step = analyst._step_ingest_and_parse(alert, model_available=True)
+
+    assert step.llm_calls == []
 
 
 def test_step_ingest_and_parse_records_model_available_true():
@@ -587,10 +676,13 @@ def test_step_correlate_skips_open_value_search_when_proposal_call_fails():
         def __init__(self):
             self.calls = 0
 
-        def generate_structured(self, prompt, schema):
+        def generate_structured(self, prompt, schema, prompt_ref):
             self.calls += 1
             if schema is CorrelationDecision:
-                return CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED)
+                return LLMResponse(
+                    value=CorrelationDecision(pattern_type=PatternType.OTHER, follow_up_query=SearchTemplate.NONE_NEEDED),
+                    call=_fake_call(prompt, prompt_ref),
+                )
             raise LLMClientError("timeout", "took too long")
 
         def health_check(self):
@@ -640,7 +732,7 @@ def test_run_open_value_search_logs_proposal_and_siem_result(caplog):
     canonical_results = {}
 
     with caplog.at_level(logging.DEBUG, logger="app.agent.state_graph"):
-        result = analyst._run_open_value_search(alert, canonical_results)
+        result, _calls = analyst._run_open_value_search(alert, canonical_results)
 
     assert "_run_open_value_search prompt" in caplog.text
     assert "_run_open_value_search result" in caplog.text

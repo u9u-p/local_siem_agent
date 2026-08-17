@@ -28,10 +28,11 @@ def live_client():
 
 
 def test_live_generate_structured_returns_valid_object(live_client):
-    result = live_client.generate_structured(
+    response = live_client.generate_structured(
         "Respond with a JSON object containing one field, 'answer', set to the string 'ok'.",
         _SmokeTestSchema,
+        "test_live_generate_structured_returns_valid_object",
     )
 
-    assert isinstance(result, _SmokeTestSchema)
-    assert isinstance(result.answer, str)
+    assert isinstance(response.value, _SmokeTestSchema)
+    assert isinstance(response.value.answer, str)

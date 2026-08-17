@@ -361,14 +361,14 @@ def probe_model(model: str) -> dict:
     # Warm up so model load time is not charged to the first probe. Unwarmed,
     # gemma4:latest read 12.2s on the trivial probe against 5.7s on the harder one.
     try:
-        client.generate_structured("Reply with the single word ok.", TrivialAnswer)
+        client.generate_structured("Reply with the single word ok.", TrivialAnswer, "stage0_warmup")
     except Exception:  # noqa: BLE001 - a failed warmup is the probe's result to report
         pass
 
     for name, schema, prompt in PROBES:
         started = time.time()
         try:
-            client.generate_structured(prompt, schema)
+            client.generate_structured(prompt, schema, f"stage0_probe_{name}")
             outcome = "pass"
         except LLMClientError as exc:
             outcome = f"FAIL:{exc.kind}"
