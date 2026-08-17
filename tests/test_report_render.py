@@ -39,6 +39,9 @@ def _fully_populated_report():
             ],
         ),
         uncertainty_notes="no MITRE ATT&CK mapping available for this alert",
+        triage_verdict_experimental="true_positive",
+        triage_rationale_experimental="sandbox flagged a macro-enabled attachment",
+        recommended_actions_freeform_experimental=["Block the sender domain at the gateway"],
         investigation_timeline=[
             InvestigationStep(
                 step_name="enrich", action="completed",
@@ -148,6 +151,14 @@ def test_render_text_golden_output_for_a_fully_populated_report():
         "  - Block the source IP at the network perimeter\n"
         "  - Force a password reset for the affected account\n"
         "\n"
+        "Experimental (unvetted):\n"
+        "EXPERIMENTAL — unvetted model output. Not audited by the self-check pass.\n"
+        "Do not action without analyst review.\n"
+        "\n"
+        "Triage verdict: true_positive\n"
+        "sandbox flagged a macro-enabled attachment\n"
+        "  - Block the sender domain at the gateway\n"
+        "\n"
         "Command analysis:\n"
         "Command line: powershell.exe -EncodedCommand AAA\n"
         "  - [powershell_encoded] whoami\n"
@@ -162,6 +173,45 @@ def test_render_text_golden_output_for_a_fully_populated_report():
     assert output == expected
 
 
+def test_experimental_section_is_omitted_when_there_is_no_experimental_output():
+    output = render_text(report_sections(_make_report()))
+    assert "EXPERIMENTAL" not in output
+
+
+def test_experimental_section_carries_its_disclaimer():
+    report = _make_report(
+        triage_verdict_experimental="true_positive",
+        triage_rationale_experimental="sandbox flagged a macro-enabled attachment",
+        recommended_actions_freeform_experimental=["Block the sender domain at the gateway"],
+    )
+
+    output = render_text(report_sections(report))
+
+    assert "EXPERIMENTAL — unvetted model output" in output
+    assert "Not audited by the self-check pass" in output
+    assert "Triage verdict: true_positive" in output
+    assert "sandbox flagged a macro-enabled attachment" in output
+    assert "  - Block the sender domain at the gateway" in output
+
+
+def test_experimental_section_renders_with_only_freeform_actions():
+    report = _make_report(recommended_actions_freeform_experimental=["Do a thing"])
+
+    output = render_text(report_sections(report))
+
+    assert "EXPERIMENTAL" in output
+    assert "Triage verdict:" not in output
+
+
+def test_experimental_section_is_a_blockquote_in_markdown():
+    report = _make_report(triage_verdict_experimental="uncertain")
+
+    output = render_markdown(report, report_sections(report))
+
+    assert "## Experimental (unvetted)" in output
+    assert "> EXPERIMENTAL — unvetted model output" in output
+
+
 def test_render_markdown_heading_order_for_a_fully_populated_report():
     """Pins section order independently of render_text's golden test, since Markdown
     builds its own line list from the same Section objects."""
@@ -173,6 +223,7 @@ def test_render_markdown_heading_order_for_a_fully_populated_report():
         "## Summary",
         "## Risk",
         "## Recommended actions",
+        "## Experimental (unvetted)",
         "## Command analysis",
         "## Uncertainty notes",
         "## Timeline",

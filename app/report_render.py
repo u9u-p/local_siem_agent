@@ -20,6 +20,39 @@ class Section:
         return not self.body and not self.bullets
 
 
+_EXPERIMENTAL_DISCLAIMER = [
+    "EXPERIMENTAL — unvetted model output. Not audited by the self-check pass.",
+    "Do not action without analyst review.",
+]
+
+
+def _experimental_section(report: Report) -> Section:
+    """The unconstrained Draft-B output, always behind its disclaimer.
+
+    The disclaimer is part of the section body rather than something a caller adds,
+    so there is no way to render this content without it.
+    """
+    body = list(_EXPERIMENTAL_DISCLAIMER)
+    if report.triage_verdict_experimental:
+        body.append("")
+        body.append(f"Triage verdict: {report.triage_verdict_experimental}")
+        if report.triage_rationale_experimental:
+            body.append(report.triage_rationale_experimental)
+    return Section(
+        title="Experimental (unvetted)",
+        body=body,
+        bullets=list(report.recommended_actions_freeform_experimental or []),
+    )
+
+
+def _has_experimental_output(report: Report) -> bool:
+    return bool(
+        report.triage_verdict_experimental
+        or report.triage_rationale_experimental
+        or report.recommended_actions_freeform_experimental
+    )
+
+
 def report_sections(report: Report) -> list[Section]:
     sections = [
         Section(body=[
@@ -35,6 +68,9 @@ def report_sections(report: Report) -> list[Section]:
         ]),
         Section(title="Recommended actions", bullets=list(report.recommended_actions)),
     ]
+
+    if _has_experimental_output(report):
+        sections.append(_experimental_section(report))
 
     if report.command_analysis is not None:
         sections.append(Section(
@@ -82,8 +118,11 @@ def render_markdown(report: Report, sections: list[Section]) -> str:
         if section.title:
             lines.append(f"## {section.title}")
             lines.append("")
-        lines.extend(section.body)
-        if section.body:
+        body = section.body
+        if section.title == "Experimental (unvetted)":
+            body = [f"> {line}".rstrip() for line in body]
+        lines.extend(body)
+        if body:
             lines.append("")
         lines.extend(f"- {bullet}" for bullet in section.bullets)
         if section.bullets:

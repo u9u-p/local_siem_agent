@@ -518,6 +518,34 @@ def test_show_report_command_prints_command_analysis_section_when_present(monkey
     assert "185.220.101.1" in result.stdout
 
 
+def test_show_report_command_prints_experimental_section_when_present(monkeypatch):
+    report = _make_report(
+        triage_verdict_experimental="true_positive",
+        triage_rationale_experimental="looks like spear-phishing",
+        recommended_actions_freeform_experimental=["Reset the affected credentials"],
+    )
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id)])
+
+    assert result.exit_code == 0
+    assert "EXPERIMENTAL" in result.stdout
+    assert "true_positive" in result.stdout
+    assert "Reset the affected credentials" in result.stdout
+
+
+def test_show_report_command_omits_experimental_section_when_absent(monkeypatch):
+    report = _make_report()
+    store = _FakeAlertStore(reports=[report])
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+
+    result = runner.invoke(app, ["show-report", str(report.report_id)])
+
+    assert result.exit_code == 0
+    assert "EXPERIMENTAL" not in result.stdout
+
+
 def test_show_report_command_json_output(monkeypatch):
     report = _make_report()
     store = _FakeAlertStore(reports=[report])
