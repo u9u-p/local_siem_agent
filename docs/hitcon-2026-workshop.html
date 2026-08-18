@@ -268,6 +268,8 @@
   }
 
   pre .c { color: var(--ink-faint); }
+  table.wrap td { white-space: normal; }
+  table.wrap td:last-child { min-width: 30ch; }
   .check-list { display: flex; flex-direction: column; gap: 0.8rem; }
   .check-item { display: flex; gap: 0.9rem; align-items: baseline; font-size: clamp(1rem, 1.6vw, 1.3rem); color: var(--ink); }
   .check-item .box { font-family: var(--mono); color: var(--accent); flex: none; }
@@ -385,10 +387,24 @@
 </section>
 
 <section class="slide" data-sec="2 · Hypothesis">
-  <p class="eyebrow">The bet</p>
+  <p class="eyebrow">The bet — three predictions, scored at the end</p>
   <h2>Constrain the model. Don't scale it.</h2>
-  <p class="lead">A small local model, inside a deterministic state graph, answering one narrow schema-constrained question at a time — should beat a larger model given freedom.</p>
-  <p>The model never picks a tool, never chooses the next step, never sees a transcript of its own earlier output.</p>
+  <p class="lead">A 12B model inside a deterministic state graph — one narrow, schema-constrained question at a time. The model never picks a tool, never chooses the next step, never sees a running transcript.</p>
+  <div class="cols">
+    <div class="col">
+      <h3>P1 · It can do the job</h3>
+      <p>A model this small can find real attacks and clear the false-positive control.</p>
+    </div>
+    <div class="col">
+      <h3>P2 · The harness is the safety</h3>
+      <p>What makes it safe to use is the pipeline around the model, not the model.</p>
+    </div>
+    <div class="col">
+      <h3>P3 · Freedom makes it worse</h3>
+      <p>Every added degree of freedom — parameters, reasoning budget, free text — costs more than it buys.</p>
+    </div>
+  </div>
+  <p>Conclusions renders the verdict on all three.</p>
 </section>
 
 <section class="slide" data-sec="2 · Hypothesis">
@@ -409,7 +425,7 @@
     </div>
   </div>
   <div class="note acc">
-    <span class="tag">Section 5 pays these off</span>
+    <span class="tag">Results and Learnings pay these off</span>
     <p>Each was refuted by measurement, and the reasoning one was refuted in the dangerous direction.</p>
   </div>
 </section>
@@ -1179,6 +1195,43 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
     <li><strong>Size by KV at your real context</strong>, not by download size. Bake <code>num_ctx</code> into a Modelfile variant; per-request doesn't survive.</li>
     <li><strong>Measure on your own alert classes.</strong> Failures cluster, and clusters invert between models. A leaderboard position does not transfer.</li>
   </ul>
+</section>
+
+<section class="slide" data-sec="7 · Conclusions">
+  <p class="eyebrow">The bet from the start, scored</p>
+  <h2>All three predictions held. And we name the one we didn't measure.</h2>
+  <div class="scroller">
+    <table class="wrap">
+      <thead><tr><th>prediction</th><th>verdict</th><th>the evidence</th></tr></thead>
+      <tbody>
+        <tr><td><strong>P1</strong> · a 12B can do the job</td><td class="num">held</td><td>5/5 needles incl. the base64 C2 · VPN control correct 6/6 · 8.4 GiB (margins are one alert at n=5)</td></tr>
+        <tr class="pick"><td><strong>P2</strong> · the harness is the safety</td><td class="num"><strong>held, strongest</strong></td><td>same model free-written says "block Google" · through menu + self-check, 0 of 300 marked risky actions shipped</td></tr>
+        <tr><td><strong>P3</strong> · freedom makes it worse</td><td class="num">held on every axis measured</td><td>more reasoning: VPN control 0/6 → 6/6 wrong · bigger: missed 2 of 5 attacks · free text: disruption on 50/60 harmless</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note acc">
+    <span class="tag">The unmeasured corner, named</span>
+    <p>Nobody ran the endpoint of P3 — a big model in a free-form agent loop, end to end. Every measured step toward freedom made results worse; the endpoint itself is <em>inferred, not measured</em>. That baseline is honest future work.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="7 · Conclusions">
+  <p class="eyebrow">Remember the four questions?</p>
+  <h2>Even when the label is wrong, the report arrives with the answers.</h2>
+  <p>The VPN false positive, from a real report on the current pipeline — verdict <strong>low / medium</strong>, correct:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>the question from slide one</th><th>where it is in the report</th></tr></thead>
+      <tbody>
+        <tr><td>Has this address appeared before?</td><td>26 correlated alerts, plus an open-value search on the username — 12 more</td></tr>
+        <tr><td>Is this the user's own VPN egress?</td><td>his ocserv connect and the egress assignment are <em>in the correlated evidence</em> — this is what flipped the verdict</td></tr>
+        <tr><td>Was there an MFA push?</td><td>the approved push sits in the same correlated set</td></tr>
+        <tr><td>Who owns this host?</td><td>agent and rule context pulled into the timeline — the lightest of the four, honestly</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead">The winner still mislabels 28 of 60 benign alerts — and every one of those 28 reports <em>still carries this evidence</em>. Overriding a label takes seconds; assembling the evidence was the twenty minutes. <strong>The label is advice. The evidence is the product.</strong></p>
 </section>
 
 <section class="slide" data-sec="7 · Conclusions">
