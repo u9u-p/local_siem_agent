@@ -268,6 +268,17 @@
   }
 
   pre .c { color: var(--ink-faint); }
+  .prov {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
   table.wrap td { white-space: normal; }
   table.wrap td:last-child { min-width: 30ch; }
   .check-list { display: flex; flex-direction: column; gap: 0.8rem; }
@@ -561,6 +572,28 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <div class="metric"><span class="val">3.2–68.7<span style="font-size:0.4em"> GB</span></span><span class="cap">Model size span</span></div>
   </div>
   <p>Zero missing reports across the whole field. <strong>~21 hours of local inference</strong> on a 128 GB Mac Studio.</p>
+  <span class="prov">602 runs · 4d-v1 · 15–16 Aug</span>
+</section>
+
+<section class="slide" data-sec="4 · Results">
+  <p class="eyebrow">Methods — the full provenance, once</p>
+  <h2>Every number traces to one frozen setup.</h2>
+  <div class="scroller">
+    <table class="wrap">
+      <tbody>
+        <tr><td>Benchmark</td><td class="num">v1</td></tr>
+        <tr><td>Prompt version</td><td class="num">4d-v1</td></tr>
+        <tr><td>App under test</td><td class="num">bba31dd</td></tr>
+        <tr><td>Corpus</td><td class="num">182 alerts · 130 graded · four clusters</td></tr>
+        <tr><td>Measured</td><td class="num">15–16 Aug 2026</td></tr>
+        <tr><td>Host</td><td class="num">Mac Studio · 128 GB</td></tr>
+        <tr><td>Context</td><td class="num">num_ctx=8192, baked into a Modelfile variant</td></tr>
+        <tr><td>Enrichment</td><td class="num">off — no providers registered; every lookup unknown by construction</td></tr>
+        <tr><td>Sampling</td><td class="num">temperature=0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>From here on, every data slide carries its stamp in the footer. Slides that depart from this setup say so there: the 17 Aug live runs are on <code>4e-v1</code>, the context ladder reads <code>/api/ps</code>, and the MLX probe predates the benchmark.</p>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -599,6 +632,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <span class="tag">Favorite warning</span>
     <p>Ternary-Bonsai never loaded — but every run still exited “success” with an empty, safe-default report. <strong>A dead model can look exactly like a careful one.</strong> Screening was 11 alerts per model: enough to remove clear failures, not enough to rank survivors.</p>
   </div>
+  <span class="prov">gate + screen + deep · 15–16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -612,6 +646,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
   </div>
   <div class="dots" role="img" aria-label="60 squares, 28 filled red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <p class="lead">Even the winner escalates <em>28 of 60</em>. Nothing here is a quiet tool yet — alert fatigue is the problem a SOC buys this for, and an agent that adds false alarms is worse than no agent.</p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -630,6 +665,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     </table>
   </div>
   <p><strong>One criterion nothing else meets:</strong> the only configuration with full needle recall <em>and</em> a clean false-positive control, at the smallest footprint.</p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -673,6 +709,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <figcaption>Attacks caught is n=5 — the 60%↔100% gap is two alerts. The top two differ by one false alarm (27 vs 28 of 60). Show counts, never percent alone.</figcaption>
   </figure>
   </div>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -688,6 +725,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <span class="tag">Consequence for this talk</span>
     <p>The demo is pre-recorded or cut away from. That is a measured conclusion, not a staging preference.</p>
   </div>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
@@ -729,6 +767,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <figcaption>Bar = median. Ticks = p95 and worst run. The pick is 11× the runner-up on a typical run, 27× at worst. All times: 128 GB Mac Studio — the M4 Pro is slower; re-measure before quoting.</figcaption>
   </figure>
   </div>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <!-- ═══ 5 DEEPDIVE ═══ -->
@@ -834,6 +873,7 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
     <div class="metric"><span class="val ok">100%</span><span class="cap">Passed the strict validator</span></div>
   </div>
   <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
+  <span class="prov">n=8 · seeded stack · 14 Aug</span>
 </section>
 
 <section class="slide dense" data-sec="5 · Deepdive">
@@ -900,6 +940,7 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
     <figcaption>gpt-oss looks calm only because of the menu (0 → 50). gemma4:12b is calm by itself (24 → 27). lfm2 inverts: it selects almost everything on the menu. “Disruptive” is a keyword match — rough counts. Free writing is experimental Draft-B: say “what it would have said,” never “what the product does.”</figcaption>
   </figure>
   </div>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide dense" data-sec="5 · Deepdive">
@@ -920,6 +961,7 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
     </table>
   </div>
   <p class="lead">A <em>medium</em> score passes the test — but the same run’s draft still says <em>“immediately isolate the endpoint… force a password reset.”</em> A good score does not mean a harmless report. n=6 each — show counts.</p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="5 · Deepdive">
@@ -934,6 +976,7 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
 NetRange:  209.85.128.0 - 209.85.255.255
 OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops delivering</pre>
   <p>Runner-up, another harmless alert: <em>“terminate all active SSH sessions associated with … 203.0.113.63”</em> — TEST-NET-3, a documentation-only range. ~70% of free-written drafts name a specific IP to act on. (Alert data is synthetic; 209.85.220.41 is real — ARIN, checked 17 Aug.)</p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="5 · Deepdive">
@@ -950,6 +993,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">Closing line</span>
     <p>A 12B model on a laptop is safe to use — not because the model can be trusted, but because <strong>the pipeline never trusts it</strong>. The distance between “ask a human” and “block Gmail” is the pipeline.</p>
   </div>
+  <span class="prov">426 deep reports · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="5 · Deepdive">
@@ -966,6 +1010,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">The designed path, not a defect</span>
     <p>The failure is written into the timeline, counted in <code>llm_usage</code>, and named in the report’s uncertainty notes. A step that did not run cannot be mistaken for a step that found nothing.</p>
   </div>
+  <span class="prov">live run · 4e-v1 · 17 Aug</span>
 </section>
 
 <!-- ═══ 6 LEARNINGS ═══ -->
@@ -1024,6 +1069,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">Why this is worse than a crash</span>
     <p>The model is pulled, reachable, and chats fine — <code>model_available()</code> returns true. The failure is deterministic, so retry buys nothing. Every investigation quietly degrades to a stub report marked <em>needs human review</em>, forever, and nothing names the backend as the cause. <strong>Gate every model on a structured-output probe before you configure it — being pulled is not being usable.</strong></p>
   </div>
+  <span class="prov">raw HTTP probe · 11 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1042,6 +1088,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     </table>
   </div>
   <p class="lead">The VPN egress <em>is</em> a real anomaly — reason about it long enough and you argue yourself into flagging it. <strong>Three independent models show the same inversion.</strong></p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1060,6 +1107,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     </div>
   </div>
   <p class="lead">A model that wins on a public leaderboard can still be blind to <em>your</em> alerts. Test on the alert types you see every day.</p>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1081,6 +1129,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">And the default will surprise you</span>
     <p>Ollama sizes KV from the model's <em>default</em> context. <code>qwen3.6:27b</code> is 36.5 GB at default and 16 GB at <code>num_ctx=8192</code>. Invisible on a 128 GB Studio. Decisive on a laptop.</p>
   </div>
+  <span class="prov">context ladder · /api/ps · 16 Aug</span>
 </section>
 
 <section class="slide dense" data-sec="6 · Learnings">
@@ -1141,6 +1190,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <figcaption>Measured via /api/ps (exact bytes) at four context settings. The pick affords the full 262K window in 9.4 GiB — half the budget. Two models you would size identically from their weights end up 17.4 GiB apart.</figcaption>
   </figure>
   </div>
+  <span class="prov">context ladder · /api/ps · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1159,6 +1209,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
   <p class="lead">The KV saving is real and large. The base footprint grew just enough to absorb <em>all</em> of it — and it generates at 51 chars/s against 99.</p>
   <p><strong>“Newer” is not a scalar.</strong> This is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.</p>
+  <span class="prov">gate · /api/ps · 17 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1179,6 +1230,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">Same lesson, second metric</span>
     <p>Triage accuracy collapsed between stages for almost every model (45%→7% at the extreme) — a property of the metric and the corpus mix, not the models: the screen corpus is needle-rich, so anything that leans "true positive" scored well on it and badly on a realistic mix. <strong>Screen to remove clear failures. Never to rank survivors.</strong></p>
   </div>
+  <span class="prov">screen n=4 → deep n=60 · 4d-v1</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1191,6 +1243,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
   <p class="lead">It surfaced only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB/1K, flat across three rungs.</p>
   <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
+  <span class="prov">found 16 Aug · rankings unchanged</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1212,6 +1265,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">Needs a data-handling decision before real SIEM data</span>
     <p><strong>Instrumentation is a data-flow change.</strong> We added observability to see inside the pipeline, and widened the blast radius of every stored report in the same commit.</p>
   </div>
+  <span class="prov">live run · 4e-v1 · 17 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
@@ -1277,6 +1331,7 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
     <span class="tag">The unmeasured corner, named</span>
     <p>Nobody ran the endpoint of P3 — a big model in a free-form agent loop, end to end. Every measured step toward freedom made results worse; the endpoint itself is <em>inferred, not measured</em>. That baseline is honest future work.</p>
   </div>
+  <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="7 · Conclusions">
@@ -1295,6 +1350,7 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
     </table>
   </div>
   <p class="lead">The winner still mislabels 28 of 60 benign alerts — and every one of those 28 reports <em>still carries this evidence</em>. Overriding a label takes seconds; assembling the evidence was the twenty minutes. <strong>The label is advice. The evidence is the product.</strong></p>
+  <span class="prov">deep control run · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="7 · Conclusions">
