@@ -1,5 +1,6 @@
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
@@ -236,12 +237,19 @@ class AgenticAnalyst:
         alert_store: AlertStore,
         enrichment_registry: EnrichmentRegistry,
         llm_client: LLMClient,
+        on_step: Callable[[InvestigationStep], None] | None = None,
     ) -> None:
         self._siem = siem
         self._alert_store = alert_store
         self._enrichment_registry = enrichment_registry
         self._llm_client = llm_client
+        self._on_step = on_step
         self._degraded_reasons: list[str] = []
+
+    def _emit(self, timeline: list[InvestigationStep], step: InvestigationStep) -> None:
+        timeline.append(step)
+        if self._on_step is not None:
+            self._on_step(step)
 
     def _step_ingest_and_parse(self, alert: Alert, model_available: bool) -> InvestigationStep:
         logger.debug(
@@ -1008,7 +1016,8 @@ class AgenticAnalyst:
             "_step_finalize_and_persist input: report_id=%s, alert_id=%s", report.report_id, alert.alert_id
         )
         step_input = {"report_id": str(report.report_id), "alert_id": str(alert.alert_id)}
-        report.investigation_timeline.append(
+        self._emit(
+            report.investigation_timeline,
             InvestigationStep(
                 step_name=Step.FINALIZE_AND_PERSIST.value,
                 action="completed",
@@ -1017,7 +1026,7 @@ class AgenticAnalyst:
                 output={"persisted": True},
                 output_summary=f"report {report.report_id} persisted, alert marked investigated",
                 timestamp=datetime.now(timezone.utc),
-            )
+            ),
         )
         try:
             self._alert_store.save_report(report)
@@ -1032,6 +1041,9 @@ class AgenticAnalyst:
                 output_summary=f"could not persist report or update alert status: {exc}",
                 timestamp=datetime.now(timezone.utc),
             )
+            # Re-emit so a listening frontend shows the failure, not the optimistic step.
+            if self._on_step is not None:
+                self._on_step(report.investigation_timeline[-1])
             logger.debug("_step_finalize_and_persist output: failed: %s", exc)
             return
         logger.debug("_step_finalize_and_persist output: persisted")
@@ -1042,39 +1054,40 @@ class AgenticAnalyst:
         model_available = self._llm_client.model_available()
         if not model_available:
             self._degraded_reasons.append("model unavailable")
-        timeline: list[InvestigationStep] = [self._step_ingest_and_parse(alert, model_available)]
+        timeline: list[InvestigationStep] = []
+        self._emit(timeline, self._step_ingest_and_parse(alert, model_available))
 
         indicators, command_decode_result, extract_step = self._step_extract_indicators(alert, model_available)
-        timeline.append(extract_step)
+        self._emit(timeline, extract_step)
 
         enrichment_results, enrich_step = self._step_enrich(indicators)
-        timeline.append(enrich_step)
+        self._emit(timeline, enrich_step)
 
         _agent_context, _rule_metadata, context_step = self._step_gather_context(alert)
-        timeline.append(context_step)
+        self._emit(timeline, context_step)
 
         pattern_type, evidence_count, correlate_step = self._step_correlate(
             alert, enrichment_results, model_available
         )
-        timeline.append(correlate_step)
+        self._emit(timeline, correlate_step)
 
         risk_assessment, risk_step = self._step_risk_assessment(
             alert, pattern_type, evidence_count, enrichment_results, model_available,
             command_context=command_decode_result,
         )
-        timeline.append(risk_step)
+        self._emit(timeline, risk_step)
 
         draft, experimental, draft_step = self._step_draft_report(
             alert, pattern_type, evidence_count, enrichment_results, risk_assessment, model_available,
             command_context=command_decode_result,
         )
-        timeline.append(draft_step)
+        self._emit(timeline, draft_step)
 
         draft, uncertainty_notes, self_check_step = self._step_self_check(
             alert, draft, pattern_type, evidence_count, enrichment_results, risk_assessment,
             correlate_step, model_available, command_context=command_decode_result,
         )
-        timeline.append(self_check_step)
+        self._emit(timeline, self_check_step)
 
         wall_clock_ms = int((time.monotonic() - started) * 1000)
         report = self._assemble_report(

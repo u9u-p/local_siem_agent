@@ -2365,3 +2365,34 @@ def test_roll_up_usage_does_not_crash_when_one_token_field_is_partially_measured
 
     assert totals.prompt_tokens == 10
     assert totals.completion_tokens is None
+
+
+def test_on_step_hook_fires_once_per_timeline_entry_in_order():
+    seen: list[InvestigationStep] = []
+    analyst = _make_analyst(
+        llm_client=_FakeLLMClient(model_available=False),
+        on_step=seen.append,
+    )
+
+    report = analyst.investigate(_make_alert())
+
+    assert [s.step_name for s in seen] == [s.step_name for s in report.investigation_timeline]
+    assert len(seen) == 9
+
+
+def test_on_step_hook_gets_the_degraded_finalize_step_when_persist_fails():
+    class _ExplodingStore(_FakeAlertStore):
+        def save_report(self, report):
+            raise RuntimeError("disk full")
+
+    seen: list[InvestigationStep] = []
+    analyst = _make_analyst(
+        llm_client=_FakeLLMClient(model_available=False),
+        alert_store=_ExplodingStore(),
+        on_step=seen.append,
+    )
+
+    analyst.investigate(_make_alert())
+
+    assert seen[-1].step_name == Step.FINALIZE_AND_PERSIST.value
+    assert seen[-1].action == "degraded"

@@ -145,7 +145,7 @@ Seeded stack went from 51 alerts over 4 sources to **71 over 7**. Suite is **314
 | 1 | P0 | Verify it runs from a clean clone | venv, install, pytest, stack up, seeded alerts reaching the indexer, model pulled, one timed `investigate-one` | ✅ Done |
 | 2 | P0 | Fix `pull-alerts` duplication | Deterministic `alert_id` so the existing `DuplicateAlertError` path fires | ✅ Done |
 | 3 | P0 | Decide run mode, time it against the slot | Fully live, or one live run plus pre-generated reports. Drives 5–7 | ⏸ Deferred by user |
-| 4 | P1 | Add a step event hook | Optional `on_step` callback on `AgenticAnalyst` at each `timeline.append`. `investigate()` is blocking with no progress stream — prerequisite for any frontend | ⬜ Open (~10 lines + test) |
+| 4 | P1 | Add a step event hook | Optional `on_step` callback on `AgenticAnalyst` at each `timeline.append`. `investigate()` is blocking with no progress stream — prerequisite for any frontend | ✅ Done — also re-emits the degraded finalize step on persist failure |
 | 5 | P1 | Live pipeline view using `rich` | 9 steps with status, current LLM call showing which schema is enforced and elapsed time, enrichment and correlation results landing as they resolve. `ratatui` was considered and rejected — a second toolchain and an IPC boundary for no gain this close to the date | ⬜ Open (needs 4) |
 | 6 | P1 | Make the Self-Check visible | Surface a claim being flagged and dropped in `_apply_self_check_corrections` — "the model proposed this, the code rejected it" is the talk's thesis in one frame | ⛔ Blocked — see below |
 | 7 | P1 | Script demo alerts, confirm real output | Run both cases several times and record what the agent actually concludes; local model output varies | 🚧 Partial — one run each |
