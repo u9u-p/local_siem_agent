@@ -369,7 +369,7 @@
   <p class="eyebrow">The work being automated</p>
   <h2>Every alert costs an analyst the same four questions.</h2>
   <p>Who owns this host? Has this address appeared before? Is this the user's own VPN egress? Was there an MFA push?</p>
-  <p class="lead">The queue length isn't the pain. <em>Re-deriving the same context, from scratch, per alert</em> is the pain.</p>
+  <p class="lead">The number of alerts is not the real pain. <em>Answering the same questions again, for every alert</em> — that is the pain.</p>
 </section>
 
 <section class="slide" data-sec="1 · Problem">
@@ -377,7 +377,7 @@
   <h2>No leaderboard tells you which local model can do this.</h2>
   <ul>
     <li>Benchmarks measure reasoning, coding, trivia — not "does it escalate benign Windows logons"</li>
-    <li>The failures are <strong>per alert class</strong>, and they invert between models</li>
+    <li>Failures depend on the <strong>alert type</strong> — and each model fails on different types</li>
     <li>Nothing published tells you what a model costs in RAM at the context you need</li>
   </ul>
   <p class="lead">So we had to measure it ourselves. That measurement is most of this talk.</p>
@@ -400,14 +400,14 @@
 <section class="slide" data-sec="2 · Hypothesis">
   <p class="eyebrow">The bet — three predictions, scored at the end</p>
   <h2>Constrain the model. Don't scale it.</h2>
-  <p class="lead">A 12B model inside a deterministic state graph — one narrow, schema-constrained question at a time. The model never picks a tool, never chooses the next step, never sees a running transcript.</p>
+  <p class="lead">A 12B model inside a fixed pipeline — it answers one narrow, schema-constrained question at a time. The model never picks a tool, never chooses the next step, never sees a running transcript.</p>
   <div class="cols">
     <div class="col">
       <h3>P1 · It can do the job</h3>
       <p>A model this small can find real attacks and clear the false-positive control.</p>
     </div>
     <div class="col">
-      <h3>P2 · The harness is the safety</h3>
+      <h3>P2 · The pipeline is the safety</h3>
       <p>What makes it safe to use is the pipeline around the model, not the model.</p>
     </div>
     <div class="col">
@@ -424,20 +424,20 @@
   <div class="cols">
     <div class="col">
       <h3>Bigger is better</h3>
-      <p>Assumed scaling up would improve everything. <em>Settled by the scatter in Results.</em></p>
+      <p>Assumed scaling up would improve everything. <em>Answered by the scatter in Results.</em></p>
     </div>
     <div class="col">
       <h3>More reasoning is better</h3>
-      <p>Assumed a higher effort setting was a free upgrade. <em>Settled in Learnings — the inversion.</em></p>
+      <p>Assumed a higher effort setting was a free upgrade. <em>Answered in Learnings.</em></p>
     </div>
     <div class="col">
       <h3>A screening run predicts the real one</h3>
-      <p>Assumed a cheap n=4 pass would rank models correctly. <em>Settled in Learnings — the 28-point shift.</em></p>
+      <p>Assumed a cheap n=4 pass would rank models correctly. <em>Answered in Learnings — the 28-point shift.</em></p>
     </div>
   </div>
   <div class="note acc">
     <span class="tag">Results and Learnings pay these off</span>
-    <p>Each was refuted by measurement, and the reasoning one was refuted in the dangerous direction.</p>
+    <p>Measurement proved each one wrong — and the reasoning one failed in the dangerous direction.</p>
   </div>
 </section>
 
@@ -455,13 +455,13 @@
 </section>
 
 <section class="slide" data-sec="3 · Get running">
-  <p class="eyebrow">Before anything else — this is the long pole</p>
+  <p class="eyebrow">Before anything else — this is the slowest step</p>
   <h2>Start the 7.6&nbsp;GB download now. We'll keep talking.</h2>
   <pre>ollama pull gemma4:12b</pre>
   <p>On conference wifi this is the slowest thing in the room, so it goes first. You will not need the model until the Deepdive section — everything between now and then is talk.</p>
   <div class="note warn">
     <span class="tag">Not gemma4:12b-mlx</span>
-    <p>The <code>-mlx</code> build of the <em>same weights</em> silently ignores structured output — every report degrades to a stub, and nothing tells you why. GGUF only. The Learnings section shows the probe.</p>
+    <p>The <code>-mlx</code> build of the <em>same weights</em> silently ignores structured output — every report quietly becomes an empty template, and nothing tells you why. GGUF only. The Learnings section shows the probe.</p>
   </div>
 </section>
 
@@ -483,7 +483,7 @@
 </section>
 
 <section class="slide" data-sec="3 · Get running">
-  <p class="eyebrow">Small machine? Two escape hatches, both measured</p>
+  <p class="eyebrow">Small machine? Two backup plans, both measured</p>
   <h2>The pipeline runs on 3 GiB. The verdicts get worse — and you'll see exactly how much.</h2>
   <div class="cols">
     <div class="col">
@@ -512,12 +512,12 @@ cp .env.example .env</pre>
 
 <section class="slide" data-sec="3 · Get running">
   <p class="eyebrow">Step 2 of 3</p>
-  <h2>Bring up Wazuh, pre-seeded with arguments</h2>
+  <h2>Bring up Wazuh — test data included</h2>
   <pre>cd wazuh_deployment/single-node
 docker compose -f generate-indexer-certs.yml run --rm generator   <span class="c"># once</span>
 docker compose up -d   <span class="c"># first boot ~1 min</span></pre>
-  <p><strong>11 sample log sources</strong> — SSH auth, VPN, Windows Security, Sysmon, Mimecast email, and AI-dev-tool command execution — seeded with deliberate false-positive pairs, benign noise floods, and hidden needles including a base64-encoded C2 address.</p>
-  <p class="lead">The corpus is built so the agent has to <em>correlate across sources</em> to be right, not pattern-match one line.</p>
+  <p><strong>11 sample log sources</strong> — SSH auth, VPN, Windows Security, Sysmon, Mimecast email, and AI-dev-tool command execution — seeded with deliberate false alarms, harmless noise, and hidden real attacks — including a base64-encoded C2 address.</p>
+  <p class="lead">The test data is built so the agent must <em>connect several log sources</em> to get the right answer.</p>
 </section>
 
 <section class="slide" data-sec="3 · Get running">
@@ -576,7 +576,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 </section>
 
 <section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">Methods — the full provenance, once</p>
+  <p class="eyebrow">Methods — where every number comes from, once</p>
   <h2>Every number traces to one frozen setup.</h2>
   <div class="scroller">
     <table class="wrap">
@@ -584,7 +584,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
         <tr><td>Benchmark</td><td class="num">v1</td></tr>
         <tr><td>Prompt version</td><td class="num">4d-v1</td></tr>
         <tr><td>App under test</td><td class="num">bba31dd</td></tr>
-        <tr><td>Corpus</td><td class="num">182 alerts · 130 graded · four clusters</td></tr>
+        <tr><td>Test data</td><td class="num">182 alerts · 130 graded · four clusters</td></tr>
         <tr><td>Measured</td><td class="num">15–16 Aug 2026</td></tr>
         <tr><td>Host</td><td class="num">Mac Studio · 128 GB</td></tr>
         <tr><td>Context</td><td class="num">num_ctx=8192, baked into a Modelfile variant</td></tr>
@@ -598,7 +598,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 
 <section class="slide" data-sec="4 · Results">
   <p class="eyebrow">The field · a candidate = one model at one quant</p>
-  <h2>18 candidates. One met the bar.</h2>
+  <h2>18 candidates. Only one passed.</h2>
   <div class="cols">
     <div class="col">
       <h3>Stopped at the gate · 4</h3>
@@ -629,14 +629,14 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     </div>
   </div>
   <div class="note acc">
-    <span class="tag">Favorite warning</span>
+    <span class="tag">The warning to remember</span>
     <p>Ternary-Bonsai never loaded — but every run still exited “success” with an empty, safe-default report. <strong>A dead model can look exactly like a careful one.</strong> Screening was 11 alerts per model: enough to remove clear failures, not enough to rank survivors.</p>
   </div>
   <span class="prov">gate + screen + deep · 15–16 Aug</span>
 </section>
 
-<section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">The key metric — learn it once</p>
+<section class="slide dense" data-sec="4 · Results">
+  <p class="eyebrow">The three scores — learn them once</p>
   <h2>Benign escalation: a harmless alert marked HIGH.</h2>
   <p>The test set has <strong>60 normal, harmless alerts</strong> per model. The model gives each a severity. A harmless alert marked <strong>high</strong> or <strong>critical</strong> is a false alarm a human must investigate. We count them.</p>
   <div class="sevrow">
@@ -645,7 +645,12 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <span class="sev"><span class="chip bad"></span><strong>high / critical</strong> escalated — a false alarm</span>
   </div>
   <div class="dots" role="img" aria-label="60 squares, 28 filled red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-  <p class="lead">Even the winner escalates <em>28 of 60</em>. Nothing here is a quiet tool yet — alert fatigue is the problem a SOC buys this for, and an agent that adds false alarms is worse than no agent.</p>
+  <div class="cols">
+    <div class="col"><h3>Needle recall</h3><p>A <strong>needle</strong> = a real attack we hid in the test data. Recall = how many of the 5 the model found.</p></div>
+    <div class="col"><h3>VPN test</h3><p>One user logs in from his own VPN address — looks strange, is safe. The model must <em>not</em> raise the alarm. 6 tries per model.</p></div>
+    <div class="col"><h3>Severity distance</h3><p>How far each answer is from the correct severity. 0 is perfect.</p></div>
+  </div>
+  <p class="lead">Even the winner escalates <em>28 of 60</em>. No model here is quiet yet — and an agent that adds false alarms makes alert fatigue worse, not better.</p>
   <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
@@ -654,7 +659,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
   <h2>The pick is the smallest serious candidate.</h2>
   <div class="scroller">
     <table>
-      <thead><tr><th>model</th><th>benign esc.↓</th><th>needle↑</th><th>fp-control↓</th><th>sev. dist.↓</th><th>median</th><th>footprint</th></tr></thead>
+      <thead><tr><th>model</th><th>benign esc.↓</th><th>needle↑</th><th>VPN test↓</th><th>sev. dist.↓</th><th>median</th><th>footprint</th></tr></thead>
       <tbody>
         <tr><td><code>gpt-oss:120b</code>@low</td><td class="num">20%</td><td class="num">60%</td><td class="num">0/6</td><td class="num">0.20</td><td class="num">35s</td><td class="num">64.0 GiB</td></tr>
         <tr><td><code>gpt-oss:20b</code>@low</td><td class="num">45%</td><td class="num">80%</td><td class="num">0/6</td><td class="num">0.39</td><td class="num">24s</td><td class="num">12.0 GiB</td></tr>
@@ -664,13 +669,13 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
       </tbody>
     </table>
   </div>
-  <p><strong>One criterion nothing else meets:</strong> the only configuration with full needle recall <em>and</em> a clean false-positive control, at the smallest footprint.</p>
+  <p><strong>Only one model did both:</strong> found all 5 hidden attacks <em>and</em> passed the VPN test — at the smallest memory footprint.</p>
   <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">The same table, as a picture — and assumption 1, settled</p>
-  <h2>Bigger buys quiet, and pays for it in missed attacks.</h2>
+  <p class="eyebrow">The same table, as a picture — and assumption 1, answered</p>
+  <h2>Bigger models are quieter — but they miss more attacks.</h2>
   <div class="fig-wrap">
   <figure>
     <svg viewBox="0 0 720 330" role="img" aria-label="Scatter: benign escalation versus attacks caught, five finalist models">
@@ -720,7 +725,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
     <div class="metric"><span class="val">1.34<span style="font-size:0.4em">×</span></span><span class="cap">gemma4 low→high spread</span></div>
     <div class="metric"><span class="val">28<span style="font-size:0.4em">×</span></span><span class="cap">gpt-oss:20b low→high spread</span></div>
   </div>
-  <p class="lead">gemma4 barely responds to the effort knob, so ~220s is the floor. <em>A live demo needs 60–90s.</em></p>
+  <p class="lead">The reasoning-effort setting barely changes gemma4, so ~220s is the minimum. <em>A live demo needs 60–90s.</em></p>
   <div class="note warn">
     <span class="tag">Consequence for this talk</span>
     <p>The demo is pre-recorded or cut away from. That is a measured conclusion, not a staging preference.</p>
@@ -729,8 +734,8 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 </section>
 
 <section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">And plan for the slowest run, not the average</p>
-  <h2>A demo is sized by its worst case.</h2>
+  <p class="eyebrow">Sizing the demo — worst case, not average</p>
+  <h2>Plan for the slowest run, not the average.</h2>
   <div class="fig-wrap">
   <figure>
     <svg viewBox="0 0 720 240" role="img" aria-label="Seconds per investigation per model: median bars with p95 and worst-case ticks">
@@ -854,7 +859,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 
 <section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">Demo — start yours now, watch ours finish</p>
-  <h2>Kick off an investigation. It will land before we're done talking.</h2>
+  <h2>Start an investigation now. It will finish before we stop talking.</h2>
   <pre>agent list-alerts --limit 5          <span class="c"># pick one</span>
 agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12b</span></pre>
   <p class="lead">On stage: the <strong>pre-recorded</strong> run of the encoded-PowerShell needle — Results already showed why live is off the table (median 259s, worst 10.8 min). Your own run finishes while the next slides play; we come back to it at the checkpoint after Learnings.</p>
@@ -872,12 +877,12 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
     <div class="metric"><span class="val ok">8/8</span><span class="cap">Runs recovering IP and URL</span></div>
     <div class="metric"><span class="val ok">100%</span><span class="cap">Passed the strict validator</span></div>
   </div>
-  <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
+  <p class="lead">The model finds what regex cannot. <em>The validator still checks everything it proposes.</em></p>
   <span class="prov">n=8 · seeded stack · 14 Aug</span>
 </section>
 
 <section class="slide dense" data-sec="5 · Deepdive">
-  <p class="eyebrow">The A/B test — is the menu just bureaucracy?</p>
+  <p class="eyebrow">The A/B test — does the menu actually matter?</p>
   <h2>Take away the menu, and the calmest model recommends disruption on 50 of 60 harmless alerts.</h2>
   <p>Every report answers “what should the analyst do?” twice, from the same evidence. <strong>A: pick from a fixed menu of 19 actions</strong> — this ships. <strong>B: write freely</strong> — recorded for research, never shown. Count of reports with a disruptive action (block an IP, lock an account, isolate a machine) on the 60 harmless alerts:</p>
   <div class="leg">
@@ -1005,10 +1010,10 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <div class="metric"><span class="val">13</span><span class="cap">Claims the audit never finished</span></div>
     <div class="metric"><span class="val ok">0</span><span class="cap">Unaudited drafts shipped as complete</span></div>
   </div>
-  <p class="lead">The pipeline does not trust the model. <em>It also does not trust itself to have succeeded.</em></p>
+  <p class="lead">The pipeline does not trust the model. <em>It also checks whether its own steps ran.</em></p>
   <div class="note good">
     <span class="tag">The designed path, not a defect</span>
-    <p>The failure is written into the timeline, counted in <code>llm_usage</code>, and named in the report’s uncertainty notes. A step that did not run cannot be mistaken for a step that found nothing.</p>
+    <p>The failure is written into the timeline, counted in <code>llm_usage</code>, and named in the report’s uncertainty notes. The report separates "this step failed" from "this step found nothing".</p>
   </div>
   <span class="prov">live run · 4e-v1 · 17 Aug</span>
 </section>
@@ -1028,7 +1033,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
 
 <section class="slide dense" data-sec="6 · Learnings">
   <p class="eyebrow">First — the trap we promised back in Get running</p>
-  <h2>Same weights, one tag apart. One silently ignores your schema.</h2>
+  <h2>Same model, different tag. One silently ignores your schema.</h2>
   <div class="fig-wrap">
   <figure>
     <svg viewBox="0 0 900 260" role="img" aria-label="The same gemma4 12B model served through Ollama's GGUF backend honours the response_format constraint and returns raw JSON, while the MLX backend ignores it and returns markdown-fenced text that fails validation on every call.">
@@ -1067,13 +1072,13 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
   <div class="note warn">
     <span class="tag">Why this is worse than a crash</span>
-    <p>The model is pulled, reachable, and chats fine — <code>model_available()</code> returns true. The failure is deterministic, so retry buys nothing. Every investigation quietly degrades to a stub report marked <em>needs human review</em>, forever, and nothing names the backend as the cause. <strong>Gate every model on a structured-output probe before you configure it — being pulled is not being usable.</strong></p>
+    <p>The model is pulled, reachable, and chats fine — <code>model_available()</code> returns true. The failure is deterministic, so retry buys nothing. Every investigation quietly degrades to a stub report marked <em>needs human review</em>, forever, and nothing names the backend as the cause. <strong>Test every model with a structured-output probe before you configure it — downloaded does not mean working.</strong></p>
   </div>
   <span class="prov">raw HTTP probe · 11 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
-  <p class="eyebrow">Learning 1 · assumption 2, settled the hard way</p>
+  <p class="eyebrow">Learning 1 · assumption 2, proven wrong by measurement</p>
   <h2>More reasoning made it worse, in the dangerous direction.</h2>
   <p><code>gpt-oss:20b</code>, same model, <code>low</code> against default effort, n=71:</p>
   <div class="scroller">
@@ -1083,11 +1088,11 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
         <tr><td>benign escalation</td><td class="num">45%</td><td class="num">58%</td></tr>
         <tr><td>severity distance</td><td class="num">0.39</td><td class="num">0.63</td></tr>
         <tr><td>needle recall</td><td class="num">80%</td><td class="num">80%</td></tr>
-        <tr class="pick"><td><strong>false-positive control</strong></td><td class="num">0/6 correct</td><td class="num">6/6 wrong</td></tr>
+        <tr class="pick"><td><strong>VPN test</strong></td><td class="num">0/6 correct</td><td class="num">6/6 wrong</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="lead">The VPN egress <em>is</em> a real anomaly — reason about it long enough and you argue yourself into flagging it. <strong>Three independent models show the same inversion.</strong></p>
+  <p class="lead">The VPN address <em>is</em> unusual — and the longer the model reasons, the more it convinces itself the alert is real. <strong>Three different models fail the same way.</strong></p>
   <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
 
@@ -1208,24 +1213,24 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     </table>
   </div>
   <p class="lead">The KV saving is real and large. The base footprint grew just enough to absorb <em>all</em> of it — and it generates at 51 chars/s against 99.</p>
-  <p><strong>“Newer” is not a scalar.</strong> This is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.</p>
+  <p><strong>“Newer” is not one number.</strong> The new model trades speed for memory efficiency — and on a small machine, the trade adds up to zero.</p>
   <span class="prov">gate · /api/ps · 17 Aug</span>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
-  <p class="eyebrow">Assumption 3, settled — the screen is a filter, not a forecast</p>
+  <p class="eyebrow">Assumption 3, answered — the screen is a filter, not a forecast</p>
   <h2>At real sample size, the ranking moved 28 points.</h2>
   <p>Benign escalation, the deciding metric, at screen (n=4) against deep (n=60):</p>
   <div class="scroller">
     <table>
       <thead><tr><th>candidate</th><th>screen n=4</th><th>deep n=60</th><th>shift</th></tr></thead>
       <tbody>
-        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">75% (3/4)</td><td class="num">47% (28/60)</td><td class="num">−28, flattering</td></tr>
-        <tr><td><code>gemma4:26b-a4b</code></td><td class="num">75% (3/4)</td><td class="num">53% (32/60)</td><td class="num">−22, flattering</td></tr>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">75% (3/4)</td><td class="num">47% (28/60)</td><td class="num">−28 · looked better at n=4</td></tr>
+        <tr><td><code>gemma4:26b-a4b</code></td><td class="num">75% (3/4)</td><td class="num">53% (32/60)</td><td class="num">−22 · looked better at n=4</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="lead">Every model shifted between stages — the two gemmas shifted most, and in the flattering direction. The screen's headline prediction, that the runner-up was far quieter than the pick, evaporated to <em>one alert</em> at n=60 (27 vs 28).</p>
+  <p class="lead">Every model's score moved between stages — the two gemmas moved most, in the direction that made them look better. At n=4 the screen said the runner-up was far quieter than the pick. At n=60 the gap shrank to <em>one alert</em> (27 vs 28).</p>
   <div class="note">
     <span class="tag">Same lesson, second metric</span>
     <p>Triage accuracy collapsed between stages for almost every model (45%→7% at the extreme) — a property of the metric and the corpus mix, not the models: the screen corpus is needle-rich, so anything that leans "true positive" scored well on it and badly on a realistic mix. <strong>Screen to remove clear failures. Never to rank survivors.</strong></p>
@@ -1241,8 +1246,8 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="tag">Why it survived</span>
     <p>It cleared a full gate, a 16-configuration sweep and two writeups — because <strong>a uniform multiplier reorders nothing</strong>. Every ranking was still correct. It eliminated one model for the wrong reason.</p>
   </div>
-  <p class="lead">It surfaced only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB/1K, flat across three rungs.</p>
-  <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
+  <p class="lead">We found it only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB per 1K tokens.</p>
+  <p><strong>When one number looks impossible, dig there. That is where the real bug hides.</strong></p>
   <span class="prov">found 16 Aug · rankings unchanged</span>
 </section>
 
@@ -1263,7 +1268,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
   <div class="note warn">
     <span class="tag">Needs a data-handling decision before real SIEM data</span>
-    <p><strong>Instrumentation is a data-flow change.</strong> We added observability to see inside the pipeline, and widened the blast radius of every stored report in the same commit.</p>
+    <p><strong>Adding logging moves your data to new places.</strong> We added logging to see inside the pipeline — and in the same commit, every stored report became a bigger leak risk.</p>
   </div>
   <span class="prov">live run · 4e-v1 · 17 Aug</span>
 </section>
@@ -1284,7 +1289,7 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
     </div>
     <div class="col">
       <h3>On a fallback model?</h3>
-      <p>Compare your verdict against the scoreboard from Results — you now hold a live sample of exactly the accuracy gap we measured. That gap is the talk.</p>
+      <p>Compare your verdict against the scoreboard from Results — you are holding a live example of the accuracy gap we measured.</p>
     </div>
   </div>
 </section>
@@ -1305,29 +1310,29 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
   <p class="eyebrow">What we'd tell you to do</p>
   <h2>Four things, all measured.</h2>
   <ul>
-    <li><strong>Constrain before you scale.</strong> The harness carries the structure; extra model capacity mostly buys room to argue away the grounded answer.</li>
+    <li><strong>Constrain before you scale.</strong> The pipeline carries the structure; a bigger model mostly uses the extra capacity to argue against the evidence.</li>
     <li><strong>Use <code>low</code> reasoning effort</strong> wherever the model honours it — and verify it honours it by counting reasoning characters, not by checking the request didn't error.</li>
-    <li><strong>Size by KV at your real context</strong>, not by download size. Bake <code>num_ctx</code> into a Modelfile variant; per-request doesn't survive.</li>
+    <li><strong>Size by KV at your real context</strong>, not by download size. Bake <code>num_ctx</code> into a Modelfile variant; setting it per request does not stick.</li>
     <li><strong>Measure on your own alert classes.</strong> Failures cluster, and clusters invert between models. A leaderboard position does not transfer.</li>
   </ul>
 </section>
 
 <section class="slide" data-sec="7 · Conclusions">
   <p class="eyebrow">The bet from the start, scored</p>
-  <h2>All three predictions held. And we name the one we didn't measure.</h2>
+  <h2>All three predictions were confirmed. And we name what we did not test.</h2>
   <div class="scroller">
     <table class="wrap">
       <thead><tr><th>prediction</th><th>verdict</th><th>the evidence</th></tr></thead>
       <tbody>
-        <tr><td><strong>P1</strong> · a 12B can do the job</td><td class="num">held</td><td>5/5 needles incl. the base64 C2 · VPN control correct 6/6 · 8.4 GiB (margins are one alert at n=5)</td></tr>
-        <tr class="pick"><td><strong>P2</strong> · the harness is the safety</td><td class="num"><strong>held, strongest</strong></td><td>same model free-written says "block Google" · through menu + self-check, 0 of 300 marked risky actions shipped</td></tr>
-        <tr><td><strong>P3</strong> · freedom makes it worse</td><td class="num">held on every axis measured</td><td>more reasoning: VPN control 0/6 → 6/6 wrong · bigger: missed 2 of 5 attacks · free text: disruption on 50/60 harmless</td></tr>
+        <tr><td><strong>P1</strong> · a 12B can do the job</td><td class="num">confirmed</td><td>5/5 needles incl. the base64 C2 · VPN test correct 6/6 · 8.4 GiB (margins are one alert at n=5)</td></tr>
+        <tr class="pick"><td><strong>P2</strong> · the pipeline is the safety</td><td class="num"><strong>confirmed, strongest</strong></td><td>same model free-written says "block Google" · through menu + self-check, 0 of 300 marked risky actions shipped</td></tr>
+        <tr><td><strong>P3</strong> · freedom makes it worse</td><td class="num">confirmed in every test we ran</td><td>more reasoning: VPN test 0/6 → 6/6 wrong · bigger: missed 2 of 5 attacks · free text: disruption on 50/60 harmless</td></tr>
       </tbody>
     </table>
   </div>
   <div class="note acc">
-    <span class="tag">The unmeasured corner, named</span>
-    <p>Nobody ran the endpoint of P3 — a big model in a free-form agent loop, end to end. Every measured step toward freedom made results worse; the endpoint itself is <em>inferred, not measured</em>. That baseline is honest future work.</p>
+    <span class="tag">What we did not test</span>
+    <p>We never ran the full opposite design — a big model in a free agent loop, end to end. Every step toward freedom that we did measure made results worse. The endpoint is <em>predicted from the trend, not measured</em>. That test is honest future work.</p>
   </div>
   <span class="prov">n=71 · 4d-v1 · 16 Aug</span>
 </section>
@@ -1343,17 +1348,17 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
         <tr><td>Has this address appeared before?</td><td>26 correlated alerts, plus an open-value search on the username — 12 more</td></tr>
         <tr><td>Is this the user's own VPN egress?</td><td>his ocserv connect and the egress assignment are <em>in the correlated evidence</em> — this is what flipped the verdict</td></tr>
         <tr><td>Was there an MFA push?</td><td>the approved push sits in the same correlated set</td></tr>
-        <tr><td>Who owns this host?</td><td>agent and rule context pulled into the timeline — the lightest of the four, honestly</td></tr>
+        <tr><td>Who owns this host?</td><td>agent and rule context pulled into the timeline — the weakest answer of the four — we say so honestly</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="lead">The winner still mislabels 28 of 60 benign alerts — and every one of those 28 reports <em>still carries this evidence</em>. Overriding a label takes seconds; assembling the evidence was the twenty minutes. <strong>The label is advice. The evidence is the product.</strong></p>
+  <p class="lead">The winner still mislabels 28 of 60 harmless alerts — but every one of those 28 reports <em>still carries this evidence</em>. Fixing a wrong label takes seconds. Collecting the evidence takes twenty minutes. The agent does the twenty-minute part. <strong>The label is advice. The evidence is the product.</strong></p>
   <span class="prov">deep control run · 4d-v1 · 16 Aug</span>
 </section>
 
 <section class="slide" data-sec="7 · Conclusions">
   <p class="eyebrow">Position</p>
-  <h2>It builds the hypothesis. You still make the call.</h2>
+  <h2>It builds the hypothesis. The decision is yours.</h2>
   <p class="lead">Strictly read-only. No remediation tool is wired to the model — not disabled, <em>not present</em>.</p>
   <div class="metric-row">
     <div class="metric"><span class="val acc">8.4<span style="font-size:0.4em"> GiB</span></span><span class="cap">Everything you saw, resident</span></div>
@@ -1363,12 +1368,12 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
 
 <section class="slide" data-sec="7 · Conclusions">
   <p class="eyebrow">Take it home — everything you saw runs offline, for free</p>
-  <h2>Clone it tonight. Gate your model before you trust it.</h2>
+  <h2>Clone it tonight. Test your model before you trust it.</h2>
   <pre>git clone &lt;repo-url&gt;                <span class="c"># everything: pipeline, stack, benchmark</span>
 python -m bench.stage0              <span class="c"># the go/no-go gate from Learnings</span></pre>
   <div class="cols">
     <div class="col">
-      <h3>In the box</h3>
+      <h3>What you get</h3>
       <ul>
         <li>The 9-step pipeline, 448 tests</li>
         <li>Seeded Wazuh stack — 11 sources, FP pairs, hidden needles</li>
@@ -1377,7 +1382,7 @@ python -m bench.stage0              <span class="c"># the go/no-go gate from Lea
     </div>
     <div class="col">
       <h3>Run the gate first</h3>
-      <p>Structured-output probe, effort check, measured footprint — the answer to "can I build on this model at all?", for <em>your</em> hardware, in minutes. Being pulled is not being usable.</p>
+      <p>Structured-output probe, effort check, measured footprint — the answer to "can I build on this model at all?", for <em>your</em> hardware, in minutes. Downloaded does not mean working.</p>
     </div>
   </div>
   <div class="todo">
