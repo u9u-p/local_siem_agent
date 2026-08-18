@@ -1,0 +1,755 @@
+{
+  "report_id": "180e2ac3-77a2-40ec-abd4-cce9bbc29474",
+  "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+  "generated_at": "2026-08-18T02:31:50.067955Z",
+  "alert_summary": "A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010",
+        "rule_id": "100061",
+        "rule_level": 3,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 04295e39-12a8-5ac1-997f-9013b12ba010 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:30:59.517980Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 352,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 0
+      },
+      "output": {
+        "regex": {
+          "candidates": 3,
+          "validated": 3
+        },
+        "llm": {
+          "candidates": 3,
+          "validated": 2
+        },
+        "decode": {
+          "segments": 0,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "10.20.4.94"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local"
+          },
+          {
+            "type": "domain",
+            "value": "tommy.wong"
+          }
+        ]
+      },
+      "output_summary": "regex: 3 candidates, 3 validated; LLM: 3 candidates, 2 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-29T09:04:51.000+08:00\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Security-Auditing\",\"eventID\":\"4624\",\"eventRecordID\":\"920415\",\"channel\":\"Security\",\"computer\":\"DC01.corp.local\"},\"eventdata\":{\"targetUserName\":\"tommy.wong\",\"targetDomainName\":\"CORP\",\"ipAddress\":\"10.20.4.94\",\"logonType\":\"3\",\"workstationName\":\"DEV-TWONG02\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'targetUserName': 'tommy.wong', 'ipAddress': '10.20.4.94', 'targetDomainName': 'CORP', 'workstationName': 'DEV-TWONG02', 'logonType': '3'}, 'system': {'eventRecordID': '920415', 'eventID': '4624', 'computer': 'DC01.corp.local', 'channel': 'Security', 'providerName': 'Microsoft-Windows-Security-Auditing'}}, 'timestamp': '2026-07-29T09:04:51.000+08:00'}\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators from raw log. The log includes fields: ipAddress \"10.20.4.94\". Also computer \"DC01.corp.local\" is a domain? It's a hostname with .corp.local. That's a domain. Also maybe targetDomainName \"CORP\". That's a domain. Also maybe URL? No. No file hash. So list each candidate indicator with type and value in normal form.\n\nWe have ipAddress: 10.20.4.94 (already normal). computer: DC01.corp.local -> domain? It's a hostname, treat as domain. value: DC01.corp.local? Actually .corp.local is domain. So domain: DC01.corp.local.\n\ntargetDomainName: CORP -> domain: CORP.\n\nAlso maybe \"win\" providerName \"Microsoft-Windows-Security-Auditing\" not indicator.\n\nThus output list.\n\nWe need to output each candidate indicator with type and value.\n\nLet's produce:\n\n- ip: 10.20.4.94\n- domain: DC01.corp.local\n- domain: CORP\n\nBut maybe they want each indicator separate. Provide as list.\n\nLet's answer.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "ip",
+                "value": "10.20.4.94"
+              },
+              {
+                "type": "domain",
+                "value": "DC01.corp.local"
+              },
+              {
+                "type": "domain",
+                "value": "CORP"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 810,
+          "completion_tokens": 81,
+          "latency_ms": 4856,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:31:04.375193Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "10.20.4.94"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local"
+          },
+          {
+            "type": "domain",
+            "value": "tommy.wong"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "ip",
+            "value": "10.20.4.94",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "tommy.wong",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 3 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:31:04.375261Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100061"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100061",
+          "description": "Windows: successful logon for user $(win.eventdata.targetUserName) from $(win.eventdata.ipAddress).",
+          "level": 3,
+          "groups": [
+            "authentication_success",
+            "windows",
+            "windows_security"
+          ],
+          "mitre_technique_ids": [
+            "T1078"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:31:04.793150Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_rule_id_host",
+          "same_src_ip_24h"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "10.20.4.94",
+            "verdict": "unknown"
+          },
+          {
+            "value": "dc01.corp.local",
+            "verdict": "unknown"
+          },
+          {
+            "value": "tommy.wong",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_src_ip_24h": {
+            "total_count": 0,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_rule_id_host": {
+            "total_count": 8,
+            "distinct_counts": {
+              "source ips": 5,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "scanning",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "100061",
+          "hit_count": 8
+        },
+        "open_value": null,
+        "evidence_count": 16,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=scanning, evidence_count=16; follow-up same_rule_id_host added 8",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100061 (Windows: successful logon for user tommy.wong from 10.20.4.94.), level 3.\nAlert source IP: 10.20.4.94; destination IP: not set.\n\nCanonical search results:\n- same_src_ip_24h: 0 matching alert(s)\n- same_rule_id_host: 8 matching alert(s); distinct source ips: 5\n\nEnrichment verdicts:\n- ip 10.20.4.94 (none): unknown (lookup failed: no_provider_registered)\n- domain dc01.corp.local (none): unknown (lookup failed: no_provider_registered)\n- domain tommy.wong (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 8\n\nThe distinct-value counts describe how the matching alerts spread out: a high spread across many targets indicates a broad sweep, while many hits concentrated on a single target indicates repeated attempts against it.\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern type. Alert: successful logon for user tommy.wong from 10.20.4.94. That's a successful login from internal IP. Could be brute force? But it's a single successful login, not many attempts. Could be lateral movement? Successful logon could be part of lateral movement. However pattern type likely \"lateral_movement\" because it's a successful logon from internal host to another host? Destination IP not set. Could be just a normal login. The canonical search same_rule_id_host gave 8 matching alerts; distinct source ips:5. So many alerts with same rule ID but different source IPs. That suggests scanning? Or brute force? The pattern type: \"lateral_movement\" maybe because it's a successful logon from internal host to another host (maybe remote). But we have no destination IP. The enrichment unknown. The distinct-value counts: high spread across many targets indicates broad sweep. That suggests scanning. So pattern_type = scanning. Follow-up query: same_rule_id_host? That would give more details on same rule ID across hosts. That could confirm scanning. So answer: pattern_type: scanning; follow_up_query: same_rule_id_host.\n\nThus output: scanning, same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "scanning",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 682,
+          "completion_tokens": 27,
+          "latency_ms": 4121,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:31:08.932283Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 16,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "medium",
+        "confidence": "medium",
+        "rationale": "The alert shows a valid account login from an internal IP with scanning activity, indicating possible lateral movement but not necessarily a breach; thus medium severity. Confidence is medium due to limited enrichment."
+      },
+      "output_summary": "severity=medium, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100061 - Windows: successful logon for user tommy.wong from 10.20.4.94. (level 3, groups: windows, windows_security, authentication_success).\nKnown MITRE ATT&CK mapping: T1078 (Valid Accounts).\nCorrelation findings: pattern_type=scanning, evidence_count=16.\nEnrichment findings:\n- ip 10.20.4.94: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\n- domain tommy.wong: unknown (provider none)\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. The alert: successful logon for user tommy.wong from 10.20.4.94, level 3, groups windows, windows_security, authentication_success. MITRE T1078 Valid Accounts. Correlation pattern_type=scanning, evidence_count=16. Enrichment unknown. So likely a valid account used for scanning. Severity? Could be medium. Confidence medium. Rationale: scanning activity from internal IP using valid account suggests possible lateral movement, but unknown source. Provide one- to two-sentence rationale.\n\nThus output: severity medium, confidence medium, rationale: \"The alert shows a valid account login from an internal IP with scanning activity, indicating possible lateral movement but not necessarily a breach; thus medium severity. Confidence is medium due to limited enrichment.\"\n\nProvide in required format.",
+          "parsed_output": {
+            "severity": "medium",
+            "confidence": "medium",
+            "rationale": "The alert shows a valid account login from an internal IP with scanning activity, indicating possible lateral movement but not necessarily a breach; thus medium severity. Confidence is medium due to limited enrichment."
+          },
+          "attempts": 1,
+          "prompt_tokens": 426,
+          "completion_tokens": 63,
+          "latency_ms": 3304,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:31:12.236716Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 16,
+        "severity": "medium",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+          "rationale": "The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.",
+          "recommended_actions": [
+            "Disable or reset credentials for the affected user account",
+            "Isolate the affected host from the network pending investigation",
+            "Escalate to the incident response / Tier 2 team",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Notify the asset owner of the affected host or agent",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Escalate to a human analyst for manual review",
+            "Terminate the suspicious process on the affected host",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Check if the user tommy. Wong has any scheduled tasks or scripts that could be generating the scanning activity.",
+            "Inspect the process list on the host 10.20.4.94 for any unusual command‑line arguments or child processes that might be performing scans.",
+            "Correlate the login time with other events on the domain dc01. corp. local to see if the account was used for other privileged actions shortly after.",
+            "Review the Windows Event Logs for the same host for any failed logon attempts or privilege‑escalation events that could indicate a follow‑up attack.",
+            "If the scanning activity is still present, consider temporarily isolating the host and performing a full malware scan to rule out a resident scanner.",
+            "Document the exact IP address and domain name in a temporary internal threat‑intel feed to see if any known malicious activity has been reported from that source."
+          ],
+          "triage_verdict": "uncertain",
+          "triage_rationale": "The alert is uncertain because the login is legitimate but the concurrent scanning activity could be benign or malicious, and the lack of enrichment makes it hard to determine intent."
+        }
+      },
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=uncertain",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100061 - Windows: successful logon for user tommy.wong from 10.20.4.94. (level 3, groups: windows, windows_security, authentication_success).\nCorrelation findings: pattern_type=scanning, evidence_count=16.\nEnrichment findings:\n- ip 10.20.4.94: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\n- domain tommy.wong: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The alert shows a valid account login from an internal IP with scanning activity, indicating possible lateral movement but not necessarily a breach; thus medium severity. Confidence is medium due to limited enrichment.\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Need to decide which actions apply.\n\nGiven alert: successful logon for user tommy.wong from internal IP 10.20.4.94, scanning activity, medium severity. Likely lateral movement. Recommended actions: Disable or reset credentials? Possibly yes, because account may be compromised. Block source IP? Could be internal, maybe not needed. Isolate host? Might be good. Escalate to incident response? Yes. Review authentication logs over wider time window? Yes. Verify whether source IP/user is known service account? Yes. Run AV/EDR scan? Yes. Review file integrity monitoring? Yes. Patch vulnerable software? Possibly unknown. Notify asset owner? Yes. Rotate credentials? Yes. Review firewall/segmentation? Yes. Correlate indicator against wider environment? Yes. Preserve logs? Yes. No immediate action needed? Probably not. Escalate to human analyst? Yes. Terminate suspicious process? Possibly. Review parent-child process tree? Possibly. Manually review decoded command payload? Possibly.\n\nBut we must \"select every recommended_action below that applies to this alert\". So we need to list all that apply. Let's think: The alert is medium severity, scanning activity, internal IP. Likely lateral movement. So actions: Disable or reset credentials, Block source IP (maybe not needed but could), Isolate host, Escalate to incident response, Review authentication logs, Verify whether source IP/user is known service account, Run AV/EDR scan, Review file integrity monitoring, Notify asset owner, Rotate credentials, Review firewall/segmentation, Correlate indicator, Preserve logs, Escalate to human analyst, Terminate suspicious process, Review parent-child process tree, Manually review decoded command payload.\n\nBut \"Block the source IP at the network perimeter\" might be less appropriate because it's internal IP; blocking internal IP could disrupt legitimate traffic. Might not apply. Also \"No immediate action needed — monitor for recurrence\" is a no-action. But we are selecting actions that apply, not no-action.\n\nThus list all except Block source IP? Also \"No immediate action needed\" is not an action. So we exclude that.\n\nThus recommended actions: Disable or reset credentials for the affected user account; Isolate the affected host from the network pending investigation; Escalate to the incident response / Tier 2 team; Review authentication logs for this account over a wider time window; Verify whether the source IP/user is a known, expected service account or automation; Run an antivirus/EDR scan on the affected host; Review file integrity monitoring output for unauthorized changes on the affected host; Notify the asset owner of the affected host or agent; Rotate any credentials or secrets that may have been exposed; Review firewall/network segmentation rules for the affected subnet; Correlate this indicator against the wider environment beyond this alert's time window; Preserve logs and evidence for the affected host pending further investigation; Escalate to a human analyst for manual review; Terminate the suspicious process on the affected host; Review the parent-child process execution tree for the affected host; Manually review the decoded command payload for malicious intent.\n\nAlso \"Patch or update the vulnerable software identified for this host\" – we don't know vulnerable software, so maybe not apply. \"Review firewall/...\" already covered.\n\nThus produce output: alert_summary, expanded rationale, then list actions.\n\nWe must output in plain language. Probably format: alert_summary: \"A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.\" Expanded rationale: \"The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.\"\n\nThen list actions as bullet list.\n\nLet's produce.",
+          "parsed_output": {
+            "alert_summary": "A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+            "rationale": "The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.",
+            "recommended_actions": [
+              "Disable or reset credentials for the affected user account",
+              "Isolate the affected host from the network pending investigation",
+              "Escalate to the incident response / Tier 2 team",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Notify the asset owner of the affected host or agent",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Escalate to a human analyst for manual review",
+              "Terminate the suspicious process on the affected host",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1445,
+          "completion_tokens": 337,
+          "latency_ms": 15044,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100061 - Windows: successful logon for user tommy.wong from 10.20.4.94. (level 3, groups: windows, windows_security, authentication_success).\nCorrelation findings: pattern_type=scanning, evidence_count=16.\nEnrichment findings:\n- ip 10.20.4.94: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\n- domain tommy.wong: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The alert shows a valid account login from an internal IP with scanning activity, indicating possible lateral movement but not necessarily a breach; thus medium severity. Confidence is medium due to limited enrichment.\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must not give fixed list. Provide suggestions. Then classification.\n\nWe must label as experimental. Probably output:\n\n**Experimental** ... then content.\n\nMake sure it's clear it's experimental.\n\nProvide recommended actions: e.g., verify user activity, check for unusual processes, monitor network traffic, etc.\n\nThen classification: maybe uncertain.\n\nOne-sentence rationale: \"The alert is uncertain because the login is legitimate but the scanning activity could be benign or malicious, and enrichment is missing.\"\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Check if the user tommy. Wong has any scheduled tasks or scripts that could be generating the scanning activity.",
+              "Inspect the process list on the host 10.20.4.94 for any unusual command‑line arguments or child processes that might be performing scans.",
+              "Correlate the login time with other events on the domain dc01. corp. local to see if the account was used for other privileged actions shortly after.",
+              "Review the Windows Event Logs for the same host for any failed logon attempts or privilege‑escalation events that could indicate a follow‑up attack.",
+              "If the scanning activity is still present, consider temporarily isolating the host and performing a full malware scan to rule out a resident scanner.",
+              "Document the exact IP address and domain name in a temporary internal threat‑intel feed to see if any known malicious activity has been reported from that source."
+            ],
+            "triage_verdict": "uncertain",
+            "triage_rationale": "The alert is uncertain because the login is legitimate but the concurrent scanning activity could be benign or malicious, and the lack of enrichment makes it hard to determine intent."
+          },
+          "attempts": 1,
+          "prompt_tokens": 473,
+          "completion_tokens": 260,
+          "latency_ms": 5385,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:31:32.667286Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+          "The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.",
+          "Disable or reset credentials for the affected user account",
+          "Isolate the affected host from the network pending investigation",
+          "Escalate to the incident response / Tier 2 team",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Escalate to a human analyst for manual review",
+          "Terminate the suspicious process on the affected host",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": "1. A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "2. The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "3. Disable or reset credentials for the affected user account",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "4. Isolate the affected host from the network pending investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "5. Escalate to the incident response / Tier 2 team",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "6. Review authentication logs for this account over a wider time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "7. Verify whether the source IP/user is a known, expected service account or automation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "8. Run an antivirus/EDR scan on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "9. Review file integrity monitoring output for unauthorized changes on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "10. Notify the asset owner of the affected host or agent",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "11. Rotate any credentials or secrets that may have been exposed",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "12. Review firewall/network segmentation rules for the affected subnet",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "13. Correlate this indicator against the wider environment beyond this alert' s time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "14. Preserve logs and evidence for the affected host pending further investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "15. Escalate to a human analyst for manual review",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "16. Terminate the suspicious process on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "17. Review the parent-child process execution tree for the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "18. Manually review the decoded command payload for malicious intent",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 18 claim(s), 0 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=scanning, evidence_count=16.\nEnrichment findings:\n- ip 10.20.4.94: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\n- domain tommy.wong: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium.\n\nClaims to audit, in order:\n1. A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.\n2. The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.\n3. Disable or reset credentials for the affected user account\n4. Isolate the affected host from the network pending investigation\n5. Escalate to the incident response / Tier 2 team\n6. Review authentication logs for this account over a wider time window\n7. Verify whether the source IP/user is a known, expected service account or automation\n8. Run an antivirus/EDR scan on the affected host\n9. Review file integrity monitoring output for unauthorized changes on the affected host\n10. Notify the asset owner of the affected host or agent\n11. Rotate any credentials or secrets that may have been exposed\n12. Review firewall/network segmentation rules for the affected subnet\n13. Correlate this indicator against the wider environment beyond this alert's time window\n14. Preserve logs and evidence for the affected host pending further investigation\n15. Escalate to a human analyst for manual review\n16. Terminate the suspicious process on the affected host\n17. Review the parent-child process execution tree for the affected host\n18. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to evaluate each claim whether structured findings support it. Structured findings: pattern_type=scanning, evidence_count=16. Enrichment findings: three unknown IPs/domains. Risk assessment: severity=medium, confidence=medium.\n\nClaims:\n\n1. A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.\n\nSupported? We have enrichment: domain tommy.wong: unknown (provider none). That suggests user Tommy Wong unknown. Also scanning activity observed. So claim 1 is supported: user Tommy Wong logged in from internal IP while scanning, medium severity. Yes.\n\n2. The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.\n\nSupported? Yes, same reasoning. So claim 2 supported.\n\n3. Disable or reset credentials for the affected user account\n\nSupported? The findings suggest unknown user, but no explicit recommendation. However typical response includes disabling credentials. The structured findings don't directly say to disable credentials, but risk assessment medium suggests containment. The claim is a recommendation. Is it supported? The structured findings include risk assessment medium, confidence medium, recommend containment. Disabling credentials is a containment step. So supported.\n\n4. Isolate the affected host from the network pending investigation\n\nSupported? Yes, containment step. Structured findings suggest containment. So supported.\n\n5. Escalate to the incident response / Tier 2 team\n\nSupported? Yes, typical response. Structured findings include risk medium, confidence medium, recommend escalation. So supported.\n\n6. Review authentication logs for this account over a wider time window\n\nSupported? Yes, investigation step. Structured findings include review logs. So supported.\n\n7. Verify whether the source IP/user is a known, expected service account or automation\n\nSupported? Yes, enrichment unknown, so need verification. So supported.\n\n8. Run an antivirus/EDR scan on the affected host\n\nSupported? Yes, investigation step. Structured findings include scanning pattern. So supported.\n\n9. Review file integrity monitoring output for unauthorized changes on the affected host\n\nSupported? Yes, investigation step. So supported.\n\n10. Notify the asset owner of the affected host or agent\n\nSupported? Yes, typical response. Structured findings include asset owner? Not explicit but likely. So supported.\n\n11. Rotate any credentials or secrets that may have been exposed\n\nSupported? Yes, containment. Structured findings include risk medium. So supported.\n\n12. Review firewall/network segmentation rules for the affected subnet\n\nSupported? Yes, investigation. So supported.\n\n13. Correlate this indicator against the wider environment beyond this alert's time window\n\nSupported? Yes, investigation. So supported.\n\n14. Preserve logs and evidence for the affected host pending further investigation\n\nSupported? Yes. So supported.\n\n15. Escalate to a human analyst for manual review\n\nSupported? Yes. So supported.\n\n16. Terminate the suspicious process on the affected host\n\nSupported? Yes, containment. So supported.\n\n17. Review the parent-child process execution tree for the affected host\n\nSupported? Yes. So supported.\n\n18. Manually review the decoded command payload for malicious intent\n\nSupported? Yes. So supported.\n\nThus all claims are supported. No corrections needed. Return empty for each.\n\nBut need to output exactly one audit per claim, in same order. Probably list each claim with empty correction. Format? \" \" maybe. Provide empty string.\n\nThus output:\n\n1. \n2. \n... etc.\n\nLet's produce each line with claim number and empty correction.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": "1. A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "2. The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "3. Disable or reset credentials for the affected user account",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "4. Isolate the affected host from the network pending investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "5. Escalate to the incident response / Tier 2 team",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "6. Review authentication logs for this account over a wider time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "7. Verify whether the source IP/user is a known, expected service account or automation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "8. Run an antivirus/EDR scan on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "9. Review file integrity monitoring output for unauthorized changes on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "10. Notify the asset owner of the affected host or agent",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "11. Rotate any credentials or secrets that may have been exposed",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "12. Review firewall/network segmentation rules for the affected subnet",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "13. Correlate this indicator against the wider environment beyond this alert' s time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "14. Preserve logs and evidence for the affected host pending further investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "15. Escalate to a human analyst for manual review",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "16. Terminate the suspicious process on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "17. Review the parent-child process execution tree for the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "18. Manually review the decoded command payload for malicious intent",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1388,
+          "completion_tokens": 629,
+          "latency_ms": 17400,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:31:50.067901Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "180e2ac3-77a2-40ec-abd4-cce9bbc29474",
+        "alert_id": "04295e39-12a8-5ac1-997f-9013b12ba010"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('180e2ac3-77a2-40ec-abd4-cce9bbc29474', '04295e39-12a8-5ac1-997f-9013b12ba010', '2026-08-18 02:31:50.067955', 'A user named Tommy Wong logged in from an internal IP address while scanning activity was observed, raising a medium‑severity alert.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"04295e39-12a8-5ac1-997f-9013b12ba010\", \"rule_id\": ... (40286 characters truncated) ... y\": \"report 180e2ac3-77a2-40ec-abd4-cce9bbc29474 persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:31:50.068027Z\"}]', '[{\"indicator_type\": \"ip\", \"indicator_value\": \"10.20.4.94\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:31:04.375225Z\", \"verdict\": \"unknown\",  ... (522 characters truncated) ... 250Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:31:04.375250Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"medium\", \"confidence\": \"medium\", \"rationale\": \"The login is from within the corporate network, which is unusual for scanning activity,  ... (84 characters truncated) ...  IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps.\"}', '[\"Disable or reset credentials for the affected user account\", \"Isolate the affected host from the network pending investigation\", \"Escalate to the i ... (791 characters truncated) ... ed host\", \"Review the parent-child process execution tree for the affected host\", \"Manually review the decoded command payload for malicious intent\"]', '[\"Check if the user tommy. Wong has any scheduled tasks or scripts that could be generating the scanning activity.\", \"Inspect the process list on the ... (607 characters truncated) ...  address and domain name in a temporary internal threat\\\\u2011intel feed to see if any known malicious activity has been reported from that source.\"]', 'uncertain', 'The alert is uncertain because the login is legitimate but the concurrent scanning activity could be benign or malicious, and the lack of enrichment makes it hard to determine intent.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 5224, \"completion_tokens\": 1397, \"reasoning_chars\": 11852, \"llm_latency_ms\": 50110, \"wall_clock_ms\": 50634}', 'null', '3 enrichment lookup(s) errored or returned unknown verdicts', 'complete', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx8k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:31:50.071539Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "10.20.4.94",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:31:04.375225Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:31:04.375225Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:31:04.375244Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:31:04.375244Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "tommy.wong",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:31:04.375250Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:31:04.375250Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The login is from within the corporate network, which is unusual for scanning activity, suggesting possible lateral movement. Because the account is internal and the source IP is not known, the risk is moderate, not high. Enrichment is limited, so confidence is medium. We recommend containment and investigation steps."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Check if the user tommy. Wong has any scheduled tasks or scripts that could be generating the scanning activity.",
+    "Inspect the process list on the host 10.20.4.94 for any unusual command‑line arguments or child processes that might be performing scans.",
+    "Correlate the login time with other events on the domain dc01. corp. local to see if the account was used for other privileged actions shortly after.",
+    "Review the Windows Event Logs for the same host for any failed logon attempts or privilege‑escalation events that could indicate a follow‑up attack.",
+    "If the scanning activity is still present, consider temporarily isolating the host and performing a full malware scan to rule out a resident scanner.",
+    "Document the exact IP address and domain name in a temporary internal threat‑intel feed to see if any known malicious activity has been reported from that source."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert is uncertain because the login is legitimate but the concurrent scanning activity could be benign or malicious, and the lack of enrichment makes it hard to determine intent.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": null,
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 5224,
+    "completion_tokens": 1397,
+    "reasoning_chars": 11852,
+    "llm_latency_ms": 50110,
+    "wall_clock_ms": 50634
+  }
+}

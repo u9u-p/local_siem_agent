@@ -129,6 +129,11 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--stage", choices=sorted(STAGE_PLAN), default="screen")
+    ap.add_argument(
+        "--context", type=int, default=None,
+        help="num_ctx for the bounded variant. Only for testing whether the benchmark "
+             "context is a binding constraint -- comparable runs must all use the default.",
+    )
     ap.add_argument("--snapshot", type=Path, default=SNAPSHOT)
     ap.add_argument(
         "--effort", default=None,
@@ -142,6 +147,10 @@ def main() -> None:
         raise SystemExit(f"no snapshot at {args.snapshot} — run `agent pull-alerts` first")
 
     label = f"{args.model.replace(':', '_')}@{args.effort or 'default'}"
+    # Any explicit --context gets its own directory, including one equal to the default:
+    # a repeat run must never overwrite the block it is being compared against.
+    if args.context is not None:
+        label += f"+ctx{args.context // 1024}k"
     workdir = RESULTS / label / args.stage
     workdir.mkdir(parents=True, exist_ok=True)
     shutil.copy(args.snapshot, workdir / "alerts.db")
@@ -153,14 +162,15 @@ def main() -> None:
     # per-request num_ctx does not survive the OpenAI-compat path; the Modelfile
     # PARAMETER does, which is what bench_variant bakes in. Results directories stay
     # keyed on the base name, so the variant is invisible to the scorer.
-    model = bench_variant(args.model) or args.model
+    context = args.context if args.context is not None else CONTEXT_TOKENS
+    model = bench_variant(args.model, context) or args.model
     if model == args.model:
         print(f"  ! no bounded variant for {args.model} — running its default context", flush=True)
 
     selected = select_alerts(args.snapshot, args.stage)
     total = sum(repeats for *_, repeats in selected)
     print(f"{model} @ {args.effort or 'default'} / {args.stage}: "
-          f"{len(selected)} alerts, {total} runs, num_ctx {CONTEXT_TOKENS}", flush=True)
+          f"{len(selected)} alerts, {total} runs, num_ctx {context}", flush=True)
 
     results_file = workdir / "runs.jsonl"
     done = 0

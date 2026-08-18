@@ -1,0 +1,831 @@
+{
+  "report_id": "62515e54-dbf7-45a8-867f-6dc847447e9f",
+  "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+  "generated_at": "2026-08-18T02:20:04.669022Z",
+  "alert_summary": "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2",
+        "rule_id": "106001",
+        "rule_level": 5,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 0236843f-347d-5142-95aa-99f01aac46b2 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:18:38.081916Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 420,
+        "data_keys": [
+          "mimecast",
+          "srcip"
+        ],
+        "extra_texts_count": 0
+      },
+      "output": {
+        "regex": {
+          "candidates": 10,
+          "validated": 5
+        },
+        "llm": {
+          "candidates": 3,
+          "validated": 3
+        },
+        "decode": {
+          "segments": 0,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "209.85.220.41"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "meridian-audit.com"
+          },
+          {
+            "type": "domain",
+            "value": "raj.kumar"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: datetime=2026-07-30T09:07:53Z|aCode=aN7b0h3n6q9rS1|acc=VICTC-1|Route=Inbound|Dir=Inbound|Sender=jane.tan@meridian-audit.com|headerFrom=Jane Tan <jane.tan@meridian-audit.com>|Rcpt=raj.kumar@victimcorp.com|Subject=Audit evidence request - Q2 access reviews|MsgId=<f2c5b9d3-8a42-4c03-8f12-4d6e8b0a3c21@meridian-audit.com>|IP=209.85.220.41|Act=Hld|Definition=Impersonation|ReplyMismatch=false|SenderDomain=meridian-audit.com\nAdditional decoded fields: {'srcip': '209.85.220.41', 'mimecast': {'acc': 'VICTC-1', 'IP': '209.85.220.41', 'Definition': 'Impersonation', 'SenderDomain': 'meridian-audit.com', 'Dir': 'Inbound', 'MsgId': '<f2c5b9d3-8a42-4c03-8f12-4d6e8b0a3c21@meridian-audit.com>', 'Subject': 'Audit evidence request - Q2 access reviews', 'headerFrom': 'Jane Tan <jane.tan@meridian-audit.com>', 'Sender': 'jane.tan@meridian-audit.com', 'datetime': '2026-07-30T09:07:53Z', 'Rcpt': 'raj.kumar@victimcorp.com', 'Act': 'Hld', 'aCode': 'aN7b0h3n6q9rS1', 'ReplyMismatch': 'false', 'Route': 'Inbound'}}\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have IP=209.85.220.41. Also SenderDomain=meridian-audit.com, Rcpt=raj.kumar@victimcorp.com (email). Also maybe other domains: meridian-audit.com, victimcorp.com. Also maybe URL? No. No file hash. So list candidates:\n\nIP: 209.85.220.41 (type ip)\nDomain: meridian-audit.com (type domain)\nDomain: victimcorp.com (type domain)\nEmail addresses are not requested.\n\nAlso maybe \"aCode\" is not indicator.\n\nThus output list.\n\nAlso note obfuscated? IP is normal.\n\nThus produce list.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "ip",
+                "value": "209.85.220.41"
+              },
+              {
+                "type": "domain",
+                "value": "meridian-audit.com"
+              },
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 894,
+          "completion_tokens": 87,
+          "latency_ms": 3891,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:18:41.973592Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "209.85.220.41"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "meridian-audit.com"
+          },
+          {
+            "type": "domain",
+            "value": "raj.kumar"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "ip",
+            "value": "209.85.220.41",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "meridian-audit.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "raj.kumar",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 5 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:18:41.973682Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "106001"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "106001",
+          "description": "Mimecast held a message from $(mimecast.Sender) to $(mimecast.Rcpt) for review - reason $(mimecast.Definition), subject '$(mimecast.Subject)'.",
+          "level": 5,
+          "groups": [
+            "mimecast"
+          ],
+          "mitre_technique_ids": [
+            "T1566"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:18:42.388620Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_rule_id_host",
+          "same_src_ip_24h"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "209.85.220.41",
+            "verdict": "unknown"
+          },
+          {
+            "value": "jane.tan",
+            "verdict": "unknown"
+          },
+          {
+            "value": "meridian-audit.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "raj.kumar",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_src_ip_24h": {
+            "total_count": 3,
+            "distinct_counts": {
+              "source ips": 1,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_rule_id_host": {
+            "total_count": 22,
+            "distinct_counts": {
+              "source ips": 12,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "scanning",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "106001",
+          "hit_count": 22
+        },
+        "open_value": null,
+        "evidence_count": 47,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=scanning, evidence_count=47; follow-up same_rule_id_host added 22",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 106001 (Mimecast held a message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com for review - reason Impersonation, subject 'Audit evidence request - Q2 access reviews'.), level 5.\nAlert source IP: 209.85.220.41; destination IP: not set.\n\nCanonical search results:\n- same_src_ip_24h: 3 matching alert(s); distinct source ips: 1\n- same_rule_id_host: 22 matching alert(s); distinct source ips: 12\n\nEnrichment verdicts:\n- ip 209.85.220.41 (none): unknown (lookup failed: no_provider_registered)\n- domain jane.tan (none): unknown (lookup failed: no_provider_registered)\n- domain meridian-audit.com (none): unknown (lookup failed: no_provider_registered)\n- domain raj.kumar (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 25\n\nThe distinct-value counts describe how the matching alerts spread out: a high spread across many targets indicates a broad sweep, while many hits concentrated on a single target indicates repeated attempts against it.\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type based on data. Alert: rule 106001, impersonation, subject 'Audit evidence request - Q2 access reviews'. Source IP 209.85.220.41, destination IP not set. Canonical search results: same_src_ip_24h: 3 matching alerts; distinct source ips: 1 (so same source IP across 3 alerts). same_rule_id_host: 22 matching alerts; distinct source ips: 12 (so many source IPs). Enrichment all unknown. Total evidence 25.\n\nPattern: many alerts from same source IP targeting many different hosts (different destinations). That suggests scanning or brute force? Since same source IP, multiple targets, could be scanning for vulnerable hosts. Also rule is impersonation, maybe lateral movement? Lateral movement would involve moving from compromised host to others, but source IP is same across alerts, not necessarily same host. Could be scanning for accounts. The pattern_type likely \"scanning\". Follow-up query: same_src_ip_24h already gives 3 matches, but we might want same_rule_id_host to see if many source IPs? Already have 22 matches with 12 source IPs, maybe not needed. The question: pick at most one follow_up_query if further investigation of one of the canonical searches would help confirm pattern. Since we have same_src_ip_24h already shows 3 matches, maybe we need same_rule_id_host to see if many source IPs? But pattern is scanning, so same_src_ip_24h is enough. However maybe we need same_rule_id_host to see if many source IPs indicate scanning across many IPs. The pattern_type scanning: many source IPs targeting same rule. So follow_up_query: same_rule_id_host.\n\nThus answer: pattern_type: scanning; follow_up_query: same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "scanning",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 925,
+          "completion_tokens": 27,
+          "latency_ms": 6040,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:18:48.462150Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 47,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "high",
+        "confidence": "medium",
+        "rationale": "The alert involves a phishing attempt (MITRE T1566) with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. However, the lack of domain reputation data limits confidence to medium."
+      },
+      "output_summary": "severity=high, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 106001 - Mimecast held a message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com for review - reason Impersonation, subject 'Audit evidence request - Q2 access reviews'. (level 5, groups: mimecast).\nKnown MITRE ATT&CK mapping: T1566 (Phishing).\nCorrelation findings: pattern_type=scanning, evidence_count=47.\nEnrichment findings:\n- ip 209.85.220.41: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain meridian-audit.com: unknown (provider none)\n- domain raj.kumar: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity based on rule: Mimecast alert, impersonation, subject \"Audit evidence request - Q2 access reviews\". Level 5, groups: mimecast. MITRE ATT&CK T1566 Phishing. Correlation pattern scanning, evidence count 47. Enrichment unknown. Likely high severity? Level 5 maybe high. Confidence medium? Provide rationale: impersonation phishing, unknown domains, scanning pattern, 47 evidence suggests strong. So severity high, confidence medium. Provide one- to two-sentence rationale.",
+          "parsed_output": {
+            "severity": "high",
+            "confidence": "medium",
+            "rationale": "The alert involves a phishing attempt (MITRE T1566) with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. However, the lack of domain reputation data limits confidence to medium."
+          },
+          "attempts": 1,
+          "prompt_tokens": 413,
+          "completion_tokens": 80,
+          "latency_ms": 2863,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:18:51.325396Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 47,
+        "severity": "high",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+          "rationale": "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.",
+          "recommended_actions": [
+            "Disable or reset credentials for the affected user account",
+            "Block the source IP at the network perimeter",
+            "Isolate the affected host from the network pending investigation",
+            "Escalate to the incident response / Tier 2 team",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Notify the asset owner of the affected host or agent",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Escalate to a human analyst for manual review",
+            "Terminate the suspicious process on the affected host",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Ask the security team to manually verify the authenticity of the email by contacting the sender through a known, out‑of‑band channel.",
+            "Temporarily block the IP address 209.85.220.41 at the perimeter firewall while the investigation continues.",
+            "Add a watchlist entry for the domain victimcorp.com to flag any further outbound connections from that host.",
+            "Run a local DNS lookup for the sub‑domains jane.an and meridian‑audit.com to see if they resolve to internal services or external hosts.",
+            "Correlate the 47 evidence points with any recent privileged account activity on victimcorp.com to see if the scan is part of a broader lateral‑movement attempt."
+          ],
+          "triage_verdict": "uncertain",
+          "triage_rationale": "The alert is based on a scanning pattern and impersonation, but without domain reputation data the confidence is limited, making a definitive true_positive or false_positive call uncertain."
+        }
+      },
+      "output_summary": "draft-A: 17 action(s) selected; draft-B: experimental triage=uncertain",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 106001 - Mimecast held a message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com for review - reason Impersonation, subject 'Audit evidence request - Q2 access reviews'. (level 5, groups: mimecast).\nCorrelation findings: pattern_type=scanning, evidence_count=47.\nEnrichment findings:\n- ip 209.85.220.41: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain meridian-audit.com: unknown (provider none)\n- domain raj.kumar: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium, rationale: The alert involves a phishing attempt (MITRE T1566) with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. However, the lack of domain reputation data limits confidence to medium.\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Need to decide which actions apply.\n\nGiven high severity, medium confidence. Likely actions: Disable or reset credentials for affected user account? Possibly yes. Block source IP? Yes. Isolate host? Possibly. Escalate to incident response? Yes. Review authentication logs? Yes. Verify whether source IP/ user is known service account? Yes. Run AV/EDR scan? Yes. Review file integrity monitoring? Yes. Patch vulnerable software? Possibly if vulnerable software identified. But we don't know. Could include. Notify asset owner? Yes. Rotate credentials? Yes. Review firewall/segmentation? Yes. Correlate indicator? Yes. Preserve logs? Yes. No immediate action needed? Probably not. Escalate to human analyst? Yes. Terminate suspicious process? Possibly. Review parent-child tree? Possibly. Manually review decoded command payload? Possibly.\n\nBut we must \"select every recommended_action below that applies to this alert\". So we need to include all that apply. Likely many. Let's list:\n\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent\n\nAlso \"No immediate action needed — monitor for recurrence\" is not an action, it's a recommendation but not an action. \"No immediate action needed\" is not an action to select.\n\nThus produce output with alert_summary, expanded rationale, and list of selected actions.\n\nWe must output in plain language. Probably format:\n\nAlert Summary: ... \nRationale: ...\nRecommended Actions: [list]\n\nLet's craft.\n\nNow produce final answer.",
+          "parsed_output": {
+            "alert_summary": "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+            "rationale": "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.",
+            "recommended_actions": [
+              "Disable or reset credentials for the affected user account",
+              "Block the source IP at the network perimeter",
+              "Isolate the affected host from the network pending investigation",
+              "Escalate to the incident response / Tier 2 team",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Notify the asset owner of the affected host or agent",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Escalate to a human analyst for manual review",
+              "Terminate the suspicious process on the affected host",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1213,
+          "completion_tokens": 398,
+          "latency_ms": 12111,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 106001 - Mimecast held a message from jane.tan@meridian-audit.com to raj.kumar@victimcorp.com for review - reason Impersonation, subject 'Audit evidence request - Q2 access reviews'. (level 5, groups: mimecast).\nCorrelation findings: pattern_type=scanning, evidence_count=47.\nEnrichment findings:\n- ip 209.85.220.41: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain meridian-audit.com: unknown (provider none)\n- domain raj.kumar: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium, rationale: The alert involves a phishing attempt (MITRE T1566) with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. However, the lack of domain reputation data limits confidence to medium.\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental, not vetted section. Must label experimental. Provide additional recommended actions in own words, no fixed list. Then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must ensure we label experimental. Probably start with \"Experimental:\" then content. Provide recommended actions: e.g., verify sender, block IP, monitor, etc. Then classification: uncertain, rationale: limited domain reputation.\n\nMake sure it's experimental, not trusted guidance. So maybe include disclaimer.\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Ask the security team to manually verify the authenticity of the email by contacting the sender through a known, out‑of‑band channel.",
+              "Temporarily block the IP address 209.85.220.41 at the perimeter firewall while the investigation continues.",
+              "Add a watchlist entry for the domain victimcorp.com to flag any further outbound connections from that host.",
+              "Run a local DNS lookup for the sub‑domains jane.an and meridian‑audit.com to see if they resolve to internal services or external hosts.",
+              "Correlate the 47 evidence points with any recent privileged account activity on victimcorp.com to see if the scan is part of a broader lateral‑movement attempt."
+            ],
+            "triage_verdict": "uncertain",
+            "triage_rationale": "The alert is based on a scanning pattern and impersonation, but without domain reputation data the confidence is limited, making a definitive true_positive or false_positive call uncertain."
+          },
+          "attempts": 1,
+          "prompt_tokens": 499,
+          "completion_tokens": 235,
+          "latency_ms": 4783,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:19:08.220661Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+          "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.",
+          "Disable or reset credentials for the affected user account",
+          "Block the source IP at the network perimeter",
+          "Isolate the affected host from the network pending investigation",
+          "Escalate to the incident response / Tier 2 team",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Escalate to a human analyst for manual review",
+          "Terminate the suspicious process on the affected host",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Disable or reset credentials for the affected user account",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Block the source IP at the network perimeter",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Isolate the affected host from the network pending investigation",
+            "supported": false,
+            "correction": "Preserve logs and evidence for the affected host pending further investigation."
+          },
+          {
+            "claim": "Escalate to the incident response / Tier 2 team",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review authentication logs for this account over a wider time window",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Run an antivirus/EDR scan on the affected host",
+            "supported": false,
+            "correction": "Preserve logs and evidence for the affected host pending further investigation."
+          },
+          {
+            "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "supported": false,
+            "correction": "Preserve logs and evidence for the affected host pending further investigation."
+          },
+          {
+            "claim": "Notify the asset owner of the affected host or agent",
+            "supported": false,
+            "correction": "Escalate to a human analyst for manual review."
+          },
+          {
+            "claim": "Rotate any credentials or secrets that may have been exposed",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Review firewall/network segmentation rules for the affected subnet",
+            "supported": false,
+            "correction": ""
+          },
+          {
+            "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Preserve logs and evidence for the affected host pending further investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Escalate to a human analyst for manual review",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Terminate the suspicious process on the affected host",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Review the parent-child process execution tree for the affected host",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          },
+          {
+            "claim": "Manually review the decoded command payload for malicious intent",
+            "supported": false,
+            "correction": "Review authentication logs for this account over a wider time window."
+          }
+        ],
+        "flagged_claims": [
+          "Disable or reset credentials for the affected user account",
+          "Isolate the affected host from the network pending investigation",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Terminate the suspicious process on the affected host",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 19 claim(s), 12 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=scanning, evidence_count=47.\nEnrichment findings:\n- ip 209.85.220.41: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain meridian-audit.com: unknown (provider none)\n- domain raj.kumar: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium.\n\nClaims to audit, in order:\n1. A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.\n2. The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.\n3. Disable or reset credentials for the affected user account\n4. Block the source IP at the network perimeter\n5. Isolate the affected host from the network pending investigation\n6. Escalate to the incident response / Tier 2 team\n7. Review authentication logs for this account over a wider time window\n8. Verify whether the source IP/user is a known, expected service account or automation\n9. Run an antivirus/EDR scan on the affected host\n10. Review file integrity monitoring output for unauthorized changes on the affected host\n11. Notify the asset owner of the affected host or agent\n12. Rotate any credentials or secrets that may have been exposed\n13. Review firewall/network segmentation rules for the affected subnet\n14. Correlate this indicator against the wider environment beyond this alert's time window\n15. Preserve logs and evidence for the affected host pending further investigation\n16. Escalate to a human analyst for manual review\n17. Terminate the suspicious process on the affected host\n18. Review the parent-child process execution tree for the affected host\n19. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to evaluate each claim whether structured findings support it. Structured findings: correlation findings pattern_type=scanning, evidence_count=47. Enrichment findings: list of unknown domains/ip. Risk assessment severity=high, confidence=medium.\n\nClaims:\n\n1. A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.\n\nSupported? We have enrichment: domain jane.tan: unknown (provider none). Also domain meridian-audit.com unknown. So we have unknown domain, but claim says phishing email from jane.tan@meridian-audit.com. That's plausible. Structured findings: scanning pattern 47 evidence, enrichment unknown domains. Risk assessment high severity medium confidence. So claim is supported? The claim is about phishing email impersonation. We have evidence of unknown domain, but not explicit that it's phishing. However risk assessment high severity suggests phishing. So claim is supported.\n\n2. The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.\n\nSupported? Yes, matches risk assessment high severity, scanning pattern 47 evidence, unknown domains, medium confidence. So claim supported.\n\n3. Disable or reset credentials for the affected user account\n\nSupported? No direct evidence about user account. Enrichment only domain unknown. No mention of user account. So claim not supported. Need correction: \"Disable or reset credentials for the affected user account\" is not supported; better: \"Review authentication logs for this account over a wider time window\" (claim 7). So correction: \"Review authentication logs for this account over a wider time window.\"\n\n4. Block the source IP at the network perimeter\n\nSupported? Enrichment includes IP 209.85.220.41 unknown. So yes, we have source IP unknown. So claim supported.\n\n5. Isolate the affected host from the network pending investigation\n\nSupported? No evidence about host isolation. Not directly supported. Correction: \"Isolate the affected host from the network pending investigation\" is a typical response but not directly supported by findings. Maybe we can replace with \"Preserve logs and evidence for the affected host pending further investigation\" (claim 15). But claim 5 is about isolation. Not supported. Provide correction: \"Preserve logs and evidence for the affected host pending further investigation.\"\n\n6. Escalate to the incident response / Tier 2 team\n\nSupported? Yes, high severity, unknown domains, scanning pattern. So claim supported.\n\n7. Review authentication logs for this account over a wider time window\n\nSupported? Yes, we have user account? Not directly. But claim 7 is about reviewing logs. That's a standard response. Not directly supported by findings but it's a logical next step. However we need to decide if structured findings support it. The findings are about scanning and enrichment, not logs. So claim 7 not directly supported. Correction: maybe \"Review authentication logs for this account over a wider time window\" is a generic recommendation, not supported. But we need to produce correction if claim not supported. Provide better-supported replacement: \"Review authentication logs for this account over a wider time window\" is already a replacement? Actually claim 7 is that. So we need to replace with something supported: \"Review authentication logs for this account over a wider time window\" is not supported. Better: \"Review file integrity monitoring output for unauthorized changes on the affected host\" (claim 10) is supported? Not directly. Hmm.\n\nMaybe we should keep claim 7 as is? The instruction: \"If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\" So if claim not supported, we need to provide correction (i.e., replace claim with better-supported one). So we need to output corrected claim text. So for claim 7, we need a better-supported replacement. What is supported? The enrichment includes unknown domain jane.tan, maybe the account is jane. So reviewing authentication logs for jane. That is plausible. So we can keep claim 7 as is? It's about reviewing logs for this account. That's a standard response, not directly supported but maybe okay. However the instruction: \"If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\" So we need to decide if claim is supported. I'd say not directly supported. So we need to replace with something supported: \"Review authentication logs for this account over a wider time window\" is the claim itself. Hmm.\n\nMaybe we should replace with \"Review file integrity monitoring output for unauthorized changes on the affected host\" (claim 10) is supported? Not directly.\n\nBetter: \"Review authentication logs for this account over a wider time window\" is a generic step, not tied to findings. So maybe we should replace with \"Review authentication logs for this account over a wider time window\" is already the claim. So no correction needed? But claim 7 is not supported. So we need a better-supported replacement: \"Review authentication logs for this account over a wider time window\" is the same. Hmm.\n\nMaybe we should replace with \"Review authentication logs for this account over a wider time window\" is the only one that mentions account. So it's okay.\n\nBut claim 3 is about disabling credentials, not supported. So we replace with claim 7. So correction: \"Review authentication logs for this account over a wider time window.\"\n\nThus claim 3 corrected to claim 7.\n\nNow claim 8: Verify whether the source IP/user is a known, expected service account or automation\n\nSupported? We have IP unknown, domain unknown. No info about service account. So not supported. Provide correction: maybe \"Review authentication logs for this account over a wider time window\" again? But that's claim 7. Maybe \"Review authentication logs for this account over a wider time window\" covers verification. So replace claim 8 with that? But claim 8 is verification. Could be supported by logs. So we replace claim 8 with \"Review authentication logs for this account over a wider time window.\"\n\nBut we already used that for claim 7. Might be okay.\n\nClaim 9: Run an antivirus/EDR scan on the affected host\n\nSupported? No evidence about host. Not supported. Provide correction: \"Review file integrity monitoring output for unauthorized changes on the affected host\" (claim 10) is supported? Not directly. Maybe \"Preserve logs and evidence for the affected host pending further investigation\" (claim 15) is supported. So replace claim 9 with \"Preserve logs and evidence for the affected host pending further investigation.\"\n\nClaim 10: Review file integrity monitoring output for unauthorized changes on the affected host\n\nSupported? No evidence about host. Not supported. Provide correction: \"Preserve logs and evidence for the affected host pending further investigation\" again? That's claim 15. So replace claim 10 with \"Preserve logs and evidence for the affected host pending further investigation.\"\n\nBut we already used that for claim 9. Might be okay.\n\nClaim 11: Notify the asset owner of the affected host or agent\n\nSupported? No evidence about asset owner. Not supported. Provide correction: \"Preserve logs and evidence for the affected host pending further investigation\" again? Or \"Escalate to a human analyst for manual review\" (claim 16). That is supported. So replace claim 11 with \"Escalate to a human analyst for manual review.\"\n\nClaim 12: Rotate any credentials or secrets that may have been exposed\n\nSupported? No evidence about credentials. Not supported. Provide correction: \"Review authentication logs for this account over a wider time window\" again? Or \"Review file integrity monitoring output...\" Hmm. Maybe \"Review authentication logs for this account over a wider time window\" is about credentials. So replace claim 12 with \"Review authentication logs for this account over a wider time window.\"\n\nClaim 13: Review firewall/network segmentation rules for the affected subnet\n\nSupported? No evidence about subnet. Not supported. Provide correction: \"Review firewall/network segmentation rules for the affected subnet\" is claim itself. Not supported. Maybe \"Review firewall/network segmentation rules for the affected subnet\" is generic. Could be okay. But we need better-supported replacement: \"Review firewall/network segmentation rules for the affected subnet\" is claim 13. Not supported. Maybe \"Review firewall/network segmentation rules for the affected subnet\" is not supported. Provide correction: \"Review firewall/network segmentation rules for the affected subnet\" is same. Hmm.\n\nMaybe we should replace with \"Review firewall/network segmentation rules for the affected subnet\" is the claim, not supported. Better: \"Review firewall/network segmentation rules for the affected subnet\" is the only one. So maybe leave empty? But instruction: if not supported, propose better-supported replacement. So we need a replacement claim that is supported. Which claim is supported? Claim 4 block IP, claim 5 isolate host, claim 6 escalate, claim 14 correlate, claim 15 preserve logs, claim 16 escalate human, claim 17 terminate process, claim 18 review process tree, claim 19 manually review payload. Those are actions. So we could replace claim 13 with \"Review firewall/network segmentation rules for the affected subnet\" is same. Not good.\n\nMaybe we should replace claim 13 with \"Review firewall/network segmentation rules for the affected subnet\" is the claim, not supported. So we need a different claim that is supported: \"Review authentication logs for this account over a wider time window\" again. But that's about logs.\n\nProbably we should leave correction empty for claim 13? But instruction says if not supported, propose better-supported replacement. So we need to replace claim 13 with something supported: \"Review firewall/network segmentation rules for the affected subnet\" is the claim itself. So maybe we cannot replace. Hmm.\n\nMaybe we should just leave correction empty for claim 13 because it's a generic recommendation not tied to findings. But we need to produce correction text? The output format: \"Return exactly one audit per claim, in the same order.\" Likely we output either the claim text (if supported) or a corrected claim text (if not). So for claim 13, we need to output corrected claim text (replacement). So we need a replacement claim that is supported. Which claim is supported? Claim 4 block IP, claim 5 isolate host, claim 6 escalate, claim 14 correlate, claim 15 preserve logs, claim 16 escalate human, claim 17 terminate process, claim 18 review process tree, claim 19 manually review payload. Among those, \"Review firewall/network segmentation rules for the affected subnet\" is not supported. So maybe we replace claim 13 with \"Review firewall/network segmentation rules for the affected subnet\" is same. Not good.\n\nMaybe we should replace claim 13 with \"Review firewall/network segmentation rules for the affected subnet\" is the only one about firewall. So we cannot replace. So maybe we leave correction empty? But instruction says if not supported, propose better-supported replacement. So we must propose a replacement claim that is supported. Could be \"Review firewall/network segmentation rules for the affected subnet\" is the claim, but it's not supported. So maybe we replace with \"Review firewall/network segmentation rules for the affected subnet\" is the same. Hmm.\n\nMaybe we should just output the original claim (no correction) because it's not supported but we cannot propose better. But instruction says \"If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\" So if we cannot propose better, leave correction empty. So for claim 13, correction empty.\n\nSimilarly claim 14: Correlate this indicator against the wider environment beyond this alert's time window\n\nSupported? Yes, scanning pattern 47 evidence, unknown domains, high severity. So claim supported.\n\nClaim 15: Preserve logs and evidence for the affected host pending further investigation\n\nSupported? Yes, typical response, supported.\n\nClaim 16: Escalate to a human analyst for manual review\n\nSupported? Yes.\n\nClaim 17: Terminate the suspicious process on the affected host\n\nSupported? No evidence about process. Not supported. Provide correction: maybe \"Review authentication logs for this account over a wider time window\" again? Or \"Review file integrity monitoring output...\" Not about process. Better: \"Review authentication logs for this account over a wider time window\" is about logs. Not process. Maybe \"Review authentication logs for this account over a wider time window\" is not process. So maybe replace with \"Review authentication logs for this account over a wider time window\" again. But we already used that.\n\nMaybe we should replace claim 17 with \"Review authentication logs for this account over a wider time window\" is not about process. Hmm.\n\nBetter: \"Review authentication logs for this account over a wider time window\" is claim 7. So we can replace claim 17 with that.\n\nClaim 18: Review the parent-child process execution tree for the affected host\n\nSupported? No evidence. Not supported. Provide correction: \"Review authentication logs for this account over a wider time window\" again? Or \"Review file integrity monitoring output...\" Not about process tree. Maybe \"Review authentication logs for this account over a wider time window\" is about logs. So replace claim 18 with that.\n\nClaim 19: Manually review the decoded command payload for malicious intent\n\nSupported? No evidence. Not supported. Provide correction: \"Review authentication logs for this account over a wider time window\" again? Or \"Review file integrity monitoring output...\" Not about payload. Maybe \"Review authentication logs for this account over a wider time window\" is about logs. So replace claim 19 with that.\n\nBut we are repeating same replacement many times. Might be okay.\n\nNow produce output: For each claim, output either the claim text (if supported) or corrected claim text (if not). For those with correction empty, output empty? Probably output empty string.\n\nLet's list:\n\n1. Supported -> output claim 1 text.\n\n2. Supported -> output claim 2 text.\n\n3. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n4. Supported -> output claim 4 text.\n\n5. Not supported -> correction: \"Preserve logs and evidence for the affected host pending further investigation.\"\n\n6. Supported -> output claim 6 text.\n\n7. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n8. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n9. Not supported -> correction: \"Preserve logs and evidence for the affected host pending further investigation.\"\n\n10. Not supported -> correction: \"Preserve logs and evidence for the affected host pending further investigation.\"\n\n11. Not supported -> correction: \"Escalate to a human analyst for manual review.\"\n\n12. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n13. Correction empty -> output empty.\n\n14. Supported -> output claim 14 text.\n\n15. Supported -> output claim 15 text.\n\n16. Supported -> output claim 16 text.\n\n17. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n18. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\n19. Not supported -> correction: \"Review authentication logs for this account over a wider time window.\"\n\nNow produce output as list of 19 items, each on separate line? \"Return exactly one audit per claim, in the same order.\" So likely each claim's text (or correction) as a line.\n\nLet's output:\n\n1. A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.\n2. The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.\n3. Review authentication logs for this account over a wider time window.\n4. Block the source IP at the network perimeter.\n5. Preserve logs and evidence for the affected host pending further investigation.\n6. Escalate to the incident response / Tier 2 team.\n7. Review authentication logs for this account over a wider time window.\n8. Review authentication logs for this account over a wider time window.\n9. Preserve logs and evidence for the affected host pending further investigation.\n10. Preserve logs and evidence for the affected host pending further investigation.\n11. Escalate to a human analyst for manual review.\n12. Review authentication logs for this account over a wider time window.\n13. \n14. Correlate this indicator against the wider environment beyond this alert's time window.\n15. Preserve logs and evidence for the affected host pending further investigation.\n16. Escalate to a human analyst for manual review.\n17. Review authentication logs for this account over a wider time window.\n18. Review authentication logs for this account over a wider time window.\n19. Review authentication logs for this account over a wider time window.\n\nThat's the output.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": "A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Disable or reset credentials for the affected user account",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Block the source IP at the network perimeter",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Isolate the affected host from the network pending investigation",
+                "supported": false,
+                "correction": "Preserve logs and evidence for the affected host pending further investigation."
+              },
+              {
+                "claim": "Escalate to the incident response / Tier 2 team",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review authentication logs for this account over a wider time window",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Run an antivirus/EDR scan on the affected host",
+                "supported": false,
+                "correction": "Preserve logs and evidence for the affected host pending further investigation."
+              },
+              {
+                "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+                "supported": false,
+                "correction": "Preserve logs and evidence for the affected host pending further investigation."
+              },
+              {
+                "claim": "Notify the asset owner of the affected host or agent",
+                "supported": false,
+                "correction": "Escalate to a human analyst for manual review."
+              },
+              {
+                "claim": "Rotate any credentials or secrets that may have been exposed",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Review firewall/network segmentation rules for the affected subnet",
+                "supported": false,
+                "correction": ""
+              },
+              {
+                "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Preserve logs and evidence for the affected host pending further investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Escalate to a human analyst for manual review",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Terminate the suspicious process on the affected host",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Review the parent-child process execution tree for the affected host",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              },
+              {
+                "claim": "Manually review the decoded command payload for malicious intent",
+                "supported": false,
+                "correction": "Review authentication logs for this account over a wider time window."
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 4735,
+          "completion_tokens": 885,
+          "latency_ms": 56448,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:20:04.668988Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "62515e54-dbf7-45a8-867f-6dc847447e9f",
+        "alert_id": "0236843f-347d-5142-95aa-99f01aac46b2"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('62515e54-dbf7-45a8-867f-6dc847447e9f', '0236843f-347d-5142-95aa-99f01aac46b2', '2026-08-18 02:20:04.669022', 'A phishing email from jane.tan@meridian-audit.com appears to impersonate a trusted sender and request Q2 access reviews, indicating a high‑risk impersonation attempt.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"0236843f-347d-5142-95aa-99f01aac46b2\", \"rule_id\": ... (58235 characters truncated) ... y\": \"report 62515e54-dbf7-45a8-867f-6dc847447e9f persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:20:04.669071Z\"}]', '[{\"indicator_type\": \"ip\", \"indicator_value\": \"209.85.220.41\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:18:41.973630Z\", \"verdict\": \"unknown ... (1075 characters truncated) ... 668Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:18:41.973668Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"high\", \"confidence\": \"medium\", \"rationale\": \"The alert is classified as high severity because it involves a MITRE T1566 (phishing) atta ... (238 characters truncated) ... der\\\\u2019s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation.\"}', '[\"Block the source IP at the network perimeter\", \"Escalate to the incident response / Tier 2 team\", \"Correlate this indicator against the wider envir ... (23 characters truncated) ... t\\'s time window\", \"Preserve logs and evidence for the affected host pending further investigation\", \"Escalate to a human analyst for manual review\"]', '[\"Ask the security team to manually verify the authenticity of the email by contacting the sender through a known, out\\\\u2011of\\\\u2011band channel.\", ... (396 characters truncated) ... idence points with any recent privileged account activity on victimcorp.com to see if the scan is part of a broader lateral\\\\u2011movement attempt.\"]', 'uncertain', 'The alert is based on a scanning pattern and impersonation, but without domain reputation data the confidence is limited, making a definitive true_positive or false_positive call uncertain.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 8679, \"completion_tokens\": 1712, \"reasoning_chars\": 24161, \"llm_latency_ms\": 86136, \"wall_clock_ms\": 86668}', 'null', \"unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pendi ... (805 characters truncated) ... '; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 5 enrichment lookup(s) errored or returned unknown verdicts\", 'needs_human_review', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx32k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:20:04.673402Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "209.85.220.41",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:18:41.973630Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:18:41.973630Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:18:41.973652Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:18:41.973652Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "meridian-audit.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:18:41.973659Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:18:41.973659Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "raj.kumar",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:18:41.973664Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:18:41.973664Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:18:41.973668Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:18:41.973668Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The alert is classified as high severity because it involves a MITRE T1566 (phishing) attack with impersonation of a trusted sender, and the scanning pattern with 47 evidence points to a targeted, malicious activity. The confidence is medium due to the lack of domain reputation data, which limits our ability to confirm the sender’s legitimacy. This suggests the email may be part of a broader, coordinated campaign, warranting immediate containment and investigation."
+  },
+  "recommended_actions": [
+    "Block the source IP at the network perimeter",
+    "Escalate to the incident response / Tier 2 team",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Ask the security team to manually verify the authenticity of the email by contacting the sender through a known, out‑of‑band channel.",
+    "Temporarily block the IP address 209.85.220.41 at the perimeter firewall while the investigation continues.",
+    "Add a watchlist entry for the domain victimcorp.com to flag any further outbound connections from that host.",
+    "Run a local DNS lookup for the sub‑domains jane.an and meridian‑audit.com to see if they resolve to internal services or external hosts.",
+    "Correlate the 47 evidence points with any recent privileged account activity on victimcorp.com to see if the scan is part of a broader lateral‑movement attempt."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert is based on a scanning pattern and impersonation, but without domain reputation data the confidence is limited, making a definitive true_positive or false_positive call uncertain.",
+  "uncertainty_notes": "unsupported claim: 'Disable or reset credentials for the affected user account'; unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Terminate the suspicious process on the affected host'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx32k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": null,
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 8679,
+    "completion_tokens": 1712,
+    "reasoning_chars": 24161,
+    "llm_latency_ms": 86136,
+    "wall_clock_ms": 86668
+  }
+}

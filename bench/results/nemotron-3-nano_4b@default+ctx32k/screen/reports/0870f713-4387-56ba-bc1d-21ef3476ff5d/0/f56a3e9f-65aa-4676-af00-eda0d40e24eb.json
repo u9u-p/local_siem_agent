@@ -1,0 +1,667 @@
+{
+  "report_id": "f56a3e9f-65aa-4676-af00-eda0d40e24eb",
+  "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+  "generated_at": "2026-08-18T02:22:21.707480Z",
+  "alert_summary": "A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d",
+        "rule_id": "100061",
+        "rule_level": 3,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 0870f713-4387-56ba-bc1d-21ef3476ff5d ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:21:37.578853Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 421,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 0
+      },
+      "output": {
+        "regex": {
+          "candidates": 2,
+          "validated": 2
+        },
+        "llm": {
+          "candidates": 3,
+          "validated": 2
+        },
+        "decode": {
+          "segments": 0,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "100.72.44.19"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local"
+          }
+        ]
+      },
+      "output_summary": "regex: 2 candidates, 2 validated; LLM: 3 candidates, 2 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-31T14:02:47.000+08:00\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Security-Auditing\",\"eventID\":\"4624\",\"eventRecordID\":\"920255\",\"channel\":\"Security\",\"computer\":\"DC01.corp.local\"},\"eventdata\":{\"targetUserName\":\"mrahman\",\"targetDomainName\":\"CORP\",\"ipAddress\":\"100.72.44.19\",\"logonType\":\"3\",\"workstationName\":\"WKS-MRAHMAN-REMOTE\",\"authenticationPackageName\":\"Negotiate\",\"mfaResult\":\"Approved\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'targetUserName': 'mrahman', 'ipAddress': '100.72.44.19', 'targetDomainName': 'CORP', 'workstationName': 'WKS-MRAHMAN-REMOTE', 'authenticationPackageName': 'Negotiate', 'logonType': '3', 'mfaResult': 'Approved'}, 'system': {'eventRecordID': '920255', 'eventID': '4624', 'computer': 'DC01.corp.local', 'channel': 'Security', 'providerName': 'Microsoft-Windows-Security-Auditing'}}, 'timestamp': '2026-07-31T14:02:47.000+08:00'}\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators from raw log. The log includes fields: ipAddress \"100.72.44.19\". Also computer \"DC01.corp.local\" is a domain? It's a hostname with .corp.local. That's a domain. Also maybe \"CORP\" is domain? But domain is \"CORP\". However typical domain is \"DC01.corp.local\". That's a computer name, not a domain. The indicator types: ip, file_hash, domain, url. So we have ip: 100.72.44.19. Domain: DC01.corp.local (maybe also CORP). But \"CORP\" is part of domain. The log also has \"targetDomainName\":\"CORP\". That's a domain name. So we have domain: CORP. Also maybe \"WKS-...\" is workstation name, not indicator.\n\nThus list:\n\n- ip: 100.72.44.19\n- domain: DC01.corp.local\n- domain: CORP\n\nBut maybe they want only unique indicators. Provide each with type and value.\n\nAlso any obfuscated? No.\n\nThus answer.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "ip",
+                "value": "100.72.44.19"
+              },
+              {
+                "type": "domain",
+                "value": "DC01.corp.local"
+              },
+              {
+                "type": "domain",
+                "value": "CORP"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 841,
+          "completion_tokens": 85,
+          "latency_ms": 5101,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:21:42.680406Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "100.72.44.19"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "ip",
+            "value": "100.72.44.19",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "dc01.corp.local",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 2 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:21:42.680461Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100061"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100061",
+          "description": "Windows: successful logon for user $(win.eventdata.targetUserName) from $(win.eventdata.ipAddress).",
+          "level": 3,
+          "groups": [
+            "authentication_success",
+            "windows",
+            "windows_security"
+          ],
+          "mitre_technique_ids": [
+            "T1078"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100061",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:21:43.108111Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_rule_id_host",
+          "same_src_ip_24h"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "100.72.44.19",
+            "verdict": "unknown"
+          },
+          {
+            "value": "dc01.corp.local",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_src_ip_24h": {
+            "total_count": 2,
+            "distinct_counts": {
+              "source ips": 1,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 1
+            }
+          },
+          "same_rule_id_host": {
+            "total_count": 20,
+            "distinct_counts": {
+              "source ips": 9,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "brute_force",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "100061",
+          "hit_count": 20
+        },
+        "open_value": null,
+        "evidence_count": 42,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=brute_force, evidence_count=42; follow-up same_rule_id_host added 20",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100061 (Windows: successful logon for user mrahman from 100.72.44.19.), level 3.\nAlert source IP: 100.72.44.19; destination IP: not set.\n\nCanonical search results:\n- same_src_ip_24h: 2 matching alert(s); distinct source ips: 1; distinct target users: 1\n- same_rule_id_host: 20 matching alert(s); distinct source ips: 9\n\nEnrichment verdicts:\n- ip 100.72.44.19 (none): unknown (lookup failed: no_provider_registered)\n- domain dc01.corp.local (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 22\n\nThe distinct-value counts describe how the matching alerts spread out: a high spread across many targets indicates a broad sweep, while many hits concentrated on a single target indicates repeated attempts against it.\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern type. Alert: successful logon for user mrahman from IP 100.72.44.19. That's a successful login, could be brute force? But it's a single successful login, not many attempts. Could be lateral movement? Successful logon from external IP could be brute force or credential stuffing. The pattern type likely brute_force (attempts). However only one success. Could be scanning? No, scanning would be many attempts to a host. Lateral movement would involve moving within network after initial access. Here it's external login. So pattern_type: brute_force.\n\nFollow-up query: maybe same_rule_id_host to see other alerts with same rule ID host? That could confirm repeated attempts. So pick same_rule_id_host.\n\nThus answer: pattern_type brute_force, follow_up_query same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "brute_force",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 587,
+          "completion_tokens": 29,
+          "latency_ms": 3436,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:21:46.570095Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "brute_force",
+        "evidence_count": 42,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "medium",
+        "confidence": "medium",
+        "rationale": "The alert indicates a successful login from an unknown IP and domain, which could be a brute‑force attempt using valid credentials, but the lack of additional malicious indicators limits the risk to a medium level."
+      },
+      "output_summary": "severity=medium, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100061 - Windows: successful logon for user mrahman from 100.72.44.19. (level 3, groups: windows, windows_security, authentication_success).\nKnown MITRE ATT&CK mapping: T1078 (Valid Accounts).\nCorrelation findings: pattern_type=brute_force, evidence_count=42.\nEnrichment findings:\n- ip 100.72.44.19: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. The alert: successful logon for user mrahman from IP 100.72.44.19, level 3, groups windows, windows_security, authentication_success. MITRE T1078 Valid Accounts. Correlation pattern_type=brute_force, evidence_count=42. Enrichment unknown IP and domain. Likely a brute-force login attempt succeeded, possibly credential stuffing. Severity? Could be medium. Confidence medium. Rationale: successful login from unknown IP suggests possible compromised credentials, but unknown domain and IP, not necessarily malicious. So medium severity, medium confidence. Provide one- to two-sentence rationale.",
+          "parsed_output": {
+            "severity": "medium",
+            "confidence": "medium",
+            "rationale": "The alert indicates a successful login from an unknown IP and domain, which could be a brute‑force attempt using valid credentials, but the lack of additional malicious indicators limits the risk to a medium level."
+          },
+          "attempts": 1,
+          "prompt_tokens": 376,
+          "completion_tokens": 65,
+          "latency_ms": 2886,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:21:49.456624Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "brute_force",
+        "evidence_count": 42,
+        "severity": "medium",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.",
+          "rationale": "The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.",
+          "recommended_actions": [
+            "Disable or reset credentials for the affected user account",
+            "Block the source IP at the network perimeter",
+            "Isolate the affected host from the network pending investigation",
+            "Escalate to the incident response / Tier 2 team",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Notify the asset owner of the affected host or agent",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Preserve logs and evidence for the affected host pending further investigation"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Monitor the account mrahman for any unusual activity such as repeated failed logins or changes to profile settings.",
+            "Check the network logs for any other suspicious connections originating from 100.72.44.19 during the same time window.",
+            "Review the domain dc01.corp.local for any recent administrative changes or unauthorized access attempts.",
+            "Consider temporarily disabling the account if the login pattern appears to be part of a broader brute‑force campaign.",
+            "Notify the security operations team to correlate this event with any other alerts from the same source IP or domain."
+          ],
+          "triage_verdict": "uncertain",
+          "triage_rationale": "The alert shows a successful login from an unknown IP and domain, which could be a legitimate user or a compromised account, making it unclear whether it is a true positive or a false positive."
+        }
+      },
+      "output_summary": "draft-A: 13 action(s) selected; draft-B: experimental triage=uncertain",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100061 - Windows: successful logon for user mrahman from 100.72.44.19. (level 3, groups: windows, windows_security, authentication_success).\nCorrelation findings: pattern_type=brute_force, evidence_count=42.\nEnrichment findings:\n- ip 100.72.44.19: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The alert indicates a successful login from an unknown IP and domain, which could be a brute‑force attempt using valid credentials, but the lack of additional malicious indicators limits the risk to a medium level.\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary 1-2 sentences, expanded rationale 2-4 sentences, and select every recommended action that applies. Must only pick from exact list. Let's decide which actions apply.\n\nAlert: successful login from unknown IP, medium risk. Likely actions: Disable or reset credentials for affected user account? Possibly yes, because credentials may be compromised. Block source IP at network perimeter? Yes. Isolate host? Possibly. Escalate to incident response? Yes. Review authentication logs over wider time window? Yes. Verify whether source IP/user is known service account? Yes. Run AV/EDR scan? Yes. Review file integrity monitoring? Yes. Patch vulnerable software? Not indicated. Notify asset owner? Yes. Rotate credentials? Yes. Review firewall/segmentation? Yes. Correlate indicator against wider environment? Yes. Preserve logs? Yes. No immediate action needed? Probably not, but we have actions. Rotate credentials etc. Review firewall/segmentation. Correlate. Preserve logs. Also maybe \"Escalate to human analyst for manual review\" is similar to escalate to incident response. \"Terminate suspicious process\" not indicated. \"Review parent-child process tree\" not indicated. \"Manually review decoded command payload\" not indicated.\n\nThus selected actions: Disable or reset credentials for the affected user account; Block the source IP at the network perimeter; Isolate the affected host from the network pending investigation; Escalate to the incident response / Tier 2 team; Review authentication logs for this account over a wider time window; Verify whether the source IP/user is a known, expected service account or automation; Run an antivirus/EDR scan on the affected host; Review file integrity monitoring output for unauthorized changes on the affected host; Notify the asset owner of the affected host or agent; Rotate any credentials or secrets that may have been exposed; Review firewall/network segmentation rules for the affected subnet; Correlate this indicator against the wider environment beyond this alert's time window; Preserve logs and evidence for the affected host pending further investigation.\n\nNow produce output: plain-language alert_summary (1-2 sentences). Example: \"A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.\" That's one sentence.\n\nExpanded rationale 2-4 sentences: \"The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.\"\n\nNow output. Must include selected actions list. Probably format: alert_summary: ...; rationale: ...; recommended_actions: [list]. Provide exactly those actions.\n\nLet's craft.",
+          "parsed_output": {
+            "alert_summary": "A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.",
+            "rationale": "The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.",
+            "recommended_actions": [
+              "Disable or reset credentials for the affected user account",
+              "Block the source IP at the network perimeter",
+              "Isolate the affected host from the network pending investigation",
+              "Escalate to the incident response / Tier 2 team",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Notify the asset owner of the affected host or agent",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Preserve logs and evidence for the affected host pending further investigation"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1187,
+          "completion_tokens": 330,
+          "latency_ms": 11634,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100061 - Windows: successful logon for user mrahman from 100.72.44.19. (level 3, groups: windows, windows_security, authentication_success).\nCorrelation findings: pattern_type=brute_force, evidence_count=42.\nEnrichment findings:\n- ip 100.72.44.19: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The alert indicates a successful login from an unknown IP and domain, which could be a brute‑force attempt using valid credentials, but the lack of additional malicious indicators limits the risk to a medium level.\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, no fixed list. Then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must ensure we label as experimental. Probably output:\n\n**Experimental** ... then content.\n\nWe must not give fixed list. Provide suggestions.\n\nThen classification: maybe uncertain? Provide rationale.\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Monitor the account mrahman for any unusual activity such as repeated failed logins or changes to profile settings.",
+              "Check the network logs for any other suspicious connections originating from 100.72.44.19 during the same time window.",
+              "Review the domain dc01.corp.local for any recent administrative changes or unauthorized access attempts.",
+              "Consider temporarily disabling the account if the login pattern appears to be part of a broader brute‑force campaign.",
+              "Notify the security operations team to correlate this event with any other alerts from the same source IP or domain."
+            ],
+            "triage_verdict": "uncertain",
+            "triage_rationale": "The alert shows a successful login from an unknown IP and domain, which could be a legitimate user or a compromised account, making it unclear whether it is a true positive or a false positive."
+          },
+          "attempts": 1,
+          "prompt_tokens": 397,
+          "completion_tokens": 199,
+          "latency_ms": 3855,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:04.946944Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.",
+          "The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.",
+          "Disable or reset credentials for the affected user account",
+          "Block the source IP at the network perimeter",
+          "Isolate the affected host from the network pending investigation",
+          "Escalate to the incident response / Tier 2 team",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Preserve logs and evidence for the affected host pending further investigation"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": false,
+            "correction": "Consider disabling or resetting credentials for the affected user account as a mitigation step."
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": false,
+            "correction": "If evidence indicates credential exposure, rotate credentials; otherwise, monitor."
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ", ",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [],
+        "corrections_applied": false
+      },
+      "output_summary": "self-check returned 14 audit(s) for 15 claim(s); corrections not applied",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=brute_force, evidence_count=42.\nEnrichment findings:\n- ip 100.72.44.19: unknown (provider none)\n- domain dc01.corp.local: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium.\n\nClaims to audit, in order:\n1. A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.\n2. The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.\n3. Disable or reset credentials for the affected user account\n4. Block the source IP at the network perimeter\n5. Isolate the affected host from the network pending investigation\n6. Escalate to the incident response / Tier 2 team\n7. Review authentication logs for this account over a wider time window\n8. Verify whether the source IP/user is a known, expected service account or automation\n9. Run an antivirus/EDR scan on the affected host\n10. Review file integrity monitoring output for unauthorized changes on the affected host\n11. Notify the asset owner of the affected host or agent\n12. Rotate any credentials or secrets that may have been exposed\n13. Review firewall/network segmentation rules for the affected subnet\n14. Correlate this indicator against the wider environment beyond this alert's time window\n15. Preserve logs and evidence for the affected host pending further investigation\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to evaluate each claim whether structured findings support it. Structured findings: correlation pattern brute_force, evidence count 42. Enrichment: IP unknown, domain unknown. Risk assessment severity medium, confidence medium.\n\nClaims:\n\n1. A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.\n\nStructured findings: pattern brute_force, evidence count 42. Enrichment shows unknown IP and domain. So supports claim 1. Provide correction? It's supported, so leave empty.\n\n2. The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.\n\nStructured findings support: unknown IP/domain, brute_force pattern, medium risk. So claim 2 is supported. No correction.\n\n3. Disable or reset credentials for the affected user account.\n\nIs this supported? The findings suggest medium risk, but not necessarily that credentials must be disabled. The claim is a recommendation, not a finding. The structured findings don't explicitly say to disable credentials. So claim 3 is not supported. Need correction: maybe \"Consider disabling or resetting credentials for the affected user account as a mitigation step.\" Provide correction.\n\n4. Block the source IP at the network perimeter.\n\nStructured findings: unknown IP, brute_force pattern. Blocking IP is a typical action. Supported? Yes, it's a recommended action. So claim 4 supported. No correction.\n\n5. Isolate the affected host from the network pending investigation.\n\nSupported? Yes, typical response. So claim 5 supported. No correction.\n\n6. Escalate to the incident response / Tier 2 team.\n\nSupported? Yes, medium risk. So claim 6 supported. No correction.\n\n7. Review authentication logs for this account over a wider time window.\n\nSupported? Yes, typical. So claim 7 supported. No correction.\n\n8. Verify whether the source IP/user is a known, expected service account or automation.\n\nSupported? Yes, enrichment unknown, could be service account. So claim 8 supported. No correction.\n\n9. Run an antivirus/EDR scan on the affected host.\n\nSupported? Yes, typical. So claim 9 supported. No correction.\n\n10. Review file integrity monitoring output for unauthorized changes on the affected host.\n\nSupported? Yes. So claim 10 supported. No correction.\n\n11. Notify the asset owner of the affected host or agent.\n\nSupported? Yes. So claim 11 supported. No correction.\n\n12. Rotate any credentials or secrets that may have been exposed.\n\nSupported? Possibly, but not directly indicated. The findings suggest medium risk, but not explicit exposure. Might be a recommendation. The claim is \"Rotate any credentials or secrets that may have been exposed.\" The structured findings don't confirm exposure. So claim 12 not fully supported. Provide correction: \"If evidence indicates credential exposure, rotate credentials; otherwise, monitor.\"\n\n13. Review firewall/network segmentation rules for the affected subnet.\n\nSupported? Yes, typical. So claim 13 supported. No correction.\n\n14. Correlate this indicator against the wider environment beyond this alert's time window.\n\nSupported? Yes. So claim 14 supported. No correction.\n\n15. Preserve logs and evidence for the affected host pending further investigation.\n\nSupported? Yes. So claim 15 supported. No correction.\n\nNow produce output: for each claim, either empty if supported, else correction string.\n\nThus:\n\n1. (empty)\n2. (empty)\n3. Consider disabling or resetting credentials for the affected user account as a mitigation step.\n4. (empty)\n5. (empty)\n6. (empty)\n7. (empty)\n8. (empty)\n9. (empty)\n10. (empty)\n11. (empty)\n12. If evidence indicates credential exposure, rotate credentials; otherwise, monitor.\n13. (empty)\n14. (empty)\n15. (empty)\n\nReturn exactly one audit per claim, in same order. Probably each on separate line? The instruction: \"Return exactly one audit per claim, in the same order.\" So list them sequentially, maybe each on its own line. Provide empty for supported, correction for not.\n\nThus final answer lines:\n\n1. \n2. \nConsider disabling or resetting credentials for the affected user account as a mitigation step.\n4. \n5. \n6. \n7. \n8. \n9. \n10. \nIf evidence indicates credential exposure, rotate credentials; otherwise, monitor.\n13. \n14. \n15. \n\nBut need to ensure order: claim 3 correction line is third line. Yes.\n\nLet's output as list.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": false,
+                "correction": "Consider disabling or resetting credentials for the affected user account as a mitigation step."
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": false,
+                "correction": "If evidence indicates credential exposure, rotate credentials; otherwise, monitor."
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ", ",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1686,
+          "completion_tokens": 307,
+          "latency_ms": 16759,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:21.707387Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "f56a3e9f-65aa-4676-af00-eda0d40e24eb",
+        "alert_id": "0870f713-4387-56ba-bc1d-21ef3476ff5d"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('f56a3e9f-65aa-4676-af00-eda0d40e24eb', '0870f713-4387-56ba-bc1d-21ef3476ff5d', '2026-08-18 02:22:21.707480', 'A user named mrahman logged in from an unknown IP address (100.72.44.19) to the corporate domain, which may indicate a brute‑force attempt using valid credentials.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"0870f713-4387-56ba-bc1d-21ef3476ff5d\", \"rule_id\": ... (34689 characters truncated) ... y\": \"report f56a3e9f-65aa-4676-af00-eda0d40e24eb persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:22:21.707618Z\"}]', '[{\"indicator_type\": \"ip\", \"indicator_value\": \"100.72.44.19\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:21:42.680436Z\", \"verdict\": \"unknown\" ... (251 characters truncated) ... 451Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:21:42.680451Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"medium\", \"confidence\": \"medium\", \"rationale\": \"The alert shows a successful login from an IP and domain that are not recognized, sugges ... (184 characters truncated) ... other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login.\"}', '[\"Disable or reset credentials for the affected user account\", \"Block the source IP at the network perimeter\", \"Isolate the affected host from the ne ... (593 characters truncated) ... or against the wider environment beyond this alert\\'s time window\", \"Preserve logs and evidence for the affected host pending further investigation\"]', '[\"Monitor the account mrahman for any unusual activity such as repeated failed logins or changes to profile settings.\", \"Check the network logs for a ... (298 characters truncated) ... brute\\\\u2011force campaign.\", \"Notify the security operations team to correlate this event with any other alerts from the same source IP or domain.\"]', 'uncertain', 'The alert shows a successful login from an unknown IP and domain, which could be a legitimate user or a compromised account, making it unclear whether it is a true positive or a false positive.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 5074, \"completion_tokens\": 1015, \"reasoning_chars\": 10475, \"llm_latency_ms\": 43671, \"wall_clock_ms\": 44208}', 'null', 'self-check audit count did not match claim count; corrections not applied; 2 enrichment lookup(s) errored or returned unknown verdicts', 'needs_human_review', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx32k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:22:21.712970Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "100.72.44.19",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:21:42.680436Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:21:42.680436Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dc01.corp.local",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:21:42.680451Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:21:42.680451Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The alert shows a successful login from an IP and domain that are not recognized, suggesting an unauthorized attempt to use the user’s credentials. Because the login succeeded, there is a medium risk that the account may have been compromised. However, there are no other malicious indicators, so the risk is not high. The recommended actions focus on limiting exposure and confirming the legitimacy of the login."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Monitor the account mrahman for any unusual activity such as repeated failed logins or changes to profile settings.",
+    "Check the network logs for any other suspicious connections originating from 100.72.44.19 during the same time window.",
+    "Review the domain dc01.corp.local for any recent administrative changes or unauthorized access attempts.",
+    "Consider temporarily disabling the account if the login pattern appears to be part of a broader brute‑force campaign.",
+    "Notify the security operations team to correlate this event with any other alerts from the same source IP or domain."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert shows a successful login from an unknown IP and domain, which could be a legitimate user or a compromised account, making it unclear whether it is a true positive or a false positive.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 2 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx32k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": null,
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 5074,
+    "completion_tokens": 1015,
+    "reasoning_chars": 10475,
+    "llm_latency_ms": 43671,
+    "wall_clock_ms": 44208
+  }
+}

@@ -1,0 +1,671 @@
+{
+  "report_id": "224fc438-ea80-485c-bcc8-bfbc7703223f",
+  "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+  "generated_at": "2026-08-18T02:23:03.869169Z",
+  "alert_summary": "The event is likely benign, no lateral movement observed.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829",
+        "rule_id": "100075",
+        "rule_level": 10,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 0952f028-de8d-51c2-a308-7363e91ff829 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:22:22.192556Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 649,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 3
+      },
+      "output": {
+        "regex": {
+          "candidates": 11,
+          "validated": 2
+        },
+        "llm": {
+          "candidates": 1,
+          "validated": 1
+        },
+        "decode": {
+          "segments": 1,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 11 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-30T02:08:44.000+0000\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Sysmon\",\"eventID\":\"1\",\"computer\":\"DEV-KLYAM01.victimcorp.com\"},\"eventdata\":{\"utcTime\":\"2026-07-30 02:08:44.000\",\"image\":\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\",\"commandLine\":\"powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\",\"parentImage\":\"C:\\\\Users\\\\ke.li.yam\\\\AppData\\\\Local\\\\Programs\\\\cursor\\\\Cursor.exe\",\"parentCommandLine\":\"\\\"C:\\\\Users\\\\ke.li.yam\\\\AppData\\\\Local\\\\Programs\\\\cursor\\\\Cursor.exe\\\" --ms-enable-electron-run-as-node\",\"user\":\"VICTIMCORP\\\\ke.li.yam\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'image': 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe', 'parentCommandLine': '\"C:\\\\Users\\\\ke.li.yam\\\\AppData\\\\Local\\\\Programs\\\\cursor\\\\Cursor.exe\" --ms-enable-electron-run-as-node', 'utcTime': '2026-07-30 02:08:44.000', 'parentImage': 'C:\\\\Users\\\\ke.li.yam\\\\AppData\\\\Local\\\\Programs\\\\cursor\\\\Cursor.exe', 'commandLine': 'powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=', 'user': 'VICTIMCORP\\\\ke.li.yam'}, 'system': {'eventID': '1', 'computer': 'DEV-KLYAM01.victimcorp.com', 'providerName': 'Microsoft-Windows-Sysmon'}}, 'timestamp': '2026-07-30T02:08:44.000+0000'}\n\nAdditional decoded command-line text:\n- powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\n- \"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node\n- cargo check --quiet\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have:\n\n- computer: \"DEV-KLYAM01.victimcorp.com\" => domain? It's a hostname with .com. So domain: victimcorp.com? Actually \"DEV-KLYAM01.victimcorp.com\" includes subdomain \"DEV-KLYAM01\". Domain is \"victimcorp.com\". So candidate: domain victimcorp.com.\n\n- image: \"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" => file path, not hash. No hash.\n\n- parentCommandLine includes \"cursor.exe\" path.\n\n- Additional decoded command-line text includes \"cargo check --quiet\". No hash.\n\n- No IP addresses.\n\n- No URLs.\n\n- No file hashes.\n\nThus only domain candidate.\n\nBut also maybe \"cursor.exe\" is a file, but not hash. No hash.\n\nThus output: domain victimcorp.com.\n\nBut also maybe \"DEV-KLYAM01. victimcorp.com\" includes subdomain, but domain is victimcorp.com.\n\nThus answer list.\n\nProvide type and value.\n\nLet's produce:\n\n- domain: victimcorp.com\n\nAnything else? The IP address? No.\n\nThus final.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1208,
+          "completion_tokens": 34,
+          "latency_ms": 4854,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:27.049606Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 3 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:22:27.049688Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100075"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100075",
+          "description": "Sysmon: PowerShell executed with an encoded command by $(win.eventdata.parentImage).",
+          "level": 10,
+          "groups": [
+            "sysmon_event1",
+            "windows",
+            "sysmon"
+          ],
+          "mitre_technique_ids": [
+            "T1027",
+            "T1059.001"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:22:27.480159Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_command_line_env_wide",
+          "same_rule_id_host"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "dev-klyam01.victimcorp.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "ke.li.yam",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_rule_id_host": {
+            "total_count": 27,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_command_line_env_wide": {
+            "total_count": 1,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "lateral_movement",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "100075",
+          "hit_count": 27
+        },
+        "open_value": null,
+        "evidence_count": 55,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=lateral_movement, evidence_count=55; follow-up same_rule_id_host added 27",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100075 (Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe.), level 10.\nAlert source IP: not set; destination IP: not set.\n\nCanonical search results:\n- same_rule_id_host: 27 matching alert(s)\n- same_command_line_env_wide: 1 matching alert(s)\n\nEnrichment verdicts:\n- domain dev-klyam01.victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n- domain ke.li.yam (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 28\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type: rule 100075: Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe. This is likely lateral movement (PowerShell encoded command). So pattern_type = lateral_movement.\n\nPick at most one follow_up_query from closed menu: same_rule_id_host, same_command_line_env_wide, etc. Which would help confirm pattern? Since we have same_rule_id_host matches 27 alerts, maybe need to check same_rule_id_host to see if same host. So follow_up_query = same_rule_id_host.\n\nThus answer: pattern_type: lateral_movement, follow_up_query: same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "lateral_movement",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 539,
+          "completion_tokens": 30,
+          "latency_ms": 2996,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:30.501633Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 55,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "low",
+        "confidence": "medium",
+        "rationale": "The encoded PowerShell command decodes to a benign 'cargo check' command, and there is no evidence of malicious payload or lateral movement activity beyond a single local execution. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event."
+      },
+      "output_summary": "severity=low, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nKnown MITRE ATT&CK mapping: T1027 (Obfuscated Files or Information), T1059.001 (PowerShell).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nCommand line: powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\nParent command line: \"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node\nDecoded command segments:\n  - [powershell_encoded] cargo check --quiet\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. The event: PowerShell executed with encoded command by a local executable (Cursor.exe) from user ke.li.yam. Command decodes to cargo check --quiet. That's a benign command (cargo check). Likely not malicious. Lateral movement correlation with 55 evidence, but unknown domains. Likely low severity. Confidence medium? Provide rationale: encoded PowerShell but decodes to harmless command, no known malicious payload, low impact. So severity low, confidence medium.",
+          "parsed_output": {
+            "severity": "low",
+            "confidence": "medium",
+            "rationale": "The encoded PowerShell command decodes to a benign 'cargo check' command, and there is no evidence of malicious payload or lateral movement activity beyond a single local execution. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event."
+          },
+          "attempts": 1,
+          "prompt_tokens": 507,
+          "completion_tokens": 83,
+          "latency_ms": 2755,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:33.258704Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 55,
+        "severity": "low",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.",
+          "rationale": "The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.",
+          "recommended_actions": [
+            "No immediate action needed — monitor for recurrence",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Escalate to a human analyst for manual review",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Observe whether the same encoded PowerShell command appears in other processes or at different times, as repeated execution could indicate a scripted activity.",
+            "Inspect the parent executable (Cursor.exe) for any unusual behavior or additional command‑line arguments that might have been added after the initial run.",
+            "Check the user account ke.li.yam for any recent privilege escalation or credential‑related events that could explain the lateral‑movement correlation.",
+            "Correlate the timestamp of the event with any network traffic from the victimcorp. com domain to see if any data was actually transferred.",
+            "Run a quick hash comparison of the decoded command against known benign scripts to confirm it is not a disguised payload."
+          ],
+          "triage_verdict": "false_positive",
+          "triage_rationale": "The decoded command is a harmless 'cargo check' and there is no evidence of actual lateral movement, so the alert is likely a false positive."
+        }
+      },
+      "output_summary": "draft-A: 10 action(s) selected; draft-B: experimental triage=false_positive",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=medium, rationale: The encoded PowerShell command decodes to a benign 'cargo check' command, and there is no evidence of malicious payload or lateral movement activity beyond a single local execution. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event.\nCommand line: powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\nParent command line: \"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node\nDecoded command segments:\n  - [powershell_encoded] cargo check --quiet\n\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Let's evaluate.\n\nAlert: encoded PowerShell command decodes to benign cargo check, low severity, medium confidence, likely coincidental. No malicious payload, no lateral movement beyond local execution. So recommended actions: likely \"No immediate action needed — monitor for recurrence\", \"Preserve logs and evidence for the affected host pending further investigation\", \"Review authentication logs for this account over a wider time window\", \"Verify whether the source IP/user is a known, expected service account or automation\", \"Review file integrity monitoring output for unauthorized changes on the affected host\", \"Review firewall/network segmentation rules for the affected subnet\", \"Correlate this indicator against the wider environment beyond this alert's time window\", \"Escalate to a human analyst for manual review\", \"Review the parent-child process execution tree for the affected host\", \"Manually review the decoded command payload for malicious intent\". Also maybe \"Run an antivirus/EDR scan\"? Since benign, maybe not needed. \"Disable or reset credentials\" not needed. \"Block source IP\" not needed. \"Isolate host\" not needed. \"Escalate to incident response\" maybe not needed. \"Notify asset owner\" maybe not needed. \"Rotate credentials\" not needed. \"Patch or update vulnerable software\" not needed. \"Terminate suspicious process\" not needed. \"Terminate process\" maybe not needed. \"Terminate suspicious process\" is in list. Probably not needed.\n\nThus recommended actions: No immediate action needed — monitor for recurrence; Preserve logs and evidence; Review authentication logs; Verify source IP/ user is known service account; Review file integrity monitoring; Review firewall/segmentation; Correlate indicator; Escalate to human analyst for manual review; Review parent-child process tree; Manually review decoded command payload.\n\nAlso maybe \"Run an antivirus/EDR scan\" could be considered but not needed. The alert is low severity, so maybe not.\n\nNow produce output: plain-language alert_summary (1-2 sentences). Example: \"A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.\" That's 1 sentence.\n\nExpanded rationale 2-4 sentences: explain low severity, encoded command decodes to cargo check, no lateral movement, confidence medium, etc.\n\nNow list recommended actions as per list, each on separate line? Probably just list them. Provide them.\n\nLet's craft final answer.",
+          "parsed_output": {
+            "alert_summary": "A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.",
+            "rationale": "The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.",
+            "recommended_actions": [
+              "No immediate action needed — monitor for recurrence",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Escalate to a human analyst for manual review",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1293,
+          "completion_tokens": 290,
+          "latency_ms": 10398,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=medium, rationale: The encoded PowerShell command decodes to a benign 'cargo check' command, and there is no evidence of malicious payload or lateral movement activity beyond a single local execution. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event.\nCommand line: powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\nParent command line: \"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node\nDecoded command segments:\n  - [powershell_encoded] cargo check --quiet\n\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must not give fixed list. Provide suggestions. Then classification.\n\nWe must label experimental. Probably output:\n\n**Experimental** ... then content.\n\nMake sure not to treat as trusted guidance. Provide suggestions: monitor process, check for persistence, etc.\n\nClassification: likely false_positive? Or uncertain? The rationale: encoded command decodes to benign cargo check, no lateral movement, low severity. So classification: false_positive (since correlation likely coincidental). One-sentence rationale.\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Observe whether the same encoded PowerShell command appears in other processes or at different times, as repeated execution could indicate a scripted activity.",
+              "Inspect the parent executable (Cursor.exe) for any unusual behavior or additional command‑line arguments that might have been added after the initial run.",
+              "Check the user account ke.li.yam for any recent privilege escalation or credential‑related events that could explain the lateral‑movement correlation.",
+              "Correlate the timestamp of the event with any network traffic from the victimcorp. com domain to see if any data was actually transferred.",
+              "Run a quick hash comparison of the decoded command against known benign scripts to confirm it is not a disguised payload."
+            ],
+            "triage_verdict": "false_positive",
+            "triage_rationale": "The decoded command is a harmless 'cargo check' and there is no evidence of actual lateral movement, so the alert is likely a false positive."
+          },
+          "attempts": 1,
+          "prompt_tokens": 624,
+          "completion_tokens": 215,
+          "latency_ms": 4819,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:22:48.479813Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.",
+          "The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.",
+          "No immediate action needed — monitor for recurrence",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Escalate to a human analyst for manual review",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": "A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.",
+            "supported": false,
+            "correction": "The event is likely benign, no lateral movement observed."
+          },
+          {
+            "claim": "The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.",
+            "supported": false,
+            "correction": "The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed."
+          },
+          {
+            "claim": "No immediate action needed — monitor for recurrence",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Preserve logs and evidence for the affected host pending further investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review authentication logs for this account over a wider time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review firewall/network segmentation rules for the affected subnet",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Escalate to a human analyst for manual review",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review the parent-child process execution tree for the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Manually review the decoded command payload for malicious intent",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 12 claim(s), 0 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=medium.\n\nCommand line: powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\nParent command line: \"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node\nDecoded command segments:\n  - [powershell_encoded] cargo check --quiet\n\nClaims to audit, in order:\n1. A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.\n2. The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.\n3. No immediate action needed — monitor for recurrence\n4. Preserve logs and evidence for the affected host pending further investigation\n5. Review authentication logs for this account over a wider time window\n6. Verify whether the source IP/user is a known, expected service account or automation\n7. Review file integrity monitoring output for unauthorized changes on the affected host\n8. Review firewall/network segmentation rules for the affected subnet\n9. Correlate this indicator against the wider environment beyond this alert's time window\n10. Escalate to a human analyst for manual review\n11. Review the parent-child process execution tree for the affected host\n12. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to decide for each claim whether structured findings support it. Structured findings: correlation findings pattern_type=lateral_ movement, evidence_count=55. Enrichment findings: three unknown domains. Risk assessment severity=low, confidence=medium. Command line: powershell.exe -NoProfile -NonInteractive -EncodedCommand ... Decoded command segments: - [powershell_encoded] cargo check --quiet\n\nClaims:\n\n1. A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.\n\nStructured findings: correlation pattern lateral movement, evidence 55. That suggests lateral movement, not benign. So claim 1 is not supported. Need correction: maybe \"The event is likely benign, no lateral movement observed.\" Provide correction.\n\n2. The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.\n\nStructured findings: correlation lateral movement, evidence 55. That suggests lateral movement is present. So claim 2 is not supported. Correction: \"The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed.\"\n\n3. No immediate action needed — monitor for recurrence.\n\nStructured findings: severity low, confidence medium, risk low. So claim 3 is supported. Leave empty.\n\n4. Preserve logs and evidence for the affected host pending further investigation.\n\nSupported? Yes, low risk. Leave empty.\n\n5. Review authentication logs for this account over a wider time window.\n\nSupported? Yes. Leave empty.\n\n6. Verify whether the source IP/user is a known, expected service account or automation.\n\nSupported? Yes. Leave empty.\n\n7. Review file integrity monitoring output for unauthorized changes on the affected host.\n\nSupported? Yes. Leave empty.\n\n8. Review firewall/network segmentation rules for the affected subnet.\n\nSupported? Yes. Leave empty.\n\n9. Correlate this indicator against the wider environment beyond this alert's time window.\n\nStructured findings: lateral movement correlation suggests broader impact. So claim 9 is supported? The claim is to correlate indicator against wider environment. That is appropriate. So supported. Leave empty.\n\n10. Escalate to a human analyst for manual review.\n\nGiven lateral movement correlation, maybe escalate. Structured findings indicate lateral movement, so escalation appropriate. Supported. Leave empty.\n\n11. Review the parent-child process execution tree for the affected host.\n\nSupported. Leave empty.\n\n12. Manually review the decoded command payload for malicious intent.\n\nSupported. Leave empty.\n\nNow produce output: for each claim, either \"Correction: ...\" or empty.\n\nLet's produce:\n\n1. Correction: The event is likely benign, no lateral movement observed.\n\n2. Correction: The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed.\n\n3. (empty)\n\n4. (empty)\n\n5. (empty)\n\n6. (empty)\n\n7. (empty)\n\n8. (empty)\n\n9. (empty)\n\n10. (empty)\n\n11. (empty)\n\n12. (empty)\n\nReturn exactly one audit per claim, in same order. Probably each line with claim number and correction or empty. Let's output as list.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": "A benign PowerShell command was executed locally on the user ke.li.yam's machine, likely from a trusted application, and no malicious activity was observed.",
+                "supported": false,
+                "correction": "The event is likely benign, no lateral movement observed."
+              },
+              {
+                "claim": "The encoded PowerShell command decodes to a harmless 'cargo check' command, indicating only a local, non‑malicious operation. There is no evidence of payload delivery, lateral movement, or credential compromise. The correlation to lateral movement is likely coincidental or misinterpreted, resulting in a low‑impact event. Because the confidence is medium and the risk is low, the event does not warrant immediate containment or credential changes.",
+                "supported": false,
+                "correction": "The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed."
+              },
+              {
+                "claim": "No immediate action needed — monitor for recurrence",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Preserve logs and evidence for the affected host pending further investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review authentication logs for this account over a wider time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review firewall/network segmentation rules for the affected subnet",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Escalate to a human analyst for manual review",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review the parent-child process execution tree for the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Manually review the decoded command payload for malicious intent",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1441,
+          "completion_tokens": 538,
+          "latency_ms": 15388,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:23:03.869114Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "224fc438-ea80-485c-bcc8-bfbc7703223f",
+        "alert_id": "0952f028-de8d-51c2-a308-7363e91ff829"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('224fc438-ea80-485c-bcc8-bfbc7703223f', '0952f028-de8d-51c2-a308-7363e91ff829', '2026-08-18 02:23:03.869169', 'The event is likely benign, no lateral movement observed.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"0952f028-de8d-51c2-a308-7363e91ff829\", \"rule_id\": ... (38888 characters truncated) ... y\": \"report 224fc438-ea80-485c-bcc8-bfbc7703223f persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:23:03.869248Z\"}]', '[{\"indicator_type\": \"domain\", \"indicator_value\": \"dev-klyam01.victimcorp.com\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:22:27.049644Z\", \"v ... (540 characters truncated) ... 676Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:22:27.049676Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"low\", \"confidence\": \"medium\", \"rationale\": \"The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed.\"}', '[\"No immediate action needed \\\\u2014 monitor for recurrence\", \"Preserve logs and evidence for the affected host pending further investigation\", \"Revi ... (444 characters truncated) ...  review\", \"Review the parent-child process execution tree for the affected host\", \"Manually review the decoded command payload for malicious intent\"]', '[\"Observe whether the same encoded PowerShell command appears in other processes or at different times, as repeated execution could indicate a script ... (462 characters truncated) ...  actually transferred.\", \"Run a quick hash comparison of the decoded command against known benign scripts to confirm it is not a disguised payload.\"]', 'false_positive', \"The decoded command is a harmless 'cargo check' and there is no evidence of actual lateral movement, so the alert is likely a false positive.\", '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 5612, \"completion_tokens\": 1190, \"reasoning_chars\": 9087, \"llm_latency_ms\": 41210, \"wall_clock_ms\": 41753}', '{\"command_line\": \"powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\", \"parent_command_li ... (138 characters truncated) ... egments\": [{\"encoding\": \"powershell_encoded\", \"original\": \"YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=\", \"decoded\": \"cargo check --quiet\"}]}', '3 enrichment lookup(s) errored or returned unknown verdicts', 'complete', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx32k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:23:03.874446Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:22:27.049644Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:22:27.049644Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:22:27.049668Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:22:27.049668Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:22:27.049676Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:22:27.049676Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "medium",
+    "rationale": "The command is benign, but lateral movement correlation suggests possible compromise; further investigation needed."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Escalate to a human analyst for manual review",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Observe whether the same encoded PowerShell command appears in other processes or at different times, as repeated execution could indicate a scripted activity.",
+    "Inspect the parent executable (Cursor.exe) for any unusual behavior or additional command‑line arguments that might have been added after the initial run.",
+    "Check the user account ke.li.yam for any recent privilege escalation or credential‑related events that could explain the lateral‑movement correlation.",
+    "Correlate the timestamp of the event with any network traffic from the victimcorp. com domain to see if any data was actually transferred.",
+    "Run a quick hash comparison of the decoded command against known benign scripts to confirm it is not a disguised payload."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The decoded command is a harmless 'cargo check' and there is no evidence of actual lateral movement, so the alert is likely a false positive.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx32k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoProfile -NonInteractive -EncodedCommand YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+    "parent_command_line": "\"C:\\Users\\ke.li.yam\\AppData\\Local\\Programs\\cursor\\Cursor.exe\" --ms-enable-electron-run-as-node",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "YwBhAHIAZwBvACAAYwBoAGUAYwBrACAALQAtAHEAdQBpAGUAdAA=",
+        "decoded": "cargo check --quiet"
+      }
+    ]
+  },
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 5612,
+    "completion_tokens": 1190,
+    "reasoning_chars": 9087,
+    "llm_latency_ms": 41210,
+    "wall_clock_ms": 41753
+  }
+}

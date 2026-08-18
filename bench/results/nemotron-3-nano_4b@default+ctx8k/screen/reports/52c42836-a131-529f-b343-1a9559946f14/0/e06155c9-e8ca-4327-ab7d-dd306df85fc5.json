@@ -1,0 +1,840 @@
+{
+  "report_id": "e06155c9-e8ca-4327-ab7d-dd306df85fc5",
+  "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+  "generated_at": "2026-08-18T02:38:11.749167Z",
+  "alert_summary": "A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "52c42836-a131-529f-b343-1a9559946f14",
+        "rule_id": "106001",
+        "rule_level": 5,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 52c42836-a131-529f-b343-1a9559946f14 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:37:21.937862Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 463,
+        "data_keys": [
+          "mimecast",
+          "srcip"
+        ],
+        "extra_texts_count": 0
+      },
+      "output": {
+        "regex": {
+          "candidates": 10,
+          "validated": 5
+        },
+        "llm": {
+          "candidates": 3,
+          "validated": 3
+        },
+        "decode": {
+          "segments": 0,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47"
+          },
+          {
+            "type": "domain",
+            "value": "cfo.support"
+          },
+          {
+            "type": "domain",
+            "value": "secure-invoice-updates.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 10 candidates, 5 validated; LLM: 3 candidates, 3 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: datetime=2026-07-30T09:14:22Z|aCode=aXYZ1a2b3c4d5e|acc=VICTC-1|Route=Inbound|Dir=Internal|Sender=cfo.support@secure-invoice-updates.com|headerFrom=CFO Office <cfo.support@secure-invoice-updates.com>|Rcpt=jane.tan@victimcorp.com|Subject=Urgent: Invoice Payment Confirmation Required|MsgId=<9f2a1b7c-88e2-4e31-9c3d-1a2b3c4d5e6f@secure-invoice-updates.com>|IP=185.220.101.47|Act=Hld|Definition=Impersonation|ReplyMismatch=true|SenderDomain=secure-invoice-updates.com\nAdditional decoded fields: {'srcip': '185.220.101.47', 'mimecast': {'acc': 'VICTC-1', 'IP': '185.220.101.47', 'Definition': 'Impersonation', 'SenderDomain': 'secure-invoice-updates.com', 'Dir': 'Internal', 'MsgId': '<9f2a1b7c-88e2-4e31-9c3d-1a2b3c4d5e6f@secure-invoice-updates.com>', 'Subject': 'Urgent: Invoice Payment Confirmation Required', 'headerFrom': 'CFO Office <cfo.support@secure-invoice-updates.com>', 'Sender': 'cfo.support@secure-invoice-updates.com', 'datetime': '2026-07-30T09:14:22Z', 'Rcpt': 'jane.tan@victimcorp.com', 'Act': 'Hld', 'aCode': 'aXYZ1a2b3c4d5e', 'ReplyMismatch': 'true', 'Route': 'Inbound'}}\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have IP=185.220.101.47 (already normal). Also SenderDomain=secure-invoice-updates.com (domain). Also maybe other domains: victimcorp.com (rcpt). Also maybe URL? No URL present. No file hash. So list:\n\nIP: 185.220.101.47\nDomain: secure-invoice-updates.com\nDomain: victimcorp.com\n\nAlso maybe Sender: cfo.support@secure-invoice-updates.com is email, not needed.\n\nThus output list with type and value.\n\nLet's produce.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "ip",
+                "value": "185.220.101.47"
+              },
+              {
+                "type": "domain",
+                "value": "secure-invoice-updates.com"
+              },
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 869,
+          "completion_tokens": 91,
+          "latency_ms": 3886,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:37:25.824700Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47"
+          },
+          {
+            "type": "domain",
+            "value": "cfo.support"
+          },
+          {
+            "type": "domain",
+            "value": "secure-invoice-updates.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "cfo.support",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "secure-invoice-updates.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 5 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:37:25.824838Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "106001"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "106001",
+          "description": "Mimecast held a message from $(mimecast.Sender) to $(mimecast.Rcpt) for review - reason $(mimecast.Definition), subject '$(mimecast.Subject)'.",
+          "level": 5,
+          "groups": [
+            "mimecast"
+          ],
+          "mitre_technique_ids": [
+            "T1566"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 106001",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:37:26.231947Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_rule_id_host",
+          "same_src_ip_24h"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "185.220.101.47",
+            "verdict": "unknown"
+          },
+          {
+            "value": "cfo.support",
+            "verdict": "unknown"
+          },
+          {
+            "value": "secure-invoice-updates.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "jane.tan",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_src_ip_24h": {
+            "total_count": 3,
+            "distinct_counts": {
+              "source ips": 1,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_rule_id_host": {
+            "total_count": 8,
+            "distinct_counts": {
+              "source ips": 7,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "scanning",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "106001",
+          "hit_count": 8
+        },
+        "open_value": null,
+        "evidence_count": 19,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=scanning, evidence_count=19; follow-up same_rule_id_host added 8",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 106001 (Mimecast held a message from cfo.support@secure-invoice-updates.com to jane.tan@victimcorp.com for review - reason Impersonation, subject 'Urgent: Invoice Payment Confirmation Required'.), level 5.\nAlert source IP: 185.220.101.47; destination IP: not set.\n\nCanonical search results:\n- same_src_ip_24h: 3 matching alert(s); distinct source ips: 1\n- same_rule_id_host: 8 matching alert(s); distinct source ips: 7\n\nEnrichment verdicts:\n- ip 185.220.101.47 (none): unknown (lookup failed: no_provider_registered)\n- domain cfo.support (none): unknown (lookup failed: no_provider_registered)\n- domain secure-invoice-updates.com (none): unknown (lookup failed: no_provider_registered)\n- domain jane.tan (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 11\n\nThe distinct-value counts describe how the matching alerts spread out: a high spread across many targets indicates a broad sweep, while many hits concentrated on a single target indicates repeated attempts against it.\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type based on data. Alert: rule 106001, impersonation, subject urgent invoice. Source IP 185.220.101.47, destination IP not set. Canonical search results: same_src_ip_24h: 3 matching alerts; distinct source ips: 1 (so same source IP across 3 alerts). same_rule_id_host: 8 matching alerts; distinct source ips: 7 (so many source IPs). Enrichment all unknown. Total evidence 11.\n\nPattern type: likely brute_force? But it's impersonation, maybe scanning? The source IP repeated across 3 alerts suggests targeted attempts at same destination? Destination IP not set, but maybe same domain? The rule is about impersonation, maybe scanning for email addresses? The distinct source IPs 7 across 8 alerts suggests scanning across many source IPs targeting same rule? That suggests scanning (e.g., scanning for impersonation attempts). So pattern_type = scanning.\n\nFollow-up query: which canonical search would help confirm pattern? Since we have same_src_ip_24h (3 alerts same src IP) indicates repeated attempts from same source, maybe confirm scanning. Also same_rule_id_host shows many source IPs. To confirm scanning, we might want same_rule_id_host to see distribution across source IPs. So follow_up_query = same_rule_id_host.\n\nThus answer: pattern_type scanning, follow_up_query same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "scanning",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 834,
+          "completion_tokens": 27,
+          "latency_ms": 4896,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:37:31.149928Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 19,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "high",
+        "confidence": "medium",
+        "rationale": "The alert is a phishing attempt (T1566) with a high‑impact impersonation message, though the domain and IP enrichment is unknown, which limits certainty. The pattern‑type scanning and single evidence point to a likely malicious email, warranting a high severity but not a critical one."
+      },
+      "output_summary": "severity=high, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 106001 - Mimecast held a message from cfo.support@secure-invoice-updates.com to jane.tan@victimcorp.com for review - reason Impersonation, subject 'Urgent: Invoice Payment Confirmation Required'. (level 5, groups: mimecast).\nKnown MITRE ATT&CK mapping: T1566 (Phishing).\nCorrelation findings: pattern_type=scanning, evidence_count=19.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain cfo.support: unknown (provider none)\n- domain secure-invoice-updates.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. Level 5 is high? MITRE ATT&CK mapping T1566 is phishing, generally medium to high. Level 5 likely high. Confidence medium? Provide rationale: pattern scanning, unknown domains, impersonation, likely phishing. So severity high, confidence medium. Provide one- to two-sentence rationale.",
+          "parsed_output": {
+            "severity": "high",
+            "confidence": "medium",
+            "rationale": "The alert is a phishing attempt (T1566) with a high‑impact impersonation message, though the domain and IP enrichment is unknown, which limits certainty. The pattern‑type scanning and single evidence point to a likely malicious email, warranting a high severity but not a critical one."
+          },
+          "attempts": 1,
+          "prompt_tokens": 369,
+          "completion_tokens": 89,
+          "latency_ms": 2408,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:37:33.558789Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "scanning",
+        "evidence_count": 19,
+        "severity": "high",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.",
+          "rationale": "The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.",
+          "recommended_actions": [
+            "Disable or reset credentials for the affected user account",
+            "Block the source IP at the network perimeter",
+            "Isolate the affected host from the network pending investigation",
+            "Escalate to the incident response / Tier 2 team",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Notify the asset owner of the affected host or agent",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Escalate to a human analyst for manual review",
+            "Terminate the suspicious process on the affected host",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Block the IP address 185.220.101.47 at the perimeter firewall to prevent any further traffic from that source.",
+            "Add a rule to your email gateway that quarantines messages containing the phrase 'Urgent: Invoice Payment Confirmation Required' from any domain that does not resolve to a known internal service.",
+            "Request the CFO to verify the authenticity of the email by contacting the finance department through a separate channel, such as a phone call or a known internal ticket system.",
+            "Log the event in the SIEM with a custom tag for phishing‑impersonation attempts and set up a follow‑up ticket for the security team to review the domain reputation later.",
+            "If the email is confirmed as malicious, add the sender’s domain to the blocklist and inform the finance team to monitor for similar attempts."
+          ],
+          "triage_verdict": "uncertain",
+          "triage_rationale": "The alert is uncertain because the domain and IP enrichment is unknown, making it unclear whether the message is genuine or a phishing attempt."
+        }
+      },
+      "output_summary": "draft-A: 17 action(s) selected; draft-B: experimental triage=uncertain",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 106001 - Mimecast held a message from cfo.support@secure-invoice-updates.com to jane.tan@victimcorp.com for review - reason Impersonation, subject 'Urgent: Invoice Payment Confirmation Required'. (level 5, groups: mimecast).\nCorrelation findings: pattern_type=scanning, evidence_count=19.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain cfo.support: unknown (provider none)\n- domain secure-invoice-updates.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium, rationale: The alert is a phishing attempt (T1566) with a high‑impact impersonation message, though the domain and IP enrichment is unknown, which limits certainty. The pattern‑type scanning and single evidence point to a likely malicious email, warranting a high severity but not a critical one.\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Need to decide which actions apply.\n\nGiven high severity, medium confidence. Likely actions: Disable or reset credentials for affected user account? Possibly yes. Block source IP? Yes. Isolate host? Possibly. Escalate to incident response? Yes. Review authentication logs? Yes. Verify whether source IP/ user is known service account? Yes. Run AV/EDR scan? Yes. Review file integrity monitoring? Yes. Patch vulnerable software? Possibly unknown. Notify asset owner? Yes. Rotate credentials? Yes. Review firewall/segmentation? Yes. Correlate indicator? Yes. Preserve logs? Yes. No immediate action needed? Probably not. Escalate to human analyst? Yes. Terminate suspicious process? Possibly. Review parent-child tree? Possibly. Manually review decoded command payload? Possibly.\n\nBut we must \"select every recommended_action below that applies to this alert\". So we need to include all that apply. Let's think: The alert is a phishing email, not necessarily host compromise yet. But we have evidence scanning, unknown domains. Likely we should isolate host? Might be precautionary. But maybe not needed. However typical response: block IP, disable credentials, isolate host, escalate, review logs, verify service account, run AV/EDR, review file integrity, notify asset owner, rotate credentials, review firewall, correlate, preserve logs, escalate to human analyst, terminate process, review parent-child, manually review payload.\n\nThat's many. Might be too many. But the instruction: \"select every recommended_action below that applies to this alert\". So we should include all that are appropriate. Let's list:\n\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent\n\nAlso \"No immediate action needed — monitor for recurrence\" does not apply because we have high severity. \"Patch or update the vulnerable software identified for this host\" – no vulnerable software identified, so maybe not.\n\nThus produce output with alert_summary, expanded rationale, and list of selected actions.\n\nWe must output in plain language. Probably format:\n\nAlert Summary: ... (1-2 sentences)\n\nExpanded Rationale: ... (2-4 sentences)\n\nRecommended Actions: [list]\n\nLet's craft.\n\nAlert Summary: \"A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.\"\n\nExpanded Rationale: \"The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing (T1566) technique. Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.\"\n\nNow recommended actions list.\n\nWe'll output as bullet list.\n\nLet's produce final answer.",
+          "parsed_output": {
+            "alert_summary": "A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.",
+            "rationale": "The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.",
+            "recommended_actions": [
+              "Disable or reset credentials for the affected user account",
+              "Block the source IP at the network perimeter",
+              "Isolate the affected host from the network pending investigation",
+              "Escalate to the incident response / Tier 2 team",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Notify the asset owner of the affected host or agent",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Escalate to a human analyst for manual review",
+              "Terminate the suspicious process on the affected host",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1567,
+          "completion_tokens": 416,
+          "latency_ms": 15709,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 106001 - Mimecast held a message from cfo.support@secure-invoice-updates.com to jane.tan@victimcorp.com for review - reason Impersonation, subject 'Urgent: Invoice Payment Confirmation Required'. (level 5, groups: mimecast).\nCorrelation findings: pattern_type=scanning, evidence_count=19.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain cfo.support: unknown (provider none)\n- domain secure-invoice-updates.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium, rationale: The alert is a phishing attempt (T1566) with a high‑impact impersonation message, though the domain and IP enrichment is unknown, which limits certainty. The pattern‑type scanning and single evidence point to a likely malicious email, warranting a high severity but not a critical one.\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental, not-yet-vetted section of a security investigation report. Must label experimental. Provide additional recommended actions in own words, no fixed list. Then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale.\n\nWe must not treat as trusted guidance. So we output experimental label.\n\nWe need to produce the content: maybe a paragraph with experimental label, then recommended actions, then classification.\n\nMake sure to label \"experimental\" somewhere. Probably at top: \"Experimental: ...\" Then the rest.\n\nWe must not give fixed list; just free suggestions.\n\nClassification: likely true_positive? But confidence medium, unknown enrichment. Could be uncertain. Provide one-sentence rationale.\n\nLet's produce:\n\nExperimental: ... (content). Then recommended actions: e.g., \"Consider blocking the IP, verify the sender's domain via internal DNS, etc.\" Then classification: \"True_positive – because the content matches typical phishing impersonation pattern.\" Or uncertain.\n\nGiven confidence medium, maybe uncertain. Provide rationale: \"The alert is uncertain because the domain and IP enrichment is unknown, making it unclear if the message is genuine.\"\n\nWe'll output.\n\nMake sure it's clearly labeled experimental. Probably start with \"Experimental:\" then content.\n\nLet's produce final answer.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Block the IP address 185.220.101.47 at the perimeter firewall to prevent any further traffic from that source.",
+              "Add a rule to your email gateway that quarantines messages containing the phrase 'Urgent: Invoice Payment Confirmation Required' from any domain that does not resolve to a known internal service.",
+              "Request the CFO to verify the authenticity of the email by contacting the finance department through a separate channel, such as a phone call or a known internal ticket system.",
+              "Log the event in the SIEM with a custom tag for phishing‑impersonation attempts and set up a follow‑up ticket for the security team to review the domain reputation later.",
+              "If the email is confirmed as malicious, add the sender’s domain to the blocklist and inform the finance team to monitor for similar attempts."
+            ],
+            "triage_verdict": "uncertain",
+            "triage_rationale": "The alert is uncertain because the domain and IP enrichment is unknown, making it unclear whether the message is genuine or a phishing attempt."
+          },
+          "attempts": 1,
+          "prompt_tokens": 699,
+          "completion_tokens": 244,
+          "latency_ms": 6563,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:37:55.832282Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "degraded",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.",
+          "The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.",
+          "Disable or reset credentials for the affected user account",
+          "Block the source IP at the network perimeter",
+          "Isolate the affected host from the network pending investigation",
+          "Escalate to the incident response / Tier 2 team",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Escalate to a human analyst for manual review",
+          "Terminate the suspicious process on the affected host",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "Recommend disabling or resetting credentials only after confirming compromise."
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "Rotate credentials only if evidence of exposure is confirmed."
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [],
+        "corrections_applied": false
+      },
+      "output_summary": "self-check returned 20 audit(s) for 19 claim(s); corrections not applied",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=scanning, evidence_count=19.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain cfo.support: unknown (provider none)\n- domain secure-invoice-updates.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=medium.\n\nClaims to audit, in order:\n1. A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.\n2. The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.\n3. Disable or reset credentials for the affected user account\n4. Block the source IP at the network perimeter\n5. Isolate the affected host from the network pending investigation\n6. Escalate to the incident response / Tier 2 team\n7. Review authentication logs for this account over a wider time window\n8. Verify whether the source IP/user is a known, expected service account or automation\n9. Run an antivirus/EDR scan on the affected host\n10. Review file integrity monitoring output for unauthorized changes on the affected host\n11. Notify the asset owner of the affected host or agent\n12. Rotate any credentials or secrets that may have been exposed\n13. Review firewall/network segmentation rules for the affected subnet\n14. Correlate this indicator against the wider environment beyond this alert's time window\n15. Preserve logs and evidence for the affected host pending further investigation\n16. Escalate to a human analyst for manual review\n17. Terminate the suspicious process on the affected host\n18. Review the parent-child process execution tree for the affected host\n19. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to evaluate each claim whether structured findings support it. Structured findings: pattern_type=scanning, evidence_count=19. Enrichment findings list unknown domains/ips. So we have scanning pattern, 19 evidence points, but enrichment unknown. Claims:\n\n1. A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.\n\nDo we have evidence? We have domain cfo.support unknown, domain secure-invoice-updates.com unknown, domain jane.tan unknown, domain victimcorp.com unknown. Scanning pattern suggests malicious. So claim 1 is supported? It says appears to impersonate CFO, high severity. The findings include unknown domains, scanning pattern. So yes, supported. No correction.\n\n2. The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.\n\nThis is a claim about technique and risk. Findings: scanning pattern, unknown enrichment. So supports. No correction.\n\n3. Disable or reset credentials for the affected user account.\n\nIs this supported? Findings: scanning pattern, unknown enrichment. No direct evidence that credentials were compromised. So claim not supported. Need correction: maybe \"Recommend disabling/resetting credentials pending further investigation.\" Provide correction.\n\n4. Block the source IP at the network perimeter.\n\nWe have source IP 185.220.101.47 unknown. Scanning pattern suggests malicious. So blocking IP is supported. No correction.\n\n5. Isolate the affected host from the network pending investigation.\n\nSupported by scanning pattern, unknown enrichment. Yes.\n\n6. Escalate to the incident response / Tier 2 team.\n\nSupported.\n\n7. Review authentication logs for this account over a wider time window.\n\nSupported.\n\n8. Verify whether the source IP/user is a known, expected service account or automation.\n\nSupported.\n\n9. Run an antivirus/EDR scan on the affected host.\n\nSupported.\n\n10. Review file integrity monitoring output for unauthorized changes on the affected host.\n\nSupported.\n\n11. Notify the asset owner of the affected host or agent.\n\nSupported.\n\n12. Rotate any credentials or secrets that may have been exposed.\n\nNot directly supported; we have unknown enrichment, but no evidence of exposure. So claim not supported. Correction: \"Rotate credentials only if evidence of exposure is confirmed.\"\n\n13. Review firewall/network segmentation rules for the affected subnet.\n\nSupported.\n\n14. Correlate this indicator against the wider environment beyond this alert's time window.\n\nSupported.\n\n15. Preserve logs and evidence for the affected host pending further investigation.\n\nSupported.\n\n16. Escalate to a human analyst for manual review.\n\nSupported.\n\n17. Terminate the suspicious process on the affected host.\n\nSupported.\n\n18. Review the parent-child process execution tree for the affected host.\n\nSupported.\n\n19. Manually review the decoded command payload for malicious intent.\n\nSupported.\n\nNow produce output: for each claim, either leave correction empty if supported, else provide correction string.\n\nThus:\n\n1. (empty)\n2. (empty)\n3. \"Recommend disabling or resetting credentials only after confirming compromise.\"\n4. (empty)\n5. (empty)\n6. (empty)\n7. (empty)\n8. (empty)\n9. (empty)\n10. (empty)\n11. (empty)\n12. \"Rotate credentials only if evidence of exposure is confirmed.\"\n13. (empty)\n14. (empty)\n15. (empty)\n16. (empty)\n17. (empty)\n18. (empty)\n19. (empty)\n\nReturn exactly one audit per claim, in same order. Probably list each on separate line? \"Return exactly one audit per claim, in the same order.\" So output list of 19 items, each either empty string or correction string.\n\nThus final answer: 19 lines with empty or correction.\n\nLet's produce.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "Recommend disabling or resetting credentials only after confirming compromise."
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "Rotate credentials only if evidence of exposure is confirmed."
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1698,
+          "completion_tokens": 373,
+          "latency_ms": 15916,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:38:11.749143Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "e06155c9-e8ca-4327-ab7d-dd306df85fc5",
+        "alert_id": "52c42836-a131-529f-b343-1a9559946f14"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('e06155c9-e8ca-4327-ab7d-dd306df85fc5', '52c42836-a131-529f-b343-1a9559946f14', '2026-08-18 02:38:11.749167', 'A phishing email from cfo.support@secure-invoice-updates.com appears to impersonate the CFO and demands urgent invoice payment, targeting jane.tan@victimcorp.com. The alert is classified as high severity due to the impersonation risk.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"52c42836-a131-529f-b343-1a9559946f14\", \"rule_id\": ... (41303 characters truncated) ... y\": \"report e06155c9-e8ca-4327-ab7d-dd306df85fc5 persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:38:11.749204Z\"}]', '[{\"indicator_type\": \"ip\", \"indicator_value\": \"185.220.101.47\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:37:25.824772Z\", \"verdict\": \"unknow ... (1086 characters truncated) ... 819Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:37:25.824819Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"high\", \"confidence\": \"medium\", \"rationale\": \"The email uses a deceptive subject line and sender address to mimic a legitimate CFO reque ... (258 characters truncated) ... tem compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps.\"}', '[\"Disable or reset credentials for the affected user account\", \"Block the source IP at the network perimeter\", \"Isolate the affected host from the ne ... (839 characters truncated) ... ed host\", \"Review the parent-child process execution tree for the affected host\", \"Manually review the decoded command payload for malicious intent\"]', '[\"Block the IP address 185.220.101.47 at the perimeter firewall to prevent any further traffic from that source.\", \"Add a rule to your email gateway  ... (534 characters truncated) ... If the email is confirmed as malicious, add the sender\\\\u2019s domain to the blocklist and inform the finance team to monitor for similar attempts.\"]', 'uncertain', 'The alert is uncertain because the domain and IP enrichment is unknown, making it unclear whether the message is genuine or a phishing attempt.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 6036, \"completion_tokens\": 1240, \"reasoning_chars\": 12001, \"llm_latency_ms\": 49378, \"wall_clock_ms\": 49892}', 'null', 'self-check audit count did not match claim count; corrections not applied; 5 enrichment lookup(s) errored or returned unknown verdicts', 'needs_human_review', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx8k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:38:11.751713Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:37:25.824772Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:37:25.824772Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "cfo.support",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:37:25.824803Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:37:25.824803Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "secure-invoice-updates.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:37:25.824810Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:37:25.824810Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:37:25.824814Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:37:25.824814Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:37:25.824819Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:37:25.824819Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "medium",
+    "rationale": "The email uses a deceptive subject line and sender address to mimic a legitimate CFO request, which is a classic phishing technique (T1566). Although the domain and IP enrichment is unknown, the single evidence point and scanning pattern suggest a malicious attempt. The risk is high because a successful click could lead to credential theft or system compromise, but the confidence is medium due to limited enrichment data. Therefore, we recommend immediate containment and investigation steps."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Review firewall/network segmentation rules for the affected subnet",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Block the IP address 185.220.101.47 at the perimeter firewall to prevent any further traffic from that source.",
+    "Add a rule to your email gateway that quarantines messages containing the phrase 'Urgent: Invoice Payment Confirmation Required' from any domain that does not resolve to a known internal service.",
+    "Request the CFO to verify the authenticity of the email by contacting the finance department through a separate channel, such as a phone call or a known internal ticket system.",
+    "Log the event in the SIEM with a custom tag for phishing‑impersonation attempts and set up a follow‑up ticket for the security team to review the domain reputation later.",
+    "If the email is confirmed as malicious, add the sender’s domain to the blocklist and inform the finance team to monitor for similar attempts."
+  ],
+  "triage_verdict_experimental": "uncertain",
+  "triage_rationale_experimental": "The alert is uncertain because the domain and IP enrichment is unknown, making it unclear whether the message is genuine or a phishing attempt.",
+  "uncertainty_notes": "self-check audit count did not match claim count; corrections not applied; 5 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": null,
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 6036,
+    "completion_tokens": 1240,
+    "reasoning_chars": 12001,
+    "llm_latency_ms": 49378,
+    "wall_clock_ms": 49892
+  }
+}
