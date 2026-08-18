@@ -975,11 +975,55 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <div class="queue">
     <span class="qh">Material available to expand into</span>
     <ul>
-      <li>GGUF vs MLX — same weights, one silently ignores your schema</li>
       <li>The harness completes an investigation with <em>no working model at all</em> — and scores like a cautious one</li>
       <li>Screen-stage ranking moved 28 points at real sample size</li>
       <li>Docker binds single files by inode; git rewrites break the mount silently</li>
     </ul>
+  </div>
+</section>
+
+<section class="slide dense" data-sec="6 · Learnings">
+  <p class="eyebrow">First — the trap we promised back in Get running</p>
+  <h2>Same weights, one tag apart. One silently ignores your schema.</h2>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 900 260" role="img" aria-label="The same gemma4 12B model served through Ollama's GGUF backend honours the response_format constraint and returns raw JSON, while the MLX backend ignores it and returns markdown-fenced text that fails validation on every call.">
+      <defs>
+        <marker id="armx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="ui-monospace, monospace" font-size="12">
+        <rect x="300" y="10" width="300" height="42" fill="none" stroke="currentColor" stroke-width="1.4"/>
+        <text x="450" y="30" text-anchor="middle" fill="currentColor">response_format: json_schema</text>
+        <text x="450" y="45" text-anchor="middle" fill="currentColor" opacity="0.5" font-size="11">strict: true — identical request both sides</text>
+
+        <line x1="380" y1="52" x2="230" y2="92" stroke="currentColor" stroke-width="1.2" opacity="0.6" marker-end="url(#armx)"/>
+        <line x1="520" y1="52" x2="670" y2="92" stroke="currentColor" stroke-width="1.2" opacity="0.6" marker-end="url(#armx)"/>
+
+        <rect x="90" y="100" width="280" height="46" fill="none" stroke="var(--good)" stroke-width="1.6"/>
+        <text x="230" y="121" text-anchor="middle" fill="var(--good)">gemma4:12b</text>
+        <text x="230" y="137" text-anchor="middle" fill="var(--good)" opacity="0.75" font-size="11">GGUF · llama.cpp grammar decoding</text>
+        <line x1="230" y1="146" x2="230" y2="186" stroke="var(--good)" stroke-width="1.3" marker-end="url(#armx)"/>
+        <rect x="90" y="194" width="280" height="46" fill="none" stroke="var(--good)" stroke-width="1.2"/>
+        <text x="230" y="215" text-anchor="middle" fill="var(--good)" font-size="12">{"answer": "ok"}</text>
+        <text x="230" y="231" text-anchor="middle" fill="var(--good)" opacity="0.7" font-size="11">validates · pipeline runs</text>
+
+        <rect x="530" y="100" width="280" height="46" fill="none" stroke="var(--bad)" stroke-width="1.6"/>
+        <text x="670" y="121" text-anchor="middle" fill="var(--bad)">gemma4:12b-mlx</text>
+        <text x="670" y="137" text-anchor="middle" fill="var(--bad)" opacity="0.75" font-size="11">safetensors · constraint is a no-op</text>
+        <line x1="670" y1="146" x2="670" y2="186" stroke="var(--bad)" stroke-width="1.3" marker-end="url(#armx)"/>
+        <rect x="530" y="194" width="280" height="46" fill="none" stroke="var(--bad)" stroke-width="1.2"/>
+        <text x="670" y="213" text-anchor="middle" fill="var(--bad)" font-size="11">json```json {"answer": "ok"}```</text>
+        <text x="670" y="231" text-anchor="middle" fill="var(--bad)" opacity="0.75" font-size="11">invalid from position 0 · every call fails</text>
+      </g>
+    </svg>
+    <figcaption>Confirmed with a raw HTTP probe against both builds. Unconstrained, <em>both</em> markdown-wrap — that is the model's natural habit. What differs is whether the backend enforces the grammar at decode time: llama.cpp does, Ollama's MLX backend silently does not.</figcaption>
+  </figure>
+  </div>
+  <div class="note warn">
+    <span class="tag">Why this is worse than a crash</span>
+    <p>The model is pulled, reachable, and chats fine — <code>model_available()</code> returns true. The failure is deterministic, so retry buys nothing. Every investigation quietly degrades to a stub report marked <em>needs human review</em>, forever, and nothing names the backend as the cause. <strong>Gate every model on a structured-output probe before you configure it — being pulled is not being usable.</strong></p>
   </div>
 </section>
 
