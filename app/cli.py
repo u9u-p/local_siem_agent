@@ -109,7 +109,10 @@ def _investigate_with_optional_view(analyst, alert: Alert, reports_dir: Path, vi
         return _investigate_alert(analyst, alert, reports_dir)
     from rich.live import Live
 
-    view.reset(title=f"alert {alert.alert_id} (rule {alert.rule_id})")
+    view.reset(
+        title=f"rule {alert.rule_id}: {alert.rule_description}",
+        subtitle=alert.full_log[:110],
+    )
     with Live(view, refresh_per_second=4):
         return _investigate_alert(analyst, alert, reports_dir)
 
