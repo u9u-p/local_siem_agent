@@ -413,15 +413,15 @@
   <div class="cols">
     <div class="col">
       <h3>Bigger is better</h3>
-      <p>Assumed scaling up would improve everything.</p>
+      <p>Assumed scaling up would improve everything. <em>Settled by the scatter in Results.</em></p>
     </div>
     <div class="col">
       <h3>More reasoning is better</h3>
-      <p>Assumed a higher effort setting was a free upgrade.</p>
+      <p>Assumed a higher effort setting was a free upgrade. <em>Settled in Learnings — the inversion.</em></p>
     </div>
     <div class="col">
       <h3>A screening run predicts the real one</h3>
-      <p>Assumed a cheap n=4 pass would rank models correctly.</p>
+      <p>Assumed a cheap n=4 pass would rank models correctly. <em>Settled in Learnings — the 28-point shift.</em></p>
     </div>
   </div>
   <div class="note acc">
@@ -633,8 +633,8 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 </section>
 
 <section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">The same table, as a picture</p>
-  <h2>No model is best at everything — quiet models miss attacks.</h2>
+  <p class="eyebrow">The same table, as a picture — and assumption 1, settled</p>
+  <h2>Bigger buys quiet, and pays for it in missed attacks.</h2>
   <div class="fig-wrap">
   <figure>
     <svg viewBox="0 0 720 330" role="img" aria-label="Scatter: benign escalation versus attacks caught, five finalist models">
@@ -976,7 +976,6 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
     <span class="qh">Material available to expand into</span>
     <ul>
       <li>The harness completes an investigation with <em>no working model at all</em> — and scores like a cautious one</li>
-      <li>Screen-stage ranking moved 28 points at real sample size</li>
       <li>Docker binds single files by inode; git rewrites break the mount silently</li>
     </ul>
   </div>
@@ -1028,7 +1027,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
-  <p class="eyebrow">Learning 1 · the counterintuitive one</p>
+  <p class="eyebrow">Learning 1 · assumption 2, settled the hard way</p>
   <h2>More reasoning made it worse, in the dangerous direction.</h2>
   <p><code>gpt-oss:20b</code>, same model, <code>low</code> against default effort, n=71:</p>
   <div class="scroller">
@@ -1160,6 +1159,26 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
   <p class="lead">The KV saving is real and large. The base footprint grew just enough to absorb <em>all</em> of it — and it generates at 51 chars/s against 99.</p>
   <p><strong>“Newer” is not a scalar.</strong> This is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.</p>
+</section>
+
+<section class="slide" data-sec="6 · Learnings">
+  <p class="eyebrow">Assumption 3, settled — the screen is a filter, not a forecast</p>
+  <h2>At real sample size, the ranking moved 28 points.</h2>
+  <p>Benign escalation, the deciding metric, at screen (n=4) against deep (n=60):</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>candidate</th><th>screen n=4</th><th>deep n=60</th><th>shift</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td class="num">75% (3/4)</td><td class="num">47% (28/60)</td><td class="num">−28, flattering</td></tr>
+        <tr><td><code>gemma4:26b-a4b</code></td><td class="num">75% (3/4)</td><td class="num">53% (32/60)</td><td class="num">−22, flattering</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead">Every model shifted between stages — the two gemmas shifted most, and in the flattering direction. The screen's headline prediction, that the runner-up was far quieter than the pick, evaporated to <em>one alert</em> at n=60 (27 vs 28).</p>
+  <div class="note">
+    <span class="tag">Same lesson, second metric</span>
+    <p>Triage accuracy collapsed between stages for almost every model (45%→7% at the extreme) — a property of the metric and the corpus mix, not the models: the screen corpus is needle-rich, so anything that leans "true positive" scored well on it and badly on a realistic mix. <strong>Screen to remove clear failures. Never to rank survivors.</strong></p>
+  </div>
 </section>
 
 <section class="slide" data-sec="6 · Learnings">
