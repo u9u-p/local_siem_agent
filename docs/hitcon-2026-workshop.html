@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Agentic SOC Without the GPU Bill</title>
 <style>
   :root {
@@ -267,6 +268,33 @@
   }
 
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ── merged from the analytics story deck ── */
+  .chip { display: inline-block; width: 0.8em; height: 0.8em; border-radius: 3px; margin-right: 0.4em; vertical-align: -0.08em; }
+  .chip.good { background: var(--good); } .chip.acc { background: var(--accent); } .chip.bad { background: var(--bad); }
+  .sevrow { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+  .sevrow .sev { display: flex; align-items: center; border: 1px solid var(--rule); border-radius: 6px; padding: 0.5rem 0.9rem; font-size: 0.95rem; color: var(--ink-dim); }
+  .sevrow .sev strong { margin-right: 0.35em; }
+  .dots { display: grid; grid-template-columns: repeat(20, clamp(14px, 1.6vw, 22px)); gap: 5px; }
+  .dots i { aspect-ratio: 1; border-radius: 4px; box-shadow: inset 0 0 0 1.5px var(--rule-strong); }
+  .dots i.on { background: var(--bad); box-shadow: none; }
+  .hm { display: grid; grid-template-columns: minmax(150px, auto) repeat(4, minmax(70px, 1fr)); gap: 2px; min-width: 520px; font-size: 0.95rem; }
+  .hm .h { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); align-self: end; padding: 0.3rem 0.4rem; }
+  .hm .r { padding: 0.45rem 0.6rem 0.45rem 0; color: var(--ink-dim); white-space: nowrap; }
+  .hm .cell { text-align: center; padding: 0.45rem 0; border-radius: 4px; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .hm .b0 { box-shadow: inset 0 0 0 1px var(--rule); color: var(--ink-faint); }
+  .hm .b1 { background: color-mix(in srgb, var(--ink) 12%, var(--surface)); color: var(--ink); }
+  .hm .b2 { background: color-mix(in srgb, var(--ink) 28%, var(--surface)); color: var(--ink); }
+  .hm .b3 { background: color-mix(in srgb, var(--ink) 45%, var(--surface)); color: var(--ink); }
+  .hm .b4 { background: color-mix(in srgb, var(--ink) 68%, var(--surface)); color: var(--surface); }
+  .hm .b5 { background: color-mix(in srgb, var(--ink) 85%, var(--surface)); color: var(--surface); }
+  .ffbar { display: inline-block; height: 0.7em; background: var(--bad); border-radius: 3px; }
+  blockquote.action { margin: 0; padding: 1rem 1.4rem; border-left: 3px solid var(--bad); background: var(--surface); font-size: clamp(1.05rem, 1.8vw, 1.4rem); color: var(--ink); max-width: 70ch; }
+  blockquote.action .src { display: block; margin-top: 0.5rem; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-faint); }
+  pre.whois { margin: 0; padding: 0.9rem 1.2rem; background: var(--surface-2); border-radius: 6px; font-family: var(--mono); font-size: 0.9rem; line-height: 1.6; color: var(--ink); overflow-x: auto; max-width: 64ch; }
+  pre.whois .hit { color: var(--bad); font-weight: 700; }
+  .leg { display: flex; gap: 1.4rem; flex-wrap: wrap; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-dim); }
+  .leg span { display: flex; align-items: center; }
 </style>
 
 <div class="deck" id="deck" tabindex="-1">
@@ -365,7 +393,6 @@
     <ul>
       <li>Corpus design — 182 alerts, 130 graded, four clusters, needle vs benign vs FP-control</li>
       <li>Stage 1 screen: 16 configurations, 522 + 187 min</li>
-      <li>Why needle recall saturates and benign escalation discriminates</li>
       <li>Triage-accuracy collapse between stages — a metric artefact, not a model property</li>
     </ul>
   </div>
@@ -381,6 +408,57 @@
     <div class="metric"><span class="val">3.2–68.7<span style="font-size:0.4em"> GB</span></span><span class="cap">Model size span</span></div>
   </div>
   <p>Zero missing reports across the whole field. <strong>~21 hours of local inference</strong> on a 128 GB Mac Studio.</p>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">The field</p>
+  <h2>We tested 18 models. One survived.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Stopped at the gate · 4</h3>
+      <ul>
+        <li><code>qwen3.6:27b-bf16</code> — 48.9 GB, twice the laptop</li>
+        <li><code>qwen3.6:27b-q8_0</code> — 26.5 GB, and q8 pays the same KV cost as q4</li>
+        <li><code>qwen3.8:27b</code> — KV 15.7× cheaper, base model grew: same 32K fits. Slower too.</li>
+        <li><code>Ternary-Bonsai 27B</code> — never loaded, see note</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Removed at screening · 9</h3>
+      <ul>
+        <li><code>qwen3.5:9b</code> (old default), <code>qwen3.6:27b</code>, <code>glm-4.7-flash</code>, <code>muse-glimmer:30b</code> — 10–13 min per alert and/or VPN test wrong both runs</li>
+        <li><code>mistral-small3.2</code> — KV cache 26× the pick: only 8K context fits</li>
+        <li><code>gemma4:latest</code>, <code>lfm2.5:8b</code>, <code>nemotron-3-nano:4b</code>, <code>qwen3.6:35b-a3b</code> — VPN test wrong, alarms on everything, or does not fit</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Finalists · 5</h3>
+      <ul>
+        <li><code>gpt-oss:120b</code> — reference only, 64 GiB never ships</li>
+        <li><code>gpt-oss:20b</code> — the runner-up, fast</li>
+        <li><code>lfm2:24b-a2b</code> — fastest, noisiest</li>
+        <li><code>gemma4:26b-a4b</code> — VPN test wrong 3/6</li>
+        <li><strong>gemma4:12b — the pick</strong></li>
+      </ul>
+    </div>
+  </div>
+  <div class="note acc">
+    <span class="tag">Favorite warning</span>
+    <p>Ternary-Bonsai never loaded — but every run still exited “success” with an empty, safe-default report. <strong>A dead model can look exactly like a careful one.</strong> Screening was 11 alerts per model: enough to remove clear failures, not enough to rank survivors.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">The key metric — learn it once</p>
+  <h2>Benign escalation: a harmless alert marked HIGH.</h2>
+  <p>The test set has <strong>60 normal, harmless alerts</strong> per model. The model gives each a severity. A harmless alert marked <strong>high</strong> or <strong>critical</strong> is a false alarm a human must investigate. We count them.</p>
+  <div class="sevrow">
+    <span class="sev"><span class="chip good"></span><strong>low</strong> correct</span>
+    <span class="sev"><span class="chip acc"></span><strong>medium</strong> still acceptable</span>
+    <span class="sev"><span class="chip bad"></span><strong>high / critical</strong> escalated — a false alarm</span>
+  </div>
+  <div class="dots" role="img" aria-label="60 squares, 28 filled red"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <p class="lead">Even the winner escalates <em>28 of 60</em>. Nothing here is a quiet tool yet — alert fatigue is the problem a SOC buys this for, and an agent that adds false alarms is worse than no agent.</p>
 </section>
 
 <section class="slide" data-sec="3 · Results">
@@ -402,6 +480,49 @@
 </section>
 
 <section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">The same table, as a picture</p>
+  <h2>No model is best at everything — quiet models miss attacks.</h2>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 720 330" role="img" aria-label="Scatter: benign escalation versus attacks caught, five finalist models">
+      <g font-family="ui-monospace, monospace" font-size="12">
+      <line x1="70" y1="150" x2="680" y2="150" stroke="currentColor" stroke-width="1" opacity="0.15"/>
+      <line x1="70" y1="90"  x2="680" y2="90"  stroke="currentColor" stroke-width="1" opacity="0.15"/>
+      <line x1="70" y1="210" x2="680" y2="210" stroke="currentColor" stroke-width="1" opacity="0.15"/>
+      <line x1="70" y1="270" x2="680" y2="270" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <line x1="70" y1="30"  x2="70"  y2="270" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <text x="70"  y="288" text-anchor="middle" fill="currentColor" opacity="0.5">0%</text>
+      <text x="273" y="288" text-anchor="middle" fill="currentColor" opacity="0.5">20%</text>
+      <text x="476" y="288" text-anchor="middle" fill="currentColor" opacity="0.5">40%</text>
+      <text x="680" y="288" text-anchor="middle" fill="currentColor" opacity="0.5">60%</text>
+      <text x="375" y="312" text-anchor="middle" fill="currentColor" opacity="0.55">benign escalation — false alarms on 60 normal alerts →</text>
+      <text x="60" y="274" text-anchor="end" fill="currentColor" opacity="0.5">50%</text>
+      <text x="60" y="154" text-anchor="end" fill="currentColor" opacity="0.5">75%</text>
+      <text x="60" y="34"  text-anchor="end" fill="currentColor" opacity="0.5">100%</text>
+      <text transform="rotate(-90 22 150)" x="22" y="150" text-anchor="middle" fill="currentColor" opacity="0.55">attacks caught (of 5)</text>
+      <circle cx="273" cy="222" r="9" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"><title>gpt-oss:120b@low — false alarms 12/60, attacks 3/5, 64.0 GiB</title></circle>
+      <text x="273" y="248" text-anchor="middle" fill="currentColor" opacity="0.85">gpt-oss:120b</text>
+      <text x="273" y="264" text-anchor="middle" fill="currentColor" opacity="0.5">64 GiB · missed 2 of 5 attacks</text>
+      <circle cx="527" cy="126" r="9" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"><title>gpt-oss:20b@low — false alarms 27/60, attacks 4/5, 12.0 GiB</title></circle>
+      <text x="527" y="108" text-anchor="middle" fill="currentColor" opacity="0.85">gpt-oss:20b</text>
+      <circle cx="659" cy="222" r="9" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"><title>lfm2:24b-a2b — false alarms 35/60, attacks 3/5, 14.0 GiB</title></circle>
+      <text x="659" y="248" text-anchor="middle" fill="currentColor" opacity="0.85">lfm2:24b</text>
+      <text x="659" y="264" text-anchor="middle" fill="currentColor" opacity="0.5">noisy, and still missed 2</text>
+      <circle cx="609" cy="30" r="9" fill="none" stroke="var(--bad)" stroke-width="2"><title>gemma4:26b-a4b-it-qat — attacks 5/5, but VPN test wrong 3 of 6 runs</title></circle>
+      <text x="609" y="56" text-anchor="middle" fill="currentColor" opacity="0.85">gemma4:26b</text>
+      <text x="609" y="72" text-anchor="middle" fill="var(--bad)">fails VPN test 3/6</text>
+      <circle cx="548" cy="30" r="10" fill="var(--accent)"><title>gemma4:12b — false alarms 28/60, attacks 5/5, VPN test correct 6/6, 8.4 GiB</title></circle>
+      <text x="548" y="14" text-anchor="middle" fill="var(--accent)">gemma4:12b — the pick</text>
+      <text x="370" y="56" text-anchor="middle" fill="currentColor" opacity="0.5">caught all 5 · VPN clean · 8.4 GiB</text>
+      <text x="180" y="200" text-anchor="middle" fill="currentColor" opacity="0.5">quiet, but misses attacks</text>
+      </g>
+    </svg>
+    <figcaption>Attacks caught is n=5 — the 60%↔100% gap is two alerts. The top two differ by one false alarm (27 vs 28 of 60). Show counts, never percent alone.</figcaption>
+  </figure>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Results">
   <p class="eyebrow">The cost of that pick</p>
   <h2>259 seconds per alert, and reasoning effort can't fix it.</h2>
   <div class="metric-row">
@@ -413,6 +534,47 @@
   <div class="note warn">
     <span class="tag">Consequence for this talk</span>
     <p>The demo is pre-recorded or cut away from. That is a measured conclusion, not a staging preference.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Results">
+  <p class="eyebrow">And plan for the slowest run, not the average</p>
+  <h2>A demo is sized by its worst case.</h2>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 720 240" role="img" aria-label="Seconds per investigation per model: median bars with p95 and worst-case ticks">
+      <g font-family="ui-monospace, monospace" font-size="12">
+      <rect x="150" y="18" width="25" height="192" fill="var(--good)" opacity="0.15"/>
+      <text x="163" y="14" text-anchor="middle" fill="currentColor" opacity="0.55">a live demo needs 60–90s</text>
+      <line x1="150" y1="210" x2="700" y2="210" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <text x="150" y="228" text-anchor="middle" fill="currentColor" opacity="0.5">0</text>
+      <text x="316" y="228" text-anchor="middle" fill="currentColor" opacity="0.5">200s</text>
+      <text x="483" y="228" text-anchor="middle" fill="currentColor" opacity="0.5">400s</text>
+      <text x="650" y="228" text-anchor="middle" fill="currentColor" opacity="0.5">600s</text>
+      <text x="140" y="38" text-anchor="end" fill="currentColor" opacity="0.85">lfm2:24b</text>
+      <rect x="150" y="28" width="8" height="13" rx="2" fill="currentColor" opacity="0.35"><title>lfm2:24b-a2b — median 10s, p95 14s, worst 18s</title></rect>
+      <text x="140" y="72" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:20b@low</text>
+      <rect x="150" y="62" width="20" height="13" rx="2" fill="currentColor" opacity="0.35"><title>gpt-oss:20b@low — median 24s, p95 31s, worst 33s</title></rect>
+      <text x="140" y="106" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:120b@low</text>
+      <rect x="150" y="96" width="29" height="13" rx="2" fill="currentColor" opacity="0.35"><title>gpt-oss:120b@low — median 35s, p95 45s, worst 58s</title></rect>
+      <text x="140" y="140" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:20b@default</text>
+      <rect x="150" y="130" width="54" height="13" rx="2" fill="currentColor" opacity="0.35"><title>gpt-oss:20b@default — median 65s, p95 81s, worst 139s</title></rect>
+      <line x1="217" y1="128" x2="217" y2="145" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="266" y1="128" x2="266" y2="145" stroke="currentColor" stroke-width="2" opacity="0.4"/>
+      <text x="140" y="174" text-anchor="end" fill="currentColor" opacity="0.85">gemma4:26b-a4b</text>
+      <rect x="150" y="164" width="129" height="13" rx="2" fill="currentColor" opacity="0.35"><title>gemma4:26b-a4b — median 155s, p95 248s, worst 283s</title></rect>
+      <line x1="357" y1="162" x2="357" y2="179" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="386" y1="162" x2="386" y2="179" stroke="currentColor" stroke-width="2" opacity="0.4"/>
+      <text x="140" y="208" text-anchor="end" fill="currentColor" opacity="0.85">gemma4:12b</text>
+      <rect x="150" y="198" width="216" height="13" rx="2" fill="var(--accent)"><title>gemma4:12b — median 259s, p95 462s, worst 648s</title></rect>
+      <line x1="535" y1="196" x2="535" y2="213" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+      <line x1="690" y1="196" x2="690" y2="213" stroke="currentColor" stroke-width="2" opacity="0.4"/>
+      <text x="525" y="194" text-anchor="end" fill="currentColor" opacity="0.85">p95 462s</text>
+      <text x="700" y="194" text-anchor="end" fill="currentColor" opacity="0.5">worst 10.8 min</text>
+      </g>
+    </svg>
+    <figcaption>Bar = median. Ticks = p95 and worst run. The pick is 11× the runner-up on a typical run, 27× at worst. All times: 128 GB Mac Studio — the M4 Pro is slower; re-measure before quoting.</figcaption>
+  </figure>
   </div>
 </section>
 
@@ -509,6 +671,138 @@
   <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
 </section>
 
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The A/B test — is the menu just bureaucracy?</p>
+  <h2>Take away the menu, and the calmest model recommends disruption on 50 of 60 harmless alerts.</h2>
+  <p>Every report answers “what should the analyst do?” twice, from the same evidence. <strong>A: pick from a fixed menu of 18 actions</strong> — this ships. <strong>B: write freely</strong> — recorded for research, never shown. Count of reports with a disruptive action (block an IP, lock an account, isolate a machine) on the 60 harmless alerts:</p>
+  <div class="leg">
+    <span><span class="chip good"></span>menu (what the analyst sees)</span>
+    <span><span class="chip bad"></span>free writing (never shown)</span>
+  </div>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 720 250" role="img" aria-label="Dumbbell chart: disruptive recommendations on harmless alerts, menu versus free writing, per model">
+      <g font-family="ui-monospace, monospace" font-size="12">
+      <line x1="255" y1="16" x2="255" y2="216" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="340" y1="16" x2="340" y2="216" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="425" y1="16" x2="425" y2="216" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="510" y1="16" x2="510" y2="216" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="595" y1="16" x2="595" y2="216" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="170" y1="216" x2="680" y2="216" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <text x="170" y="234" text-anchor="middle" fill="currentColor" opacity="0.5">0</text>
+      <text x="340" y="234" text-anchor="middle" fill="currentColor" opacity="0.5">20</text>
+      <text x="510" y="234" text-anchor="middle" fill="currentColor" opacity="0.5">40</text>
+      <text x="680" y="234" text-anchor="middle" fill="currentColor" opacity="0.5">60</text>
+      <text x="425" y="250" text-anchor="middle" fill="currentColor" opacity="0.55">reports saying block / lock / isolate, out of 60 harmless alerts</text>
+      <text x="160" y="34" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:120b@low</text>
+      <line x1="170" y1="30" x2="595" y2="30" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="170" cy="30" r="7" fill="var(--good)"><title>menu: 0/60</title></circle>
+      <circle cx="595" cy="30" r="7" fill="var(--bad)"><title>free writing: 50/60</title></circle>
+      <text x="612" y="34" fill="currentColor" opacity="0.85">50</text>
+      <text x="180" y="20" fill="currentColor" opacity="0.6">0</text>
+      <text x="160" y="70" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:20b@low</text>
+      <line x1="230" y1="66" x2="570" y2="66" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="230" cy="66" r="7" fill="var(--good)"><title>menu: 7/60</title></circle>
+      <circle cx="570" cy="66" r="7" fill="var(--bad)"><title>free writing: 47/60</title></circle>
+      <text x="587" y="70" fill="currentColor" opacity="0.85">47</text>
+      <text x="207" y="70" text-anchor="end" fill="currentColor" opacity="0.6">7</text>
+      <text x="160" y="106" text-anchor="end" fill="currentColor" opacity="0.85">gpt-oss:20b@default</text>
+      <line x1="255" y1="102" x2="527" y2="102" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="255" cy="102" r="7" fill="var(--good)"><title>menu: 10/60</title></circle>
+      <circle cx="527" cy="102" r="7" fill="var(--bad)"><title>free writing: 42/60</title></circle>
+      <text x="544" y="106" fill="currentColor" opacity="0.85">42</text>
+      <text x="232" y="106" text-anchor="end" fill="currentColor" opacity="0.6">10</text>
+      <text x="160" y="142" text-anchor="end" fill="currentColor" opacity="0.85">gemma4:26b-a4b</text>
+      <line x1="400" y1="138" x2="450" y2="138" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="400" cy="138" r="7" fill="var(--good)"><title>menu: 27/60</title></circle>
+      <circle cx="450" cy="138" r="7" fill="var(--bad)"><title>free writing: 33/60</title></circle>
+      <text x="467" y="142" fill="currentColor" opacity="0.85">33</text>
+      <text x="377" y="142" text-anchor="end" fill="currentColor" opacity="0.6">27</text>
+      <text x="160" y="178" text-anchor="end" fill="currentColor" opacity="0.85">gemma4:12b — the pick</text>
+      <line x1="374" y1="174" x2="400" y2="174" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="374" cy="174" r="7" fill="var(--good)"><title>menu: 24/60</title></circle>
+      <circle cx="400" cy="174" r="7" fill="var(--bad)"><title>free writing: 27/60</title></circle>
+      <text x="417" y="178" fill="currentColor" opacity="0.85">27</text>
+      <text x="351" y="178" text-anchor="end" fill="currentColor" opacity="0.6">24</text>
+      <text x="160" y="214" text-anchor="end" fill="currentColor" opacity="0.85">lfm2:24b-a2b</text>
+      <line x1="323" y1="210" x2="595" y2="210" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+      <circle cx="595" cy="210" r="7" fill="var(--good)"><title>menu: 50/60 — it selects almost everything on the menu, 9.1 actions per report</title></circle>
+      <circle cx="323" cy="210" r="7" fill="var(--bad)"><title>free writing: 18/60</title></circle>
+      <text x="300" y="214" text-anchor="end" fill="currentColor" opacity="0.85">18</text>
+      <text x="612" y="214" fill="currentColor" opacity="0.6">50</text>
+      </g>
+    </svg>
+    <figcaption>gpt-oss looks calm only because of the menu (0 → 50). gemma4:12b is calm by itself (24 → 27). lfm2 inverts: it selects almost everything on the menu. “Disruptive” is a keyword match — rough counts. Free writing is experimental Draft-B: say “what it would have said,” never “what the product does.”</figcaption>
+  </figure>
+  </div>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The VPN false positive, both columns</p>
+  <h2>Every gpt-oss run wants to lock this user out — even the runs that scored correctly.</h2>
+  <p>mrahman’s VPN login looks strange but is legitimate — the alert the demo exists to get right. Severity given (6 runs each) beside what the free-written draft recommends doing to mrahman:</p>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>model</th><th>severity given (6 runs)</th><th>free-written draft says lock out / isolate</th></tr></thead>
+      <tbody>
+        <tr class="pick"><td><strong>gemma4:12b</strong></td><td><span class="chip good"></span><span class="chip good"></span><span class="chip good"></span><span class="chip good"></span><span class="chip good"></span><span class="chip good"></span> low ×6 ✓</td><td><strong>0 of 6 — the only model safe in both columns</strong></td></tr>
+        <tr><td><code>lfm2:24b-a2b</code></td><td><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span> medium ×6</td><td>0 of 6</td></tr>
+        <tr><td><code>gpt-oss:120b</code>@low</td><td><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span> medium ×6</td><td><span class="ffbar" style="width:6em"></span> 6 of 6</td></tr>
+        <tr><td><code>gpt-oss:20b</code>@low</td><td><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span> medium ×6</td><td><span class="ffbar" style="width:6em"></span> 6 of 6</td></tr>
+        <tr><td><code>gpt-oss:20b</code>@default</td><td><span class="chip bad"></span><span class="chip bad"></span><span class="chip bad"></span><span class="chip bad"></span><span class="chip bad"></span><span class="chip bad"></span> high ×6 ✗</td><td><span class="ffbar" style="width:6em"></span> 6 of 6</td></tr>
+        <tr><td><code>gemma4:26b-a4b</code></td><td><span class="chip bad"></span><span class="chip bad"></span><span class="chip bad"></span><span class="chip acc"></span><span class="chip acc"></span><span class="chip acc"></span> high ×3 ✗</td><td><span class="ffbar" style="width:3em"></span> 3 of 6</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead">A <em>medium</em> score passes the test — but the same run’s draft still says <em>“immediately isolate the endpoint… force a password reset.”</em> A good score does not mean a harmless report. n=6 each — show counts.</p>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The punchline</p>
+  <h2>Writing freely, the model tells you to block Google.</h2>
+  <p>Harmless held-for-review email · from <code>jane.tan@meridian-audit.com</code> (a real external auditor) to <code>raj.kumar@victimcorp.com</code> · subject “Audit evidence request — Q2 access reviews”.</p>
+  <blockquote class="action">
+    “Block the sender’s IP (209.85.220.41) and the domain ‘meridian-audit.com’ at the corporate firewall and email gateway.”
+    <span class="src">gemma4:12b, free-written Draft-B on that harmless alert — the analyst never sees this</span>
+  </blockquote>
+  <pre class="whois">$ whois 209.85.220.41
+NetRange:  209.85.128.0 - 209.85.255.255
+OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops delivering</pre>
+  <p>Runner-up, another harmless alert: <em>“terminate all active SSH sessions associated with … 203.0.113.63”</em> — TEST-NET-3, a documentation-only range. ~70% of free-written drafts name a specific IP to act on. (Alert data is synthetic; 209.85.220.41 is real — ARIN, checked 17 Aug.)</p>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">The safety net, measured across all 426 deep reports</p>
+  <h2>The self-check deletes every risky action it catches.</h2>
+  <div class="metric-row">
+    <div class="metric"><span class="val">1,517</span><span class="cap">Claims marked “not supported by evidence”</span></div>
+    <div class="metric"><span class="val acc">24% <span style="font-size:0.4em">vs</span> 16%</span><span class="cap">Risky share of marked claims vs of all selections</span></div>
+    <div class="metric"><span class="val ok">0/300</span><span class="cap">Marked risky actions reaching a final report</span></div>
+    <div class="metric"><span class="val">67</span><span class="cap">Reports where every action was deleted — a safe default is inserted</span></div>
+  </div>
+  <p class="lead">The model never writes its own uncertainty notes — the pipeline computes them, re-checks every claim in a fresh call, and deletes what fails. When it deletes everything, <em>“escalate to a human”</em> remains.</p>
+  <div class="note good">
+    <span class="tag">Closing line</span>
+    <p>A 12B model on a laptop is safe to use — not because the model can be trusted, but because <strong>the pipeline never trusts it</strong>. The distance between “ask a human” and “block Gmail” is the pipeline.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="4 · Deepdive">
+  <p class="eyebrow">And when the safety net itself fails</p>
+  <h2>The self-check timed out on a live run — and the report said so.</h2>
+  <p>17 Aug, the encoded-PowerShell needle. Draft-A selected <strong>13</strong> recommended actions, so the self-check had 13 claims to audit. It exceeded the 120-second timeout and failed.</p>
+  <div class="metric-row">
+    <div class="metric"><span class="val hot">1</span><span class="cap">failed_calls recorded on the report</span></div>
+    <div class="metric"><span class="val">13</span><span class="cap">Claims the audit never finished</span></div>
+    <div class="metric"><span class="val ok">0</span><span class="cap">Unaudited drafts shipped as complete</span></div>
+  </div>
+  <p class="lead">The pipeline does not trust the model. <em>It also does not trust itself to have succeeded.</em></p>
+  <div class="note good">
+    <span class="tag">The designed path, not a defect</span>
+    <p>The failure is written into the timeline, counted in <code>llm_usage</code>, and named in the report’s uncertainty notes. A step that did not run cannot be mistaken for a step that found nothing.</p>
+  </div>
+</section>
+
 <!-- ═══ 5 LEARNINGS ═══ -->
 <section class="slide sec" data-sec="5 · Learnings">
   <div class="no">05</div>
@@ -518,9 +812,7 @@
     <ul>
       <li>GGUF vs MLX — same weights, one silently ignores your schema</li>
       <li>The harness completes an investigation with <em>no working model at all</em> — and scores like a cautious one</li>
-      <li>Models fail by cluster, and the clusters invert between models</li>
       <li>Screen-stage ranking moved 28 points at real sample size</li>
-      <li>Don't derive tok/s from Ollama's <code>usage</code> — off by 8×</li>
       <li>Docker binds single files by inode; git rewrites break the mount silently</li>
     </ul>
   </div>
@@ -545,6 +837,24 @@
 </section>
 
 <section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 1b · why leaderboards can't help</p>
+  <h2>Each model is blind in a different place.</h2>
+  <p>Benign escalation by alert type — false alarms out of 15, darker = noisier. <code>lfm2</code> flags every normal PowerShell alert and almost no Windows logins; <code>gemma4:26b</code> is the exact opposite.</p>
+  <div class="scroller">
+    <div class="hm">
+      <div class="h"></div><div class="h">email</div><div class="h">powershell</div><div class="h">ssh</div><div class="h">winlogon</div>
+      <div class="r">gemma4:12b</div>          <div class="cell b3" title="10 of 15">10</div><div class="cell b0" title="0 of 15">0</div><div class="cell b2" title="7 of 15">7</div><div class="cell b3" title="11 of 15">11</div>
+      <div class="r">gemma4:26b-a4b</div>      <div class="cell b2" title="7 of 15">7</div><div class="cell b0" title="0 of 15">0</div><div class="cell b3" title="11 of 15">11</div><div class="cell b4" title="14 of 15">14</div>
+      <div class="r">gpt-oss:120b@low</div>    <div class="cell b0" title="0 of 15">0</div><div class="cell b2" title="7 of 15">7</div><div class="cell b2" title="5 of 15">5</div><div class="cell b0" title="0 of 15">0</div>
+      <div class="r">gpt-oss:20b@low</div>     <div class="cell b1" title="4 of 15">4</div><div class="cell b3" title="8 of 15">8</div><div class="cell b4" title="12 of 15">12</div><div class="cell b1" title="3 of 15">3</div>
+      <div class="r">gpt-oss:20b@default</div> <div class="cell b3" title="9 of 15">9</div><div class="cell b1" title="2 of 15">2</div><div class="cell b3" title="9 of 15">9</div><div class="cell b5" title="15 of 15">15</div>
+      <div class="r">lfm2:24b-a2b</div>        <div class="cell b2" title="7 of 15">7</div><div class="cell b5" title="15 of 15">15</div><div class="cell b3" title="9 of 15">9</div><div class="cell b1" title="4 of 15">4</div>
+    </div>
+  </div>
+  <p class="lead">A model that wins on a public leaderboard can still be blind to <em>your</em> alerts. Test on the alert types you see every day.</p>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
   <p class="eyebrow">Learning 2 · the deployment one</p>
   <h2>KV cache, not weights, decides what fits on your laptop.</h2>
   <div class="scroller">
@@ -566,6 +876,84 @@
 </section>
 
 <section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 2, as a picture</p>
+  <h2>Two models look the same size — until you give them context.</h2>
+  <div class="leg">
+    <span><span class="chip acc"></span>gemma4:12b — the pick</span>
+    <span><span class="chip bad"></span>mistral-small3.2</span>
+    <span><span class="chip good"></span>muse-glimmer:30b</span>
+    <span><span class="chip" style="background: currentColor; opacity: 0.55"></span>qwen3.6:27b</span>
+  </div>
+  <div class="fig-wrap">
+  <figure>
+    <svg viewBox="0 0 720 300" role="img" aria-label="Line chart: resident memory versus context window for four models, with the laptop budget as a dashed ceiling">
+      <g font-family="ui-monospace, monospace" font-size="12">
+      <line x1="120" y1="189" x2="700" y2="189" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="120" y1="128" x2="700" y2="128" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="120" y1="67"  x2="700" y2="67"  stroke="currentColor" stroke-width="1" opacity="0.12"/>
+      <line x1="120" y1="250" x2="700" y2="250" stroke="currentColor" stroke-width="1.2" opacity="0.4"/>
+      <text x="110" y="254" text-anchor="end" fill="currentColor" opacity="0.5">0</text>
+      <text x="110" y="193" text-anchor="end" fill="currentColor" opacity="0.5">10</text>
+      <text x="110" y="132" text-anchor="end" fill="currentColor" opacity="0.5">20</text>
+      <text x="110" y="71"  text-anchor="end" fill="currentColor" opacity="0.5">30 GiB</text>
+      <text x="200" y="268" text-anchor="middle" fill="currentColor" opacity="0.5">8K</text>
+      <text x="360" y="268" text-anchor="middle" fill="currentColor" opacity="0.5">32K</text>
+      <text x="520" y="268" text-anchor="middle" fill="currentColor" opacity="0.5">128K</text>
+      <text x="660" y="268" text-anchor="middle" fill="currentColor" opacity="0.5">256K</text>
+      <text x="410" y="290" text-anchor="middle" fill="currentColor" opacity="0.55">context window (tokens)</text>
+      <line x1="120" y1="143" x2="700" y2="143" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 5" opacity="0.6"/>
+      <text x="126" y="137" fill="currentColor" opacity="0.7">laptop budget · 17.5 GiB</text>
+      <polyline points="200,160 360,136 520,39" fill="none" stroke="var(--bad)" stroke-width="2"/>
+      <circle cx="200" cy="160" r="4" fill="var(--bad)"><title>mistral-small3.2 — 14.8 GiB at 8K</title></circle>
+      <circle cx="360" cy="136" r="4" fill="var(--bad)"><title>mistral-small3.2 — 18.6 GiB at 32K: already over budget</title></circle>
+      <circle cx="520" cy="39"  r="4" fill="var(--bad)"><title>mistral-small3.2 — 34.5 GiB at 128K</title></circle>
+      <text x="536" y="39" fill="var(--bad)">34.5 GiB</text>
+      <text x="536" y="55" fill="currentColor" opacity="0.5">KV: 168 MB/1K</text>
+      <polyline points="200,155 360,145 520,104 660,52" fill="none" stroke="currentColor" stroke-width="2" opacity="0.55"/>
+      <circle cx="200" cy="155" r="4" fill="currentColor" opacity="0.55"><title>qwen3.6:27b — 15.6 GiB at 8K</title></circle>
+      <circle cx="360" cy="145" r="4" fill="currentColor" opacity="0.55"><title>qwen3.6:27b — 17.2 GiB at 32K</title></circle>
+      <circle cx="520" cy="104" r="4" fill="currentColor" opacity="0.55"><title>qwen3.6:27b — 23.9 GiB at 128K</title></circle>
+      <circle cx="660" cy="52"  r="4" fill="currentColor" opacity="0.55"><title>qwen3.6:27b — 32.4 GiB at 256K. q4 and q8 pay identical KV: quantization does not shrink it.</title></circle>
+      <text x="676" y="52" fill="currentColor" opacity="0.7">32.4</text>
+      <polyline points="200,150 360,150 520,146" fill="none" stroke="var(--good)" stroke-width="2"/>
+      <circle cx="200" cy="150" r="4" fill="var(--good)"><title>muse-glimmer:30b — 16.3 GiB at 8K: only 1.5 GiB more than mistral here</title></circle>
+      <circle cx="360" cy="150" r="4" fill="var(--good)"><title>muse-glimmer:30b — 16.3 GiB at 32K</title></circle>
+      <circle cx="520" cy="146" r="4" fill="var(--good)"><title>muse-glimmer:30b — 17.1 GiB at 128K: still under budget</title></circle>
+      <text x="536" y="164" fill="var(--good)">17.1</text>
+      <polyline points="200,202 360,202 520,196 660,193" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      <circle cx="200" cy="202" r="4" fill="var(--accent)"><title>gemma4:12b — 7.8 GiB at 8K</title></circle>
+      <circle cx="360" cy="202" r="4" fill="var(--accent)"><title>gemma4:12b — 7.8 GiB at 32K</title></circle>
+      <circle cx="520" cy="196" r="4" fill="var(--accent)"><title>gemma4:12b — 8.9 GiB at 128K</title></circle>
+      <circle cx="660" cy="193" r="4" fill="var(--accent)"><title>gemma4:12b — 9.4 GiB at 256K: full context, half the budget</title></circle>
+      <text x="676" y="197" fill="var(--accent)">9.4</text>
+      <text x="126" y="95" fill="currentColor" opacity="0.5">at 8K, mistral and muse-glimmer are 1.5 GiB apart</text>
+      <text x="126" y="111" fill="currentColor" opacity="0.5">at 128K, they are 17.4 GiB apart</text>
+      </g>
+    </svg>
+    <figcaption>Measured via /api/ps (exact bytes) at four context settings. The pick affords the full 262K window in 9.4 GiB — half the budget. Two models you would size identically from their weights end up 17.4 GiB apart.</figcaption>
+  </figure>
+  </div>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 2, the sequel · gated 17 Aug</p>
+  <h2>A generation of architecture work bought zero extra context.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th></th><th>qwen3.6:27b</th><th>qwen3.8:27b</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>KV cost per 1K tokens</td><td class="num">69.2 MB</td><td class="num">4.4 MB</td><td>15.7× better</td></tr>
+        <tr><td>Ladder growth, 8K → 256K</td><td class="num">+16.8 GiB</td><td class="num">+1.1 GiB</td><td>15× better</td></tr>
+        <tr><td>Base footprint</td><td class="num">15.6 GiB</td><td class="num">16.9 GiB</td><td>worse</td></tr>
+        <tr class="pick"><td><strong>Max context under 17.5 GiB</strong></td><td class="num">32,768</td><td class="num">32,768</td><td><strong>identical</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead">The KV saving is real and large. The base footprint grew just enough to absorb <em>all</em> of it — and it generates at 51 chars/s against 99.</p>
+  <p><strong>“Newer” is not a scalar.</strong> This is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.</p>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
   <p class="eyebrow">Learning 3 · the measurement one</p>
   <h2>Every footprint we published was 7.7% too heavy.</h2>
   <p><code>ollama ps</code> prints <em>decimal</em> GB. The parser multiplied by 1024³. Every number in the project was wrong by the same constant.</p>
@@ -575,6 +963,27 @@
   </div>
   <p class="lead">It surfaced only because a <em>different</em> number looked impossible: a 120B model reporting a KV cost of exactly 0.0 MB/1K, flat across three rungs.</p>
   <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
+</section>
+
+<section class="slide" data-sec="5 · Learnings">
+  <p class="eyebrow">Learning 4 · the one we caused ourselves</p>
+  <h2>We instrumented every call. It taught us two things.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Useful — the token count is not a cost metric</h3>
+      <p>One run: <strong>20,843</strong> characters of reasoning against <strong>500</strong> reported <code>completion_tokens</code>. A <em>42× gap</em>. The self-check call alone reported 163 tokens against 6,655 characters of reasoning trace.</p>
+      <p><code>completion_tokens</code> counts structured output only. It is never a throughput or cost figure.</p>
+    </div>
+    <div class="col">
+      <h3>Uncomfortable — the logs moved</h3>
+      <p>Capturing the verbatim prompt puts <code>full_log</code> into every report JSON <em>and</em> every database row — not just the alert’s own <code>raw_json</code>.</p>
+      <p>A report can now leak alert content even if the alert record itself is handled carefully.</p>
+    </div>
+  </div>
+  <div class="note warn">
+    <span class="tag">Needs a data-handling decision before real SIEM data</span>
+    <p><strong>Instrumentation is a data-flow change.</strong> We added observability to see inside the pipeline, and widened the blast radius of every stored report in the same commit.</p>
+  </div>
 </section>
 
 <!-- ═══ 6 CONCLUSIONS ═══ -->
