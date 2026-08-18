@@ -607,3 +607,45 @@ def test_configure_verbose_logging_is_idempotent_across_repeated_calls():
     assert len(app_logger.handlers) == 1
 
     logging.getLogger("app").handlers.clear()
+
+
+def test_investigate_one_with_tui_wires_on_step_into_the_analyst(monkeypatch, tmp_path):
+    alert = _make_alert()
+    store = _FakeAlertStore(alerts=[alert])
+    report = _make_report(alert_id=alert.alert_id)
+    captured = {}
+
+    def fake_build_analyst(settings, alert_store=None, on_step=None):
+        captured["on_step"] = on_step
+        return _FakeAnalyst(report)
+
+    monkeypatch.setattr("app.cli.build_analyst", fake_build_analyst)
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+
+    result = runner.invoke(app, ["investigate-one", str(alert.alert_id), "--tui"])
+
+    assert result.exit_code == 0
+    assert callable(captured["on_step"])
+    assert str(report.report_id) in result.stdout
+
+
+def test_investigate_all_with_tui_wires_on_step_into_the_analyst(monkeypatch, tmp_path):
+    alert = _make_alert(status=AlertStatus.NEW)
+    store = _FakeAlertStore(alerts=[alert])
+    report = _make_report(alert_id=alert.alert_id)
+    captured = {}
+
+    def fake_build_analyst(settings, alert_store=None, on_step=None):
+        captured["on_step"] = on_step
+        return _FakeAnalyst(report)
+
+    monkeypatch.setattr("app.cli.build_analyst", fake_build_analyst)
+    monkeypatch.setattr("app.cli.build_alert_store", lambda settings: store)
+    monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+
+    result = runner.invoke(app, ["investigate-all", "--tui"])
+
+    assert result.exit_code == 0
+    assert callable(captured["on_step"])
+    assert str(report.report_id) in result.stdout
