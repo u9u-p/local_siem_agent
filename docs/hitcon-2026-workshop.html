@@ -556,7 +556,7 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
   <h2>602 investigations. Zero crashes.</h2>
   <div class="metric-row">
     <div class="metric"><span class="val acc">602</span><span class="cap">Investigations · 176 screen, 426 deep</span></div>
-    <div class="metric"><span class="val">16</span><span class="cap">Configurations screened</span></div>
+    <div class="metric"><span class="val">18</span><span class="cap">Candidates · 4 gated + 9 screened out + 5 deep</span></div>
     <div class="metric"><span class="val">5</span><span class="cap">Finalists at n=71</span></div>
     <div class="metric"><span class="val">3.2–68.7<span style="font-size:0.4em"> GB</span></span><span class="cap">Model size span</span></div>
   </div>
@@ -564,8 +564,8 @@ LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll s
 </section>
 
 <section class="slide" data-sec="4 · Results">
-  <p class="eyebrow">The field</p>
-  <h2>We tested 18 models. One survived.</h2>
+  <p class="eyebrow">The field · a candidate = one model at one quant</p>
+  <h2>18 candidates. One met the bar.</h2>
   <div class="cols">
     <div class="col">
       <h3>Stopped at the gate · 4</h3>
@@ -839,7 +839,7 @@ agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12
 <section class="slide dense" data-sec="5 · Deepdive">
   <p class="eyebrow">The A/B test — is the menu just bureaucracy?</p>
   <h2>Take away the menu, and the calmest model recommends disruption on 50 of 60 harmless alerts.</h2>
-  <p>Every report answers “what should the analyst do?” twice, from the same evidence. <strong>A: pick from a fixed menu of 18 actions</strong> — this ships. <strong>B: write freely</strong> — recorded for research, never shown. Count of reports with a disruptive action (block an IP, lock an account, isolate a machine) on the 60 harmless alerts:</p>
+  <p>Every report answers “what should the analyst do?” twice, from the same evidence. <strong>A: pick from a fixed menu of 19 actions</strong> — this ships. <strong>B: write freely</strong> — recorded for research, never shown. Count of reports with a disruptive action (block an IP, lock an account, isolate a machine) on the 60 harmless alerts:</p>
   <div class="leg">
     <span><span class="chip good"></span>menu (what the analyst sees)</span>
     <span><span class="chip bad"></span>free writing (never shown)</span>
