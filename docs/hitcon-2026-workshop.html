@@ -1296,9 +1296,7 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
   <div class="queue">
     <span class="qh">Material available to expand into</span>
     <ul>
-      <li>The go/no-go smoke test as the take-home artifact</li>
       <li>Named gaps between here and autonomous, each with a file</li>
-      <li>Repo, slides, contact</li>
     </ul>
   </div>
 </section>
@@ -1360,6 +1358,31 @@ agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --j
   <div class="metric-row">
     <div class="metric"><span class="val acc">8.4<span style="font-size:0.4em"> GiB</span></span><span class="cap">Everything you saw, resident</span></div>
     <div class="metric"><span class="val acc">0</span><span class="cap">Bytes sent to a cloud model</span></div>
+  </div>
+</section>
+
+<section class="slide" data-sec="7 · Conclusions">
+  <p class="eyebrow">Take it home — everything you saw runs offline, for free</p>
+  <h2>Clone it tonight. Gate your model before you trust it.</h2>
+  <pre>git clone &lt;repo-url&gt;                <span class="c"># everything: pipeline, stack, benchmark</span>
+python -m bench.stage0              <span class="c"># the go/no-go gate from Learnings</span></pre>
+  <div class="cols">
+    <div class="col">
+      <h3>In the box</h3>
+      <ul>
+        <li>The 9-step pipeline, 448 tests</li>
+        <li>Seeded Wazuh stack — 11 sources, FP pairs, hidden needles</li>
+        <li>The benchmark harness and the graded corpus</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Run the gate first</h3>
+      <p>Structured-output probe, effort check, measured footprint — the answer to "can I build on this model at all?", for <em>your</em> hardware, in minutes. Being pulled is not being usable.</p>
+    </div>
+  </div>
+  <div class="todo">
+    <span class="tag">Before 21 Aug</span>
+    <p>Repo URL, slides URL, contact handles.</p>
   </div>
 </section>
 
