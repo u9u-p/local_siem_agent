@@ -1,0 +1,758 @@
+{
+  "report_id": "643e74fe-29c2-4540-a459-691be3f45852",
+  "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+  "generated_at": "2026-08-18T02:39:03.200475Z",
+  "alert_summary": "Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48",
+        "rule_id": "100073",
+        "rule_level": 14,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 869b38c2-a8f1-5be6-85af-f9e09eff7f48 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:38:12.287501Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 548,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 3
+      },
+      "output": {
+        "regex": {
+          "candidates": 8,
+          "validated": 2
+        },
+        "llm": {
+          "candidates": 1,
+          "validated": 1
+        },
+        "decode": {
+          "segments": 1,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 8 candidates, 2 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 1 candidates, 1 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-30T09:16:41.554+0000\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Sysmon\",\"eventID\":\"1\",\"computer\":\"JTAN-LT01.victimcorp.com\"},\"eventdata\":{\"utcTime\":\"2026-07-30 09:16:41.530\",\"image\":\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\",\"commandLine\":\"powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\",\"parentImage\":\"C:\\\\Program Files\\\\Microsoft Office\\\\root\\\\Office16\\\\EXCEL.EXE\",\"parentCommandLine\":\"\\\"EXCEL.EXE\\\" /n \\\"Invoice_2984773.xlsm\\\"\",\"user\":\"VICTIMCORP\\\\jane.tan\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'image': 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe', 'parentCommandLine': '\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"', 'utcTime': '2026-07-30 09:16:41.530', 'parentImage': 'C:\\\\Program Files\\\\Microsoft Office\\\\root\\\\Office16\\\\EXCEL.EXE', 'commandLine': 'powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...', 'user': 'VICTIMCORP\\\\jane.tan'}, 'system': {'eventID': '1', 'computer': 'JTAN-LT01.victimcorp.com', 'providerName': 'Microsoft-Windows-Sysmon'}}, 'timestamp': '2026-07-30T09:16:41.554+0000'}\n\nAdditional decoded command-line text:\n- powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\n- \"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"\n- IEX (New-Object\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have:\n\n- computer: 'JTAN-LT01.victimcorp.com' => domain: victimcorp.com? Actually \"JTAN-LT01.victimcorp.com\" is a hostname with domain victimcorp.com. So domain indicator: victimcorp.com.\n\n- image: powershell.exe (file path) not hash.\n\n- parentCommandLine includes \"EXCEL.EXE\" (file path) not hash.\n\n- commandLine includes \"powershell.exe  -NoP  -W Hidden  -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\" This is encoded command line, not hash.\n\n- Additional decoded command-line text includes \"IEX (New-Object List every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.\"\n\nBut we need to list candidate indicators found. Possibly also \"IEX\" is not indicator.\n\nFile hashes? None given. No SHA256 etc.\n\nIP addresses? None.\n\nURLs? None.\n\nThus only domain: victimcorp.com.\n\nBut maybe \"JTAN-LT01. victimcorp.com\" includes subdomain JTAN-LT01. So domain is victimcorp.com.\n\nThus output: domain - victimcorp.com.\n\nBut maybe also \"EXCEL.EXE\" is a file path, not hash.\n\nThus answer: domain: victimcorp.com.\n\nProvide list.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1211,
+          "completion_tokens": 34,
+          "latency_ms": 5693,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:38:17.981228Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 3 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:38:17.981288Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100073"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100073",
+          "description": "Sysmon: Office application spawned PowerShell with an encoded command.",
+          "level": 14,
+          "groups": [
+            "sysmon_event1",
+            "windows",
+            "sysmon"
+          ],
+          "mitre_technique_ids": [
+            "T1059.001",
+            "T1566.001"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100073",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:38:18.424748Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_command_line_env_wide",
+          "same_rule_id_host"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "jtan-lt01.victimcorp.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "jane.tan",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_rule_id_host": {
+            "total_count": 1,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_command_line_env_wide": {
+            "total_count": 1,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "lateral_movement",
+        "follow_up": {
+          "template": "same_command_line_env_wide",
+          "value": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+          "hit_count": 1
+        },
+        "open_value": null,
+        "evidence_count": 3,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=lateral_movement, evidence_count=3; follow-up same_command_line_env_wide added 1",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100073 (Sysmon: Office application spawned PowerShell with an encoded command.), level 14.\nAlert source IP: not set; destination IP: not set.\n\nCanonical search results:\n- same_rule_id_host: 1 matching alert(s)\n- same_command_line_env_wide: 1 matching alert(s)\n\nEnrichment verdicts:\n- domain jtan-lt01.victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n- domain jane.tan (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 2\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type: rule 100073 is Sysmon: Office application spawned PowerShell with an encoded command. That's lateral movement (post-exploitation). So pattern_type = lateral_movement.\n\nPick at most one follow_up_query from closed menu: same_rule_id_host, same_command_line_env_wide, same_dst_host, same_src_ip_24h, or none_needed.\n\nWe have two canonical searches: same_rule_id_host (1 match) and same_command_line_env_wide (1 match). Which would help confirm pattern? The rule is about Office app spawning encoded PowerShell. The same_command_line_env_wide search matches command line and env. That seems relevant to confirm the encoded command. So follow_up_query = same_command_line_env_wide.\n\nThus output: pattern_type: lateral_movement, follow_up_query: same_command_line_env_wide.\n\nProbably format: \"lateral_movement, same_command_line_env_wide\".",
+          "parsed_output": {
+            "pattern_type": "lateral_movement",
+            "follow_up_query": "same_command_line_env_wide"
+          },
+          "attempts": 1,
+          "prompt_tokens": 579,
+          "completion_tokens": 32,
+          "latency_ms": 3648,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:38:22.084354Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 3,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "medium",
+        "confidence": "medium",
+        "rationale": "The event shows lateral movement via an encoded PowerShell command launched from an Excel attachment, which is a common initial access technique. However, the Sysmon severity is low (level 14), indicating a less critical detection, so the overall risk is moderate rather than critical."
+      },
+      "output_summary": "severity=medium, confidence=medium",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100073 - Sysmon: Office application spawned PowerShell with an encoded command. (level 14, groups: windows, sysmon, sysmon_event1).\nKnown MITRE ATT&CK mapping: T1059.001 (PowerShell), T1566.001 (Spearphishing Attachment).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=3.\nEnrichment findings:\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\nParent command line: \"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. The event: Sysmon level 14 (medium?), but rule says level 14. Usually Sysmon levels: 1=critical, 2=high, 3=medium, 4=low? Actually Sysmon severity: 1=critical, 2=high, 3=medium, 4=low. So level 14 is low. But correlation lateral movement, evidence count 3, encoded PowerShell, spearphishing attachment. Likely medium severity. Confidence medium. Rationale: Lateral movement via encoded PowerShell from Excel attachment suggests possible compromise, but low severity due to low Sysmon level. Provide answer.",
+          "parsed_output": {
+            "severity": "medium",
+            "confidence": "medium",
+            "rationale": "The event shows lateral movement via an encoded PowerShell command launched from an Excel attachment, which is a common initial access technique. However, the Sysmon severity is low (level 14), indicating a less critical detection, so the overall risk is moderate rather than critical."
+          },
+          "attempts": 1,
+          "prompt_tokens": 499,
+          "completion_tokens": 80,
+          "latency_ms": 3329,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:38:25.413938Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 3,
+        "severity": "medium",
+        "confidence": "medium",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.",
+          "rationale": "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.",
+          "recommended_actions": [
+            "Disable or reset credentials for the affected user account",
+            "Block the source IP at the network perimeter",
+            "Isolate the affected host from the network pending investigation",
+            "Escalate to the incident response / Tier 2 team",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Notify the asset owner of the affected host or agent",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Escalate to a human analyst for manual review",
+            "Terminate the suspicious process on the affected host",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Isolate the affected workstation immediately to prevent further data exfiltration or command execution.",
+            "Collect the full Sysmon event log and any related network traffic for deeper analysis.",
+            "Verify the identity of the user account that initiated the PowerShell command and check for anomalous login patterns.",
+            "Inspect the Excel attachment for embedded macros or malicious code that could have triggered the encoded command.",
+            "Search for additional indicators of compromise such as unusual registry changes, scheduled tasks, or persistence mechanisms.",
+            "Engage the incident response team to conduct a full forensic investigation and determine the scope of the breach."
+          ],
+          "triage_verdict": "true_positive",
+          "triage_rationale": "The event describes a classic lateral‑movement technique (encoded PowerShell from an Excel attachment) that aligns with known initial‑access tactics, making the alert a likely true positive."
+        }
+      },
+      "output_summary": "draft-A: 16 action(s) selected; draft-B: experimental triage=true_positive",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100073 - Sysmon: Office application spawned PowerShell with an encoded command. (level 14, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=3.\nEnrichment findings:\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The event shows lateral movement via an encoded PowerShell command launched from an Excel attachment, which is a common initial access technique. However, the Sysmon severity is low (level 14), indicating a less critical detection, so the overall risk is moderate rather than critical.\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\nParent command line: \"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object\n\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Need to decide which actions apply.\n\nGiven event: Office app (Excel) spawns PowerShell encoded command. Likely lateral movement. Recommended actions: Disable/reset credentials for affected user account? Possibly yes if user account compromised. Block source IP? Might be unknown domain, but could block. Isolate host? Probably yes. Escalate to incident response? Yes. Review authentication logs? Yes. Verify whether source IP/user is known service account? Yes. Run AV/EDR scan? Yes. Review file integrity monitoring? Yes. Patch vulnerable software? Possibly not identified. Notify asset owner? Yes. Rotate credentials? Yes. Review firewall/segmentation? Possibly. Correlate indicator? Yes. Preserve logs? Yes. No immediate action needed? Probably not. Escalate to human analyst? Yes. Terminate suspicious process? Possibly. Review parent-child tree? Yes. Manually review decoded command payload? Yes.\n\nBut we must \"select every recommended_action below that applies\". So include all that apply. Let's list:\n\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent\n\nAlso \"No immediate action needed — monitor for recurrence\" maybe not needed because we have actions. \"Patch or update the vulnerable software identified for this host\" not identified, so skip.\n\nNow produce output: plain-language alert_summary (1-2 sentences). Then expanded rationale (2-4 sentences). Then list selected actions.\n\nLet's craft:\n\nAlert summary: \"An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.\"\n\nRationale: \"The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.\"\n\nNow list actions as bullet list.\n\nLet's output.",
+          "parsed_output": {
+            "alert_summary": "An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.",
+            "rationale": "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.",
+            "recommended_actions": [
+              "Disable or reset credentials for the affected user account",
+              "Block the source IP at the network perimeter",
+              "Isolate the affected host from the network pending investigation",
+              "Escalate to the incident response / Tier 2 team",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Notify the asset owner of the affected host or agent",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Escalate to a human analyst for manual review",
+              "Terminate the suspicious process on the affected host",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1362,
+          "completion_tokens": 363,
+          "latency_ms": 12639,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100073 - Sysmon: Office application spawned PowerShell with an encoded command. (level 14, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=3.\nEnrichment findings:\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium, rationale: The event shows lateral movement via an encoded PowerShell command launched from an Excel attachment, which is a common initial access technique. However, the Sysmon severity is low (level 14), indicating a less critical detection, so the overall risk is moderate rather than critical.\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\nParent command line: \"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object\n\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must not give fixed list. Provide suggestions. Then classification.\n\nWe must label experimental. Probably output:\n\n**Experimental** ... then content.\n\nMake sure not to treat as trusted guidance.\n\nProvide recommended actions: e.g., isolate host, verify user, check for persistence, etc.\n\nThen classification: likely true_positive because lateral movement via encoded PowerShell from Excel is suspicious.\n\nOne-sentence rationale.\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Isolate the affected workstation immediately to prevent further data exfiltration or command execution.",
+              "Collect the full Sysmon event log and any related network traffic for deeper analysis.",
+              "Verify the identity of the user account that initiated the PowerShell command and check for anomalous login patterns.",
+              "Inspect the Excel attachment for embedded macros or malicious code that could have triggered the encoded command.",
+              "Search for additional indicators of compromise such as unusual registry changes, scheduled tasks, or persistence mechanisms.",
+              "Engage the incident response team to conduct a full forensic investigation and determine the scope of the breach."
+            ],
+            "triage_verdict": "true_positive",
+            "triage_rationale": "The event describes a classic lateral‑movement technique (encoded PowerShell from an Excel attachment) that aligns with known initial‑access tactics, making the alert a likely true positive."
+          },
+          "attempts": 1,
+          "prompt_tokens": 567,
+          "completion_tokens": 198,
+          "latency_ms": 4378,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:38:42.432331Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.",
+          "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.",
+          "Disable or reset credentials for the affected user account",
+          "Block the source IP at the network perimeter",
+          "Isolate the affected host from the network pending investigation",
+          "Escalate to the incident response / Tier 2 team",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Notify the asset owner of the affected host or agent",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Escalate to a human analyst for manual review",
+          "Terminate the suspicious process on the affected host",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": "An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.",
+            "supported": false,
+            "correction": "Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced."
+          },
+          {
+            "claim": "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Disable or reset credentials for the affected user account",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Block the source IP at the network perimeter",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Isolate the affected host from the network pending investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Escalate to the incident response / Tier 2 team",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review authentication logs for this account over a wider time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Run an antivirus/EDR scan on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Notify the asset owner of the affected host or agent",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Rotate any credentials or secrets that may have been exposed",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Preserve logs and evidence for the affected host pending further investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Escalate to a human analyst for manual review",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Terminate the suspicious process on the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review the parent-child process execution tree for the affected host",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Manually review the decoded command payload for malicious intent",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 18 claim(s), 0 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=lateral_movement, evidence_count=3.\nEnrichment findings:\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=medium, confidence=medium.\n\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\nParent command line: \"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object\n\nClaims to audit, in order:\n1. An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.\n2. The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.\n3. Disable or reset credentials for the affected user account\n4. Block the source IP at the network perimeter\n5. Isolate the affected host from the network pending investigation\n6. Escalate to the incident response / Tier 2 team\n7. Review authentication logs for this account over a wider time window\n8. Verify whether the source IP/user is a known, expected service account or automation\n9. Run an antivirus/EDR scan on the affected host\n10. Review file integrity monitoring output for unauthorized changes on the affected host\n11. Notify the asset owner of the affected host or agent\n12. Rotate any credentials or secrets that may have been exposed\n13. Correlate this indicator against the wider environment beyond this alert's time window\n14. Preserve logs and evidence for the affected host pending further investigation\n15. Escalate to a human analyst for manual review\n16. Terminate the suspicious process on the affected host\n17. Review the parent-child process execution tree for the affected host\n18. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce exactly one audit per claim, in same order. For each claim, decide whether structured findings support it. If not, propose a better-supported replacement, else leave correction empty.\n\nWe have claims 1-18. Structured findings: correlation pattern lateral_movement, evidence_count=3. Enrichment findings: three unknown domains: jtan-lt01.victimcorp.com, jane.tan, victimcorp.com. Risk assessment severity=medium, confidence=medium.\n\nWe need to see which claims are supported by these findings.\n\nClaim 1: \"An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.\" Does structured findings support? We have lateral movement pattern, unknown domains, medium risk. The claim mentions Excel file launching encoded PowerShell, lateral movement. The structured findings include lateral movement pattern, but not specifically Excel file. However enrichment unknown domains could be related. The claim is plausible but not directly supported by evidence count 3 unknown domains. Might be weak. Could propose replacement: \"The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced.\" So correction needed.\n\nThus output: \"Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced.\"\n\nIf claim is supported, output empty.\n\nWe'll produce for each claim.\n\nLet's go through each:\n\n2. \"The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.\"\n\nStructured findings support lateral movement pattern, medium risk, unknown domains. So claim 2 is supported. No correction.\n\n3. \"Disable or reset credentials for the affected user account\" - This is a remediation action, not a claim about findings. The structured findings support medium risk, so action is appropriate. But claim is a recommendation, not a claim about findings. The question: \"decide whether the structured findings support it.\" The claim is a recommendation, not a factual claim. Does structured findings support that we should disable credentials? The findings indicate medium risk, so yes. So support. No correction.\n\n4. \"Block the source IP at the network perimeter\" - Again remediation. Findings support medium risk, so support. No correction.\n\n5. \"Isolate the affected host from the network pending investigation\" - Support.\n\n6. \"Escalate to the incident response / Tier 2 team\" - Support.\n\n7. \"Review authentication logs for this account over a wider time window\" - Support.\n\n8. \"Verify whether the source IP/user is a known, expected service account or automation\" - Findings include unknown domains, not IP. But we can still verify. Support.\n\n9. \"Run an antivirus/EDR scan on the affected host\" - Support.\n\n10. \"Review file integrity monitoring output for unauthorized changes on the affected host\" - Support.\n\n11. \"Notify the asset owner of the affected host or agent\" - Support.\n\n12. \"Rotate any credentials or secrets that may have been exposed\" - Findings unknown domains, medium risk, supports.\n\n13. \"Correlate this indicator against the wider environment beyond this alert's time window\" - Findings include lateral movement pattern, supports.\n\n14. \"Preserve logs and evidence for the affected host pending further investigation\" - Standard, supported.\n\n15. \"Escalate to a human analyst for manual review\" - Supported.\n\n16. \"Terminate the suspicious process on the affected host\" - Supported.\n\n17. \"Review the parent-child process execution tree for the affected host\" - Supported.\n\n18. \"Manually review the decoded command payload for malicious intent\" - Supported.\n\nThus only claim 1 needs correction.\n\nNow produce output: For each claim, output either empty string or correction sentence.\n\nWe must return exactly one audit per claim, in same order. Likely each line is the audit text. So produce 18 lines.\n\nLine1: correction sentence.\n\nLine2-18: empty.\n\nLet's craft correction sentence: \"Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced.\"\n\nNow produce output.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": "An Excel file on the victim host launched an encoded PowerShell command, indicating possible lateral movement.",
+                "supported": false,
+                "correction": "Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced."
+              },
+              {
+                "claim": "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Disable or reset credentials for the affected user account",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Block the source IP at the network perimeter",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Isolate the affected host from the network pending investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Escalate to the incident response / Tier 2 team",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review authentication logs for this account over a wider time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Run an antivirus/EDR scan on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review file integrity monitoring output for unauthorized changes on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Notify the asset owner of the affected host or agent",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Rotate any credentials or secrets that may have been exposed",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Correlate this indicator against the wider environment beyond this alert's time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Preserve logs and evidence for the affected host pending further investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Escalate to a human analyst for manual review",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Terminate the suspicious process on the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review the parent-child process execution tree for the affected host",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Manually review the decoded command payload for malicious intent",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1720,
+          "completion_tokens": 724,
+          "latency_ms": 20767,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:39:03.200419Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "643e74fe-29c2-4540-a459-691be3f45852",
+        "alert_id": "869b38c2-a8f1-5be6-85af-f9e09eff7f48"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('643e74fe-29c2-4540-a459-691be3f45852', '869b38c2-a8f1-5be6-85af-f9e09eff7f48', '2026-08-18 02:39:03.200475', 'Correction: The lateral movement pattern and unknown domain activity suggest a possible compromise, but the Excel file execution is not directly evidenced.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"869b38c2-a8f1-5be6-85af-f9e09eff7f48\", \"rule_id\": ... (42128 characters truncated) ... y\": \"report 643e74fe-29c2-4540-a459-691be3f45852 persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:39:03.200551Z\"}]', '[{\"indicator_type\": \"domain\", \"indicator_value\": \"jtan-lt01.victimcorp.com\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:38:17.981257Z\", \"ver ... (537 characters truncated) ... 278Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:38:17.981278Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"medium\", \"confidence\": \"medium\", \"rationale\": \"The event shows a PowerShell command encoded in the Excel attachment, a common initial a ... (254 characters truncated) ... ld be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement.\"}', '[\"Disable or reset credentials for the affected user account\", \"Block the source IP at the network perimeter\", \"Isolate the affected host from the ne ... (769 characters truncated) ... ed host\", \"Review the parent-child process execution tree for the affected host\", \"Manually review the decoded command payload for malicious intent\"]', '[\"Isolate the affected workstation immediately to prevent further data exfiltration or command execution.\", \"Collect the full Sysmon event log and an ... (382 characters truncated) ... ks, or persistence mechanisms.\", \"Engage the incident response team to conduct a full forensic investigation and determine the scope of the breach.\"]', 'true_positive', 'The event describes a classic lateral‑movement technique (encoded PowerShell from an Excel attachment) that aligns with known initial‑access tactics, making the alert a likely true positive.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 5938, \"completion_tokens\": 1431, \"reasoning_chars\": 11151, \"llm_latency_ms\": 50454, \"wall_clock_ms\": 50999}', '{\"command_line\": \"powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...\", \"parent_command_line\": \"\\\\\"EXCEL.EXE\\\\\" /n \\\\\"Invo ... (16 characters truncated) ... \\\\\"\", \"decoded_segments\": [{\"encoding\": \"powershell_encoded\", \"original\": \"SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA\", \"decoded\": \"IEX (New-Object\"}]}', '3 enrichment lookup(s) errored or returned unknown verdicts', 'complete', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx8k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:39:03.204545Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:38:17.981257Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:38:17.981257Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:38:17.981273Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:38:17.981273Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:38:17.981278Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:38:17.981278Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "medium",
+    "confidence": "medium",
+    "rationale": "The event shows a PowerShell command encoded in the Excel attachment, a common initial access technique. The Sysmon severity is low (level 14), so the detection is not high priority, but the activity suggests an attacker may be moving laterally within the network. Because the command is encoded and executed from a trusted Office app, it could be part of a broader compromise. The risk is medium, with medium confidence, due to the lateral movement pattern and unknown domain involvement."
+  },
+  "recommended_actions": [
+    "Disable or reset credentials for the affected user account",
+    "Block the source IP at the network perimeter",
+    "Isolate the affected host from the network pending investigation",
+    "Escalate to the incident response / Tier 2 team",
+    "Review authentication logs for this account over a wider time window",
+    "Verify whether the source IP/user is a known, expected service account or automation",
+    "Run an antivirus/EDR scan on the affected host",
+    "Review file integrity monitoring output for unauthorized changes on the affected host",
+    "Notify the asset owner of the affected host or agent",
+    "Rotate any credentials or secrets that may have been exposed",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Escalate to a human analyst for manual review",
+    "Terminate the suspicious process on the affected host",
+    "Review the parent-child process execution tree for the affected host",
+    "Manually review the decoded command payload for malicious intent"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Isolate the affected workstation immediately to prevent further data exfiltration or command execution.",
+    "Collect the full Sysmon event log and any related network traffic for deeper analysis.",
+    "Verify the identity of the user account that initiated the PowerShell command and check for anomalous login patterns.",
+    "Inspect the Excel attachment for embedded macros or malicious code that could have triggered the encoded command.",
+    "Search for additional indicators of compromise such as unusual registry changes, scheduled tasks, or persistence mechanisms.",
+    "Engage the incident response team to conduct a full forensic investigation and determine the scope of the breach."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The event describes a classic lateral‑movement technique (encoded PowerShell from an Excel attachment) that aligns with known initial‑access tactics, making the alert a likely true positive.",
+  "uncertainty_notes": "3 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "complete",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA...",
+    "parent_command_line": "\"EXCEL.EXE\" /n \"Invoice_2984773.xlsm\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA",
+        "decoded": "IEX (New-Object"
+      }
+    ]
+  },
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 5938,
+    "completion_tokens": 1431,
+    "reasoning_chars": 11151,
+    "llm_latency_ms": 50454,
+    "wall_clock_ms": 50999
+  }
+}

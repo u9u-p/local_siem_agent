@@ -1,0 +1,13 @@
+nemotron-3-nano:4b-bench-ctx32k @ default / screen: 11 alerts, 11 runs, num_ctx 32768
+  [1/11] email       benign        87.0s  exit=0
+  [2/11] winlogon    benign        49.7s  exit=0
+  [3/11] ssh         benign        42.7s  exit=0
+  [4/11] winlogon    fp_control    44.6s  exit=0
+  [5/11] powershell  benign        42.2s  exit=0
+  [6/11] tp_chain    needle        49.9s  exit=0
+  [7/11] powershell  needle        48.7s  exit=0
+  [8/11] ssh         needle        54.6s  exit=0
+  [9/11] winlogon    fp_control    44.7s  exit=0
+  [10/11] email       needle        50.7s  exit=0
+  [11/11] tp_chain    needle        50.6s  exit=0
+wrote bench/results/nemotron-3-nano_4b@default+ctx32k/screen/runs.jsonl

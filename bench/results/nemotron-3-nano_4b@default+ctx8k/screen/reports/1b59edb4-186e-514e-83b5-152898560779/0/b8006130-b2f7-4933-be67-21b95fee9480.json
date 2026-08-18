@@ -1,0 +1,656 @@
+{
+  "report_id": "b8006130-b2f7-4933-be67-21b95fee9480",
+  "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+  "generated_at": "2026-08-18T02:34:52.395640Z",
+  "alert_summary": "PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.",
+  "investigation_timeline": [
+    {
+      "step_name": "ingest_and_parse",
+      "action": "completed",
+      "tool_used": null,
+      "input": {
+        "alert_id": "1b59edb4-186e-514e-83b5-152898560779",
+        "rule_id": "100074",
+        "rule_level": 12,
+        "model_available": true
+      },
+      "output": {},
+      "output_summary": "alert 1b59edb4-186e-514e-83b5-152898560779 ingested; model available: True",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:01.069018Z"
+    },
+    {
+      "step_name": "extract_indicators",
+      "action": "completed",
+      "tool_used": "regex_extraction+llm_extraction",
+      "input": {
+        "full_log_chars": 463,
+        "data_keys": [
+          "timestamp",
+          "win"
+        ],
+        "extra_texts_count": 0
+      },
+      "output": {
+        "regex": {
+          "candidates": 5,
+          "validated": 3
+        },
+        "llm": {
+          "candidates": 2,
+          "validated": 2
+        },
+        "decode": {
+          "segments": 0,
+          "discarded": 0
+        },
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47"
+          },
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output_summary": "regex: 5 candidates, 3 validated; LLM: 2 candidates, 2 validated",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_extract_indicators_prompt",
+          "prompt": "You are extracting security indicators (IP addresses, file hashes, domains, URLs) from a SIEM alert's raw log text. Some indicators may be obfuscated or defanged (e.g. '185[.]220[.]101[.]1' instead of '185.220.101.1', 'hxxp://' instead of 'http://').\n\nRaw log: {\"timestamp\":\"2026-07-30T09:16:44.112+0000\",\"win\":{\"system\":{\"providerName\":\"Microsoft-Windows-Sysmon\",\"eventID\":\"3\",\"computer\":\"JTAN-LT01.victimcorp.com\"},\"eventdata\":{\"utcTime\":\"2026-07-30 09:16:44.090\",\"image\":\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\",\"destinationIp\":\"185.220.101.47\",\"destinationPort\":\"443\",\"protocol\":\"tcp\",\"parentImage\":\"C:\\\\Program Files\\\\Microsoft Office\\\\root\\\\Office16\\\\EXCEL.EXE\",\"user\":\"VICTIMCORP\\\\jane.tan\"}}}\nAdditional decoded fields: {'win': {'eventdata': {'destinationIp': '185.220.101.47', 'destinationPort': '443', 'image': 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe', 'protocol': 'tcp', 'utcTime': '2026-07-30 09:16:44.090', 'parentImage': 'C:\\\\Program Files\\\\Microsoft Office\\\\root\\\\Office16\\\\EXCEL.EXE', 'user': 'VICTIMCORP\\\\jane.tan'}, 'system': {'eventID': '3', 'computer': 'JTAN-LT01.victimcorp.com', 'providerName': 'Microsoft-Windows-Sysmon'}}, 'timestamp': '2026-07-30T09:16:44.112+0000'}\n\nList every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to extract security indicators: IP addresses, file hashes, domains, URLs. From raw log we have:\n\n- destinationIp: 185.220.101.47 (already normal)\n- computer: JTAN-LT01.victimcorp.com (domain? It's a hostname with .com, likely domain)\n- providerName: Microsoft-... not indicator\n- image: powershell.exe (file path, not hash)\n- parentImage: EXCEL.EXE (file)\n- user: VICTIMCORP\\jane.tan (not indicator)\n- destinationPort: 443 (not indicator)\n- protocol: tcp (not indicator)\n\nAlso maybe URL? No.\n\nFile hashes? None.\n\nThus candidates:\n\n- IP: 185.220.101.47 (type ip)\n- Domain: JTAN-LT01. victimcorp.com? Actually \"JTAN-LT01.victimcorp.com\" is a computer name, not a domain. Might be considered domain? Probably not. But could be considered domain indicator? Usually domain is like victimcorp.com. The computer name includes .victimcorp.com, but it's a hostname. Might be considered domain? The instruction: \"domains\" likely like \"victimcorp.com\". The computer field is \"JTAN-LT01.victimcorp.com\". That's a hostname, not a domain. Might still be considered domain indicator? Probably not.\n\n- URL? None.\n\n- File hashes? None.\n\nThus only IP.\n\nBut also maybe \"powershell.exe\" is a file path, not hash. No hash.\n\nThus answer list:\n\nip: 185.220.101.47\n\ndomain: victimcorp.com? But the indicator is \"victimcorp.com\" extracted from computer name. Could be considered domain. The computer is \"JTAN-LT01.victimcorp.com\". The domain part is \"victimcorp.com\". So we could list domain: victimcorp.com.\n\nBut the instruction: \"List every candidate indicator you find, with its type (ip, file_hash, domain, or url) and its value in normal (de-obfuscated) form.\"\n\nThus we should list:\n\n- ip: 185.220.101.47\n- domain: victimcorp.com (extracted from computer name)\n- url: none\n- file_hash: none\n\nBut maybe also \"EXCEL.EXE\" is a file name, not hash.\n\nThus final answer: list each.\n\nLet's produce JSON-like list.",
+          "parsed_output": {
+            "candidates": [
+              {
+                "type": "ip",
+                "value": "185.220.101.47"
+              },
+              {
+                "type": "domain",
+                "value": "victimcorp.com"
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1275,
+          "completion_tokens": 65,
+          "latency_ms": 8587,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:09.657219Z"
+    },
+    {
+      "step_name": "enrich",
+      "action": "completed",
+      "tool_used": "enrichment_registry",
+      "input": {
+        "indicators": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47"
+          },
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com"
+          }
+        ]
+      },
+      "output": {
+        "results": [
+          {
+            "type": "ip",
+            "value": "185.220.101.47",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "jtan-lt01.victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "jane.tan",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          },
+          {
+            "type": "domain",
+            "value": "victimcorp.com",
+            "provider_id": "none",
+            "verdict": "unknown",
+            "score": 0.0,
+            "error": "no_provider_registered"
+          }
+        ]
+      },
+      "output_summary": "enriched 4 indicator(s)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:09.657273Z"
+    },
+    {
+      "step_name": "gather_context",
+      "action": "completed",
+      "tool_used": "siem_connector",
+      "input": {
+        "agent_id": "000",
+        "rule_id": "100074"
+      },
+      "output": {
+        "agent_context": {
+          "id": "000",
+          "name": "wazuh.manager",
+          "ip": "127.0.0.1",
+          "os_platform": "amzn",
+          "os_version": "2023",
+          "agent_version": "Wazuh v4.14.6",
+          "status": "active",
+          "last_keep_alive": "9999-12-31T23:59:59Z"
+        },
+        "rule_metadata": {
+          "rule_id": "100074",
+          "description": "Sysmon: PowerShell initiated a network connection to $(win.eventdata.destinationIp):$(win.eventdata.destinationPort).",
+          "level": 12,
+          "groups": [
+            "sysmon_event3",
+            "windows",
+            "sysmon"
+          ],
+          "mitre_technique_ids": [
+            "T1071.001"
+          ]
+        }
+      },
+      "output_summary": "gathered context for agent 000, rule 100074",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:10.058580Z"
+    },
+    {
+      "step_name": "correlate",
+      "action": "completed",
+      "tool_used": "siem_connector+llm",
+      "input": {
+        "templates_built": [
+          "same_dst_host",
+          "same_rule_id_host"
+        ],
+        "enrichment_verdicts": [
+          {
+            "value": "185.220.101.47",
+            "verdict": "unknown"
+          },
+          {
+            "value": "jtan-lt01.victimcorp.com",
+            "verdict": "unknown"
+          },
+          {
+            "value": "jane.tan",
+            "verdict": "unknown"
+          },
+          {
+            "value": "victimcorp.com",
+            "verdict": "unknown"
+          }
+        ]
+      },
+      "output": {
+        "canonical": {
+          "same_rule_id_host": {
+            "total_count": 1,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 1,
+              "destination ports": 1,
+              "target users": 0
+            }
+          },
+          "same_dst_host": {
+            "total_count": 0,
+            "distinct_counts": {
+              "source ips": 0,
+              "source users": 0,
+              "destination hosts": 0,
+              "destination ports": 0,
+              "target users": 0
+            }
+          }
+        },
+        "pattern_type": "none",
+        "follow_up": null,
+        "open_value": {
+          "search_value": "PowerShell initiated network connection",
+          "hit_count": 0
+        },
+        "evidence_count": 1,
+        "failed_searches": 0
+      },
+      "output_summary": "pattern_type=none, evidence_count=1; open-value search for 'PowerShell initiated network connection' found 0 (noisier, unstructured match)",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_correlation_decision_prompt",
+          "prompt": "You are analyzing correlation search results for a security alert.\n\nAlert: rule 100074 (Sysmon: PowerShell initiated a network connection to 185.220.101.47:443.), level 12.\nAlert source IP: not set; destination IP: 185.220.101.47.\n\nCanonical search results:\n- same_rule_id_host: 1 matching alert(s); distinct destination hosts: 1; distinct destination ports: 1\n- same_dst_host: 0 matching alert(s)\n\nEnrichment verdicts:\n- ip 185.220.101.47 (none): unknown (lookup failed: no_provider_registered)\n- domain jtan-lt01.victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n- domain jane.tan (none): unknown (lookup failed: no_provider_registered)\n- domain victimcorp.com (none): unknown (lookup failed: no_provider_registered)\n\nTotal evidence count: 1\n\nThe distinct-value counts describe how the matching alerts spread out: a high spread across many targets indicates a broad sweep, while many hits concentrated on a single target indicates repeated attempts against it.\n\nClassify the pattern_type (brute_force, scanning, lateral_movement, none, or other), and pick at most one follow_up_query from the closed menu (same_src_ip_24h, same_rule_id_host, same_dst_host, same_command_line_env_wide, or none_needed) if further investigation of one of the canonical searches would help confirm the pattern.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to classify pattern_type based on the alert: PowerShell initiated a network connection to 185.220.101.47:443. That's a single connection, not brute force, not scanning, not lateral movement (no evidence of lateral). Could be \"none\" or \"other\". Since it's a single connection, maybe \"none\". But pattern_type \"other\" maybe for unknown. The canonical search: same_rule_id_host matches 1 alert, distinct destination hosts 1, distinct ports 1. That's a single target, not sweep. So pattern_type likely \"none\". Follow-up query: maybe \"same_rule_id_host\" to see if more alerts with same rule ID and host? But we already have that. \"same_dst_host\" 0 matches, so not. \"same_command_line_env_wide\" maybe to see if same command line env across alerts. Could help confirm pattern. But pattern is single connection, not repeated. So follow-up maybe \"none_needed\". I'd output pattern_type: none, follow_up_query: none_needed.",
+          "parsed_output": {
+            "pattern_type": "none",
+            "follow_up_query": "none_needed"
+          },
+          "attempts": 1,
+          "prompt_tokens": 697,
+          "completion_tokens": 23,
+          "latency_ms": 3802,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_open_value_search_prompt",
+          "prompt": "The closed-menu correlation searches below did not find or explain a clear pattern for this security alert. Propose ONE additional free-text search value (not a field name) that might surface related evidence in the alert log text.\n\nAlert: rule 100074 (Sysmon: PowerShell initiated a network connection to 185.220.101.47:443.), level 12.\n\nCanonical search results:\n- same_rule_id_host: 1 matching alert(s)\n- same_dst_host: 0 matching alert(s)\n\nRespond with a single search_value string.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to propose one additional free-text search value (not a field name) that might surface related evidence in the alert log text. The alert: \"rule 100074 (Sysmon: PowerShell initiated a network connection to 185.220.101.47:443.)\". So maybe search for \"PowerShell\" or \"185.220.101.47\" or \"443\". But they said not a field name. Field names are like same_rule_... etc. So free-text search value could be \"PowerShell initiated network connection\". Or \"185.220.101.47\". Probably \"PowerShell\" is a term. But they want a search value string. Could be \"PowerShell initiated network connection\". That is free text. Let's output that.",
+          "parsed_output": {
+            "search_value": "PowerShell initiated network connection"
+          },
+          "attempts": 1,
+          "prompt_tokens": 374,
+          "completion_tokens": 15,
+          "latency_ms": 2953,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:16.846303Z"
+    },
+    {
+      "step_name": "risk_assessment",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "none",
+        "evidence_count": 1,
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "severity": "low",
+        "confidence": "low",
+        "rationale": "The event is a single PowerShell network connection to an unknown IP on port 443, which could be benign (e.g., legitimate web traffic). Without additional indicators, known malicious domains, or correlation patterns, the likelihood of malicious intent is low, resulting in a low severity assessment with low confidence."
+      },
+      "output_summary": "severity=low, confidence=low",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_risk_assessment_prompt",
+          "prompt": "You are assessing the risk of a security alert for a human analyst to review.\n\nRule: 100074 - Sysmon: PowerShell initiated a network connection to 185.220.101.47:443. (level 12, groups: windows, sysmon, sysmon_event3).\nKnown MITRE ATT&CK mapping: T1071.001 (Web Protocols).\nCorrelation findings: pattern_type=none, evidence_count=1.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\n\nAssess the severity (low/medium/high/critical), your confidence in this assessment (low/medium/high), and a one-to-two-sentence rationale.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to assess severity. Event: PowerShell initiated network connection to IP 185.220.101.47:443. Known MITRE ATT&CK T1071.001 (Web Protocols). Only one evidence. No correlation pattern. Enrichment unknown. Likely low severity? Could be suspicious but not confirmed. Confidence low. Provide rationale: single event, no known malicious domain, unknown IP, low confidence.",
+          "parsed_output": {
+            "severity": "low",
+            "confidence": "low",
+            "rationale": "The event is a single PowerShell network connection to an unknown IP on port 443, which could be benign (e.g., legitimate web traffic). Without additional indicators, known malicious domains, or correlation patterns, the likelihood of malicious intent is low, resulting in a low severity assessment with low confidence."
+          },
+          "attempts": 1,
+          "prompt_tokens": 377,
+          "completion_tokens": 87,
+          "latency_ms": 2828,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:19.674730Z"
+    },
+    {
+      "step_name": "draft_report",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "pattern_type": "none",
+        "evidence_count": 1,
+        "severity": "low",
+        "confidence": "low",
+        "enrichment_verdicts": [
+          "unknown",
+          "unknown",
+          "unknown",
+          "unknown"
+        ],
+        "has_command_context": false,
+        "has_raw_log": false
+      },
+      "output": {
+        "canonical": {
+          "alert_summary": "PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.",
+          "rationale": "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.",
+          "recommended_actions": [
+            "No immediate action needed — monitor for recurrence",
+            "Preserve logs and evidence for the affected host pending further investigation",
+            "Correlate this indicator against the wider environment beyond this alert's time window",
+            "Review authentication logs for this account over a wider time window",
+            "Verify whether the source IP/user is a known, expected service account or automation",
+            "Review firewall/network segmentation rules for the affected subnet"
+          ]
+        },
+        "experimental": {
+          "recommended_actions_freeform": [
+            "Observe whether the PowerShell command originates from a known admin account or a user account that typically initiates web traffic.",
+            "Check the process tree to see if any parent processes are suspicious or if the command is being run from a legitimate application.",
+            "Correlate the event with other logs (e.g., firewall, proxy, or DNS) to see if the same IP or domain appears elsewhere.",
+            "If the IP or domain is later identified as malicious, consider adding it to a blocklist or alerting team.",
+            "Document the event for future review, even if it remains benign, to improve detection coverage."
+          ],
+          "triage_verdict": "false_positive",
+          "triage_rationale": "The alert is likely a false positive because it involves a single PowerShell connection to an unknown IP on a common port with no known malicious indicators."
+        }
+      },
+      "output_summary": "draft-A: 6 action(s) selected; draft-B: experimental triage=false_positive",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_draft_canonical_prompt",
+          "prompt": "You are drafting the canonical, vetted section of a security investigation report for a human analyst.\n\nRule: 100074 - Sysmon: PowerShell initiated a network connection to 185.220.101.47:443. (level 12, groups: windows, sysmon, sysmon_event3).\nCorrelation findings: pattern_type=none, evidence_count=1.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=low, rationale: The event is a single PowerShell network connection to an unknown IP on port 443, which could be benign (e.g., legitimate web traffic). Without additional indicators, known malicious domains, or correlation patterns, the likelihood of malicious intent is low, resulting in a low severity assessment with low confidence.\n\nWrite a plain-language alert_summary (1-2 sentences), an expanded rationale (2-4 sentences) explaining the risk assessment above in more detail, and select every recommended_action below that applies to this alert — you MUST only pick from this exact list:\n- Disable or reset credentials for the affected user account\n- Block the source IP at the network perimeter\n- Isolate the affected host from the network pending investigation\n- Escalate to the incident response / Tier 2 team\n- Review authentication logs for this account over a wider time window\n- Verify whether the source IP/user is a known, expected service account or automation\n- Run an antivirus/EDR scan on the affected host\n- Review file integrity monitoring output for unauthorized changes on the affected host\n- Patch or update the vulnerable software identified for this host\n- Notify the asset owner of the affected host or agent\n- Rotate any credentials or secrets that may have been exposed\n- Review firewall/network segmentation rules for the affected subnet\n- Correlate this indicator against the wider environment beyond this alert's time window\n- Preserve logs and evidence for the affected host pending further investigation\n- No immediate action needed — monitor for recurrence\n- Escalate to a human analyst for manual review\n- Terminate the suspicious process on the affected host\n- Review the parent-child process execution tree for the affected host\n- Manually review the decoded command payload for malicious intent",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce plain-language alert_summary (1-2 sentences), expanded rationale (2-4 sentences), and select every recommended_action that applies. Must only pick from exact list. Need to decide which actions apply.\n\nEvent: PowerShell initiated network connection to unknown IP 185.220.101.47:443. Severity low, confidence low. Likely benign. Recommended actions: \"No immediate action needed — monitor for recurrence\" and maybe \"Preserve logs and evidence for the affected host pending further investigation\". Also \"Correlate this indicator against the wider environment beyond this alert's time window\". Possibly \"Review authentication logs for this account over a wider time window\". Also \"Verify whether the source IP/user is a known, expected service account or automation\". Also \"Review firewall/network segmentation rules for the affected subnet\". Also \"Correlate this indicator against the wider environment beyond this alert's time window\". Also \"Preserve logs and evidence\". Also \"No immediate action needed — monitor for recurrence\". Also \"Escalate to a human analyst for manual review\"? Probably not needed.\n\nBut we must \"select every recommended_action below that applies to this alert\". So we need to list all that apply. Let's think.\n\nGiven low severity, confidence low, likely benign. Recommended actions: No immediate action needed — monitor for recurrence (makes sense). Preserve logs and evidence (good). Correlate this indicator against the wider environment beyond this alert's time window (good). Review authentication logs for this account over a wider time window (good). Verify whether the source IP/user is a known, expected service account or automation (good). Review firewall/network segmentation rules for the affected subnet (maybe). Review authentication logs? Already covered. Also \"No immediate action needed — monitor for recurrence\" is a recommended action.\n\nThus list: No immediate action needed — monitor for recurrence; Preserve logs and evidence for the affected host pending further investigation; Correlate this indicator against the wider environment beyond this alert's time window; Review authentication logs for this account over a wider time window; Verify whether the source IP/user is a known, expected service account or automation; Review firewall/network segmentation rules for the affected subnet.\n\nAlso maybe \"Escalate to a human analyst for manual review\"? Not needed.\n\nThus produce output:\n\nalert_summary: \"PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.\"\n\nexpanded rationale: \"The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.\"\n\nNow list recommended actions as bullet list.\n\nLet's output.",
+          "parsed_output": {
+            "alert_summary": "PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.",
+            "rationale": "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.",
+            "recommended_actions": [
+              "No immediate action needed — monitor for recurrence",
+              "Preserve logs and evidence for the affected host pending further investigation",
+              "Correlate this indicator against the wider environment beyond this alert's time window",
+              "Review authentication logs for this account over a wider time window",
+              "Verify whether the source IP/user is a known, expected service account or automation",
+              "Review firewall/network segmentation rules for the affected subnet"
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1313,
+          "completion_tokens": 267,
+          "latency_ms": 11986,
+          "error_kind": null
+        },
+        {
+          "prompt_ref": "build_draft_experimental_prompt",
+          "prompt": "You are drafting an EXPERIMENTAL, not-yet-vetted section of a security investigation report. This output will be clearly labeled experimental and will not be treated as trusted guidance.\n\nRule: 100074 - Sysmon: PowerShell initiated a network connection to 185.220.101.47:443. (level 12, groups: windows, sysmon, sysmon_event3).\nCorrelation findings: pattern_type=none, evidence_count=1.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=low, rationale: The event is a single PowerShell network connection to an unknown IP on port 443, which could be benign (e.g., legitimate web traffic). Without additional indicators, known malicious domains, or correlation patterns, the likelihood of malicious intent is low, resulting in a low severity assessment with low confidence.\n\nFreely propose any additional recommended actions in your own words (no fixed list this time), then classify whether this alert looks like a true_positive, false_positive, or uncertain, with a one-sentence rationale for that triage call.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce an experimental section, labeled experimental, not trusted guidance. Provide additional recommended actions in own words, then classify alert as true_positive, false_positive, or uncertain with one-sentence rationale.\n\nWe must not give fixed list. Provide suggestions like monitor process, check for known malicious domains, etc.\n\nThen classification: likely false_positive? Because low confidence, low severity, unknown IP, could be benign. So classification false_positive with rationale: \"The alert is likely a false positive because the event is a single PowerShell connection to an unknown IP on a common port, with no known malicious indicators.\"\n\nBut we need to output experimental section. Probably format:\n\nExperimental Section:\n[content]\n\nThen classification.\n\nMake sure to label experimental.\n\nLet's produce.",
+          "parsed_output": {
+            "recommended_actions_freeform": [
+              "Observe whether the PowerShell command originates from a known admin account or a user account that typically initiates web traffic.",
+              "Check the process tree to see if any parent processes are suspicious or if the command is being run from a legitimate application.",
+              "Correlate the event with other logs (e.g., firewall, proxy, or DNS) to see if the same IP or domain appears elsewhere.",
+              "If the IP or domain is later identified as malicious, consider adding it to a blocklist or alerting team.",
+              "Document the event for future review, even if it remains benign, to improve detection coverage."
+            ],
+            "triage_verdict": "false_positive",
+            "triage_rationale": "The alert is likely a false positive because it involves a single PowerShell connection to an unknown IP on a common port with no known malicious indicators."
+          },
+          "attempts": 1,
+          "prompt_tokens": 535,
+          "completion_tokens": 193,
+          "latency_ms": 4785,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:36.447519Z"
+    },
+    {
+      "step_name": "self_check",
+      "action": "completed",
+      "tool_used": "llm",
+      "input": {
+        "claims": [
+          "PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.",
+          "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.",
+          "No immediate action needed — monitor for recurrence",
+          "Preserve logs and evidence for the affected host pending further investigation",
+          "Correlate this indicator against the wider environment beyond this alert's time window",
+          "Review authentication logs for this account over a wider time window",
+          "Verify whether the source IP/user is a known, expected service account or automation",
+          "Review firewall/network segmentation rules for the affected subnet"
+        ]
+      },
+      "output": {
+        "audits": [
+          {
+            "claim": "PowerShell on the host initiated a network connection to an unknown IP  (185.220.101.47:443), but the event is low‑severity and likely benign.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "No immediate action needed  — monitor for recurrence",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Preserve logs and evidence for the affected host pending further investigation",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Correlate this indicator against the wider environment beyond this alert' s time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Review authentication logs for this account over a wider time window",
+            "supported": true,
+            "correction": ""
+          },
+          {
+            "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+            "supported": false,
+            "correction": "Verify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information."
+          },
+          {
+            "claim": "Review firewall/network segmentation rules for the affected subnet",
+            "supported": true,
+            "correction": ""
+          }
+        ],
+        "flagged_claims": [
+          "Verify whether the source IP/user is a known, expected service account or automation"
+        ],
+        "corrections_applied": true
+      },
+      "output_summary": "audited 8 claim(s), 1 flagged",
+      "llm_calls": [
+        {
+          "prompt_ref": "build_self_check_prompt",
+          "prompt": "You are auditing a draft security report against the structured findings that produced it. For EACH numbered claim below, decide whether the structured findings support it. If not, and you can propose a better-supported replacement, provide a correction; otherwise leave correction empty.\n\nCorrelation findings: pattern_type=none, evidence_count=1.\nEnrichment findings:\n- ip 185.220.101.47: unknown (provider none)\n- domain jtan-lt01.victimcorp.com: unknown (provider none)\n- domain jane.tan: unknown (provider none)\n- domain victimcorp.com: unknown (provider none)\nRisk assessment: severity=low, confidence=low.\n\nClaims to audit, in order:\n1. PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.\n2. The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.\n3. No immediate action needed — monitor for recurrence\n4. Preserve logs and evidence for the affected host pending further investigation\n5. Correlate this indicator against the wider environment beyond this alert's time window\n6. Review authentication logs for this account over a wider time window\n7. Verify whether the source IP/user is a known, expected service account or automation\n8. Review firewall/network segmentation rules for the affected subnet\n\nReturn exactly one audit per claim, in the same order.",
+          "retried": false,
+          "raw_response": null,
+          "reasoning": "We need to produce exactly one audit per claim, in same order. For each claim, decide whether structured findings support it. If not, propose a better-supported replacement, else leave correction empty.\n\nWe have correlation findings: pattern_type=none, evidence_count=1. Enrichment findings list unknown IPs and domains. Risk assessment severity low, confidence low.\n\nClaims:\n\n1. \"PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.\"\n\nStructured findings: we have enrichment: ip 185.220.101.47 unknown. So claim is supported: unknown IP, low severity. So support yes. No correction needed. Output: empty.\n\n2. \"The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.\"\n\nStructured findings: we have unknown IP, low severity, low confidence. So claim supported. No correction.\n\n3. \"No immediate action needed — monitor for recurrence\"\n\nSupported by low severity, low confidence. So yes. No correction.\n\n4. \"Preserve logs and evidence for the affected host pending further investigation\"\n\nSupported. No correction.\n\n5. \"Correlate this indicator against the wider environment beyond this alert's time window\"\n\nSupported. No correction.\n\n6. \"Review authentication logs for this account over a wider time window\"\n\nSupported. No correction.\n\n7. \"Verify whether the source IP/user is a known, expected service account or automation\"\n\nWe have enrichment: ip unknown, provider none. No info about service account. So claim not fully supported. Need replacement: \"Verify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information.\" Provide correction.\n\n8. \"Review firewall/network segmentation rules for the affected subnet\"\n\nSupported. No correction.\n\nNow produce output: for each claim, either empty string or replacement text. Must be exactly one audit per claim, in same order. Probably each line is the audit text. So output:\n\n(empty)\n(empty)\n(empty)\n(empty)\n(empty)\n(empty)\n(Replacement text)\n(empty)\n\nBut need to ensure format: \"Provide a correction\" if not supported. So for claim 7, provide a better-supported replacement. So output for claim 7: \"Verify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information.\"\n\nThus final answer: eight lines.\n\nLet's produce:\n\n1. \n2. \n3. \n4. \n5. \n6. \n7. Verify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information.\n8. \n\nBut need exactly one audit per claim, maybe each line is the audit text. So produce:\n\n(blank line)\n(blank line)\n(blank line)\n(blank line)\n(blank line)\n(blank line)\nVerify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information.\n(blank line)\n\nBut maybe they expect just the replacement text for claim 7, others empty. So output:\n\n[empty]\n[empty]\n[empty]\n[empty]\n[empty]\n[empty]\nVerify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information.\n[empty]\n\nLet's output that.",
+          "parsed_output": {
+            "audits": [
+              {
+                "claim": "PowerShell on the host initiated a network connection to an unknown IP  (185.220.101.47:443), but the event is low‑severity and likely benign.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "No immediate action needed  — monitor for recurrence",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Preserve logs and evidence for the affected host pending further investigation",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Correlate this indicator against the wider environment beyond this alert' s time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Review authentication logs for this account over a wider time window",
+                "supported": true,
+                "correction": ""
+              },
+              {
+                "claim": "Verify whether the source IP/user is a known, expected service account or automation",
+                "supported": false,
+                "correction": "Verify whether the source IP/host is a known, expected service account or automation based on its unknown IP and lack of provider information."
+              },
+              {
+                "claim": "Review firewall/network segmentation rules for the affected subnet",
+                "supported": true,
+                "correction": ""
+              }
+            ]
+          },
+          "attempts": 1,
+          "prompt_tokens": 1394,
+          "completion_tokens": 440,
+          "latency_ms": 15947,
+          "error_kind": null
+        }
+      ],
+      "timestamp": "2026-08-18T02:34:52.395609Z"
+    },
+    {
+      "step_name": "finalize_and_persist",
+      "action": "degraded",
+      "tool_used": "alert_store",
+      "input": {
+        "report_id": "b8006130-b2f7-4933-be67-21b95fee9480",
+        "alert_id": "1b59edb4-186e-514e-83b5-152898560779"
+      },
+      "output": {
+        "persisted": false
+      },
+      "output_summary": "could not persist report or update alert status: (sqlite3.OperationalError) table reports has no column named triage_verdict_experimental\n[SQL: INSERT INTO reports (report_id, alert_id, generated_at, alert_summary, investigation_timeline, enrichment_findings, risk_assessment, recommended_actions, recommended_actions_freeform_experimental, triage_verdict_experimental, triage_rationale_experimental, llm_usage, command_analysis, uncertainty_notes, status, model_metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]\n[parameters: ('b8006130-b2f7-4933-be67-21b95fee9480', '1b59edb4-186e-514e-83b5-152898560779', '2026-08-18 02:34:52.395640', 'PowerShell on the host initiated a network connection to an unknown IP (185.220.101.47:443), but the event is low‑severity and likely benign.', '[{\"step_name\": \"ingest_and_parse\", \"action\": \"completed\", \"tool_used\": null, \"input\": {\"alert_id\": \"1b59edb4-186e-514e-83b5-152898560779\", \"rule_id\": ... (38607 characters truncated) ... y\": \"report b8006130-b2f7-4933-be67-21b95fee9480 persisted, alert marked investigated\", \"llm_calls\": [], \"timestamp\": \"2026-08-18T02:34:52.395682Z\"}]', '[{\"indicator_type\": \"ip\", \"indicator_value\": \"185.220.101.47\", \"provider_id\": \"none\", \"queried_at\": \"2026-08-18T02:34:09.657243Z\", \"verdict\": \"unknow ... (810 characters truncated) ... 264Z\", \"verdict\": \"unknown\", \"score\": 0.0, \"raw_response\": {}, \"cache_expires_at\": \"2026-08-18T02:34:09.657264Z\", \"error\": \"no_provider_registered\"}]', '{\"severity\": \"low\", \"confidence\": \"low\", \"rationale\": \"The event is a single PowerShell command that opened a TLS connection to an IP address that is ... (288 characters truncated) ... ediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations.\"}', '[\"No immediate action needed \\\\u2014 monitor for recurrence\", \"Preserve logs and evidence for the affected host pending further investigation\", \"Corr ... (78 characters truncated) ... indow\", \"Review authentication logs for this account over a wider time window\", \"Review firewall/network segmentation rules for the affected subnet\"]', '[\"Observe whether the PowerShell command originates from a known admin account or a user account that typically initiates web traffic.\", \"Check the p ... (302 characters truncated) ... sider adding it to a blocklist or alerting team.\", \"Document the event for future review, even if it remains benign, to improve detection coverage.\"]', 'false_positive', 'The alert is likely a false positive because it involves a single PowerShell connection to an unknown IP on a common port with no known malicious indicators.', '{\"calls\": 7, \"failed_calls\": 0, \"attempts\": 7, \"prompt_tokens\": 5965, \"completion_tokens\": 1090, \"reasoning_chars\": 11553, \"llm_latency_ms\": 50888, \"wall_clock_ms\": 51410}', 'null', \"unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 4 enrichment lookup(s) errored or returned unknown verdicts\", 'needs_human_review', '{\"model_name\": \"nemotron-3-nano:4b-bench-ctx8k\", \"model_version\": \"none\", \"prompt_version\": \"4e-v1\"}')]\n(Background on this error at: https://sqlalche.me/e/20/e3q8)",
+      "llm_calls": [],
+      "timestamp": "2026-08-18T02:34:52.397977Z"
+    }
+  ],
+  "enrichment_findings": [
+    {
+      "indicator_type": "ip",
+      "indicator_value": "185.220.101.47",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:09.657243Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:09.657243Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jtan-lt01.victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:09.657257Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:09.657257Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "jane.tan",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:09.657261Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:09.657261Z",
+      "error": "no_provider_registered"
+    },
+    {
+      "indicator_type": "domain",
+      "indicator_value": "victimcorp.com",
+      "provider_id": "none",
+      "queried_at": "2026-08-18T02:34:09.657264Z",
+      "verdict": "unknown",
+      "score": 0.0,
+      "raw_response": {},
+      "cache_expires_at": "2026-08-18T02:34:09.657264Z",
+      "error": "no_provider_registered"
+    }
+  ],
+  "risk_assessment": {
+    "severity": "low",
+    "confidence": "low",
+    "rationale": "The event is a single PowerShell command that opened a TLS connection to an IP address that is not known to be malicious, and the IP is on port 443, which is commonly used for legitimate web traffic. Because there is only one indicator, no known malicious domains, and no correlation with other suspicious activity, the risk is assessed as low with low confidence. Therefore, no immediate remediation is required, but we should keep the logs, check for broader patterns, and verify if the connection is part of normal operations."
+  },
+  "recommended_actions": [
+    "No immediate action needed — monitor for recurrence",
+    "Preserve logs and evidence for the affected host pending further investigation",
+    "Correlate this indicator against the wider environment beyond this alert's time window",
+    "Review authentication logs for this account over a wider time window",
+    "Review firewall/network segmentation rules for the affected subnet"
+  ],
+  "recommended_actions_freeform_experimental": [
+    "Observe whether the PowerShell command originates from a known admin account or a user account that typically initiates web traffic.",
+    "Check the process tree to see if any parent processes are suspicious or if the command is being run from a legitimate application.",
+    "Correlate the event with other logs (e.g., firewall, proxy, or DNS) to see if the same IP or domain appears elsewhere.",
+    "If the IP or domain is later identified as malicious, consider adding it to a blocklist or alerting team.",
+    "Document the event for future review, even if it remains benign, to improve detection coverage."
+  ],
+  "triage_verdict_experimental": "false_positive",
+  "triage_rationale_experimental": "The alert is likely a false positive because it involves a single PowerShell connection to an unknown IP on a common port with no known malicious indicators.",
+  "uncertainty_notes": "unsupported claim: 'Verify whether the source IP/user is a known, expected service account or automation'; 4 enrichment lookup(s) errored or returned unknown verdicts",
+  "status": "needs_human_review",
+  "model_metadata": {
+    "model_name": "nemotron-3-nano:4b-bench-ctx8k",
+    "model_version": "none",
+    "prompt_version": "4e-v1"
+  },
+  "command_analysis": null,
+  "llm_usage": {
+    "calls": 7,
+    "failed_calls": 0,
+    "attempts": 7,
+    "prompt_tokens": 5965,
+    "completion_tokens": 1090,
+    "reasoning_chars": 11553,
+    "llm_latency_ms": 50888,
+    "wall_clock_ms": 51410
+  }
+}
