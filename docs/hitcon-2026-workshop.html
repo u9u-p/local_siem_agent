@@ -267,6 +267,13 @@
     .metric .val { font-size: clamp(1.9rem, 4.5vw, 3.2rem); }
   }
 
+  pre .c { color: var(--ink-faint); }
+  .check-list { display: flex; flex-direction: column; gap: 0.8rem; }
+  .check-item { display: flex; gap: 0.9rem; align-items: baseline; font-size: clamp(1rem, 1.6vw, 1.3rem); color: var(--ink); }
+  .check-item .box { font-family: var(--mono); color: var(--accent); flex: none; }
+  .todo { border: 1px dashed var(--bad); padding: 1.1rem 1.4rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .todo .tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bad); }
+
   /* Dense slides: keep every word, set it smaller. Applied per-slide, not globally. */
   .slide.dense { gap: 0.68rem; }
   .slide.dense h2 { font-size: clamp(1.3rem, 2.6vw, 1.9rem); line-height: 1.04; }
@@ -327,7 +334,7 @@
   <h1>Your First Agentic SOC Without the GPU Bill</h1>
   <p class="lead">Local LLM triage on Apple Silicon.</p>
   <div class="byline">
-    <span>Tommy Wong</span><span>Ke Li Yam</span><span>Fri 21 Aug 2026</span>
+    <span>Tommy Wong</span><span>Ke Li Yam</span><span>Fri 21 Aug 2026</span><span>90 min · follow along optional</span>
   </div>
 </section>
 
@@ -407,9 +414,116 @@
   </div>
 </section>
 
-<!-- ═══ 3 RESULTS ═══ -->
-<section class="slide sec" data-sec="3 · Results">
+<!-- ═══ 3 GET RUNNING ═══ -->
+<section class="slide sec" data-sec="3 · Get running">
   <div class="no">03</div>
+  <h1>Get running</h1>
+  <div class="queue">
+    <span class="qh">Presenter decisions still open</span>
+    <ul>
+      <li>Room stack over LAN: run one, or local-only? (Ollama needs <code>OLLAMA_HOST=0.0.0.0</code>; trusted network, plain HTTP)</li>
+      <li>Pre-work email: send the pull + docker image list ahead of the day?</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Before anything else — this is the long pole</p>
+  <h2>Start the 7.6&nbsp;GB download now. We'll keep talking.</h2>
+  <pre>ollama pull gemma4:12b</pre>
+  <p>On conference wifi this is the slowest thing in the room, so it goes first. You will not need the model until the Deepdive section — everything between now and then is talk.</p>
+  <div class="note warn">
+    <span class="tag">Not gemma4:12b-mlx</span>
+    <p>The <code>-mlx</code> build of the <em>same weights</em> silently ignores structured output — every report degrades to a stub, and nothing tells you why. GGUF only. The Learnings section shows the probe.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Hardware reality — measured, not estimated</p>
+  <h2>What this actually needs resident.</h2>
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Component</th><th>Resident</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>macOS baseline</td><td class="num">~5 GiB</td><td>before anything starts</td></tr>
+        <tr><td>Wazuh stack (3 containers)</td><td class="num">~4 GiB</td><td>indexer JVM heap capped at 1 GB in our compose file</td></tr>
+        <tr class="pick"><td><code>gemma4:12b</code> under Ollama</td><td class="num">8.4 GiB</td><td>measured via <code>/api/ps</code>, exact bytes — not the parser that was 7.7% off</td></tr>
+        <tr><td><strong>Total</strong></td><td class="num">~17.5 GiB</td><td>24 GB machine: comfortable · 16 GB: tight, see next slide</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>An 8 GB MacBook Air cannot hold this at all — we tried; that is why development moved to a Mac Studio.</p>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Small machine? Two escape hatches, both measured</p>
+  <h2>The pipeline runs on 3 GiB. The verdicts get worse — and you'll see exactly how much.</h2>
+  <div class="cols">
+    <div class="col">
+      <h3>Swap the model, keep everything</h3>
+      <p><code>nemotron-3-nano:4b</code> (2.8 GiB) or <code>lfm2.5:8b-a1b</code> (5.0 GiB) run every step of the pipeline. Both were screened out of our benchmark on accuracy — you will see their scores in Results. Follow along for the <em>mechanism</em>; trust the verdicts accordingly.</p>
+      <pre>LLM_MODEL=nemotron-3-nano:4b   <span class="c"># one line in .env</span></pre>
+    </div>
+    <div class="col">
+      <h3>Skip local Wazuh entirely</h3>
+      <p>Config is fully env-driven. Point <code>WAZUH_*_URL</code> and <code>LLM_BASE_URL</code> at another machine and run only the thin Python agent locally — nothing else changes.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Step 1 of 3</p>
+  <h2>Clone and install</h2>
+  <pre>git clone &lt;repo&gt; &amp;&amp; cd local_siem_agent
+
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -e ".[dev]"
+
+cp .env.example .env</pre>
+  <p>Python 3.11+. The CLI installs as <code>agent</code>.</p>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Step 2 of 3</p>
+  <h2>Bring up Wazuh, pre-seeded with arguments</h2>
+  <pre>cd wazuh_deployment/single-node
+docker compose -f generate-indexer-certs.yml run --rm generator   <span class="c"># once</span>
+docker compose up -d   <span class="c"># first boot ~1 min</span></pre>
+  <p><strong>11 sample log sources</strong> — SSH auth, VPN, Windows Security, Sysmon, Mimecast email, and AI-dev-tool command execution — seeded with deliberate false-positive pairs, benign noise floods, and hidden needles including a base64-encoded C2 address.</p>
+  <p class="lead">The corpus is built so the agent has to <em>correlate across sources</em> to be right, not pattern-match one line.</p>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Step 3 of 3</p>
+  <h2>Point the agent at both</h2>
+  <pre><span class="c"># .env</span>
+WAZUH_INDEXER_URL=https://localhost:9200
+WAZUH_MANAGER_URL=https://localhost:55000
+WAZUH_VERIFY_SSL=false        <span class="c"># self-signed demo certs</span>
+
+LLM_BASE_URL=http://localhost:11434/v1/
+LLM_MODEL=gemma4:12b
+LLM_TIMEOUT_SECONDS=600       <span class="c"># self-check needs it — you'll see why</span></pre>
+  <p>Enrichment API keys are optional — without them, indicator lookups skip cleanly.</p>
+</section>
+
+<section class="slide" data-sec="3 · Get running">
+  <p class="eyebrow">Checkpoint — then we go back to the story</p>
+  <h2>Three things should be true.</h2>
+  <div class="check-list">
+    <div class="check-item"><span class="box">[ ]</span><span><code>pytest -q</code> passes — live tests skip until your stack and model are up; with everything up it's <strong>448 passing, 0 skipped</strong></span></div>
+    <div class="check-item"><span class="box">[ ]</span><span><code>agent list-alerts</code> shows the seeded corpus</span></div>
+    <div class="check-item"><span class="box">[ ]</span><span><code>ollama pull</code> still running is <em>fine</em> — not needed until Deepdive</span></div>
+  </div>
+  <div class="note good">
+    <span class="tag">Behind? Not a problem</span>
+    <p>Nothing after this point requires your machine to keep up. Watch, rejoin whenever you're ready — the repo goes home with you either way.</p>
+  </div>
+</section>
+
+<!-- ═══ 4 RESULTS ═══ -->
+<section class="slide sec" data-sec="4 · Results">
+  <div class="no">04</div>
   <h1>Results</h1>
   <div class="queue">
     <span class="qh">Material available to expand into</span>
@@ -421,7 +535,7 @@
   </div>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">What was run</p>
   <h2>602 investigations. Zero crashes.</h2>
   <div class="metric-row">
@@ -433,7 +547,7 @@
   <p>Zero missing reports across the whole field. <strong>~21 hours of local inference</strong> on a 128 GB Mac Studio.</p>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">The field</p>
   <h2>We tested 18 models. One survived.</h2>
   <div class="cols">
@@ -471,7 +585,7 @@
   </div>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">The key metric — learn it once</p>
   <h2>Benign escalation: a harmless alert marked HIGH.</h2>
   <p>The test set has <strong>60 normal, harmless alerts</strong> per model. The model gives each a severity. A harmless alert marked <strong>high</strong> or <strong>critical</strong> is a false alarm a human must investigate. We count them.</p>
@@ -484,7 +598,7 @@
   <p class="lead">Even the winner escalates <em>28 of 60</em>. Nothing here is a quiet tool yet — alert fatigue is the problem a SOC buys this for, and an agent that adds false alarms is worse than no agent.</p>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">Stage 2 · n=71</p>
   <h2>The pick is the smallest serious candidate.</h2>
   <div class="scroller">
@@ -502,7 +616,7 @@
   <p><strong>One criterion nothing else meets:</strong> the only configuration with full needle recall <em>and</em> a clean false-positive control, at the smallest footprint.</p>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">The same table, as a picture</p>
   <h2>No model is best at everything — quiet models miss attacks.</h2>
   <div class="fig-wrap">
@@ -545,7 +659,7 @@
   </div>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">The cost of that pick</p>
   <h2>259 seconds per alert, and reasoning effort can't fix it.</h2>
   <div class="metric-row">
@@ -560,7 +674,7 @@
   </div>
 </section>
 
-<section class="slide" data-sec="3 · Results">
+<section class="slide" data-sec="4 · Results">
   <p class="eyebrow">And plan for the slowest run, not the average</p>
   <h2>A demo is sized by its worst case.</h2>
   <div class="fig-wrap">
@@ -601,9 +715,9 @@
   </div>
 </section>
 
-<!-- ═══ 4 DEEPDIVE ═══ -->
-<section class="slide sec" data-sec="4 · Deepdive">
-  <div class="no">04</div>
+<!-- ═══ 5 DEEPDIVE ═══ -->
+<section class="slide sec" data-sec="5 · Deepdive">
+  <div class="no">05</div>
   <h1>Deepdive</h1>
   <div class="queue">
     <span class="qh">Material available to expand into</span>
@@ -616,7 +730,7 @@
   </div>
 </section>
 
-<section class="slide" data-sec="4 · Deepdive">
+<section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">The shape</p>
   <h2>Nine steps, fixed order, six LLM calls.</h2>
   <div class="fig-wrap">
@@ -683,7 +797,19 @@
   </div>
 </section>
 
-<section class="slide" data-sec="4 · Deepdive">
+<section class="slide" data-sec="5 · Deepdive">
+  <p class="eyebrow">Demo — start yours now, watch ours finish</p>
+  <h2>Kick off an investigation. It will land before we're done talking.</h2>
+  <pre>agent list-alerts --limit 5          <span class="c"># pick one</span>
+agent investigate-one &lt;alert-id&gt;     <span class="c"># ~4 min on gemma4:12b</span></pre>
+  <p class="lead">On stage: the <strong>pre-recorded</strong> run of the encoded-PowerShell needle — Results already showed why live is off the table (median 259s, worst 10.8 min). Your own run finishes while the next slides play; we come back to it at the checkpoint after Learnings.</p>
+  <div class="todo">
+    <span class="tag">Before 21 Aug</span>
+    <p>Record the run: full terminal, real time-compressed cut at each step boundary, timestamps visible. The recording is the demo; the slide above is the audience's copy of it.</p>
+  </div>
+</section>
+
+<section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">The mechanism, proven on a real payload</p>
   <h2>It decoded base64 out of a PowerShell command and found the C2 — 8 runs out of 8.</h2>
   <p>The address <code>45.146.164.110</code> appears in <strong>no plaintext field</strong> of the alert. It is inside a UTF-16LE <code>-EncodedCommand</code> payload. Both <code>source_ip</code> and <code>destination_ip</code> are <code>None</code>.</p>
@@ -694,7 +820,7 @@
   <p class="lead">The model adds recall the regex cannot. <em>The validator still gates everything it proposes.</em></p>
 </section>
 
-<section class="slide dense" data-sec="4 · Deepdive">
+<section class="slide dense" data-sec="5 · Deepdive">
   <p class="eyebrow">The A/B test — is the menu just bureaucracy?</p>
   <h2>Take away the menu, and the calmest model recommends disruption on 50 of 60 harmless alerts.</h2>
   <p>Every report answers “what should the analyst do?” twice, from the same evidence. <strong>A: pick from a fixed menu of 18 actions</strong> — this ships. <strong>B: write freely</strong> — recorded for research, never shown. Count of reports with a disruptive action (block an IP, lock an account, isolate a machine) on the 60 harmless alerts:</p>
@@ -760,7 +886,7 @@
   </div>
 </section>
 
-<section class="slide dense" data-sec="4 · Deepdive">
+<section class="slide dense" data-sec="5 · Deepdive">
   <p class="eyebrow">The VPN false positive, both columns</p>
   <h2>Every gpt-oss run wants to lock this user out — even the runs that scored correctly.</h2>
   <p>mrahman’s VPN login looks strange but is legitimate — the alert the demo exists to get right. Severity given (6 runs each) beside what the free-written draft recommends doing to mrahman:</p>
@@ -780,7 +906,7 @@
   <p class="lead">A <em>medium</em> score passes the test — but the same run’s draft still says <em>“immediately isolate the endpoint… force a password reset.”</em> A good score does not mean a harmless report. n=6 each — show counts.</p>
 </section>
 
-<section class="slide" data-sec="4 · Deepdive">
+<section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">The punchline</p>
   <h2>Writing freely, the model tells you to block Google.</h2>
   <p>Harmless held-for-review email · from <code>jane.tan@meridian-audit.com</code> (a real external auditor) to <code>raj.kumar@victimcorp.com</code> · subject “Audit evidence request — Q2 access reviews”.</p>
@@ -794,7 +920,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <p>Runner-up, another harmless alert: <em>“terminate all active SSH sessions associated with … 203.0.113.63”</em> — TEST-NET-3, a documentation-only range. ~70% of free-written drafts name a specific IP to act on. (Alert data is synthetic; 209.85.220.41 is real — ARIN, checked 17 Aug.)</p>
 </section>
 
-<section class="slide" data-sec="4 · Deepdive">
+<section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">The safety net, measured across all 426 deep reports</p>
   <h2>The self-check deletes every risky action it catches.</h2>
   <div class="metric-row">
@@ -810,7 +936,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<section class="slide" data-sec="4 · Deepdive">
+<section class="slide" data-sec="5 · Deepdive">
   <p class="eyebrow">And when the safety net itself fails</p>
   <h2>The self-check timed out on a live run — and the report said so.</h2>
   <p>17 Aug, the encoded-PowerShell needle. Draft-A selected <strong>13</strong> recommended actions, so the self-check had 13 claims to audit. It exceeded the 120-second timeout and failed.</p>
@@ -826,9 +952,9 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<!-- ═══ 5 LEARNINGS ═══ -->
-<section class="slide sec" data-sec="5 · Learnings">
-  <div class="no">05</div>
+<!-- ═══ 6 LEARNINGS ═══ -->
+<section class="slide sec" data-sec="6 · Learnings">
+  <div class="no">06</div>
   <h1>Learnings</h1>
   <div class="queue">
     <span class="qh">Material available to expand into</span>
@@ -841,7 +967,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 1 · the counterintuitive one</p>
   <h2>More reasoning made it worse, in the dangerous direction.</h2>
   <p><code>gpt-oss:20b</code>, same model, <code>low</code> against default effort, n=71:</p>
@@ -859,7 +985,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <p class="lead">The VPN egress <em>is</em> a real anomaly — reason about it long enough and you argue yourself into flagging it. <strong>Three independent models show the same inversion.</strong></p>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 1b · why leaderboards can't help</p>
   <h2>Each model is blind in a different place.</h2>
   <p>Benign escalation by alert type — false alarms out of 15, darker = noisier. <code>lfm2</code> flags every normal PowerShell alert and almost no Windows logins; <code>gemma4:26b</code> is the exact opposite.</p>
@@ -877,7 +1003,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <p class="lead">A model that wins on a public leaderboard can still be blind to <em>your</em> alerts. Test on the alert types you see every day.</p>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 2 · the deployment one</p>
   <h2>KV cache, not weights, decides what fits on your laptop.</h2>
   <div class="scroller">
@@ -898,7 +1024,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<section class="slide dense" data-sec="5 · Learnings">
+<section class="slide dense" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 2, as a picture</p>
   <h2>Two models look the same size — until you give them context.</h2>
   <div class="leg">
@@ -958,7 +1084,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 2, the sequel · gated 17 Aug</p>
   <h2>A generation of architecture work bought zero extra context.</h2>
   <div class="scroller">
@@ -976,7 +1102,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <p><strong>“Newer” is not a scalar.</strong> This is a real trade of generation speed for memory efficiency, and on a memory-constrained device the trade cancelled out.</p>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 3 · the measurement one</p>
   <h2>Every footprint we published was 7.7% too heavy.</h2>
   <p><code>ollama ps</code> prints <em>decimal</em> GB. The parser multiplied by 1024³. Every number in the project was wrong by the same constant.</p>
@@ -988,7 +1114,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   <p><strong>Chase the implausible reading. The systematic error is underneath it.</strong></p>
 </section>
 
-<section class="slide" data-sec="5 · Learnings">
+<section class="slide" data-sec="6 · Learnings">
   <p class="eyebrow">Learning 4 · the one we caused ourselves</p>
   <h2>We instrumented every call. It taught us two things.</h2>
   <div class="cols">
@@ -1009,9 +1135,30 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<!-- ═══ 6 CONCLUSIONS ═══ -->
-<section class="slide sec" data-sec="6 · Conclusions">
-  <div class="no">06</div>
+<section class="slide" data-sec="6 · Learnings">
+  <p class="eyebrow">Checkpoint — collect what you started in Deepdive</p>
+  <h2>Your investigation is done. Read it like an analyst.</h2>
+  <pre>agent list-reports
+agent show-report &lt;report-id&gt;        <span class="c"># human-readable; --json for raw</span></pre>
+  <div class="cols">
+    <div class="col">
+      <h3>Look for</h3>
+      <ul>
+        <li>The <strong>timeline</strong> — every step, including skipped ones with reasons</li>
+        <li><strong>Uncertainty notes</strong> — computed from structural gaps, never model self-assessment</li>
+        <li>The severity <em>and</em> the evidence it cites — judge the citation, not the verdict</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>On a fallback model?</h3>
+      <p>Compare your verdict against the scoreboard from Results — you now hold a live sample of exactly the accuracy gap we measured. That gap is the talk.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 CONCLUSIONS ═══ -->
+<section class="slide sec" data-sec="7 · Conclusions">
+  <div class="no">07</div>
   <h1>Conclusions</h1>
   <div class="queue">
     <span class="qh">Material available to expand into</span>
@@ -1023,7 +1170,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </div>
 </section>
 
-<section class="slide" data-sec="6 · Conclusions">
+<section class="slide" data-sec="7 · Conclusions">
   <p class="eyebrow">What we'd tell you to do</p>
   <h2>Four things, all measured.</h2>
   <ul>
@@ -1034,7 +1181,7 @@ OrgName:   <span class="hit">Google LLC</span>   # block it, and Gmail stops del
   </ul>
 </section>
 
-<section class="slide" data-sec="6 · Conclusions">
+<section class="slide" data-sec="7 · Conclusions">
   <p class="eyebrow">Position</p>
   <h2>It builds the hypothesis. You still make the call.</h2>
   <p class="lead">Strictly read-only. No remediation tool is wired to the model — not disabled, <em>not present</em>.</p>
