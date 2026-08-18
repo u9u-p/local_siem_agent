@@ -59,10 +59,13 @@ def build_enrichment_registry(settings: Settings) -> EnrichmentRegistry:
     return registry
 
 
-def build_analyst(settings: Settings, alert_store: AlertStore | None = None) -> AgenticAnalyst:
+def build_analyst(
+    settings: Settings, alert_store: AlertStore | None = None, on_step=None
+) -> AgenticAnalyst:
     return AgenticAnalyst(
         siem=build_siem_connector(settings),
         alert_store=alert_store if alert_store is not None else build_alert_store(settings),
         enrichment_registry=build_enrichment_registry(settings),
         llm_client=build_llm_client(settings),
+        on_step=on_step,
     )

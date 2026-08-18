@@ -90,6 +90,33 @@ def _investigate_alert(analyst: AgenticAnalyst, alert: Alert, reports_dir: Path)
     return report
 
 
+def _build_analyst_and_view(settings, alert_store: AlertStore, tui: bool):
+    """Build the analyst, with a PipelineView wired in via on_step when --tui is set.
+
+    Without --tui, build_analyst is called exactly as before (no on_step argument),
+    so the default path is unchanged.
+    """
+    if not tui:
+        return build_analyst(settings, alert_store=alert_store), None
+    from app.tui import PipelineView
+
+    view = PipelineView()
+    return build_analyst(settings, alert_store=alert_store, on_step=view.on_step), view
+
+
+def _investigate_with_optional_view(analyst, alert: Alert, reports_dir: Path, view) -> Report:
+    if view is None:
+        return _investigate_alert(analyst, alert, reports_dir)
+    from rich.live import Live
+
+    view.reset(title=f"alert {alert.alert_id} (rule {alert.rule_id})")
+    with Live(view, refresh_per_second=4):
+        return _investigate_alert(analyst, alert, reports_dir)
+
+
+_TUI_OPTION = typer.Option(False, "--tui", help="Show a live 9-step pipeline view while investigating.")
+
+
 def _summary_line(report: Report) -> str:
     return f"{report.report_id} | {report.risk_assessment.severity.value:8} | {report.status.value}"
 
@@ -114,6 +141,7 @@ def investigate_all_cmd(
     log_file: Path = typer.Option(
         None, "--log-file", help="Write verbose logs to this file instead of stdout. Implies --verbose."
     ),
+    tui: bool = _TUI_OPTION,
 ) -> None:
     _configure_verbose_logging(verbose, log_file)
     settings = get_settings()
@@ -125,7 +153,7 @@ def investigate_all_cmd(
         return
 
     try:
-        analyst = build_analyst(settings, alert_store=alert_store)
+        analyst, view = _build_analyst_and_view(settings, alert_store, tui)
     except RuntimeError as exc:
         typer.echo(f"Cannot investigate: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -133,7 +161,7 @@ def investigate_all_cmd(
 
     for alert in alerts:
         try:
-            report = _investigate_alert(analyst, alert, reports_dir)
+            report = _investigate_with_optional_view(analyst, alert, reports_dir, view)
         except OSError as exc:
             typer.echo(f"Failed to write report for alert {alert.alert_id}: {exc}", err=True)
             continue
@@ -149,6 +177,7 @@ def investigate_one_cmd(
     log_file: Path = typer.Option(
         None, "--log-file", help="Write verbose logs to this file instead of stdout. Implies --verbose."
     ),
+    tui: bool = _TUI_OPTION,
 ) -> None:
     _configure_verbose_logging(verbose, log_file)
     settings = get_settings()
@@ -161,13 +190,13 @@ def investigate_one_cmd(
         raise typer.Exit(code=1)
 
     try:
-        analyst = build_analyst(settings, alert_store=alert_store)
+        analyst, view = _build_analyst_and_view(settings, alert_store, tui)
     except RuntimeError as exc:
         typer.echo(f"Cannot investigate: {exc}", err=True)
         raise typer.Exit(code=1)
     reports_dir = Path(settings.reports_dir)
 
-    report = _investigate_alert(analyst, alert, reports_dir)
+    report = _investigate_with_optional_view(analyst, alert, reports_dir, view)
     typer.echo(_summary_line(report))
 
 

@@ -11,6 +11,7 @@ dependencies = [
     "httpx>=0.27,<1",
     "openai>=1.50,<2",
     "typer>=0.12,<1",
+    "rich>=13,<15",  # imported directly for the --tui live view; also a typer dep
 ]
 
 [project.optional-dependencies]
