@@ -134,7 +134,4 @@ def render_markdown(report: Report, sections: list[Section]) -> str:
         lines.extend(bullets)
         if bullets:
             lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("_Internal — Ryt Bank_")
     return "\n".join(lines) + "\n"
