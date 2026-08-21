@@ -1535,7 +1535,7 @@ def test_markdown_renders_headings_bullets_and_footer():
     assert "## Summary" in output
     assert "## Recommended actions" in output
     assert "- Escalate to a human analyst for manual review" in output
-    assert output.rstrip().endswith("_Internal — Ryt Bank_")
+    assert output.rstrip().endswith("_Internal_")
 
 
 def test_markdown_omits_sections_the_text_renderer_omits():
@@ -1645,7 +1645,7 @@ def render_markdown(report: Report, sections: list[Section]) -> str:
             lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("_Internal — Ryt Bank_")
+    lines.append("_Internal_")
     return "\n".join(lines) + "\n"
 ```
 

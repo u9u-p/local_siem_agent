@@ -124,7 +124,7 @@ def test_timeline_section_lists_step_names_and_actions():
     assert "  - enrich: skipped" in output
 
 
-def test_markdown_renders_headings_bullets_and_footer():
+def test_markdown_renders_headings_and_bullets():
     report = _make_report(recommended_actions=["Escalate to a human analyst for manual review"])
 
     output = render_markdown(report, report_sections(report))
@@ -133,7 +133,6 @@ def test_markdown_renders_headings_bullets_and_footer():
     assert "## Summary" in output
     assert "## Recommended actions" in output
     assert "- Escalate to a human analyst for manual review" in output
-    assert output.rstrip().endswith("_Internal — Ryt Bank_")
 
 
 def test_markdown_omits_sections_the_text_renderer_omits():

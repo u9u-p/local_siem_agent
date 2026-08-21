@@ -199,4 +199,4 @@ Live (skipped without `WAZUH_*` and a pulled model):
 
 ---
 
-*Internal — Ryt Bank*
+*Internal*

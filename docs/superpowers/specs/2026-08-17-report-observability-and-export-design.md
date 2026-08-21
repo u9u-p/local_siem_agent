@@ -191,7 +191,7 @@ def render_markdown(sections: list[Section]) -> str: ...
 
 `report_sections` is the single definition of which sections exist, in what order, and when a section is omitted. `cli._format_report_detail` becomes `render_text(report_sections(report))` and produces byte-identical output to today's format for the sections that already exist — the existing CLI tests are the guard on that.
 
-`render_markdown` maps the same sections to `##` headings and `-` bullets, with a `# Investigation Report <id>` title and an `_Internal — Ryt Bank_` footer.
+`render_markdown` maps the same sections to `##` headings and `-` bullets, with a `# Investigation Report <id>` title and an `_Internal_` footer.
 
 ### 5.2 The experimental section
 

@@ -4,6 +4,13 @@
 __pycache__/
 *.pyc
 .env
+build/
+.claude/
+
+# Internal-audience conference/handoff docs, not meant for the public repo.
+docs/analytics-handoff.md
+docs/architecture-talk-slides.md
+docs/hitcon-2026-workshop.html
 # data/* not data/ — git cannot re-include a file whose parent directory is excluded,
 # so excluding the directory itself would make the negation below silently do nothing.
 data/*
