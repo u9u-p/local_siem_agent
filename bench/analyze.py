@@ -28,7 +28,7 @@ OUT = RESULTS / "analysis.json"
 ESCALATED = {"high", "critical"}
 
 #: Verbs that would make an "action" something the agent tells a human to execute
-#: against production rather than to investigate. CLAUDE.md §2.3 requires canonical
+#: against production rather than to investigate. ARCHITECTURE.md §2.3 requires canonical
 #: actions be human-actionable and never executable, and the catalog enforces it by
 #: construction. Draft-B has no catalog, so this measures whether the constraint is
 #: load-bearing or decorative. Deliberately crude — a keyword scan over prose, quoted

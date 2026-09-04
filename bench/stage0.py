@@ -15,7 +15,7 @@ sweep touches it:
    otherwise degrade every single report to NEEDS_HUMAN_REVIEW and score across the
    sweep as merely cautious rather than broken.
 
-`PROGRESS.md` risk #9 asks for exactly this check, independently of the benchmark.
+`docs/PROGRESS.md` risk #9 asks for exactly this check, independently of the benchmark.
 
 Usage:
     python -m bench.stage0                       # every locally pulled model
@@ -46,7 +46,7 @@ FIT_CEILING_BYTES = 17.5 * 1024**3
 #: Ollama sizes the KV cache from the model's default context, which for several
 #: candidates is 262144 tokens — and that allocation, not the weights, is most of the
 #: resident footprint (qwen3.6:27b measured 36.5 GB by default against 16 GB here).
-#: CLAUDE.md §4.2 rule 2 keeps every prompt to a few hundred to ~2k tokens of
+#: ARCHITECTURE.md §4.2 rule 2 keeps every prompt to a few hundred to ~2k tokens of
 #: structured JSON, so 8192 is roughly 4x headroom.
 #:
 #: Per-request num_ctx does not survive: the OpenAI-compat endpoint that OllamaClient

@@ -25,7 +25,7 @@ data/*
 !data/bench_alerts.db
 
 # Benchmark evidence IS committed — the reports, per-run records, gate results and
-# sweep logs are what the findings in PROGRESS.md rest on, and they cannot be
+# sweep logs are what the findings in docs/PROGRESS.md rest on, and they cannot be
 # regenerated without ~20 hours of model time.
 #
 # Two exclusions, both regenerable working state rather than evidence:

@@ -1,8 +1,10 @@
-# Wazuh Local Agent
+# Local SIEM Agent
 
-A local AI agent that investigates and triages Wazuh SIEM alerts and produces an enriched report — summary, risk assessment, recommended actions, and an explicit uncertainty note — for a human security analyst to review. The agent is **strictly read-only**: it never takes remediation action, and its only output is a report. The LLM runs entirely on-device (Ollama) — no alert data or logs are sent to any cloud LLM API.
+A local AI agent that investigates and triages SIEM alerts and produces an enriched report — summary, risk assessment, recommended actions, and an explicit uncertainty note — for a human security analyst to review. The agent is **strictly read-only**: it never takes remediation action, and its only output is a report. The LLM runs entirely on-device (Ollama) — no alert data or logs are sent to any cloud LLM API.
 
-This is a prototype/POC, not connected to production SIEM data. See `CLAUDE.md` for the full design document and rationale, `ROADMAP.md` for what's built vs. planned, and `PROGRESS.md` for current status, test counts, and known issues.
+Wazuh is the only SIEM connector today. The pipeline talks to the SIEM through a small `SIEMConnector` Protocol, so a second SIEM is one new class, not a rewrite.
+
+This is a prototype/POC, not connected to production SIEM data. See `ARCHITECTURE.md` for the full design document and rationale, `ROADMAP.md` for what's built vs. planned, and `docs/PROGRESS.md` for current status, test counts, and known issues.
 
 ## How it works, in brief
 
@@ -18,7 +20,7 @@ A deterministic 9-step pipeline (the "Agentic Analyst") investigates one alert a
 8. Self-check the draft against the evidence gathered
 9. Finalize and persist the report
 
-At every point the LLM makes a decision, it's constrained to a closed schema (an enum, a fixed set of options) — never a free-form choice — so a small local model can't hallucinate its way into bad output. See `CLAUDE.md` §4 for the full design.
+At every point the LLM makes a decision, it's constrained to a closed schema (an enum, a fixed set of options) — never a free-form choice — so a small local model can't hallucinate its way into bad output. See `ARCHITECTURE.md` §4 for the full design.
 
 ---
 
@@ -27,21 +29,21 @@ At every point the LLM makes a decision, it's constrained to a closed schema (an
 | Requirement | Notes |
 |---|---|
 | **Python 3.11+** | |
-| **Ollama**, running locally (`ollama serve`) | Must serve a **GGUF-format** model — MLX-tagged builds silently ignore structured-output constraints and will produce garbage results (confirmed empirically, see `PROGRESS.md`). |
+| **Ollama**, running locally (`ollama serve`) | Must serve a **GGUF-format** model — MLX-tagged builds silently ignore structured-output constraints and will produce garbage results (confirmed empirically, see `docs/PROGRESS.md`). |
 | A **GGUF chat model** pulled into Ollama | Project default: `gemma4:12b` (Q4_K_M). Run `ollama pull gemma4:12b` (not `gemma4:12b-mlx`). |
 | **A Wazuh deployment** (manager + indexer), reachable over HTTPS | For local development, `wazuh_deployment/single-node/` in this repo brings up a full Docker Compose stack with seeded demo alerts — see [Setting up Wazuh](#setting-up-wazuh-local-demo-stack) below. Any Wazuh 4.x install works, provided you have indexer and manager credentials. |
 | **Docker with Compose v2** | Only needed if using the bundled demo Wazuh stack. |
 | AbuseIPDB / VirusTotal API keys | Optional. Without them, indicator enrichment is skipped gracefully (no crash) — alerts are still investigated, just without third-party reputation lookups. |
 
-Approximate memory budget if Wazuh and Ollama run on the same machine (see `CLAUDE.md` §7.1): ~4–6GB OS baseline, ~3–6GB for the Wazuh stack (indexer JVM heap is capped at 1GB in the bundled demo compose file), ~8GB for `gemma4:12b` under Ollama. 24GB total is comfortable for this POC's scale.
+Approximate memory budget if Wazuh and Ollama run on the same machine (see `ARCHITECTURE.md` §7.1): ~4–6GB OS baseline, ~3–6GB for the Wazuh stack (indexer JVM heap is capped at 1GB in the bundled demo compose file), ~8GB for `gemma4:12b` under Ollama. 24GB total is comfortable for this POC's scale.
 
 ---
 
 ## Installation
 
 ```bash
-git clone <this-repo>
-cd local-agent
+git clone https://github.com/u9u-p/local_siem_agent.git
+cd local_siem_agent
 
 python3 -m venv .venv
 source .venv/bin/activate
@@ -122,7 +124,7 @@ agent investigate-all                 # every alert currently in NEW status
 agent investigate-one <alert-id>      # one specific alert, regardless of its current status
 ```
 
-Each investigation takes a few minutes (local LLM inference, ~2.5 minutes per alert with `gemma4:12b` per `PROGRESS.md`'s measurements) and produces a report, persisted both to SQLite and as a JSON file under `REPORTS_DIR`.
+Each investigation takes a few minutes (local LLM inference, ~2.5 minutes per alert with `gemma4:12b` per `docs/PROGRESS.md`'s measurements) and produces a report, persisted both to SQLite and as a JSON file under `REPORTS_DIR`.
 
 ### Browse alerts and reports
 
@@ -164,11 +166,21 @@ app/
 └── config.py      # Settings (pydantic-settings, reads .env)
 tests/             # pytest suite, mirrors the app/ layout
 wazuh_deployment/  # local demo Wazuh Docker Compose stack (see its own README)
-docs/superpowers/  # design specs and implementation plans, one pair per phase
+docs/
+├── PROGRESS.md    # build log: measurements, known risks, lessons per phase
+├── app_requirement.md
+└── superpowers/   # design specs and implementation plans, one pair per phase
+ARCHITECTURE.md    # the design document
+ROADMAP.md         # phases, built vs. deferred
+CLAUDE.md          # instructions for Claude Code sessions in this repo
 ```
+
+## How this was built
+
+This repo was built with Claude Code, and the trail is kept on purpose. Each phase went brainstorm → design spec → implementation plan → code, and every spec/plan pair is in `docs/superpowers/`. `docs/PROGRESS.md` is the running log of what was measured along the way — model comparisons, latency, the verdicts that turned out wrong — and `CLAUDE.md` is the instruction file those sessions read. Treat them as the working notes of a prototype, not as polished documentation.
 
 ## Further reading
 
-- **`CLAUDE.md`** — the full design document (architecture, data model, hallucination-mitigation rules, tech stack rationale).
+- **`ARCHITECTURE.md`** — the full design document (architecture, data model, hallucination-mitigation rules, tech stack rationale).
 - **`ROADMAP.md`** — phase-by-phase plan, what's built vs. deferred.
-- **`PROGRESS.md`** — current test counts, known risks, and lessons carried forward from each phase's review.
+- **`docs/PROGRESS.md`** — current test counts, known risks, and lessons carried forward from each phase's review.

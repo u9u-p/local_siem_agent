@@ -1,5 +1,5 @@
 [project]
-name = "wazuh-local-agent"
+name = "local-siem-agent"
 version = "0.1.0"
 description = "Local SIEM alert investigation agent"
 requires-python = ">=3.11"

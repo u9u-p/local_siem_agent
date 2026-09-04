@@ -31,7 +31,7 @@ def _raw_log_block(raw_log) -> str:
     Step 2's indicator vocabulary (IP/domain/hash/URL) cannot represent facts like a mail
     gateway's own verdict, a sender identity, or a subject line, so for some alert classes
     the decisive evidence reaches no prompt at all. Labelled unvalidated because — unlike
-    every other block here — it has passed through no validator (CLAUDE.md §4.2 rule 2).
+    every other block here — it has passed through no validator (ARCHITECTURE.md §4.2 rule 2).
     Superseded once alert-class context selection exists.
     """
     if not raw_log:
