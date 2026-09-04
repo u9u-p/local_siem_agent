@@ -24,6 +24,39 @@ At every point the LLM makes a decision, it's constrained to a closed schema (an
 
 ---
 
+## Which model, and why
+
+Sixteen local-model configurations were benchmarked on this exact pipeline before one was picked (Aug 2026). Five finalists then each ran the full corpus: 71 investigations per model, 602 in total across both stages, zero crashes. Everything is scored on the `severity` the report's risk assessment emits, so the numbers measure what an analyst would actually see.
+
+| model | benign esc.↓ | needle↑ | fp-control↓ | sev. distance↓ | median | footprint |
+|---|---|---|---|---|---|---|
+| `gpt-oss:120b`@low | **20%** (12/60) | 60% | 0% (0/6) | **0.20** | 35s | 64.0 GiB |
+| `gpt-oss:20b`@low | 45% (27/60) | 80% | 0% (0/6) | 0.39 | **24s** | 12.0 GiB |
+| **`gemma4:12b`** | 47% (28/60) | **100%** | **0%** (0/6) | 0.39 | 259s | **8.4 GiB** |
+| `gemma4:26b-a4b-it-qat` | 53% (32/60) | **100%** | **50%** (3/6) | 0.49 | 155s | 15.0 GiB |
+| `lfm2:24b-a2b` | 58% (35/60) | 60% | 0% (0/6) | 0.52 | **10s** | 14.0 GiB |
+
+- **benign esc.** — share of 60 benign alerts rated `high` or `critical`. `medium` is allowed (a held-for-review message genuinely warrants a second look); escalating is the error.
+- **needle** — share of 5 genuinely malicious alerts rated `high` or `critical`, including one whose C2 address exists only inside a base64-encoded PowerShell command.
+- **fp-control** — six runs of one deliberately convincing false positive: a VPN login from a real geographic anomaly that is nonetheless benign. Escalating it is wrong.
+- **sev. distance** — mean gap, in severity levels, between the verdict and the nearest acceptable one.
+- **median / footprint** — wall clock per alert, and resident memory while generating, on a 128 GB Mac Studio at `num_ctx=8192`.
+
+**The pick is `gemma4:12b`** (Q4_K_M, GGUF): the only configuration that catches every needle *and* leaves the false-positive control alone, at the smallest footprint of any serious candidate. The runner-up, `gpt-oss:20b`@low, is one benign alert quieter and eleven times faster, and misses one needle. The pick's real cost is latency: p50 259s, p95 462s, worst case 648s on the Studio, and slower on the 24 GB laptop this was designed for. Its reasoning-effort setting barely moves either number, so this is not tunable away.
+
+Four findings that shaped the design more than the leaderboard did (full write-up in [`docs/PROGRESS.md`](docs/PROGRESS.md#local-model-selection-benchmark-1415-aug-2026)):
+
+- **The self-check flag is the best quality signal the pipeline has.** On the pick, reports where the self-check flagged at least one claim were 25% correct on severity; reports with no flags were 74% correct. A flagged report is three times more likely to be wrong, so `needs_human_review` is a real triage decision, not decoration. Models that flag nearly everything carry almost no signal, and one (`lfm2:24b-a2b`) is anti-correlated.
+- **The model's own stated confidence is anti-calibrated.** On both gemmas, `high` confidence was *less* accurate than `medium` (58% vs 67% on the pick). The design already refused to derive uncertainty notes from self-assessed confidence; the measurement says that refusal was right.
+- **More reasoning made things worse.** `gpt-oss:20b` at default effort versus `low`: benign escalation 45% → 58%, and the false-positive control went from correct on 6 of 6 runs to wrong on 6 of 6, for 2.7× the latency. The state graph already supplies structure and grounding, so extra reasoning mostly gives the model room to argue itself out of the grounded answer.
+- **Bigger models trade detection for quiet; they are not simply better.** Within one family, 20b → 120b takes benign escalation from 45% to 20% while needle recall falls from 80% to 60%. Each model also fails by alert class, not diffusely, so a leaderboard position does not transfer to alert types it was not measured on.
+
+**What this does not show.** The corpus is synthetic and self-authored (182 alerts, 130 graded, four alert classes), so these are numbers about this pipeline on these alerts, not general model rankings. Five needles and six control runs are small denominators. Enrichment was off for the whole sweep so that API quotas could not skew the ranking. It is a single sweep on hardware far larger than the target machine. And 47% benign escalation on the pick means roughly half of ordinary alerts still get flagged high, which is fine for demonstrating the pipeline and not fine for running a queue.
+
+Methodology: [design spec](docs/superpowers/specs/2026-08-14-local-model-selection-benchmark-design.md). Raw runs, per-config reports, and `runs.csv` are committed under `bench/results/`; `./bench/sweep.sh` reruns it and `python -m bench.stage0` gates a new model before it enters.
+
+---
+
 ## Prerequisites
 
 | Requirement | Notes |
@@ -124,7 +157,7 @@ agent investigate-all                 # every alert currently in NEW status
 agent investigate-one <alert-id>      # one specific alert, regardless of its current status
 ```
 
-Each investigation takes a few minutes (local LLM inference, ~2.5 minutes per alert with `gemma4:12b` per `docs/PROGRESS.md`'s measurements) and produces a report, persisted both to SQLite and as a JSON file under `REPORTS_DIR`.
+Each investigation takes minutes, not seconds: with `gemma4:12b` the benchmark measured a median of 259s per alert and a p95 of 462s on a 128 GB Mac Studio (see [Which model, and why](#which-model-and-why)). It produces a report, persisted both to SQLite and as a JSON file under `REPORTS_DIR`.
 
 ### Browse alerts and reports
 
