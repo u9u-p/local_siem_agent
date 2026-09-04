@@ -1,5 +1,7 @@
 # Local SIEM Agent
 
+> **Write-up:** [Your First Agentic SOC Without the GPU Bill: Local LLM Triage on Apple Silicon](https://u9up.com/blog/local-llm-soc-triage/) — the design, the benchmark, and what we got wrong, from the HITCON 2026 talk.
+
 A local AI agent that investigates and triages SIEM alerts and produces an enriched report — summary, risk assessment, recommended actions, and an explicit uncertainty note — for a human security analyst to review. The agent is **strictly read-only**: it never takes remediation action, and its only output is a report. The LLM runs entirely on-device (Ollama) — no alert data or logs are sent to any cloud LLM API.
 
 Wazuh is the only SIEM connector today. The pipeline talks to the SIEM through a small `SIEMConnector` Protocol, so a second SIEM is one new class, not a rewrite.
