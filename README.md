@@ -44,11 +44,15 @@ Five finalists then ran the full corpus, 71 investigations each, on a 128 GB Mac
 
 **`gemma4:12b` is the only configuration that catches every hidden attack *and* leaves the VPN false-positive control alone, at the smallest footprint.** The runner-up is one false alarm quieter and eleven times faster, and misses one attack. The cost of the pick is latency: p50 259s, p95 462s, worst case 648s on the Studio, slower on the 24 GB laptop this was designed for, and the reasoning-effort setting barely moves it.
 
-Three things the table cannot tell you:
+Four things the table cannot tell you:
 
 - **Each model is blind in a different place.** False alarms out of 15 per alert type. A public leaderboard position does not transfer to the alert classes you actually see.
 
   ![Benign escalation by alert type per model; lfm2 flags every benign PowerShell alert and almost no Windows logins, gemma4:26b is the opposite](docs/img/bench-by-alert-type.png)
+
+- **The action menu does more work than the model's judgement.** Every report picks its recommended actions twice from the same evidence: from a closed catalogue of 19 (what ships) and, separately, writing freely (recorded, never shown). On the 60 harmless alerts, `gpt-oss:120b` recommended a disruptive action (block an IP, lock an account, isolate a host) in 0 reports with the menu and 50 without it. The pick was calm either way, 24 against 27. A closed vocabulary constrains what can be said without converging what is said.
+
+  ![Menu versus free writing: disruptive recommendations on 60 harmless alerts per model](docs/img/bench-menu-vs-free.png)
 
 - **More reasoning made it worse, in the dangerous direction.** `gpt-oss:20b` at default effort against `low`: benign escalation 45% → 58%, the VPN control from 0/6 wrong to 6/6 wrong, needle recall unchanged, 2.7× the latency. The state graph already supplies the grounding; extra reasoning gives the model room to argue itself out of it.
 - **The self-check flag is the best quality signal the pipeline has, and the model's stated confidence is the worst.** On the pick, flagged reports were 25% correct on severity and unflagged ones 74%, so `needs_human_review` is a real triage decision. Meanwhile `high` confidence was *less* accurate than `medium`.
